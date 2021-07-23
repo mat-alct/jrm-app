@@ -1,8 +1,6 @@
-// @ts-nocheck 
+import { init } from 'next-firebase-auth';
 
-import { init } from 'next-firebase-auth'
-
-const TWELVE_DAYS_IN_MS = 12 * 60 * 60 * 24 * 1000
+const TWELVE_DAYS_IN_MS = 12 * 60 * 60 * 24 * 1000;
 
 const initAuth = () => {
   init({
@@ -44,7 +42,7 @@ const initAuth = () => {
       secure: process.env.NEXT_PUBLIC_COOKIE_SECURE === 'true',
       signed: true,
     },
-  })
-}
+  });
+};
 
 export default initAuth;

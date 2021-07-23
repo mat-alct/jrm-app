@@ -1,25 +1,75 @@
 {
-    "env": {
-        "browser": true,
-        "es2021": true,
-        "node": true
+  "env": {
+    "browser": true,
+    "es2020": true
+  },
+  "extends": [
+    "plugin:react/recommended",
+    "airbnb",
+    "plugin:@typescript-eslint/recommended",
+    "prettier",
+    "plugin:prettier/recommended"
+  ],
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "ecmaFeatures": {
+      "jsx": true
     },
-    "extends": [
-        "plugin:react/recommended",
-        "airbnb"
+    "ecmaVersion": 11,
+    "sourceType": "module"
+  },
+  "plugins": [
+    "react",
+    "react-hooks",
+    "@typescript-eslint",
+    "prettier",
+    "simple-import-sort"
+  ],
+  "rules": {
+    "simple-import-sort/imports": "error",
+    "simple-import-sort/exports": "error",
+    "prettier/prettier": "error",
+    "react/jsx-uses-react": "off",
+    "react/react-in-jsx-scope": "off",
+    "react-hooks/rules-of-hooks": "error",
+    "react-hooks/exhaustive-deps": "warn",
+    "react/jsx-props-no-spreading": "off",
+    "react/jsx-filename-extension": [1, { "extensions": [".tsx"] }],
+    "react/prop-types": "off",
+    "react/no-array-index-key": "off",
+    "no-return-assign": "off",
+    "@typescript-eslint/explicit-module-boundary-types": "off",
+    "@typescript-eslint/explicit-function-return-type": "off",
+    "@typescript-eslint/no-namespace": "off",
+    "import/prefer-default-export": "off",
+    "jsx-a11y/anchor-is-valid": [
+      "error",
+      {
+        "components": ["Link"],
+        "specialLink": ["hrefLeft", "hrefRight"],
+        "aspects": ["invalidHref", "preferButton"]
+      }
     ],
-    "parser": "@typescript-eslint/parser",
-    "parserOptions": {
-        "ecmaFeatures": {
-            "jsx": true
-        },
-        "ecmaVersion": 12,
-        "sourceType": "module"
-    },
-    "plugins": [
-        "react",
-        "@typescript-eslint"
+    "import/extensions": [
+      "error",
+      "ignorePackages",
+      {
+        "ts": "never",
+        "tsx": "never",
+        "js": "never",
+        "jsx": "never"
+      }
     ],
-    "rules": {
+    "import/no-extraneous-dependencies": ["error", { "devDependencies": true }],
+    "no-unused-expressions": "off",
+    "no-use-before-define": "off",
+    "@typescript-eslint/no-use-before-define": ["error"]
+  },
+  "settings": {
+    "import/resolver": {
+      "node": {
+        "extensions": [".js", ".jsx", ".ts", ".tsx", ".json"]
+      }
     }
+  }
 }

@@ -1,9 +1,9 @@
-import firebase from 'firebase/app';
-
-import 'firebase/database'
+import 'firebase/database';
 import 'firebase/auth';
+
+import firebase from 'firebase/app';
 
 const auth = firebase.auth();
 const database = firebase.database();
 
-export { firebase, auth, database };
+export { auth, database, firebase };

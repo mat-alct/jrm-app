@@ -1,5 +1,6 @@
-import type { AppProps } from "next/app";
-import initAuth from "../services/initAuth";
+import type { AppProps } from 'next/app';
+
+import initAuth from '../services/initAuth';
 
 initAuth();
 

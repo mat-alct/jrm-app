@@ -1,13 +1,14 @@
-import { withAuthUser, AuthAction } from "next-firebase-auth";
-import firebase from "firebase/app";
-import "firebase/auth";
-import { useState } from "react";
+import 'firebase/auth';
+
+import firebase from 'firebase/app';
+import { AuthAction, withAuthUser } from 'next-firebase-auth';
+import { useState } from 'react';
 
 const MyLoader = () => <div>Loading...</div>;
 
 const LoginPage = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
   const handleLogin = async () => {
     await firebase.auth().signInWithEmailAndPassword(email, password);
@@ -19,15 +20,17 @@ const LoginPage = () => {
         type="text"
         placeholder="E-mail"
         value={email}
-        onChange={(e) => setEmail(e.target.value)}
+        onChange={e => setEmail(e.target.value)}
       />
       <input
         type="password"
         placeholder="Senha"
         value={password}
-        onChange={(e) => setPassword(e.target.value)}
+        onChange={e => setPassword(e.target.value)}
       />
-      <button onClick={() => handleLogin()}>Entrar</button>
+      <button type="button" onClick={() => handleLogin()}>
+        Entrar
+      </button>
     </>
   );
 };
