@@ -1,8 +1,19 @@
-import { Button } from '@chakra-ui/react';
+import { Button, Spinner } from '@chakra-ui/react';
 import firebase from 'firebase/app';
 import { AuthAction, withAuthUser } from 'next-firebase-auth';
 
-const MyLoader = () => <div>Loading...</div>;
+const MyLoader = () => (
+  <div
+    style={{
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      height: '100vh',
+    }}
+  >
+    <Spinner size="lg" />
+  </div>
+);
 
 const Dashboard = () => {
   return (
