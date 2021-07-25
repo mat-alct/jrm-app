@@ -17,9 +17,18 @@ const LoginPage = () => {
 
   return (
     <Flex as="main" align="stretch" h="100vh">
-      <Flex flex="1" background="black" />
+      <Flex
+        flex="1"
+        background="url(/images/logInBackground.png)"
+        backgroundSize="cover"
+      />
       <Flex as="section" w="100%" maxW="44em" align="center" justify="center">
-        <Flex>
+        <Flex direction="column">
+          <img
+            src="/images/logo.svg"
+            alt="Logotipo JRM"
+            style={{ width: '350px', height: 'auto', marginBottom: '4em' }}
+          />
           <form
             style={{
               maxWidth: '22em',
