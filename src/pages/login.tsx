@@ -23,6 +23,7 @@ const LoginPage = () => {
   const [password, setPassword] = useState('');
 
   const handleLogin = async () => {
+    console.log(email, password);
     await firebase.auth().signInWithEmailAndPassword(email, password);
   };
 
@@ -80,7 +81,12 @@ const LoginPage = () => {
               </InputGroup>
             </FormControl>
 
-            <Button type="submit" w="100%" onClick={() => handleLogin()}>
+            <Button
+              variant="outline"
+              type="button"
+              isFullWidth
+              onClick={() => handleLogin()}
+            >
               Entrar
             </Button>
           </form>
@@ -91,8 +97,9 @@ const LoginPage = () => {
 };
 
 export default withAuthUser({
-  whenAuthed: AuthAction.RENDER,
+  whenAuthed: AuthAction.REDIRECT_TO_APP,
   whenUnauthedBeforeInit: AuthAction.SHOW_LOADER,
   whenUnauthedAfterInit: AuthAction.RENDER,
+  appPageURL: '/',
   LoaderComponent: MyLoader,
 })(LoginPage);
