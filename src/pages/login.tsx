@@ -1,5 +1,6 @@
 import 'firebase/auth';
 
+import { Flex } from '@chakra-ui/react';
 import firebase from 'firebase/app';
 import { AuthAction, withAuthUser } from 'next-firebase-auth';
 import { useState } from 'react';
