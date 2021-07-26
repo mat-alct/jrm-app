@@ -1,11 +1,11 @@
-/* eslint-disable react/no-children-prop */
 import 'firebase/auth';
 
+import { EmailIcon, LockIcon } from '@chakra-ui/icons';
 import {
   Button,
   Flex,
   FormControl,
-  FormLabel,
+  FormErrorMessage,
   Heading,
   Input,
   InputGroup,
@@ -14,8 +14,7 @@ import {
 } from '@chakra-ui/react';
 import firebase from 'firebase/app';
 import { AuthAction, withAuthUser } from 'next-firebase-auth';
-import React, { useState } from 'react';
-import { FiLock, FiUser } from 'react-icons/fi';
+import * as Yup from 'yup';
 
 const MyLoader = () => (
   <div
@@ -30,13 +29,14 @@ const MyLoader = () => (
   </div>
 );
 const LoginPage = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-
-  const handleLogin = async () => {
-    console.log(email, password);
+  const handleLogin = async (email: string, password: string) => {
     await firebase.auth().signInWithEmailAndPassword(email, password);
   };
+
+  const validationSchema = Yup.object().shape({
+    email: Yup.string().required('Email obrigatório'),
+    password: Yup.string().required('Senha obrigatória'),
+  });
 
   return (
     <Flex as="main" align="stretch" h="100vh">
@@ -46,61 +46,39 @@ const LoginPage = () => {
         backgroundSize="cover"
       />
       <Flex as="section" w="100%" maxW="44em" align="center" justify="center">
-        <Flex direction="column">
+        <Flex direction="column" align="center" justify="center">
           <img
             src="/images/logo.svg"
             alt="Logotipo JRM"
-            style={{ width: '350px', height: 'auto', marginBottom: '4em' }}
+            style={{ maxWidth: '250px', height: 'auto', marginBottom: '4em' }}
           />
-          <form
-            style={{
-              maxWidth: '22em',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '1em',
-            }}
-          >
+          <Flex maxW="22em" direction="column" align="center" justify="center">
             <Heading size="lg" mb="1em">
               Entre já na sua conta
             </Heading>
-            <FormControl id="email">
+
+            <FormControl gap="1em">
               <InputGroup>
                 <InputLeftElement pointerEvents="none">
-                  <FiUser color="gray.300" />
+                  <EmailIcon color="gray.300" size={20} />
                 </InputLeftElement>
-                <Input
-                  type="email"
-                  placeholder="E-mail"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                />
-              </InputGroup>
-            </FormControl>
-            <FormControl id="password">
-              <InputGroup>
-                <InputLeftElement pointerEvents="none">
-                  <FiLock color="gray.300" />
-                </InputLeftElement>
-                <Input
-                  type="password"
-                  placeholder="Senha"
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                />
+                <Input type="email" placeholder="E-mail" />
               </InputGroup>
             </FormControl>
 
-            <Button
-              variant="outline"
-              type="button"
-              isFullWidth
-              onClick={() => handleLogin()}
-            >
+            <FormControl>
+              <InputGroup>
+                <InputLeftElement pointerEvents="none">
+                  <LockIcon color="gray.300" size={20} />
+                </InputLeftElement>
+                <Input type="password" placeholder="Senha" />
+              </InputGroup>
+            </FormControl>
+
+            <Button variant="solid" type="submit" isFullWidth>
               Entrar
             </Button>
-          </form>
+          </Flex>
         </Flex>
       </Flex>
     </Flex>
