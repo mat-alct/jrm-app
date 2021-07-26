@@ -3,7 +3,6 @@ import 'firebase/auth';
 import { EmailIcon, LockIcon } from '@chakra-ui/icons';
 import {
   Button,
-  Container,
   Flex,
   FormControl,
   FormErrorMessage,
