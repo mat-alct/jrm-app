@@ -13,6 +13,8 @@ import {
 import Head from 'next/head';
 import React from 'react';
 
+import { FormInput } from '../components/Form/Input';
+
 const Login = () => {
   return (
     <>
@@ -32,13 +34,9 @@ const Login = () => {
             <Image src="images/logo.svg" alt="Logotipo" mb={16} />
 
             <Stack spacing={2}>
-              <FormControl id="email">
-                <FormLabel>Email</FormLabel>
-                <Input type="email" focusBorderColor="orange.500" />
-                <FormErrorMessage>Erro</FormErrorMessage>
-              </FormControl>
+              <FormInput name="email" label="Email" />
+              <FormInput name="password" label="Senha" />
 
-              <Input placeholder="Password" />
               <Button bgColor="orange.500" _hover={{ bgColor: 'orange.400' }}>
                 Entar
               </Button>

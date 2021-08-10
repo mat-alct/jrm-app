@@ -18,12 +18,7 @@ export const FormInput = ({ name, label, error, ...rest }: InputProps) => {
   return (
     <FormControl isInvalid={!!error}>
       {label && <FormLabel htmlFor={name}>{label}</FormLabel>}
-      <Input
-        focusBorderColor="orange.500"
-        {...rest}
-        variant="filled"
-        size="lg"
-      />
+      <Input focusBorderColor="orange.500" {...rest} size="lg" />
       {!!error && <FormErrorMessage>{error.message}</FormErrorMessage>}
     </FormControl>
   );
