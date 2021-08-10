@@ -1,9 +1,11 @@
 import { Box, Button, Flex, Image, Stack, useToast } from '@chakra-ui/react';
+import { yupResolver } from '@hookform/resolvers/yup';
 import firebase from 'firebase/app';
 import { useRouter } from 'next/dist/client/router';
 import Head from 'next/head';
 import React from 'react';
 import { useForm } from 'react-hook-form';
+import * as Yup from 'yup';
 
 import { FormInput } from '../components/Form/Input';
 
@@ -13,10 +15,25 @@ interface LoginProps {
 }
 
 const Login = () => {
-  const { register, handleSubmit } = useForm();
   const toast = useToast();
-
   const router = useRouter();
+
+  const validationSchema = Yup.object().shape({
+    email: Yup.string()
+      .email('Necessário que esteja em formato de email')
+      .required('Email obrigatório'),
+    password: Yup.string()
+      .required('Senha obrigatória')
+      .min(8, 'Senha precisa de no mínimo 8 dígitos'),
+  });
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<LoginProps>({
+    resolver: yupResolver(validationSchema),
+  });
 
   const onSubmit = async ({ email, password }: LoginProps) => {
     try {
@@ -25,8 +42,11 @@ const Login = () => {
       router.push('/');
     } catch (err) {
       toast({
+        status: 'error',
+        isClosable: true,
         title: 'Erro de autenticação',
-        description: 'Email/Senha incorretos',
+        description: 'Email ou senha incorretos',
+        position: 'top-right',
       });
     }
   };
@@ -50,6 +70,7 @@ const Login = () => {
             direction="column"
             w={['300px', '350px']}
             onSubmit={handleSubmit(onSubmit)}
+            noValidate
           >
             <Image src="images/logo.svg" alt="Logotipo" mb={16} />
 
@@ -59,22 +80,27 @@ const Login = () => {
                 name="email"
                 placeholder="Email"
                 type="email"
+                error={errors.email}
+                defaultValue="mateus@jrmcompensados.com"
               />
               <FormInput
                 {...register('password')}
                 name="password"
                 placeholder="Senha"
                 type="password"
+                error={errors.password}
+                defaultValue="12345678"
               />
+              <Button
+                isLoading={isSubmitting}
+                isFullWidth
+                type="submit"
+                bgColor="orange.500"
+                _hover={{ bgColor: 'orange.400' }}
+              >
+                Entar
+              </Button>
             </Stack>
-            <Button
-              type="submit"
-              mt={4}
-              bgColor="orange.500"
-              _hover={{ bgColor: 'orange.400' }}
-            >
-              Entar
-            </Button>
           </Flex>
         </Flex>
       </Flex>
