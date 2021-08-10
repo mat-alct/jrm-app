@@ -25,17 +25,11 @@ interface HandleLoginProps {
 }
 
 const MyLoader = () => (
-  <div
-    style={{
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      height: '100vh',
-    }}
-  >
+  <Flex h="100vh" align="center" justify="center">
     <Spinner size="lg" />
-  </div>
+  </Flex>
 );
+
 const LoginPage = () => {
   const validationSchema = Yup.object().shape({
     email: Yup.string().required('Email obrigatório'),
