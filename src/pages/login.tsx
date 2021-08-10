@@ -7,6 +7,7 @@ import {
   FormControl,
   FormErrorMessage,
   Heading,
+  Image,
   Input,
   InputGroup,
   InputLeftElement,
@@ -66,7 +67,7 @@ const LoginPage = () => {
       />
       <Flex as="section" w="100%" maxW="44em" align="center" justify="center">
         <Flex direction="column" align="center" justify="center">
-          <img
+          <Image
             src="/images/logo.svg"
             alt="Logotipo JRM"
             style={{ maxWidth: '250px', height: 'auto', marginBottom: '4em' }}
