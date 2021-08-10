@@ -1,9 +1,9 @@
 import { render } from '@testing-library/react';
 
-import { Loader } from '../../components/Loader';
+import { FormInput } from '../../../components/Form/Input';
 
 describe('Component: Loader', () => {
   it('render the component', () => {
-    render(<Loader />); //
+    render(<FormInput name="teste" />); //
   });
 });
