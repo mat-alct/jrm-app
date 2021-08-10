@@ -3,11 +3,13 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import firebase from 'firebase/app';
 import { useRouter } from 'next/dist/client/router';
 import Head from 'next/head';
+import { AuthAction, withAuthUser } from 'next-firebase-auth';
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import * as Yup from 'yup';
 
 import { FormInput } from '../components/Form/Input';
+import { Loader } from '../components/Loader';
 
 interface LoginProps {
   email: string;
@@ -108,4 +110,10 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default withAuthUser({
+  whenAuthed: AuthAction.REDIRECT_TO_APP,
+  whenUnauthedBeforeInit: AuthAction.SHOW_LOADER,
+  whenUnauthedAfterInit: AuthAction.RENDER,
+  appPageURL: '/',
+  LoaderComponent: Loader,
+})(Login);
