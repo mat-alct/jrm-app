@@ -1,5 +1,17 @@
-import { Box, Button, Flex, Image, Input, Stack } from '@chakra-ui/react';
+import {
+  Box,
+  Button,
+  Flex,
+  FormControl,
+  FormErrorMessage,
+  FormHelperText,
+  FormLabel,
+  Image,
+  Input,
+  Stack,
+} from '@chakra-ui/react';
 import Head from 'next/head';
+import React from 'react';
 
 const Login = () => {
   return (
@@ -16,13 +28,20 @@ const Login = () => {
           bgSize="cover"
         />
         <Flex align="center" justify="center" maxW="700px" w="100%">
-          <Flex direction="column" w="350px">
+          <Flex direction="column" w={['300px', '350px']}>
             <Image src="images/logo.svg" alt="Logotipo" mb={16} />
 
             <Stack spacing={2}>
-              <Input placeholder="Email" />
+              <FormControl id="email">
+                <FormLabel>Email</FormLabel>
+                <Input type="email" focusBorderColor="orange.500" />
+                <FormErrorMessage>Erro</FormErrorMessage>
+              </FormControl>
+
               <Input placeholder="Password" />
-              <Button>Entar</Button>
+              <Button bgColor="orange.500" _hover={{ bgColor: 'orange.400' }}>
+                Entar
+              </Button>
             </Stack>
           </Flex>
         </Flex>

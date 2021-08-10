@@ -63,7 +63,8 @@
     "import/no-extraneous-dependencies": ["error", { "devDependencies": true }],
     "no-unused-expressions": "off",
     "no-use-before-define": "off",
-    "@typescript-eslint/no-use-before-define": ["error"]
+    "@typescript-eslint/no-use-before-define": ["error"],
+    "react/require-default-props": "off"
   },
   "settings": {
     "import/resolver": {
