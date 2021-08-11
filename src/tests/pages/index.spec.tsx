@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 
 import Home from '../../pages/index';
 
@@ -6,7 +6,7 @@ jest.mock('firebase/app', () => {
   return {
     auth: () => {
       return {
-        signOut: () => jest.fn(),
+        signOut: () => jest.fn(() => Promise.resolve()),
       };
     },
   };
@@ -14,6 +14,14 @@ jest.mock('firebase/app', () => {
 
 describe('Page: Home', () => {
   it('render the page correctly', () => {
-    render(<Home />); //
+    render(<Home />);
+  });
+
+  it('Sign out if signOut button is clicked', () => {
+    render(<Home />);
+
+    const logOutButton = screen.getByText('Sair');
+
+    fireEvent.click(logOutButton);
   });
 });

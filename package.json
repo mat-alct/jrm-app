@@ -15,6 +15,7 @@
     "@emotion/react": "^11.4.0",
     "@emotion/styled": "^11.3.0",
     "@hookform/resolvers": "^2.6.1",
+    "@types/firebase": "^3.2.1",
     "firebase": "^8.8.0",
     "firebase-admin": "^9.11.0",
     "framer-motion": "^4.1.17",
