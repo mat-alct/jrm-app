@@ -26,7 +26,6 @@ const InputBase: ForwardRefRenderFunction<HTMLInputElement, InputProps> = (
         name={name}
         focusBorderColor="orange.500"
         size="lg"
-        ref={ref}
         {...rest}
       />
       {!!error && <FormErrorMessage>{error.message}</FormErrorMessage>}
