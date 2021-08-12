@@ -100,7 +100,7 @@ const Login = () => {
                 bgColor="orange.500"
                 _hover={{ bgColor: 'orange.400' }}
               >
-                Entar
+                Entrar
               </Button>
             </Stack>
           </Flex>
