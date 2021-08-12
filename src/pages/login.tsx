@@ -1,7 +1,7 @@
 import { Box, Button, Flex, Image, Stack, useToast } from '@chakra-ui/react';
 import { yupResolver } from '@hookform/resolvers/yup';
 import firebase from 'firebase/app';
-import { useRouter } from 'next/dist/client/router';
+import { useRouter } from 'next/router';
 import Head from 'next/head';
 import { AuthAction, withAuthUser } from 'next-firebase-auth';
 import React from 'react';
@@ -83,7 +83,7 @@ const Login = () => {
                 placeholder="Email"
                 type="email"
                 error={errors.email}
-                // defaultValue="mateus@jrmcompensados.com"
+                defaultValue="mateus@jrmcompensados.com"
               />
               <FormInput
                 {...register('password')}
@@ -91,7 +91,7 @@ const Login = () => {
                 placeholder="Senha"
                 type="password"
                 error={errors.password}
-                // defaultValue="12345678"
+                defaultValue="12345678"
               />
               <Button
                 isLoading={isSubmitting}

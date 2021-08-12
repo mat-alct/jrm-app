@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import firebase from 'firebase/app';
 import { mocked } from 'ts-jest/utils';
 
@@ -7,15 +7,48 @@ import Login from '../../pages/login';
 
 const firebaseAuth = firebase.auth;
 
+jest.mock('next/router', () => {
+  return {
+    useRouter: () => {
+      return {
+        push: jest.fn(),
+      };
+    },
+  };
+});
+
 jest.mock('firebase/app', () => {
   return {
     auth: jest.fn(),
   };
 });
 
+let signInWithEmailAndPasswordFunction: jest.Mock;
+
 describe('Page: Login', () => {
   beforeEach(() => {
     render(<Login />);
+
+    // Clear Fields
+
+    fireEvent.change(screen.getByPlaceholderText(/email/i), {
+      target: { value: '' },
+    });
+
+    fireEvent.change(screen.getByPlaceholderText(/senha/i), {
+      target: { value: '' },
+    });
+
+    // Mock signInWithEmailAndPassword
+    const authFirebaseMocked = mocked(firebaseAuth);
+
+    signInWithEmailAndPasswordFunction = jest.fn((email, password) =>
+      Promise.resolve({ email, password }),
+    );
+
+    authFirebaseMocked.mockReturnValueOnce({
+      signInWithEmailAndPassword: signInWithEmailAndPasswordFunction,
+    } as any);
   });
 
   // Render test
@@ -27,21 +60,32 @@ describe('Page: Login', () => {
 
   // Validation tests
   it('should display required error when value is invalid', async () => {
-    const authFirebaseMocked = mocked(firebaseAuth);
-
-    const signInWithEmailAndPasswordFunction = jest.fn();
-
-    authFirebaseMocked.mockReturnValueOnce({
-      signInWithEmailAndPassword: signInWithEmailAndPasswordFunction,
-    } as any);
-
     fireEvent.submit(screen.getByRole('button', { name: /entrar/i }));
 
-    expect(await screen.findAllByRole('alert'));
+    expect(await waitFor(() => screen.findAllByRole('alert'))).toHaveLength(2);
     expect(signInWithEmailAndPasswordFunction).not.toBeCalled();
   });
 
-  // TODO should display validation error if email is in wrong format
+  it('should display validation error if email is in wrong format', async () => {
+    fireEvent.change(screen.getByPlaceholderText(/email/i), {
+      target: { value: 'johndoe' },
+    });
+
+    fireEvent.change(screen.getByPlaceholderText(/senha/i), {
+      target: { value: 'password' },
+    });
+
+    await waitFor(() =>
+      fireEvent.click(screen.getByRole('button', { name: /entrar/i })),
+    );
+
+    expect(await waitFor(() => screen.findAllByRole('alert'))).toHaveLength(1);
+
+    expect(signInWithEmailAndPasswordFunction).not.toBeCalledWith(
+      'johndoe',
+      'password',
+    );
+  });
 
   // TODO should display validation error if password has less than 8 digits
 
