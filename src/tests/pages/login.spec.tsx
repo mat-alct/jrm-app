@@ -14,37 +14,19 @@ jest.mock('firebase/app', () => {
 });
 
 describe('Page: Login', () => {
-  it('render the page correctly', () => {
+  beforeEach(() => {
     render(<Login />);
+  });
 
-    screen.logTestingPlaygroundURL();
-
+  // Render test
+  it('render the page correctly', () => {
     expect(screen.getByPlaceholderText(/email/i)).toBeInTheDocument();
     expect(screen.getByPlaceholderText(/senha/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /entrar/i })).toBeInTheDocument();
   });
 
-  // it('call login function after click on sign in button', () => {
-  //   render(<Login />);
-
-  //   const authFirebaseMocked = mocked(firebaseAuth);
-
-  //   const signInWithEmailAndPasswordFunction = jest.fn();
-
-  //   authFirebaseMocked.mockReturnValueOnce({
-  //     signInWithEmailAndPassword: signInWithEmailAndPasswordFunction,
-  //   } as any);
-
-  //   screen.logTestingPlaygroundURL();
-
-  //   expect(screen.getByPlaceholderText(/email/i)).toBeInTheDocument();
-  //   expect(screen.getByPlaceholderText(/senha/i)).toBeInTheDocument();
-  //   expect(screen.getByRole('button', { name: /entrar/i })).toBeInTheDocument();
-  // });
-
+  // Validation tests
   it('should display required error when value is invalid', async () => {
-    render(<Login />);
-
     const authFirebaseMocked = mocked(firebaseAuth);
 
     const signInWithEmailAndPasswordFunction = jest.fn();
@@ -58,4 +40,13 @@ describe('Page: Login', () => {
     expect(await screen.findAllByRole('alert'));
     expect(signInWithEmailAndPasswordFunction).not.toBeCalled();
   });
+
+  // TODO should display validation error if email is in wrong format
+
+  // TODO should display validation error if password has less than 8 digits
+
+  // Submit tests
+  // TODO should return error if sign in fail
+
+  // TODO should call login function if everything is ok
 });

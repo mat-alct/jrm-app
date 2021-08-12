@@ -30,6 +30,7 @@ const InputBase: ForwardRefRenderFunction<HTMLInputElement, InputProps> = (
         {...rest}
       />
       {!!error && (
+        // Role is necessary for validation tests
         <FormErrorMessage role="alert">{error.message}</FormErrorMessage>
       )}
     </FormControl>
