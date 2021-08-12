@@ -22,13 +22,16 @@ const InputBase: ForwardRefRenderFunction<HTMLInputElement, InputProps> = (
     <FormControl isInvalid={!!error}>
       {label && <FormLabel htmlFor={name}>{label}</FormLabel>}
       <Input
+        ref={ref}
         id={name}
         name={name}
         focusBorderColor="orange.500"
         size="lg"
         {...rest}
       />
-      {!!error && <FormErrorMessage>{error.message}</FormErrorMessage>}
+      {!!error && (
+        <FormErrorMessage role="alert">{error.message}</FormErrorMessage>
+      )}
     </FormControl>
   );
 };

@@ -83,7 +83,7 @@ const Login = () => {
                 placeholder="Email"
                 type="email"
                 error={errors.email}
-                defaultValue="mateus@jrmcompensados.com"
+                // defaultValue="mateus@jrmcompensados.com"
               />
               <FormInput
                 {...register('password')}
@@ -91,7 +91,7 @@ const Login = () => {
                 placeholder="Senha"
                 type="password"
                 error={errors.password}
-                defaultValue="12345678"
+                // defaultValue="12345678"
               />
               <Button
                 isLoading={isSubmitting}
