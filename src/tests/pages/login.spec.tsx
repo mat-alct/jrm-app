@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import firebase from 'firebase/app';
 import { mocked } from 'ts-jest/utils';
 
@@ -93,6 +93,25 @@ describe('Page: Login', () => {
 
   // Submit tests
   // TODO should return error if sign in fail
+  it('should return error if sign in fail', async () => {
+    // Recreate Mock to rejects
+    const firebaseMocked = mocked(firebase.auth);
+
+    firebaseMocked.mockReset();
+
+    signInWithEmailAndPasswordFunction = jest.fn(() => Promise.reject());
+
+    firebaseMocked.mockReturnValueOnce({
+      signInWithEmailAndPassword: signInWithEmailAndPasswordFunction,
+    } as any);
+
+    changeInputByPlaceholder('email', 'johndoe@example.com');
+    changeInputByPlaceholder('senha', '12345678');
+
+    await clickButtonByName('entrar');
+
+    expect(screen.getByText('Erro de autenticação')).toBeInTheDocument();
+  });
 
   // TODO should call login function if everything is ok
   it('should call login function if everything is ok', async () => {
