@@ -74,7 +74,7 @@ const Login = () => {
             onSubmit={handleSubmit(onSubmit)}
             noValidate
           >
-            <Image src="images/logo.svg" alt="Logotipo" mb={16} />
+            <Image src="images/logo.svg" alt="Logotipo" mb={[8, 16]} />
 
             <Stack spacing={2}>
               <FormInput

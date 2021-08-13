@@ -2,12 +2,13 @@ import { Button } from '@chakra-ui/react';
 import firebase from 'firebase/app';
 import { AuthAction, withAuthUser } from 'next-firebase-auth';
 
+import { Dashboard } from '../components/Dashboard';
 import { Loader } from '../components/Loader';
 
-const Dashboard = () => {
+const Home = () => {
   return (
     <>
-      <h1>Dashboard</h1>
+      <Dashboard>Dashboard</Dashboard>
       <Button onClick={() => firebase.auth().signOut()}>Sair</Button>
     </>
   );
@@ -19,4 +20,4 @@ export default withAuthUser({
   whenUnauthedBeforeInit: AuthAction.SHOW_LOADER,
   authPageURL: '/login',
   LoaderComponent: Loader,
-})(Dashboard);
+})(Home);

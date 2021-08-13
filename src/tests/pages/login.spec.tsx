@@ -92,7 +92,6 @@ describe('Page: Login', () => {
   });
 
   // Submit tests
-  // TODO should return error if sign in fail
   it('should return error if sign in fail', async () => {
     // Recreate Mock to rejects
     const firebaseMocked = mocked(firebase.auth);
@@ -113,7 +112,6 @@ describe('Page: Login', () => {
     expect(screen.getByText('Erro de autenticação')).toBeInTheDocument();
   });
 
-  // TODO should call login function if everything is ok
   it('should call login function if everything is ok', async () => {
     changeInputByPlaceholder('email', 'johndoe@example.com');
     changeInputByPlaceholder('senha', '12345678');
