@@ -4,6 +4,10 @@ import firebase from 'firebase/app';
 import { mocked } from 'ts-jest/utils';
 
 import Login from '../../pages/login';
+import {
+  changeInputByPlaceholder,
+  clickButtonByName,
+} from '../../utils/testHelpers';
 
 const firebaseAuth = firebase.auth;
 
@@ -30,14 +34,8 @@ describe('Page: Login', () => {
     render(<Login />);
 
     // Clear Fields
-
-    fireEvent.change(screen.getByPlaceholderText(/email/i), {
-      target: { value: '' },
-    });
-
-    fireEvent.change(screen.getByPlaceholderText(/senha/i), {
-      target: { value: '' },
-    });
+    changeInputByPlaceholder('email', '');
+    changeInputByPlaceholder('senha', '');
 
     // Mock signInWithEmailAndPassword
     const authFirebaseMocked = mocked(firebaseAuth);
@@ -60,24 +58,20 @@ describe('Page: Login', () => {
 
   // Validation tests
   it('should display required error when value is invalid', async () => {
-    fireEvent.submit(screen.getByRole('button', { name: /entrar/i }));
+    await clickButtonByName('entrar');
 
     expect(await waitFor(() => screen.findAllByRole('alert'))).toHaveLength(2);
+    expect(
+      await waitFor(() => screen.getByText('Email obrigatório')),
+    ).toBeInTheDocument();
     expect(signInWithEmailAndPasswordFunction).not.toBeCalled();
   });
 
   it('should display validation error if email is in wrong format', async () => {
-    fireEvent.change(screen.getByPlaceholderText(/email/i), {
-      target: { value: 'johndoe' },
-    });
+    changeInputByPlaceholder('email', 'johndoe');
+    changeInputByPlaceholder('senha', 'password');
 
-    fireEvent.change(screen.getByPlaceholderText(/senha/i), {
-      target: { value: 'password' },
-    });
-
-    await waitFor(() =>
-      fireEvent.click(screen.getByRole('button', { name: /entrar/i })),
-    );
+    await clickButtonByName('entrar');
 
     expect(await waitFor(() => screen.findAllByRole('alert'))).toHaveLength(1);
 
@@ -87,7 +81,18 @@ describe('Page: Login', () => {
     );
   });
 
-  // TODO should display validation error if password has less than 8 digits
+  it('should display validation error if password has less than 8 digits', async () => {
+    changeInputByPlaceholder('email', 'johndoe@example.com');
+    changeInputByPlaceholder('senha', '12345');
+
+    await clickButtonByName('entrar');
+
+    expect(await waitFor(() => screen.findAllByRole('alert'))).toHaveLength(1);
+    expect(signInWithEmailAndPasswordFunction).not.toBeCalledWith(
+      'johndoe@example.com',
+      '12345',
+    );
+  });
 
   // Submit tests
   // TODO should return error if sign in fail
