@@ -9,8 +9,6 @@ import {
   clickButtonByName,
 } from '../../utils/testHelpers';
 
-const firebaseAuth = firebase.auth;
-
 jest.mock('next/router', () => {
   return {
     useRouter: () => {
@@ -37,14 +35,14 @@ describe('Page: Login', () => {
     changeInputByPlaceholder('email', '');
     changeInputByPlaceholder('senha', '');
 
-    // Mock signInWithEmailAndPassword
-    const authFirebaseMocked = mocked(firebaseAuth);
+    // Mock auth
+    const firebaseMocked = mocked(firebase.auth);
 
-    signInWithEmailAndPasswordFunction = jest.fn((email, password) =>
-      Promise.resolve({ email, password }),
-    );
+    firebaseMocked.mockReset();
 
-    authFirebaseMocked.mockReturnValueOnce({
+    signInWithEmailAndPasswordFunction = jest.fn(() => Promise.resolve());
+
+    firebaseMocked.mockReturnValueOnce({
       signInWithEmailAndPassword: signInWithEmailAndPasswordFunction,
     } as any);
   });
@@ -72,7 +70,6 @@ describe('Page: Login', () => {
     changeInputByPlaceholder('senha', 'password');
 
     await clickButtonByName('entrar');
-
     expect(await waitFor(() => screen.findAllByRole('alert'))).toHaveLength(1);
 
     expect(signInWithEmailAndPasswordFunction).not.toBeCalledWith(
@@ -98,4 +95,15 @@ describe('Page: Login', () => {
   // TODO should return error if sign in fail
 
   // TODO should call login function if everything is ok
+  it('should call login function if everything is ok', async () => {
+    changeInputByPlaceholder('email', 'johndoe@example.com');
+    changeInputByPlaceholder('senha', '12345678');
+
+    await clickButtonByName('entrar');
+
+    expect(signInWithEmailAndPasswordFunction).toBeCalledWith(
+      'johndoe@example.com',
+      '12345678',
+    );
+  });
 });

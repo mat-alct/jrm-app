@@ -4,12 +4,9 @@ export const changeInputByPlaceholder = (
   placeholder: string,
   value: string,
 ) => {
-  return fireEvent.change(
-    screen.getByPlaceholderText(new RegExp(placeholder, 'i')),
-    {
-      target: { value },
-    },
-  );
+  fireEvent.change(screen.getByPlaceholderText(new RegExp(placeholder, 'i')), {
+    target: { value },
+  });
 };
 
 export const clickButtonByName = async (buttonName: string) => {
