@@ -6,10 +6,10 @@ import { Sidebar } from './Sidebar';
 
 export const Dashboard: React.FC = ({ children }) => {
   return (
-    <Flex direction="column">
-      <Header />
-      <Flex>
-        <Sidebar />
+    <Flex>
+      <Sidebar />
+      <Flex direction="column" w="100%">
+        <Header />
         <Content>{children}</Content>
       </Flex>
     </Flex>

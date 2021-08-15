@@ -1,5 +1,5 @@
 import { Box } from '@chakra-ui/react';
 
 export const Sidebar = () => {
-  return <Box w="22rem" minH="100vh" h="100%" bg="gray.500" />;
+  return <Box maxW="22rem" minH="100vh" h="100%" bg="gray.200" w="100%" />;
 };
