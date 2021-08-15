@@ -4,12 +4,19 @@ import { Content } from './Content';
 import { Header } from './Header';
 import { Sidebar } from './Sidebar';
 
-export const Dashboard: React.FC = ({ children }) => {
+interface DashboardProps {
+  pageTitle: string;
+}
+
+export const Dashboard: React.FC<DashboardProps> = ({
+  children,
+  pageTitle,
+}) => {
   return (
     <Flex>
       <Sidebar />
       <Flex direction="column" w="100%">
-        <Header />
+        <Header pageTitle={pageTitle} />
         <Content>{children}</Content>
       </Flex>
     </Flex>

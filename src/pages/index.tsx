@@ -8,7 +8,7 @@ import { Loader } from '../components/Loader';
 const Home = () => {
   return (
     <>
-      <Dashboard />
+      <Dashboard pageTitle="Dashboard" />
       <Button onClick={() => firebase.auth().signOut()}>Sair</Button>
     </>
   );
