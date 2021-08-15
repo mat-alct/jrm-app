@@ -1,6 +1,6 @@
 import { Flex, Heading, HStack } from '@chakra-ui/react';
 
-import { SearchBar } from '../SearchBar';
+import { SearchBar } from './SearchBar';
 
 interface HeaderProps {
   pageTitle: string;

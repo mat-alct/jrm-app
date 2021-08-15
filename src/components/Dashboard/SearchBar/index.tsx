@@ -13,18 +13,18 @@ export const SearchBar = () => {
       alignSelf="center"
       color="gray.400"
       position="relative"
-      bg="gray.200"
+      bg="#fff"
       borderRadius="full"
     >
+      <Icon as={RiSearchLine} fontSize="20" />
       <Input
         color="gray.700"
         variant="unstyled"
         px="4"
-        mr="4"
+        ml="2"
         placeholder="Buscar na plataforma"
         _placeholder={{ color: 'gray.400' }}
       />
-      <Icon as={RiSearchLine} fontSize="20" />
     </Flex>
   );
 };
