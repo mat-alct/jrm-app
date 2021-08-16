@@ -43,7 +43,7 @@ export const Sidebar = () => {
             Novo serviço
           </NavLink>
           <NavLink icon={FaClipboardList} href="/novoservico">
-            Listar cortes
+            Listar serviços
           </NavLink>
         </NavSection>
         <NavSection title="Clientes">
