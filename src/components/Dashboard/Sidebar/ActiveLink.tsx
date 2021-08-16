@@ -9,7 +9,7 @@ type ActiveLinkProps = LinkProps & {
 
 export function ActiveLink({
   children,
-  shouldMatchExactHref = false,
+  shouldMatchExactHref = true,
   ...rest
 }: ActiveLinkProps) {
   const { asPath } = useRouter();
