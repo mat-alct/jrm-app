@@ -1,5 +1,6 @@
 import { Button } from '@chakra-ui/react';
 import firebase from 'firebase/app';
+import Head from 'next/head';
 import { AuthAction, withAuthUser } from 'next-firebase-auth';
 
 import { Dashboard } from '../components/Dashboard';
@@ -8,7 +9,10 @@ import { Loader } from '../components/Loader';
 const Home = () => {
   return (
     <>
-      <Dashboard pageTitle="Dashboard" />
+      <Head>
+        <title>Início | JRM Compensados</title>
+      </Head>
+      <Dashboard pageTitle="Início" />
       <Button onClick={() => firebase.auth().signOut()}>Sair</Button>
     </>
   );

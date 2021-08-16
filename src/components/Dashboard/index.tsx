@@ -15,7 +15,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
   return (
     <Flex bg="#FFFAFA">
       <Sidebar />
-      <Flex direction="column" w="100%">
+      <Flex direction="column" w="100%" px={16} pt={16}>
         <Header pageTitle={pageTitle} />
         <Content>{children}</Content>
       </Flex>

@@ -1,8 +1,8 @@
 import { Box, Button, Flex, Image, Stack, useToast } from '@chakra-ui/react';
 import { yupResolver } from '@hookform/resolvers/yup';
 import firebase from 'firebase/app';
-import { useRouter } from 'next/router';
 import Head from 'next/head';
+import { useRouter } from 'next/router';
 import { AuthAction, withAuthUser } from 'next-firebase-auth';
 import React from 'react';
 import { useForm } from 'react-hook-form';
