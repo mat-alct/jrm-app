@@ -1,6 +1,7 @@
 import { Flex, Image, VStack } from '@chakra-ui/react';
 import {
   FaClipboardList,
+  FaHome,
   FaRegPlusSquare,
   FaRegSquare,
   FaSlack,
@@ -15,7 +16,7 @@ export const Sidebar = () => {
   return (
     <Flex
       direction="column"
-      maxW="17rem"
+      maxW="15rem"
       minH="100vh"
       h="100%"
       w="100%"
@@ -31,7 +32,12 @@ export const Sidebar = () => {
         mb={12}
         mt={8}
       />
-      <VStack spacing={12} ml={8}>
+      <VStack spacing={12} ml={8} align="flex-start">
+        <NavSection title=" Geral">
+          <NavLink icon={FaHome} href="/">
+            Início
+          </NavLink>
+        </NavSection>
         <NavSection title="Cortes">
           <NavLink icon={FaSlack} href="/novoservico">
             Novo serviço
