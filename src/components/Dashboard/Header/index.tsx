@@ -8,8 +8,8 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ pageTitle }) => {
   return (
-    <Flex pt={16} align="center" justify="space-between" px={8}>
-      <Heading>{pageTitle}</Heading>
+    <Flex align="center" justify="space-between" px={16} pt={16}>
+      <Heading color="gray.700">{pageTitle}</Heading>
       <HStack spacing={8}>
         {/* <IconButton
           colorScheme="orange"
