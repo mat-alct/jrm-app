@@ -4,7 +4,6 @@ import {
   FaRegPlusSquare,
   FaRegSquare,
   FaSlack,
-  FaSlackHash,
   FaUser,
   FaUserPlus,
 } from 'react-icons/fa';
@@ -21,6 +20,8 @@ export const Sidebar = () => {
       h="100%"
       w="100%"
       align="flex-start"
+      borderRight="1px solid"
+      borderColor="gray.200"
     >
       <Image
         src="/images/logo.svg"
@@ -34,9 +35,6 @@ export const Sidebar = () => {
         <NavSection title="Cortes">
           <NavLink icon={FaSlack} href="/novoservico">
             Novo serviço
-          </NavLink>
-          <NavLink icon={FaSlackHash} href="/novoservico">
-            Novo cortecloud
           </NavLink>
           <NavLink icon={FaClipboardList} href="/novoservico">
             Listar cortes

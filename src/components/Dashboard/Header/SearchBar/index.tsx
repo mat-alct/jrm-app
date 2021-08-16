@@ -15,6 +15,8 @@ export const SearchBar = () => {
       position="relative"
       bg="#fff"
       borderRadius="full"
+      border="1px solid"
+      borderColor="gray.200"
     >
       <Icon as={RiSearchLine} fontSize="20" />
       <Input
