@@ -42,23 +42,23 @@ export const Sidebar = () => {
           <NavLink icon={FaSlack} href="/cortes/novoservico">
             Novo serviço
           </NavLink>
-          <NavLink icon={FaClipboardList} href="/">
+          <NavLink icon={FaClipboardList} href="#">
             Listar serviços
           </NavLink>
         </NavSection>
         <NavSection title="Clientes">
-          <NavLink icon={FaUserPlus} href="/">
+          <NavLink icon={FaUserPlus} href="#">
             Novo cliente
           </NavLink>
-          <NavLink icon={FaUser} href="/">
+          <NavLink icon={FaUser} href="#">
             Listar clientes
           </NavLink>
         </NavSection>
         <NavSection title="Materiais">
-          <NavLink icon={FaRegPlusSquare} href="/">
+          <NavLink icon={FaRegPlusSquare} href="#">
             Novo material
           </NavLink>
-          <NavLink icon={FaRegSquare} href="/">
+          <NavLink icon={FaRegSquare} href="#">
             Listar materiais
           </NavLink>
         </NavSection>
