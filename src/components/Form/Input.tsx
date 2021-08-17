@@ -31,6 +31,7 @@ const InputBase: ForwardRefRenderFunction<HTMLInputElement, InputProps> = (
         name={name}
         focusBorderColor="orange.500"
         size="lg"
+        maxW="250px"
         {...rest}
       />
       {!!error && (
