@@ -8,8 +8,15 @@ import {
   HStack,
   Select,
   Switch,
+  Table,
+  TableCaption,
+  Tbody,
+  Td,
   Text,
   Textarea,
+  Th,
+  Thead,
+  Tr,
   VStack,
 } from '@chakra-ui/react';
 import Head from 'next/head';
@@ -143,6 +150,9 @@ const NovoServiço = () => {
           </HStack>
           <HStack mt={8} align="center">
             <SelectWithSearch
+              isClearable
+              placeholder="Material"
+              minW="450px"
               options={[
                 {
                   value: 'ok',
@@ -154,15 +164,72 @@ const NovoServiço = () => {
                 },
               ]}
             />
-            <FormInput size="md" name="amount" placeholder="Quantidade" />
+            <FormInput size="md" name="amount" placeholder="Qtd" maxW="125px" />
             <FormInput size="md" name="sideA" placeholder="Medida A" />
-            <FormInput size="md" name="borderA" placeholder="Fita A" />
+            <SelectWithSearch
+              hasDefaultValue
+              minW="75px"
+              options={[
+                {
+                  value: 'ok',
+                  label: '1',
+                },
+                {
+                  value: 'ok2',
+                  label: '2',
+                },
+              ]}
+            />
             <FormInput size="md" name="sideB" placeholder="Medida B" />
-            <FormInput size="md" name="borderB" placeholder="Fita B" />
+            <SelectWithSearch
+              hasDefaultValue
+              minW="75px"
+              options={[
+                {
+                  value: 'ok',
+                  label: '1',
+                },
+                {
+                  value: 'ok2',
+                  label: '2',
+                },
+              ]}
+            />
             <Button colorScheme="orange" size="md" w="100%">
               Adicionar
             </Button>
           </HStack>
+          <Table colorScheme="orange" my={16}>
+            <TableCaption>Lista de peças</TableCaption>
+            <Thead>
+              <Tr>
+                <Th>Material</Th>
+                <Th isNumeric>Lado A</Th>
+                <Th isNumeric>Lado B</Th>
+                <Th isNumeric>Preço</Th>
+              </Tr>
+            </Thead>
+            <Tbody>
+              <Tr>
+                <Td>MDF BRANCO TX 2 FACES COMUM 15MM</Td>
+                <Td isNumeric>2750</Td>
+                <Td isNumeric>1850</Td>
+                <Td isNumeric>R$ 400,00</Td>
+              </Tr>
+              <Tr>
+                <Td>MDF BRANCO TX 2 FACES COMUM 15MM</Td>
+                <Td isNumeric>2750</Td>
+                <Td isNumeric>1850</Td>
+                <Td isNumeric>R$ 400,00</Td>
+              </Tr>
+              <Tr>
+                <Td>MDF BRANCO TX 2 FACES COMUM 15MM</Td>
+                <Td isNumeric>2750</Td>
+                <Td isNumeric>1850</Td>
+                <Td isNumeric>R$ 400,00</Td>
+              </Tr>
+            </Tbody>
+          </Table>
         </Flex>
       </Dashboard>
     </>
