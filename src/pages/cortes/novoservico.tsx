@@ -14,6 +14,7 @@ import React from 'react';
 
 import { Dashboard } from '../../components/Dashboard';
 import { FormInput } from '../../components/Form/Input';
+import { RadioButton } from '../../components/Form/RadioButton';
 import { areas } from '../../utils/listOfAreas';
 
 const NovoServiço = () => {
@@ -88,7 +89,15 @@ const NovoServiço = () => {
             </Heading>
             <Divider />
           </HStack>
-          <VStack align="left" />
+          <VStack align="left" mt={8}>
+            <RadioButton
+              name="orderType"
+              options={['Produção', 'Orçamento']}
+              defaultValue="Produção"
+              changeFunction={() => console.log('ok')}
+              label="Tipo do pedido"
+            />
+          </VStack>
         </Flex>
       </Dashboard>
     </>

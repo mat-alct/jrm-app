@@ -1,4 +1,11 @@
-import { Box, HStack, useRadio, useRadioGroup } from '@chakra-ui/react';
+import {
+  Box,
+  FormControl,
+  FormLabel,
+  HStack,
+  useRadio,
+  useRadioGroup,
+} from '@chakra-ui/react';
 import React from 'react';
 
 const RadioCard: React.FC = ({ children, ...rest }) => {
@@ -14,18 +21,18 @@ const RadioCard: React.FC = ({ children, ...rest }) => {
         {...checkbox}
         cursor="pointer"
         borderWidth="1px"
-        borderRadius="md"
-        boxShadow="md"
+        borderRadius="xs"
+        boxShadow="xs"
         _checked={{
-          bg: 'teal.600',
+          bg: 'orange.600',
           color: 'white',
-          borderColor: 'teal.600',
+          borderColor: 'orange.600',
         }}
         _focus={{
           boxShadow: 'outline',
         }}
-        px={5}
-        py={3}
+        px={4}
+        py={2}
       >
         {children}
       </Box>
@@ -38,12 +45,14 @@ interface RadioButtonProps {
   defaultValue?: string;
   options: string[];
   changeFunction: () => void;
+  label?: string;
 }
 
 export const RadioButton: React.FC<RadioButtonProps> = ({
   options,
   name,
   defaultValue,
+  label,
   changeFunction,
 }) => {
   const { getRootProps, getRadioProps } = useRadioGroup({
@@ -55,15 +64,22 @@ export const RadioButton: React.FC<RadioButtonProps> = ({
   const group = getRootProps();
 
   return (
-    <HStack {...group}>
-      {options.map(value => {
-        const radio = getRadioProps({ value });
-        return (
-          <RadioCard key={value} {...radio}>
-            {value}
-          </RadioCard>
-        );
-      })}
-    </HStack>
+    <FormControl display="flex" alignItems="center">
+      {label && (
+        <FormLabel htmlFor={name} color="gray.700" mb={0}>
+          {label}
+        </FormLabel>
+      )}
+      <HStack {...group}>
+        {options.map(value => {
+          const radio = getRadioProps({ value });
+          return (
+            <RadioCard name={name} key={value} {...radio}>
+              {value}
+            </RadioCard>
+          );
+        })}
+      </HStack>
+    </FormControl>
   );
 };
