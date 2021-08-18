@@ -31,8 +31,8 @@ const RadioCard: React.FC = ({ children, ...rest }) => {
         _focus={{
           boxShadow: 'outline',
         }}
-        px={4}
-        py={2}
+        px={3}
+        py={1}
       >
         {children}
       </Box>
@@ -66,11 +66,11 @@ export const RadioButton: React.FC<RadioButtonProps> = ({
   return (
     <FormControl display="flex" alignItems="center">
       {label && (
-        <FormLabel htmlFor={name} color="gray.700" mb={0}>
+        <FormLabel htmlFor={name} color="gray.700" mb={0} minW="150px">
           {label}
         </FormLabel>
       )}
-      <HStack {...group}>
+      <HStack {...group} spacing={0}>
         {options.map(value => {
           const radio = getRadioProps({ value });
           return (

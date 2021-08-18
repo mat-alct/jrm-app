@@ -1,4 +1,5 @@
 import {
+  Button,
   Divider,
   Flex,
   FormControl,
@@ -7,6 +8,8 @@ import {
   HStack,
   Select,
   Switch,
+  Text,
+  Textarea,
   VStack,
 } from '@chakra-ui/react';
 import Head from 'next/head';
@@ -89,15 +92,64 @@ const NovoServiço = () => {
             </Heading>
             <Divider />
           </HStack>
-          <VStack align="left" mt={8}>
+          <VStack align="left" mt={8} spacing={4}>
             <RadioButton
               name="orderType"
               options={['Produção', 'Orçamento']}
-              defaultValue="Produção"
               changeFunction={() => console.log('ok')}
-              label="Tipo do pedido"
+              label="Tipo do pedido:"
             />
+            <RadioButton
+              name="orderStore"
+              options={['Japuíba', 'Frade']}
+              changeFunction={() => console.log('ok')}
+              label="Loja do pedido:"
+            />
+            <RadioButton
+              name="deliveryType"
+              options={['Retirar na Loja', 'Entrega']}
+              changeFunction={() => console.log('ok')}
+              label="Tipo de Entrega:"
+            />
+            <RadioButton
+              name="paymentStatus"
+              options={['Receber na Entrega', 'Pago']}
+              changeFunction={() => console.log('ok')}
+              label="Pagamento:"
+            />
+            <RadioButton
+              name="discount"
+              options={['Balcão', 'Marceneiro', 'Sem acréscimo']}
+              changeFunction={() => console.log('ok')}
+              label="Desconto:"
+            />
+            <Flex direction="column">
+              <Text mb="8px" color="gray.700" fontWeight="bold" mt={4}>
+                Observações:
+              </Text>
+              <Textarea size="sm" />
+            </Flex>
           </VStack>
+        </Flex>
+
+        {/* Plano de Corte */}
+        <Flex as="article" direction="column" mb={16}>
+          <HStack spacing={4} mt={16}>
+            <Heading color="gray.600" size="lg" whiteSpace="nowrap">
+              Plano de Corte
+            </Heading>
+            <Divider />
+          </HStack>
+          <HStack mt={8} align="center" spacing={4}>
+            <FormInput size="sm" name="Material" placeholder="Material" />
+            <FormInput size="sm" name="sideA" placeholder="Medida A" />
+            <FormInput size="sm" name="borderA" placeholder="Fita A" />
+            <FormInput size="sm" name="sideB" placeholder="Medida B" />
+            <FormInput size="sm" name="borderB" placeholder="Fita B" />
+            <Button colorScheme="orange" size="sm" w="100%">
+              Adicionar
+            </Button>
+          </HStack>
         </Flex>
       </Dashboard>
     </>
