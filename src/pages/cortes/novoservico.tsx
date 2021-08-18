@@ -18,6 +18,7 @@ import React from 'react';
 import { Dashboard } from '../../components/Dashboard';
 import { FormInput } from '../../components/Form/Input';
 import { RadioButton } from '../../components/Form/RadioButton';
+import { SelectWithSearch } from '../../components/Form/Select';
 import { areas } from '../../utils/listOfAreas';
 
 const NovoServiço = () => {
@@ -140,13 +141,25 @@ const NovoServiço = () => {
             </Heading>
             <Divider />
           </HStack>
-          <HStack mt={8} align="center" spacing={4}>
-            <FormInput size="sm" name="Material" placeholder="Material" />
-            <FormInput size="sm" name="sideA" placeholder="Medida A" />
-            <FormInput size="sm" name="borderA" placeholder="Fita A" />
-            <FormInput size="sm" name="sideB" placeholder="Medida B" />
-            <FormInput size="sm" name="borderB" placeholder="Fita B" />
-            <Button colorScheme="orange" size="sm" w="100%">
+          <HStack mt={8} align="center">
+            <SelectWithSearch
+              options={[
+                {
+                  value: 'ok',
+                  label: 'MDF BRANCO TX 2 FACES COMUM 15MM',
+                },
+                {
+                  value: 'ok2',
+                  label: 'MDF BRANCO TX 2 FACES ULTRA 18MM',
+                },
+              ]}
+            />
+            <FormInput size="md" name="amount" placeholder="Quantidade" />
+            <FormInput size="md" name="sideA" placeholder="Medida A" />
+            <FormInput size="md" name="borderA" placeholder="Fita A" />
+            <FormInput size="md" name="sideB" placeholder="Medida B" />
+            <FormInput size="md" name="borderB" placeholder="Fita B" />
+            <Button colorScheme="orange" size="md" w="100%">
               Adicionar
             </Button>
           </HStack>
