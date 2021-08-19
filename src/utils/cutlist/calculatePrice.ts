@@ -1,14 +1,28 @@
+interface MaterialProps {
+  width: number;
+  height: number;
+  price: number;
+}
+
+interface CutlistProps {
+  quantidade: number;
+  sideA: number;
+  sideB: number;
+  borderA: number;
+  borderB: number;
+}
+
 const calculateCutlistPrice = (
-  material: IMaterial,
-  cutlistData: Omit<ICutlist, 'id' | 'price' | 'material_id'>,
+  material: MaterialProps,
+  cutlistData: CutlistProps,
   pricePercent?: number,
 ): number => {
   const qtd = cutlistData.quantidade;
   const At = material.width * material.height;
-  const Ap = cutlistData.side_a_size * cutlistData.side_b_size;
+  const Ap = cutlistData.sideA * cutlistData.sideB;
   const preço = material.price;
-  const LFp = cutlistData.side_a_size * cutlistData.side_a_border;
-  const AFp = cutlistData.side_b_size * cutlistData.side_b_border;
+  const LFp = cutlistData.sideA * cutlistData.borderA;
+  const AFp = cutlistData.sideB * cutlistData.borderB;
   let porc: number;
 
   if (pricePercent) {
