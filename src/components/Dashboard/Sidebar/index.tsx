@@ -2,11 +2,10 @@ import { Flex, Image, VStack } from '@chakra-ui/react';
 import {
   FaClipboardList,
   FaHome,
-  FaRegPlusSquare,
+  FaPen,
   FaRegSquare,
   FaSlack,
   FaUser,
-  FaUserPlus,
 } from 'react-icons/fa';
 
 import { NavLink } from './NavLink';
@@ -23,6 +22,7 @@ export const Sidebar = () => {
       align="flex-start"
       borderRight="1px solid"
       borderColor="gray.200"
+      position="fixed"
     >
       <Image
         src="/images/logo.svg"
@@ -45,21 +45,16 @@ export const Sidebar = () => {
           <NavLink icon={FaClipboardList} href="#">
             Listar serviços
           </NavLink>
-        </NavSection>
-        <NavSection title="Clientes">
-          <NavLink icon={FaUserPlus} href="#">
-            Novo cliente
-          </NavLink>
           <NavLink icon={FaUser} href="#">
-            Listar clientes
-          </NavLink>
-        </NavSection>
-        <NavSection title="Materiais">
-          <NavLink icon={FaRegPlusSquare} href="#">
-            Novo material
+            Clientes
           </NavLink>
           <NavLink icon={FaRegSquare} href="#">
-            Listar materiais
+            Materiais
+          </NavLink>
+        </NavSection>
+        <NavSection title="Administração">
+          <NavLink icon={FaPen} href="#">
+            Contas
           </NavLink>
         </NavSection>
       </VStack>
