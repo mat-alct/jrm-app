@@ -12,7 +12,7 @@ interface CutlistProps {
   borderB: number;
 }
 
-const calculateCutlistPrice = (
+export const calculateCutlistPrice = (
   material: MaterialProps,
   cutlistData: CutlistProps,
   pricePercent?: number,
@@ -39,5 +39,3 @@ const calculateCutlistPrice = (
 
   return qtd * Math.ceil(calculatedPrice);
 };
-
-export default calculateCutlistPrice;

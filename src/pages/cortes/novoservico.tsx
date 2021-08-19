@@ -1,4 +1,7 @@
+import 'react-datepicker/dist/react-datepicker.css';
+
 import {
+  Box,
   Button,
   Divider,
   Flex,
@@ -7,6 +10,7 @@ import {
   Heading,
   HStack,
   IconButton,
+  Image,
   Select,
   Switch,
   Table,
@@ -20,8 +24,11 @@ import {
   Tr,
   VStack,
 } from '@chakra-ui/react';
+import { getDay } from 'date-fns';
+import ptBR from 'date-fns/locale/pt-BR';
 import Head from 'next/head';
-import React from 'react';
+import React, { useState } from 'react';
+import DatePicker, { registerLocale } from 'react-datepicker';
 import { FaEdit, FaTrash } from 'react-icons/fa';
 
 import { Dashboard } from '../../components/Dashboard';
@@ -31,6 +38,15 @@ import { SelectWithSearch } from '../../components/Form/Select';
 import { areas } from '../../utils/listOfAreas';
 
 const NovoServiço = () => {
+  const [startDate, setStartDate] = useState<Date | null>(new Date());
+
+  const isWeekday = (date: Date) => {
+    const day = getDay(date);
+    return day !== 0 && day !== 6;
+  };
+
+  registerLocale('ptBR', ptBR);
+
   return (
     <>
       <Head>
@@ -104,7 +120,7 @@ const NovoServiço = () => {
         </HStack>
 
         <Flex as="article" direction="column" maxW="700px">
-          <VStack align="left" mt={8} spacing={4}>
+          <VStack align="left" mt={8} spacing={8}>
             <RadioButton
               name="orderType"
               options={['Produção', 'Orçamento']}
@@ -129,12 +145,35 @@ const NovoServiço = () => {
               changeFunction={() => console.log('ok')}
               label="Pagamento:"
             />
-            <RadioButton
-              name="discount"
-              options={['Balcão', 'Marceneiro', 'Sem acréscimo']}
-              changeFunction={() => console.log('ok')}
-              label="Desconto:"
-            />
+
+            <FormControl display="flex" flexDirection="row">
+              <FormLabel color="gray.700" mb={0} minW="150px">
+                Data de Entrega:
+              </FormLabel>
+              <Box border="2px solid gray.500" bg="gray.200" p="1px">
+                <DatePicker
+                  selected={startDate}
+                  onChange={(date: Date) => setStartDate(date)}
+                  locale="ptBR"
+                  dateFormat="P"
+                  filterDate={isWeekday}
+                />
+              </Box>
+            </FormControl>
+
+            <HStack whiteSpace="nowrap" spacing={4}>
+              <RadioButton
+                name="discount"
+                options={['Balcão', 'Marceneiro', 'Sem acréscimo']}
+                changeFunction={() => console.log('ok')}
+                label="Desconto:"
+                defaultValue="Balcão"
+              />
+              <Text w="100%" color="green.500" fontWeight="700" fontSize="lg">
+                R$ 20,00
+              </Text>
+            </HStack>
+
             <Flex direction="column">
               <Text mb="8px" color="gray.700" fontWeight="bold" mt={4}>
                 Observações:
@@ -208,28 +247,32 @@ const NovoServiço = () => {
               Adicionar
             </Button>
           </HStack>
-          <Table variant="striped" colorScheme="orange" my={16}>
+          <Table colorScheme="orange" my={16}>
             <TableCaption>Lista de peças</TableCaption>
             <Thead>
               <Tr>
+                <Th>Fita de Borda</Th>
                 <Th>Material</Th>
                 <Th isNumeric>Qtd</Th>
                 <Th isNumeric>Lado A</Th>
-                <Th isNumeric>Fita A</Th>
                 <Th isNumeric>Lado B</Th>
-                <Th isNumeric>Fita B</Th>
                 <Th isNumeric>Preço</Th>
                 <Th />
               </Tr>
             </Thead>
             <Tbody>
               <Tr>
+                <Td>
+                  <Image
+                    src="/images/tags/G0P0.svg"
+                    alt="Etiqueta"
+                    boxSize="50px"
+                  />
+                </Td>
                 <Td>MDF BRANCO TX 2 FACES COMUM 15MM</Td>
                 <Td isNumeric>1</Td>
                 <Td isNumeric>2750</Td>
-                <Td isNumeric>1</Td>
                 <Td isNumeric>1850</Td>
-                <Td isNumeric>2</Td>
                 <Td isNumeric>R$ 400,00</Td>
                 <Td>
                   <HStack spacing={4}>
@@ -249,12 +292,17 @@ const NovoServiço = () => {
                 </Td>
               </Tr>
               <Tr>
+                <Td>
+                  <Image
+                    src="/images/tags/G0P0.svg"
+                    alt="Etiqueta"
+                    boxSize="50px"
+                  />
+                </Td>
                 <Td>MDF BRANCO TX 2 FACES COMUM 15MM</Td>
                 <Td isNumeric>1</Td>
                 <Td isNumeric>2750</Td>
-                <Td isNumeric>1</Td>
                 <Td isNumeric>1850</Td>
-                <Td isNumeric>2</Td>
                 <Td isNumeric>R$ 400,00</Td>
                 <Td>
                   <HStack spacing={4}>
@@ -274,12 +322,17 @@ const NovoServiço = () => {
                 </Td>
               </Tr>
               <Tr>
+                <Td>
+                  <Image
+                    src="/images/tags/G0P0.svg"
+                    alt="Etiqueta"
+                    boxSize="50px"
+                  />
+                </Td>
                 <Td>MDF BRANCO TX 2 FACES COMUM 15MM</Td>
                 <Td isNumeric>1</Td>
                 <Td isNumeric>2750</Td>
-                <Td isNumeric>1</Td>
                 <Td isNumeric>1850</Td>
-                <Td isNumeric>2</Td>
                 <Td isNumeric>R$ 400,00</Td>
                 <Td>
                   <HStack spacing={4}>
@@ -301,6 +354,9 @@ const NovoServiço = () => {
             </Tbody>
           </Table>
         </Flex>
+        <Button colorScheme="orange" isFullWidth mb={16}>
+          Confirmar
+        </Button>
       </Dashboard>
     </>
   );
