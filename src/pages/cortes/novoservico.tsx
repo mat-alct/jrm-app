@@ -6,6 +6,7 @@ import {
   FormLabel,
   Heading,
   HStack,
+  IconButton,
   Select,
   Switch,
   Table,
@@ -21,6 +22,7 @@ import {
 } from '@chakra-ui/react';
 import Head from 'next/head';
 import React from 'react';
+import { FaEdit, FaTrash } from 'react-icons/fa';
 
 import { Dashboard } from '../../components/Dashboard';
 import { FormInput } from '../../components/Form/Input';
@@ -93,13 +95,15 @@ const NovoServiço = () => {
         </Flex>
 
         {/* Pedidos */}
+
+        <HStack spacing={4} mt={16}>
+          <Heading color="gray.600" size="lg" whiteSpace="nowrap">
+            Pedido
+          </Heading>
+          <Divider />
+        </HStack>
+
         <Flex as="article" direction="column" maxW="700px">
-          <HStack spacing={4} mt={16}>
-            <Heading color="gray.600" size="lg" whiteSpace="nowrap">
-              Pedido
-            </Heading>
-            <Divider />
-          </HStack>
           <VStack align="left" mt={8} spacing={4}>
             <RadioButton
               name="orderType"
@@ -164,7 +168,12 @@ const NovoServiço = () => {
                 },
               ]}
             />
-            <FormInput size="md" name="amount" placeholder="Qtd" maxW="125px" />
+            <FormInput
+              size="md"
+              name="amount"
+              placeholder="Quantidade"
+              maxW="125px"
+            />
             <FormInput size="md" name="sideA" placeholder="Medida A" />
             <SelectWithSearch
               hasDefaultValue
@@ -199,34 +208,95 @@ const NovoServiço = () => {
               Adicionar
             </Button>
           </HStack>
-          <Table colorScheme="orange" my={16}>
+          <Table variant="striped" colorScheme="orange" my={16}>
             <TableCaption>Lista de peças</TableCaption>
             <Thead>
               <Tr>
                 <Th>Material</Th>
+                <Th isNumeric>Qtd</Th>
                 <Th isNumeric>Lado A</Th>
+                <Th isNumeric>Fita A</Th>
                 <Th isNumeric>Lado B</Th>
+                <Th isNumeric>Fita B</Th>
                 <Th isNumeric>Preço</Th>
+                <Th />
               </Tr>
             </Thead>
             <Tbody>
               <Tr>
                 <Td>MDF BRANCO TX 2 FACES COMUM 15MM</Td>
+                <Td isNumeric>1</Td>
                 <Td isNumeric>2750</Td>
+                <Td isNumeric>1</Td>
                 <Td isNumeric>1850</Td>
+                <Td isNumeric>2</Td>
                 <Td isNumeric>R$ 400,00</Td>
+                <Td>
+                  <HStack spacing={4}>
+                    <IconButton
+                      colorScheme="orange"
+                      size="sm"
+                      aria-label="Editar"
+                      icon={<FaEdit />}
+                    />
+                    <IconButton
+                      colorScheme="orange"
+                      size="sm"
+                      aria-label="Remover"
+                      icon={<FaTrash />}
+                    />
+                  </HStack>
+                </Td>
               </Tr>
               <Tr>
                 <Td>MDF BRANCO TX 2 FACES COMUM 15MM</Td>
+                <Td isNumeric>1</Td>
                 <Td isNumeric>2750</Td>
+                <Td isNumeric>1</Td>
                 <Td isNumeric>1850</Td>
+                <Td isNumeric>2</Td>
                 <Td isNumeric>R$ 400,00</Td>
+                <Td>
+                  <HStack spacing={4}>
+                    <IconButton
+                      colorScheme="orange"
+                      size="sm"
+                      aria-label="Editar"
+                      icon={<FaEdit />}
+                    />
+                    <IconButton
+                      colorScheme="orange"
+                      size="sm"
+                      aria-label="Remover"
+                      icon={<FaTrash />}
+                    />
+                  </HStack>
+                </Td>
               </Tr>
               <Tr>
                 <Td>MDF BRANCO TX 2 FACES COMUM 15MM</Td>
+                <Td isNumeric>1</Td>
                 <Td isNumeric>2750</Td>
+                <Td isNumeric>1</Td>
                 <Td isNumeric>1850</Td>
+                <Td isNumeric>2</Td>
                 <Td isNumeric>R$ 400,00</Td>
+                <Td>
+                  <HStack spacing={4}>
+                    <IconButton
+                      colorScheme="orange"
+                      size="sm"
+                      aria-label="Editar"
+                      icon={<FaEdit />}
+                    />
+                    <IconButton
+                      colorScheme="orange"
+                      size="sm"
+                      aria-label="Remover"
+                      icon={<FaTrash />}
+                    />
+                  </HStack>
+                </Td>
               </Tr>
             </Tbody>
           </Table>
