@@ -47,7 +47,7 @@ export const Sidebar = () => {
           <NavLink icon={FaUser} href="#">
             Clientes
           </NavLink>
-          <NavLink icon={FaRegSquare} href="#">
+          <NavLink icon={FaRegSquare} href="/cortes/materiais">
             Materiais
           </NavLink>
         </NavSection>
