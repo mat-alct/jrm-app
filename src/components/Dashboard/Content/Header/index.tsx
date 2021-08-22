@@ -9,7 +9,7 @@ export const Header: React.FC<HeaderProps> = ({ pageTitle, children }) => {
     <Flex align="center" justify="space-between" mb={8}>
       <Heading color="gray.700">{pageTitle}</Heading>
 
-      <HStack spacing={8}>{children}</HStack>
+      <HStack spacing={4}>{children}</HStack>
     </Flex>
   );
 };
