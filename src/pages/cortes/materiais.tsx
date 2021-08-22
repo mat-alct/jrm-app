@@ -23,10 +23,12 @@ import { Dashboard } from '../../components/Dashboard';
 import { Header } from '../../components/Dashboard/Content/Header';
 import { FormInput } from '../../components/Form/Input';
 import { FormModal } from '../../components/Modal/FormModal';
+import { useMaterial } from '../../hooks/material';
 import { Material } from '../../types';
 
 const Materiais = () => {
   const { onOpen, isOpen, onClose } = useDisclosure();
+  const { createMaterial } = useMaterial();
 
   const validationSchema = Yup.object().shape({
     material: Yup.string().required('Material obrigatório'),
@@ -43,10 +45,10 @@ const Materiais = () => {
     resolver: yupResolver(validationSchema),
   });
 
-  const handleCreateMaterial = (newMaterialData: Material) => {
+  const handleCreateMaterial = async (newMaterialData: Material) => {
     onClose();
-    // eslint-disable-next-line no-console
-    console.log(newMaterialData);
+
+    await createMaterial(newMaterialData);
   };
 
   return (
