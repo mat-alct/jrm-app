@@ -9,21 +9,28 @@ import {
   Th,
   Thead,
   Tr,
+  useDisclosure,
 } from '@chakra-ui/react';
 import React from 'react';
 import { FaEdit, FaTrash } from 'react-icons/fa';
 
 import { Dashboard } from '../../components/Dashboard';
 import { Header } from '../../components/Dashboard/Content/Header';
+import { FormModal } from '../../components/Modal/FormModal';
 
 const Materiais = () => {
+  const { onOpen, isOpen, onClose } = useDisclosure();
+
   return (
     <>
       <Dashboard>
         <Header pageTitle="Materiais">
           <Button colorScheme="gray">Atualizar</Button>
-          <Button colorScheme="orange">Novo Material</Button>
+          <Button colorScheme="orange" onClick={onOpen}>
+            Novo Material
+          </Button>
         </Header>
+        <FormModal isOpen={isOpen} onClose={onClose} title="Novo Material" />
         <Table variant="striped" colorScheme="orange">
           <TableCaption>Lista de Materiais</TableCaption>
           <Thead>
