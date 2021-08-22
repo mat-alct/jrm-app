@@ -14,6 +14,7 @@ interface FormModalProps {
   title: string;
   isOpen: boolean;
   onClose: () => void;
+  onSubmit: () => void;
 }
 
 export const FormModal: React.FC<FormModalProps> = ({
@@ -21,6 +22,7 @@ export const FormModal: React.FC<FormModalProps> = ({
   title,
   isOpen,
   onClose,
+  onSubmit,
 }) => {
   return (
     <>
@@ -32,7 +34,12 @@ export const FormModal: React.FC<FormModalProps> = ({
           <ModalBody pb={6}>{children}</ModalBody>
 
           <ModalFooter>
-            <Button colorScheme="orange" mr={3} type="submit">
+            <Button
+              colorScheme="orange"
+              mr={3}
+              type="submit"
+              onClick={onSubmit}
+            >
               Criar
             </Button>
             <Button onClick={onClose}>Cancelar</Button>
