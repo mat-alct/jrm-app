@@ -13,6 +13,7 @@ import {
   VStack,
 } from '@chakra-ui/react';
 import { yupResolver } from '@hookform/resolvers/yup';
+import Head from 'next/head';
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { FaEdit, FaTrash } from 'react-icons/fa';
@@ -50,6 +51,9 @@ const Materiais = () => {
 
   return (
     <>
+      <Head>
+        <title>Materiais | JRM Compensados</title>
+      </Head>
       <Dashboard>
         <Header pageTitle="Materiais">
           <Button colorScheme="gray">Atualizar</Button>
