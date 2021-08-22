@@ -4,6 +4,7 @@ import React from 'react';
 import { QueryClientProvider } from 'react-query';
 import { ReactQueryDevtools } from 'react-query/devtools';
 
+import { AuthProvider } from '../hooks';
 import initAuth from '../services/initAuth';
 import { queryClient } from '../services/queryClient';
 import { theme } from '../styles/theme';
@@ -13,11 +14,13 @@ initAuth();
 function MyApp({ Component, pageProps }: AppProps) {
   return (
     <QueryClientProvider client={queryClient}>
-      <ChakraProvider theme={theme}>
-        <Component {...pageProps} />
-      </ChakraProvider>
+      <AuthProvider>
+        <ChakraProvider theme={theme}>
+          <Component {...pageProps} />
+        </ChakraProvider>
 
-      <ReactQueryDevtools />
+        <ReactQueryDevtools />
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
