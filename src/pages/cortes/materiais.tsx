@@ -10,6 +10,7 @@ import {
   Thead,
   Tr,
   useDisclosure,
+  useToast,
   VStack,
 } from '@chakra-ui/react';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -29,6 +30,7 @@ import { Material } from '../../types';
 const Materiais = () => {
   const { onOpen, isOpen, onClose } = useDisclosure();
   const { createMaterial } = useMaterial();
+  const toast = useToast();
 
   const validationSchema = Yup.object().shape({
     material: Yup.string().required('Material obrigatório'),
@@ -46,9 +48,24 @@ const Materiais = () => {
   });
 
   const handleCreateMaterial = async (newMaterialData: Material) => {
-    onClose();
+    try {
+      await createMaterial(newMaterialData);
 
-    await createMaterial(newMaterialData);
+      toast({
+        status: 'success',
+        title: 'Material criado com sucesso',
+        isClosable: true,
+      });
+
+      onClose();
+    } catch {
+      toast({
+        status: 'error',
+        title: 'Erro ao criar material',
+        isClosable: true,
+        description: 'Um erro ocorreu durante a criação do material',
+      });
+    }
   };
 
   return (

@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import { useToast } from '@chakra-ui/react';
 import firebase from 'firebase/app';
 import React, { createContext, useContext } from 'react';
@@ -9,7 +8,7 @@ import { queryClient } from '../services/queryClient';
 import { Material } from '../types';
 
 interface MaterialContext {
-  createMaterial: (newMaterialData: Material) => void;
+  createMaterial: (newMaterialData: Material) => Promise<void>;
 }
 
 const MaterialContext = createContext<MaterialContext>({} as MaterialContext);
@@ -43,24 +42,7 @@ export const MaterialProvider: React.FC = ({ children }) => {
   );
 
   const createMaterial = async (newMaterialData: Material) => {
-    try {
-      await createUserMutation.mutateAsync(newMaterialData);
-
-      toast({
-        status: 'success',
-        title: 'Material criado com sucesso',
-        isClosable: true,
-        position: 'top-right',
-      });
-    } catch {
-      toast({
-        status: 'error',
-        title: 'Erro ao criar material',
-        isClosable: true,
-        description: 'Um erro ocorreu durante a criação do material',
-        position: 'top-right',
-      });
-    }
+    await createUserMutation.mutateAsync(newMaterialData);
   };
 
   return (
