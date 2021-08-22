@@ -12,7 +12,7 @@ const Home = () => {
       <Head>
         <title>Início | JRM Compensados</title>
       </Head>
-      <Dashboard pageTitle="Início" />
+      <Dashboard />
       <Button onClick={() => firebase.auth().signOut()}>Sair</Button>
     </>
   );

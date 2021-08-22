@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import 'react-datepicker/dist/react-datepicker.css';
 
 import {
@@ -52,7 +53,7 @@ const NovoServiço = () => {
       <Head>
         <title>Novo Serviço | JRM Compensados</title>
       </Head>
-      <Dashboard pageTitle="Novo Serviço">
+      <Dashboard>
         <HStack spacing={4}>
           <Heading color="gray.600" size="lg" whiteSpace="nowrap">
             Cliente
