@@ -2,13 +2,6 @@ import {
   Button,
   HStack,
   IconButton,
-  Modal,
-  ModalBody,
-  ModalCloseButton,
-  ModalContent,
-  ModalFooter,
-  ModalHeader,
-  ModalOverlay,
   Table,
   TableCaption,
   Tbody,
@@ -28,6 +21,7 @@ import * as Yup from 'yup';
 import { Dashboard } from '../../components/Dashboard';
 import { Header } from '../../components/Dashboard/Content/Header';
 import { FormInput } from '../../components/Form/Input';
+import { FormModal } from '../../components/Modal/FormModal';
 import { Material } from '../../types';
 
 const Materiais = () => {
@@ -63,57 +57,44 @@ const Materiais = () => {
             Novo Material
           </Button>
         </Header>
-        <Modal isOpen={isOpen} onClose={onClose}>
-          <ModalOverlay />
-          <ModalContent>
-            <ModalHeader>Novo Material</ModalHeader>
-            <ModalCloseButton />
-            <ModalBody pb={6}>
-              <VStack as="form" spacing={4} mx="auto" noValidate>
-                <FormInput
-                  {...register('material')}
-                  error={errors.material}
-                  maxWidth="none"
-                  name="material"
-                  placeholder="Material"
-                />
-                <FormInput
-                  {...register('width')}
-                  error={errors.width}
-                  maxWidth="none"
-                  name="width"
-                  placeholder="Largura"
-                />
-                <FormInput
-                  {...register('height')}
-                  error={errors.height}
-                  maxWidth="none"
-                  name="height"
-                  placeholder="Altura"
-                />
-                <FormInput
-                  {...register('price')}
-                  error={errors.price}
-                  maxWidth="none"
-                  name="price"
-                  placeholder="Preço"
-                />
-              </VStack>
-            </ModalBody>
+        <FormModal
+          isOpen={isOpen}
+          title="Novo Material"
+          onClose={onClose}
+          onSubmit={handleSubmit(handleCreateMaterial)}
+        >
+          <VStack as="form" spacing={4} mx="auto" noValidate>
+            <FormInput
+              {...register('material')}
+              error={errors.material}
+              maxWidth="none"
+              name="material"
+              placeholder="Material"
+            />
+            <FormInput
+              {...register('width')}
+              error={errors.width}
+              maxWidth="none"
+              name="width"
+              placeholder="Largura"
+            />
+            <FormInput
+              {...register('height')}
+              error={errors.height}
+              maxWidth="none"
+              name="height"
+              placeholder="Altura"
+            />
+            <FormInput
+              {...register('price')}
+              error={errors.price}
+              maxWidth="none"
+              name="price"
+              placeholder="Preço"
+            />
+          </VStack>
+        </FormModal>
 
-            <ModalFooter>
-              <Button
-                colorScheme="orange"
-                mr={3}
-                type="submit"
-                onClick={handleSubmit(handleCreateMaterial)}
-              >
-                Criar
-              </Button>
-              <Button onClick={onClose}>Cancelar</Button>
-            </ModalFooter>
-          </ModalContent>
-        </Modal>
         <Table variant="striped" colorScheme="orange">
           <TableCaption>Lista de Materiais</TableCaption>
           <Thead>
