@@ -8,10 +8,6 @@ export const Dashboard: React.FC = ({ children }) => {
     <Flex bg="#FFFAFA" w="100%">
       <Sidebar />
       <Content>{children}</Content>
-      {/* <Flex direction="column" px={16} pt={16} w="100%">
-        <Header pageTitle={pageTitle} />
-
-      </Flex> */}
     </Flex>
   );
 };
