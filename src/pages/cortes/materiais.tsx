@@ -72,7 +72,6 @@ const Materiais = () => {
 
   return (
     <>
-      <Button onClick={getMaterials}>materiais</Button>
       <Head>
         <title>Materiais | JRM Compensados</title>
       </Head>
@@ -91,10 +90,10 @@ const Materiais = () => {
         >
           <VStack as="form" spacing={4} mx="auto" noValidate>
             <FormInput
-              {...register('material')}
-              error={errors.material}
+              {...register('name')}
+              error={errors.name}
               maxWidth="none"
-              name="material"
+              name="name"
               placeholder="Material"
             />
             <FormInput
