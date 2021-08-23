@@ -32,7 +32,9 @@ const Materiais = () => {
   const { onOpen, isOpen, onClose } = useDisclosure();
   const { createMaterial, getMaterials } = useMaterial();
   const toast = useToast();
-  const { data } = useQuery('materials', () => getMaterials());
+  const { data, refetch, isFetching } = useQuery('materials', () =>
+    getMaterials(),
+  );
 
   const validationSchema = Yup.object().shape({
     name: Yup.string().required('Material obrigatório'),
@@ -77,8 +79,18 @@ const Materiais = () => {
       </Head>
       <Dashboard>
         <Header pageTitle="Materiais">
-          <Button colorScheme="gray">Atualizar</Button>
-          <Button colorScheme="orange" onClick={onOpen} disabled={isSubmitting}>
+          <Button
+            colorScheme="gray"
+            onClick={() => refetch()}
+            disabled={isFetching}
+          >
+            Atualizar
+          </Button>
+          <Button
+            colorScheme="orange"
+            onClick={onOpen}
+            disabled={isSubmitting || isFetching}
+          >
             Novo Material
           </Button>
         </Header>
