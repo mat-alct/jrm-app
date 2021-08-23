@@ -10,7 +10,6 @@ import {
   Thead,
   Tr,
   useDisclosure,
-  useQuery,
   useToast,
   VStack,
 } from '@chakra-ui/react';
@@ -19,6 +18,7 @@ import Head from 'next/head';
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { FaEdit, FaTrash } from 'react-icons/fa';
+import { useQuery } from 'react-query';
 import * as Yup from 'yup';
 
 import { Dashboard } from '../../components/Dashboard';
@@ -32,6 +32,7 @@ const Materiais = () => {
   const { onOpen, isOpen, onClose } = useDisclosure();
   const { createMaterial, getMaterials } = useMaterial();
   const toast = useToast();
+  const { data } = useQuery('materials', () => getMaterials());
 
   const validationSchema = Yup.object().shape({
     material: Yup.string().required('Material obrigatório'),
@@ -132,50 +133,32 @@ const Materiais = () => {
             </Tr>
           </Thead>
           <Tbody>
-            <Tr>
-              <Td>MDF BRANCO TX 2 FACES COMUM 15MM </Td>
-              <Td isNumeric>2750</Td>
-              <Td isNumeric>1850</Td>
-              <Td isNumeric>R$ 239</Td>
-              <Td>
-                <HStack spacing={4}>
-                  <IconButton
-                    colorScheme="orange"
-                    size="sm"
-                    aria-label="Editar"
-                    icon={<FaEdit />}
-                  />
-                  <IconButton
-                    colorScheme="orange"
-                    size="sm"
-                    aria-label="Remover"
-                    icon={<FaTrash />}
-                  />
-                </HStack>
-              </Td>
-            </Tr>
-            <Tr>
-              <Td>MDF BRANCO TX 2 FACES COMUM 15MM </Td>
-              <Td isNumeric>2750</Td>
-              <Td isNumeric>1850</Td>
-              <Td isNumeric>R$ 239</Td>
-              <Td>
-                <HStack spacing={4}>
-                  <IconButton
-                    colorScheme="orange"
-                    size="sm"
-                    aria-label="Editar"
-                    icon={<FaEdit />}
-                  />
-                  <IconButton
-                    colorScheme="orange"
-                    size="sm"
-                    aria-label="Remover"
-                    icon={<FaTrash />}
-                  />
-                </HStack>
-              </Td>
-            </Tr>
+            {data?.map(material => {
+              return (
+                <Tr key={material.id}>
+                  <Td>{material.material}</Td>
+                  <Td isNumeric>{material.width}</Td>
+                  <Td isNumeric>{material.height}</Td>
+                  <Td isNumeric>{`R$ ${material.price}`}</Td>
+                  <Td>
+                    <HStack spacing={4}>
+                      <IconButton
+                        colorScheme="orange"
+                        size="sm"
+                        aria-label="Editar"
+                        icon={<FaEdit />}
+                      />
+                      <IconButton
+                        colorScheme="orange"
+                        size="sm"
+                        aria-label="Remover"
+                        icon={<FaTrash />}
+                      />
+                    </HStack>
+                  </Td>
+                </Tr>
+              );
+            })}
           </Tbody>
         </Table>
       </Dashboard>
