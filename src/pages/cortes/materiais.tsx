@@ -38,9 +38,19 @@ const Materiais = () => {
 
   const validationSchema = Yup.object().shape({
     name: Yup.string().required('Material obrigatório'),
-    width: Yup.number().max(2750).min(0).required('Largura obrigatória'),
-    height: Yup.number().max(1850).min(0).required('Altura obrigatória'),
-    price: Yup.number().required('Preço obrigatório'),
+    width: Yup.number()
+      .max(2750)
+      .min(0)
+      .required('Largura obrigatória')
+      .typeError('Largura precisa ser um número'),
+    height: Yup.number()
+      .max(1850)
+      .min(0)
+      .required('Altura obrigatória')
+      .typeError('Altura precisa ser um número'),
+    price: Yup.number()
+      .required('Preço obrigatório')
+      .typeError('Preço precisa ser um número'),
   });
 
   const {
@@ -106,28 +116,28 @@ const Materiais = () => {
               error={errors.name}
               maxWidth="none"
               name="name"
-              placeholder="Material"
+              label="Material"
             />
             <FormInput
               {...register('width')}
               error={errors.width}
               maxWidth="none"
               name="width"
-              placeholder="Largura"
+              label="Largura"
             />
             <FormInput
               {...register('height')}
               error={errors.height}
               maxWidth="none"
               name="height"
-              placeholder="Altura"
+              label="Altura"
             />
             <FormInput
               {...register('price')}
               error={errors.price}
               maxWidth="none"
               name="price"
-              placeholder="Preço"
+              label="Preço"
             />
           </VStack>
         </FormModal>
