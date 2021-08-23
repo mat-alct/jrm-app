@@ -35,7 +35,7 @@ const Materiais = () => {
   const { data } = useQuery('materials', () => getMaterials());
 
   const validationSchema = Yup.object().shape({
-    material: Yup.string().required('Material obrigatório'),
+    name: Yup.string().required('Material obrigatório'),
     width: Yup.number().max(2750).min(0).required('Largura obrigatória'),
     height: Yup.number().max(1850).min(0).required('Altura obrigatória'),
     price: Yup.number().required('Preço obrigatório'),
@@ -135,7 +135,7 @@ const Materiais = () => {
             {data?.map(material => {
               return (
                 <Tr key={material.id}>
-                  <Td>{material.material}</Td>
+                  <Td>{material.name}</Td>
                   <Td isNumeric>{material.width}</Td>
                   <Td isNumeric>{material.height}</Td>
                   <Td isNumeric>{`R$ ${material.price}`}</Td>
