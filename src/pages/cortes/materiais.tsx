@@ -10,6 +10,7 @@ import {
   Thead,
   Tr,
   useDisclosure,
+  useQuery,
   useToast,
   VStack,
 } from '@chakra-ui/react';
@@ -29,7 +30,7 @@ import { Material } from '../../types';
 
 const Materiais = () => {
   const { onOpen, isOpen, onClose } = useDisclosure();
-  const { createMaterial } = useMaterial();
+  const { createMaterial, getMaterials } = useMaterial();
   const toast = useToast();
 
   const validationSchema = Yup.object().shape({
@@ -49,6 +50,8 @@ const Materiais = () => {
 
   const handleCreateMaterial = async (newMaterialData: Material) => {
     try {
+      onClose();
+
       await createMaterial(newMaterialData);
 
       toast({
@@ -56,8 +59,6 @@ const Materiais = () => {
         title: 'Material criado com sucesso',
         isClosable: true,
       });
-
-      onClose();
     } catch {
       toast({
         status: 'error',
@@ -70,6 +71,7 @@ const Materiais = () => {
 
   return (
     <>
+      <Button onClick={getMaterials}>materiais</Button>
       <Head>
         <title>Materiais | JRM Compensados</title>
       </Head>

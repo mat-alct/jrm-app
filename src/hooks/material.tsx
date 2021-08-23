@@ -9,6 +9,9 @@ import { Material } from '../types';
 
 interface MaterialContext {
   createMaterial: (newMaterialData: Material) => Promise<void>;
+  getMaterials: () => Promise<
+    (firebase.firestore.DocumentData & { id: string })[]
+  >;
 }
 
 const MaterialContext = createContext<MaterialContext>({} as MaterialContext);
@@ -16,7 +19,7 @@ const MaterialContext = createContext<MaterialContext>({} as MaterialContext);
 export const MaterialProvider: React.FC = ({ children }) => {
   const toast = useToast();
 
-  const createUserMutation = useMutation(
+  const createMaterialMutation = useMutation(
     async (materialData: Material) => {
       await firebase
         .firestore()
@@ -42,11 +45,17 @@ export const MaterialProvider: React.FC = ({ children }) => {
   );
 
   const createMaterial = async (newMaterialData: Material) => {
-    await createUserMutation.mutateAsync(newMaterialData);
+    await createMaterialMutation.mutateAsync(newMaterialData);
+  };
+
+  const getMaterials = async () => {
+    const response = await firebase.firestore().collection('materials').get();
+
+    return response.docs.map(doc => Object.assign(doc.data(), { id: doc.id }));
   };
 
   return (
-    <MaterialContext.Provider value={{ createMaterial }}>
+    <MaterialContext.Provider value={{ createMaterial, getMaterials }}>
       {children}
     </MaterialContext.Provider>
   );
