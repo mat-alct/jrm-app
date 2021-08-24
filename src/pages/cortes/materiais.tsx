@@ -18,7 +18,7 @@ import {
 import { yupResolver } from '@hookform/resolvers/yup';
 import firebase from 'firebase/app';
 import Head from 'next/head';
-import React from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { FaEdit, FaTrash } from 'react-icons/fa';
 import { RiAddLine, RiRefreshLine } from 'react-icons/ri';
@@ -32,13 +32,24 @@ import { FormModal } from '../../components/Modal/FormModal';
 import { useMaterial } from '../../hooks/material';
 import { Material } from '../../types';
 
+interface handleUpdatePriceProps {
+  newPrice: number;
+}
+
 const Materiais = () => {
   const { onOpen, isOpen, onClose } = useDisclosure();
+  const {
+    onOpen: onOpenPrice,
+    isOpen: isOpenPrice,
+    onClose: onClosePrice,
+  } = useDisclosure();
   const { createMaterial, getMaterials, removeMaterial } = useMaterial();
   const toast = useToast();
   const { data, refetch, isFetching, isLoading } = useQuery('materials', () =>
     getMaterials(),
   );
+
+  const [updatingMaterialId, setUpdatingMaterialId] = useState('');
 
   const validationSchema = Yup.object().shape({
     name: Yup.string().required('Material obrigatório'),
@@ -57,12 +68,28 @@ const Materiais = () => {
       .typeError('Preço precisa ser um número'),
   });
 
+  const validationPriceSchema = Yup.object().shape({
+    newPrice: Yup.number()
+      .required('Preço obrigatório')
+      .typeError('Preço precisa ser um número'),
+  });
+
+  // New Material useForm
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<Material>({
     resolver: yupResolver(validationSchema),
+  });
+
+  // Price useForm
+  const {
+    register: priceRegister,
+    handleSubmit: priceHandleSubmit,
+    formState: { errors: priceErrors },
+  } = useForm<handleUpdatePriceProps>({
+    resolver: yupResolver(validationPriceSchema),
   });
 
   const handleCreateMaterial = async (newMaterialData: Material) => {
@@ -109,6 +136,22 @@ const Materiais = () => {
     }
   };
 
+  const handleClickOnUpdatePrice = (id: string) => {
+    setUpdatingMaterialId(id);
+
+    onOpenPrice();
+  };
+
+  const handleUpdatePrice = async ({ newPrice }: handleUpdatePriceProps) => {
+    try {
+      onClosePrice();
+
+      console.log(newPrice);
+    } catch {
+      console.log('error');
+    }
+  };
+
   return (
     <>
       <Head>
@@ -133,6 +176,8 @@ const Materiais = () => {
             Novo Material
           </Button>
         </Header>
+
+        {/* Modals */}
         <FormModal
           isOpen={isOpen}
           title="Novo Material"
@@ -171,6 +216,23 @@ const Materiais = () => {
           </VStack>
         </FormModal>
 
+        <FormModal
+          isOpen={isOpenPrice}
+          title="Atualizar Preço"
+          onClose={onClosePrice}
+          onSubmit={priceHandleSubmit(handleUpdatePrice)}
+        >
+          <VStack as="form" spacing={4} mx="auto" noValidate>
+            <FormInput
+              {...priceRegister('newPrice')}
+              error={priceErrors.newPrice}
+              maxWidth="none"
+              name="newPrice"
+              label="Novo preço"
+            />
+          </VStack>
+        </FormModal>
+
         <Table variant="striped" colorScheme="orange">
           <TableCaption>Lista de Materiais</TableCaption>
           <Thead>
@@ -197,6 +259,7 @@ const Materiais = () => {
                         size="sm"
                         aria-label="Editar"
                         icon={<FaEdit />}
+                        onClick={() => handleClickOnUpdatePrice(material.id)}
                       />
                       <IconButton
                         colorScheme="orange"
