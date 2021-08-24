@@ -31,7 +31,7 @@ import { Material } from '../../types';
 
 const Materiais = () => {
   const { onOpen, isOpen, onClose } = useDisclosure();
-  const { createMaterial, getMaterials } = useMaterial();
+  const { createMaterial, getMaterials, removeMaterial } = useMaterial();
   const toast = useToast();
   const { data, refetch, isFetching } = useQuery('materials', () =>
     getMaterials(),
@@ -179,6 +179,7 @@ const Materiais = () => {
                         size="sm"
                         aria-label="Remover"
                         icon={<FaTrash />}
+                        onClick={() => removeMaterial(material.id)}
                       />
                     </HStack>
                   </Td>
