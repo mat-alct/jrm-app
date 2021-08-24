@@ -87,6 +87,25 @@ const Materiais = () => {
     }
   };
 
+  const handleRemoveMaterial = async (id: string) => {
+    try {
+      await removeMaterial(id);
+
+      toast({
+        status: 'success',
+        title: 'Material removido com sucesso',
+        isClosable: true,
+      });
+    } catch {
+      toast({
+        status: 'error',
+        title: 'Erro ao remover material',
+        isClosable: true,
+        description: 'Um erro ocorreu durante a remoção do material',
+      });
+    }
+  };
+
   return (
     <>
       <Head>
@@ -179,7 +198,7 @@ const Materiais = () => {
                         size="sm"
                         aria-label="Remover"
                         icon={<FaTrash />}
-                        onClick={() => removeMaterial(material.id)}
+                        onClick={() => handleRemoveMaterial(material.id)}
                       />
                     </HStack>
                   </Td>
