@@ -87,7 +87,7 @@ const Materiais = () => {
   const {
     register: priceRegister,
     handleSubmit: priceHandleSubmit,
-    formState: { errors: priceErrors },
+    formState: { errors: priceErrors, isSubmitting: priceIsSubmitting },
   } = useForm<handleUpdatePriceProps>({
     resolver: yupResolver(validationPriceSchema),
   });
@@ -170,11 +170,14 @@ const Materiais = () => {
         <title>Materiais | JRM Compensados</title>
       </Head>
       <Dashboard>
-        <Header pageTitle="Materiais" isLoading={isFetching || isLoading}>
+        <Header
+          pageTitle="Materiais"
+          isLoading={isFetching || isLoading || priceIsSubmitting}
+        >
           <Button
             colorScheme="gray"
             onClick={() => refetch()}
-            disabled={isFetching}
+            disabled={isSubmitting || isFetching}
             leftIcon={<Icon as={RiRefreshLine} fontSize="20" />}
           >
             Atualizar{' '}
@@ -272,6 +275,7 @@ const Materiais = () => {
                         aria-label="Editar"
                         icon={<FaEdit />}
                         onClick={() => handleClickOnUpdatePrice(material.id)}
+                        disabled={priceIsSubmitting}
                       />
                       <IconButton
                         colorScheme="orange"
@@ -279,6 +283,7 @@ const Materiais = () => {
                         aria-label="Remover"
                         icon={<FaTrash />}
                         onClick={() => handleRemoveMaterial(material.id)}
+                        disabled={priceIsSubmitting}
                       />
                     </HStack>
                   </Td>
