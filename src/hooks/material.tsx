@@ -7,18 +7,25 @@ import { v4 } from 'uuid';
 import { queryClient } from '../services/queryClient';
 import { Material } from '../types';
 
+interface UpdateMaterialPriceProps {
+  id: string;
+  newPrice: number;
+}
 interface MaterialContext {
   createMaterial: (newMaterialData: Material) => Promise<void>;
   getMaterials: () => Promise<
     (firebase.firestore.DocumentData & { id: string })[]
   >;
   removeMaterial: (id: string) => Promise<void>;
+  updateMaterialPrice: (data: UpdateMaterialPriceProps) => Promise<void>;
 }
 
 const MaterialContext = createContext<MaterialContext>({} as MaterialContext);
 
 export const MaterialProvider: React.FC = ({ children }) => {
   const toast = useToast();
+
+  // MUTATIONS
 
   const createMaterialMutation = useMutation(
     async (materialData: Material) => {
@@ -65,6 +72,32 @@ export const MaterialProvider: React.FC = ({ children }) => {
     },
   );
 
+  const updatePriceMutation = useMutation(
+    async ({ id, newPrice }: UpdateMaterialPriceProps) => {
+      await firebase
+        .firestore()
+        .collection('materials')
+        .doc(id)
+        .update({ price: newPrice });
+    },
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries('materials');
+      },
+      onError: () => {
+        toast({
+          status: 'error',
+          title: 'Erro ao atualizar o preço do material',
+          isClosable: true,
+          description:
+            'Um erro ocorreu durante a atualização do preço do material pelo React Query',
+        });
+      },
+    },
+  );
+
+  // METHODS
+
   const createMaterial = async (newMaterialData: Material) => {
     await createMaterialMutation.mutateAsync(newMaterialData);
   };
@@ -83,9 +116,21 @@ export const MaterialProvider: React.FC = ({ children }) => {
     await removeMaterialMutation.mutateAsync(id);
   };
 
+  const updateMaterialPrice = async ({
+    id,
+    newPrice,
+  }: UpdateMaterialPriceProps) => {
+    await updatePriceMutation.mutateAsync({ id, newPrice });
+  };
+
   return (
     <MaterialContext.Provider
-      value={{ createMaterial, getMaterials, removeMaterial }}
+      value={{
+        createMaterial,
+        getMaterials,
+        removeMaterial,
+        updateMaterialPrice,
+      }}
     >
       {children}
     </MaterialContext.Provider>
