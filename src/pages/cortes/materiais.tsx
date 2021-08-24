@@ -14,6 +14,7 @@ import {
   VStack,
 } from '@chakra-ui/react';
 import { yupResolver } from '@hookform/resolvers/yup';
+import firebase from 'firebase/app';
 import Head from 'next/head';
 import React from 'react';
 import { useForm } from 'react-hook-form';
@@ -65,7 +66,11 @@ const Materiais = () => {
     try {
       onClose();
 
-      await createMaterial(newMaterialData);
+      await createMaterial({
+        ...newMaterialData,
+        createdAt: firebase.firestore.Timestamp.fromDate(new Date()),
+        updatedAt: firebase.firestore.Timestamp.fromDate(new Date()),
+      });
 
       toast({
         status: 'success',
