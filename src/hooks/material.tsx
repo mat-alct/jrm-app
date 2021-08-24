@@ -45,6 +45,26 @@ export const MaterialProvider: React.FC = ({ children }) => {
     },
   );
 
+  const removeMaterialMutation = useMutation(
+    async (id: string) => {
+      await firebase.firestore().collection('materials').doc(id).delete();
+    },
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries('materials');
+      },
+      onError: () => {
+        toast({
+          status: 'error',
+          title: 'Erro ao remover material',
+          isClosable: true,
+          description:
+            'Um erro ocorreu durante a remoção do material pelo React Query',
+        });
+      },
+    },
+  );
+
   const createMaterial = async (newMaterialData: Material) => {
     await createMaterialMutation.mutateAsync(newMaterialData);
   };
@@ -53,14 +73,14 @@ export const MaterialProvider: React.FC = ({ children }) => {
     const response = await firebase.firestore().collection('materials').get();
 
     const allMaterials = response.docs.map(doc =>
-      Object.assign(doc.data(), { id: doc.id }),
+      Object.assign(doc.data() as Material, { id: doc.id }),
     );
 
     return allMaterials;
   };
 
   const removeMaterial = async (id: string) => {
-    await firebase.firestore().collection('materials').doc(id).delete();
+    await removeMaterialMutation.mutateAsync(id);
   };
 
   return (

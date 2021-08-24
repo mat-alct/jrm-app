@@ -1,7 +1,9 @@
 import {
   Button,
   HStack,
+  Icon,
   IconButton,
+  Spinner,
   Table,
   TableCaption,
   Tbody,
@@ -19,6 +21,7 @@ import Head from 'next/head';
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { FaEdit, FaTrash } from 'react-icons/fa';
+import { RiAddLine, RiRefreshLine } from 'react-icons/ri';
 import { useQuery } from 'react-query';
 import * as Yup from 'yup';
 
@@ -33,7 +36,7 @@ const Materiais = () => {
   const { onOpen, isOpen, onClose } = useDisclosure();
   const { createMaterial, getMaterials, removeMaterial } = useMaterial();
   const toast = useToast();
-  const { data, refetch, isFetching } = useQuery('materials', () =>
+  const { data, refetch, isFetching, isLoading } = useQuery('materials', () =>
     getMaterials(),
   );
 
@@ -112,18 +115,20 @@ const Materiais = () => {
         <title>Materiais | JRM Compensados</title>
       </Head>
       <Dashboard>
-        <Header pageTitle="Materiais">
+        <Header pageTitle="Materiais" isLoading={isFetching || isLoading}>
           <Button
             colorScheme="gray"
             onClick={() => refetch()}
             disabled={isFetching}
+            leftIcon={<Icon as={RiRefreshLine} fontSize="20" />}
           >
-            Atualizar
+            Atualizar{' '}
           </Button>
           <Button
             colorScheme="orange"
             onClick={onOpen}
             disabled={isSubmitting || isFetching}
+            leftIcon={<Icon as={RiAddLine} fontSize="20" />}
           >
             Novo Material
           </Button>
