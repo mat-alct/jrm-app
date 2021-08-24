@@ -3,7 +3,6 @@ import {
   HStack,
   Icon,
   IconButton,
-  Spinner,
   Table,
   TableCaption,
   Tbody,
@@ -43,7 +42,8 @@ const Materiais = () => {
     isOpen: isOpenPrice,
     onClose: onClosePrice,
   } = useDisclosure();
-  const { createMaterial, getMaterials, removeMaterial } = useMaterial();
+  const { createMaterial, getMaterials, removeMaterial, updateMaterialPrice } =
+    useMaterial();
   const toast = useToast();
   const { data, refetch, isFetching, isLoading } = useQuery('materials', () =>
     getMaterials(),
@@ -146,9 +146,21 @@ const Materiais = () => {
     try {
       onClosePrice();
 
-      console.log(newPrice);
+      await updateMaterialPrice({ id: updatingMaterialId, newPrice });
+
+      toast({
+        status: 'success',
+        title: 'Preço atualizado com sucesso',
+        isClosable: true,
+      });
     } catch {
-      console.log('error');
+      toast({
+        status: 'error',
+        title: 'Erro ao atualizar preço do material',
+        isClosable: true,
+        description:
+          'Um erro ocorreu durante a atualização do preço do material',
+      });
     }
   };
 
