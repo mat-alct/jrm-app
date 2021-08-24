@@ -44,7 +44,7 @@ export const Sidebar = () => {
           <NavLink icon={FaClipboardList} href="#">
             Listar serviços
           </NavLink>
-          <NavLink icon={FaUser} href="#">
+          <NavLink icon={FaUser} href="/cortes/clientes">
             Clientes
           </NavLink>
           <NavLink icon={FaRegSquare} href="/cortes/materiais">
