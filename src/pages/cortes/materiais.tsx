@@ -51,7 +51,7 @@ const Materiais = () => {
 
   const [updatingMaterialId, setUpdatingMaterialId] = useState('');
 
-  const validationSchema = Yup.object().shape({
+  const validationNewMaterialSchema = Yup.object().shape({
     name: Yup.string().required('Material obrigatório'),
     width: Yup.number()
       .max(2750)
@@ -80,7 +80,7 @@ const Materiais = () => {
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<Material>({
-    resolver: yupResolver(validationSchema),
+    resolver: yupResolver(validationNewMaterialSchema),
   });
 
   // Price useForm
@@ -92,6 +92,7 @@ const Materiais = () => {
     resolver: yupResolver(validationPriceSchema),
   });
 
+  // Close Modal and create a new material
   const handleCreateMaterial = async (newMaterialData: Material) => {
     try {
       onClose();
@@ -136,12 +137,14 @@ const Materiais = () => {
     }
   };
 
+  // Store material id to update price and open modal
   const handleClickOnUpdatePrice = (id: string) => {
     setUpdatingMaterialId(id);
 
     onOpenPrice();
   };
 
+  // Close Modal and update material's price
   const handleUpdatePrice = async ({ newPrice }: handleUpdatePriceProps) => {
     try {
       onClosePrice();
@@ -180,7 +183,7 @@ const Materiais = () => {
             disabled={isSubmitting || isFetching}
             leftIcon={<Icon as={RiRefreshLine} fontSize="20" />}
           >
-            Atualizar{' '}
+            Atualizar
           </Button>
           <Button
             colorScheme="orange"
@@ -192,7 +195,7 @@ const Materiais = () => {
           </Button>
         </Header>
 
-        {/* Modals */}
+        {/* New Material Modal */}
         <FormModal
           isOpen={isOpen}
           title="Novo Material"
@@ -231,6 +234,7 @@ const Materiais = () => {
           </VStack>
         </FormModal>
 
+        {/* Update price Modal */}
         <FormModal
           isOpen={isOpenPrice}
           title="Atualizar Preço"
@@ -248,6 +252,7 @@ const Materiais = () => {
           </VStack>
         </FormModal>
 
+        {/* Table who lists all materials */}
         <Table variant="striped" colorScheme="orange">
           <TableCaption>Lista de Materiais</TableCaption>
           <Thead>
@@ -269,6 +274,7 @@ const Materiais = () => {
                   <Td isNumeric>{`R$ ${material.price}`}</Td>
                   <Td>
                     <HStack spacing={4}>
+                      {/* Update Price button */}
                       <IconButton
                         colorScheme="orange"
                         size="sm"
@@ -277,6 +283,7 @@ const Materiais = () => {
                         onClick={() => handleClickOnUpdatePrice(material.id)}
                         disabled={priceIsSubmitting}
                       />
+                      {/* Remove Material Button */}
                       <IconButton
                         colorScheme="orange"
                         size="sm"
