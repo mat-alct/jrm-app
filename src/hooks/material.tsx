@@ -12,6 +12,7 @@ interface MaterialContext {
   getMaterials: () => Promise<
     (firebase.firestore.DocumentData & { id: string })[]
   >;
+  removeMaterial: (id: string) => Promise<void>;
 }
 
 const MaterialContext = createContext<MaterialContext>({} as MaterialContext);
@@ -58,8 +59,14 @@ export const MaterialProvider: React.FC = ({ children }) => {
     return allMaterials;
   };
 
+  const removeMaterial = async (id: string) => {
+    await firebase.firestore().collection('materials').doc(id).delete();
+  };
+
   return (
-    <MaterialContext.Provider value={{ createMaterial, getMaterials }}>
+    <MaterialContext.Provider
+      value={{ createMaterial, getMaterials, removeMaterial }}
+    >
       {children}
     </MaterialContext.Provider>
   );
