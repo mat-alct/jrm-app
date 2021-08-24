@@ -1,11 +1,15 @@
 import { Button, Icon, useDisclosure, VStack } from '@chakra-ui/react';
+import { yupResolver } from '@hookform/resolvers/yup';
 import React from 'react';
+import { useForm } from 'react-hook-form';
 import { RiAddLine, RiRefreshLine } from 'react-icons/ri';
+import * as Yup from 'yup';
 
 import { Dashboard } from '../../components/Dashboard';
 import { Header } from '../../components/Dashboard/Content/Header';
 import { FormInput } from '../../components/Form/Input';
 import { FormModal } from '../../components/Modal/FormModal';
+import { Customer } from '../../types';
 
 const Clientes: React.FC = () => {
   const {
@@ -14,9 +18,30 @@ const Clientes: React.FC = () => {
     onClose: onCloseCreateCustomer,
   } = useDisclosure();
 
+  const validationCreateCustomerSchema = Yup.object().shape({
+    name: Yup.string().required('Material obrigatório'),
+  });
+
+  // Create Customer useForm
+  const {
+    register: createCustomerRegister,
+    handleSubmit: createCustomerHandleSubmit,
+    formState: {
+      errors: createCustomerErrors,
+      isSubmitting: createCustomerIsSubmitting,
+    },
+  } = useForm<Customer>({
+    resolver: yupResolver(validationCreateCustomerSchema),
+  });
+
+  const handleCreateCustomer = (customerData: Customer) => {
+    onCloseCreateCustomer();
+    console.log(customerData);
+  };
+
   return (
     <Dashboard>
-      <Header pageTitle="Clientes">
+      <Header pageTitle="Clientes" isLoading={createCustomerIsSubmitting}>
         <Button
           colorScheme="gray"
           leftIcon={<Icon as={RiRefreshLine} fontSize="20" />}
@@ -39,15 +64,15 @@ const Clientes: React.FC = () => {
         isOpen={isOpenCreateCustomer}
         onClose={onCloseCreateCustomer}
         title="Novo cliente"
-        onSubmit={() => console.log('ok')}
+        onSubmit={createCustomerHandleSubmit(handleCreateCustomer)}
       >
         <VStack as="form" spacing={4} mx="auto" noValidate>
           <FormInput
-            {...register('name')}
-            error={errors.name}
+            {...createCustomerRegister('name')}
+            error={createCustomerErrors.name}
             maxWidth="none"
             name="name"
-            label="Material"
+            label="Nome"
           />
         </VStack>
       </FormModal>

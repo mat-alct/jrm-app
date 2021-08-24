@@ -7,10 +7,11 @@ import {
   ModalFooter,
   ModalHeader,
   ModalOverlay,
+  ModalProps,
 } from '@chakra-ui/react';
 import React from 'react';
 
-interface FormModalProps {
+interface FormModalProps extends ModalProps {
   title: string;
   isOpen: boolean;
   onClose: () => void;
@@ -23,10 +24,11 @@ export const FormModal: React.FC<FormModalProps> = ({
   isOpen,
   onClose,
   onSubmit,
+  ...rest
 }) => {
   return (
     <>
-      <Modal isOpen={isOpen} onClose={onClose}>
+      <Modal isOpen={isOpen} onClose={onClose} {...rest}>
         <ModalOverlay />
         <ModalContent>
           <ModalHeader>{title}</ModalHeader>
