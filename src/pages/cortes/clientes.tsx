@@ -9,9 +9,10 @@ import { Dashboard } from '../../components/Dashboard';
 import { Header } from '../../components/Dashboard/Content/Header';
 import { FormInput } from '../../components/Form/Input';
 import { RadioButton } from '../../components/Form/RadioButton';
+import { SelectWithSearch } from '../../components/Form/Select';
 import { FormModal } from '../../components/Modal/FormModal';
 import { Customer } from '../../types';
-// import { areas } from '../../utils/listOfAreas';
+import { areas } from '../../utils/listOfAreas';
 
 interface CreateCustomerProps {
   firstName: string;
@@ -53,6 +54,13 @@ const Clientes: React.FC = () => {
     onCloseCreateCustomer();
     console.log(customerData);
   };
+
+  const areasToSelect = areas.map(area => {
+    return {
+      value: area,
+      label: area,
+    };
+  });
 
   return (
     <Dashboard>
@@ -113,6 +121,11 @@ const Clientes: React.FC = () => {
             maxWidth="none"
             name="address"
             label="Endereço"
+          />
+          <SelectWithSearch
+            options={areasToSelect}
+            control={createCustomerControl}
+            name="area"
           />
           <RadioButton
             control={createCustomerControl}

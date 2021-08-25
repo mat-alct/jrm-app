@@ -1,11 +1,12 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   BoxProps,
   FormControl,
   FormErrorMessage,
   FormLabel,
 } from '@chakra-ui/react';
-import React, { forwardRef, ForwardRefRenderFunction } from 'react';
-import { FieldError } from 'react-hook-form';
+import React from 'react';
+import { Control, useController } from 'react-hook-form';
 import Select from 'react-select';
 
 interface Options {
@@ -20,54 +21,53 @@ interface SelectWithSearchProps extends BoxProps {
   hasDefaultValue?: string;
   isClearable?: boolean;
   label?: string;
-  error?: FieldError;
+  control: Control<any>;
 }
 
-const SelectWithSearch: ForwardRefRenderFunction<
-  HTMLSelectElement,
-  SelectWithSearchProps
-> = (
-  {
-    options,
-    placeholder,
-    hasDefaultValue,
-    isClearable = false,
-    label,
-    error,
+export const SelectWithSearch: React.FC<SelectWithSearchProps> = ({
+  options,
+  placeholder,
+  hasDefaultValue,
+  isClearable = false,
+  label,
+  name,
+  control,
+  ...rest
+}) => {
+  const {
+    field,
+    formState: { errors },
+  } = useController({
+    control,
     name,
-    ...rest
-  },
-  ref,
-) => {
+  });
+
   return (
-    <FormControl isInvalid={!!error} w="100%" {...rest}>
+    <FormControl isInvalid={!!errors.name} w="100%" {...rest}>
       {label && (
         <FormLabel color="gray.700" htmlFor={name}>
           {label}
         </FormLabel>
       )}
       <Select
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        ref={ref}
         id={name}
         name={name}
         options={options}
         style={{ marginLeft: 0 }}
         isClearable={isClearable}
         placeholder={placeholder}
+        value={field.value}
+        onChange={field.onChange}
         defaultValue={
           hasDefaultValue
             ? options[options.map(opt => opt.value).indexOf(hasDefaultValue)]
             : null
         }
       />
-      {!!error && (
+      {!!errors.name && (
         // Role is necessary for validation tests
-        <FormErrorMessage role="alert">{error.message}</FormErrorMessage>
+        <FormErrorMessage role="alert">{errors.name.message}</FormErrorMessage>
       )}
     </FormControl>
   );
 };
-
-export const FormSelectWithSearch = forwardRef(SelectWithSearch);
