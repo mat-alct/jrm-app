@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   Box,
   FormControl,
@@ -7,6 +8,7 @@ import {
   useRadioGroup,
 } from '@chakra-ui/react';
 import React from 'react';
+import { Control, useController } from 'react-hook-form';
 
 const RadioCard: React.FC = ({ children, ...rest }) => {
   const { getInputProps, getCheckboxProps } = useRadio({ ...rest });
@@ -44,8 +46,9 @@ interface RadioButtonProps {
   name: string;
   defaultValue?: string;
   options: string[];
-  changeFunction: () => void;
   label?: string;
+  isHorizontal?: boolean;
+  control: Control<any>;
 }
 
 export const RadioButton: React.FC<RadioButtonProps> = ({
@@ -53,20 +56,36 @@ export const RadioButton: React.FC<RadioButtonProps> = ({
   name,
   defaultValue,
   label,
-  changeFunction,
+  isHorizontal,
+  control,
 }) => {
+  const {
+    field,
+    formState: { errors },
+  } = useController({
+    control,
+    name,
+    rules: { required: { value: true, message: 'Required field' } },
+  });
+
   const { getRootProps, getRadioProps } = useRadioGroup({
     name,
     defaultValue,
-    onChange: changeFunction,
+    onChange: field.onChange,
+    value: field.value,
   });
 
   const group = getRootProps();
 
   return (
-    <FormControl display="flex" alignItems="center">
+    <FormControl display={isHorizontal ? 'flex' : ''} alignItems="center">
       {label && (
-        <FormLabel htmlFor={name} color="gray.700" mb={0} minW="150px">
+        <FormLabel
+          htmlFor={name}
+          color="gray.700"
+          mb={isHorizontal ? 0 : ''}
+          minW="150px"
+        >
           {label}
         </FormLabel>
       )}

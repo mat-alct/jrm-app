@@ -210,27 +210,30 @@ const Materiais = () => {
               name="name"
               label="Material"
             />
-            <FormInput
-              {...register('width')}
-              error={errors.width}
-              maxWidth="none"
-              name="width"
-              label="Largura"
-            />
-            <FormInput
-              {...register('height')}
-              error={errors.height}
-              maxWidth="none"
-              name="height"
-              label="Altura"
-            />
-            <FormInput
-              {...register('price')}
-              error={errors.price}
-              maxWidth="none"
-              name="price"
-              label="Preço"
-            />
+            <HStack spacing={8}>
+              <FormInput
+                {...register('width')}
+                error={errors.width}
+                maxWidth="none"
+                name="width"
+                label="Largura"
+              />
+              <FormInput
+                {...register('height')}
+                error={errors.height}
+                maxWidth="none"
+                name="height"
+                label="Altura"
+              />
+
+              <FormInput
+                {...register('price')}
+                error={errors.price}
+                maxWidth="none"
+                name="price"
+                label="Preço"
+              />
+            </HStack>
           </VStack>
         </FormModal>
 
