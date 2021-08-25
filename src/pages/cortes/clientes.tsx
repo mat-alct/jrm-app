@@ -34,7 +34,10 @@ const Clientes: React.FC = () => {
     lastName: Yup.string().required('Sobrenome obrigatório'),
     telephone: Yup.string(),
     address: Yup.string(),
-    area: Yup.string(),
+    area: Yup.object().shape({
+      value: Yup.string(),
+      label: Yup.string(),
+    }),
     city: Yup.string(),
   });
 
@@ -89,6 +92,7 @@ const Clientes: React.FC = () => {
         onClose={onCloseCreateCustomer}
         title="Novo cliente"
         onSubmit={createCustomerHandleSubmit(handleCreateCustomer)}
+        size="lg"
       >
         <VStack as="form" spacing={4} mx="auto" noValidate>
           <HStack spacing={8}>
@@ -126,19 +130,20 @@ const Clientes: React.FC = () => {
             size="md"
             label="Endereço"
           />
-
-          <SelectWithSearch
-            options={areasToSelect}
-            control={createCustomerControl}
-            name="area"
-            label="Bairro"
-          />
-          <RadioButton
-            control={createCustomerControl}
-            name="city"
-            options={['Angra dos Reis', 'Paraty']}
-            label="Cidade"
-          />
+          <HStack spacing={8} w="100%">
+            <SelectWithSearch
+              options={areasToSelect}
+              control={createCustomerControl}
+              name="area"
+              label="Bairro"
+            />
+            <RadioButton
+              control={createCustomerControl}
+              name="city"
+              options={['Angra dos Reis', 'Paraty']}
+              label="Cidade"
+            />
+          </HStack>
         </VStack>
       </FormModal>
     </Dashboard>
