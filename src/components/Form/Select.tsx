@@ -43,7 +43,7 @@ export const SelectWithSearch: React.FC<SelectWithSearchProps> = ({
   });
 
   return (
-    <FormControl isInvalid={!!errors.name} w="100%" {...rest}>
+    <FormControl isInvalid={!!errors[name]} w="100%" {...rest}>
       {label && (
         <FormLabel color="gray.700" htmlFor={name}>
           {label}
@@ -64,9 +64,9 @@ export const SelectWithSearch: React.FC<SelectWithSearchProps> = ({
             : null
         }
       />
-      {!!errors.name && (
+      {!!errors[name] && (
         // Role is necessary for validation tests
-        <FormErrorMessage role="alert">{errors.name.message}</FormErrorMessage>
+        <FormErrorMessage role="alert">{errors[name].message}</FormErrorMessage>
       )}
     </FormControl>
   );

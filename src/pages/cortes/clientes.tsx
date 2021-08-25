@@ -34,6 +34,7 @@ const Clientes: React.FC = () => {
     lastName: Yup.string().required('Sobrenome obrigatório'),
     telephone: Yup.string(),
     address: Yup.string(),
+    area: Yup.string().required('DJKALS'),
     city: Yup.string(),
   });
 
