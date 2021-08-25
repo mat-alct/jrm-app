@@ -34,7 +34,7 @@ const Clientes: React.FC = () => {
     lastName: Yup.string().required('Sobrenome obrigatório'),
     telephone: Yup.string(),
     address: Yup.string(),
-    area: Yup.string().required('DJKALS'),
+    area: Yup.string(),
     city: Yup.string(),
   });
 
@@ -89,7 +89,6 @@ const Clientes: React.FC = () => {
         onClose={onCloseCreateCustomer}
         title="Novo cliente"
         onSubmit={createCustomerHandleSubmit(handleCreateCustomer)}
-        size="lg"
       >
         <VStack as="form" spacing={4} mx="auto" noValidate>
           <HStack spacing={8}>
@@ -99,6 +98,7 @@ const Clientes: React.FC = () => {
               maxWidth="none"
               name="firstName"
               label="Nome"
+              size="md"
             />
             <FormInput
               {...createCustomerRegister('lastName')}
@@ -106,6 +106,7 @@ const Clientes: React.FC = () => {
               maxWidth="none"
               name="lastName"
               label="Sobrenome"
+              size="md"
             />
           </HStack>
           <FormInput
@@ -114,6 +115,7 @@ const Clientes: React.FC = () => {
             maxWidth="none"
             name="telephone"
             label="Telefone"
+            size="md"
           />
 
           <FormInput
@@ -121,12 +123,15 @@ const Clientes: React.FC = () => {
             error={createCustomerErrors.address}
             maxWidth="none"
             name="address"
+            size="md"
             label="Endereço"
           />
+
           <SelectWithSearch
             options={areasToSelect}
             control={createCustomerControl}
             name="area"
+            label="Bairro"
           />
           <RadioButton
             control={createCustomerControl}

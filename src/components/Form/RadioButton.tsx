@@ -83,7 +83,7 @@ export const RadioButton: React.FC<RadioButtonProps> = ({
     <FormControl
       display={isHorizontal ? 'flex' : ''}
       alignItems={isHorizontal ? 'center' : ''}
-      isInvalid={!!errors.name}
+      isInvalid={!!errors[name]}
     >
       {label && (
         <FormLabel
