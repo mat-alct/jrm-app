@@ -33,6 +33,7 @@ const Clientes: React.FC = () => {
     lastName: Yup.string().required('Sobrenome obrigatório'),
     telephone: Yup.string(),
     address: Yup.string(),
+    city: Yup.string(),
   });
 
   // Create Customer useForm
@@ -117,6 +118,7 @@ const Clientes: React.FC = () => {
             control={createCustomerControl}
             name="city"
             options={['Angra dos Reis', 'Paraty']}
+            label="Cidade"
           />
         </VStack>
       </FormModal>

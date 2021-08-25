@@ -50,6 +50,7 @@ interface RadioButtonProps {
   label?: string;
   minWFormLabel?: string;
   control: Control<any>;
+  isHorizontal?: boolean;
 }
 
 export const RadioButton: React.FC<RadioButtonProps> = ({
@@ -57,7 +58,7 @@ export const RadioButton: React.FC<RadioButtonProps> = ({
   name,
   defaultValue,
   label,
-  minWFormLabel,
+  isHorizontal,
   control,
 }) => {
   const {
@@ -79,9 +80,18 @@ export const RadioButton: React.FC<RadioButtonProps> = ({
   const group = getRootProps();
 
   return (
-    <FormControl display="flex" alignItems="center" isInvalid={!!errors.name}>
+    <FormControl
+      display={isHorizontal ? 'flex' : ''}
+      alignItems={isHorizontal ? 'center' : ''}
+      isInvalid={!!errors.name}
+    >
       {label && (
-        <FormLabel htmlFor={name} color="gray.700" mb={0} minW={minWFormLabel}>
+        <FormLabel
+          htmlFor={name}
+          color="gray.700"
+          mb={isHorizontal ? 0 : '8px'}
+          minW={isHorizontal ? '150px' : ''}
+        >
           {label}
         </FormLabel>
       )}
