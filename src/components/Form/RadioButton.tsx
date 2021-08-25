@@ -2,6 +2,7 @@
 import {
   Box,
   FormControl,
+  FormErrorMessage,
   FormLabel,
   HStack,
   useRadio,
@@ -78,7 +79,11 @@ export const RadioButton: React.FC<RadioButtonProps> = ({
   const group = getRootProps();
 
   return (
-    <FormControl display={isHorizontal ? 'flex' : ''} alignItems="center">
+    <FormControl
+      display={isHorizontal ? 'flex' : ''}
+      alignItems="center"
+      isInvalid={!!errors.name}
+    >
       {label && (
         <FormLabel
           htmlFor={name}
@@ -99,6 +104,9 @@ export const RadioButton: React.FC<RadioButtonProps> = ({
           );
         })}
       </HStack>
+      <FormErrorMessage>
+        {errors[name] && errors[name].message}
+      </FormErrorMessage>
     </FormControl>
   );
 };
