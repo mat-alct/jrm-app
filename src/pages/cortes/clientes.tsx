@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { Button, HStack, Icon, useDisclosure, VStack } from '@chakra-ui/react';
 import { yupResolver } from '@hookform/resolvers/yup';
 import React from 'react';
@@ -38,7 +39,6 @@ const Clientes: React.FC = () => {
       value: Yup.string(),
       label: Yup.string(),
     }),
-    city: Yup.string(),
   });
 
   // Create Customer useForm
