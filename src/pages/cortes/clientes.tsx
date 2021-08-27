@@ -1,5 +1,12 @@
 /* eslint-disable no-console */
-import { Button, HStack, Icon, useDisclosure, VStack } from '@chakra-ui/react';
+import {
+  Button,
+  HStack,
+  Icon,
+  useDisclosure,
+  useToast,
+  VStack,
+} from '@chakra-ui/react';
 import { yupResolver } from '@hookform/resolvers/yup';
 import React from 'react';
 import { useForm } from 'react-hook-form';
@@ -9,7 +16,6 @@ import * as Yup from 'yup';
 import { Dashboard } from '../../components/Dashboard';
 import { Header } from '../../components/Dashboard/Content/Header';
 import { FormInput } from '../../components/Form/Input';
-import { RadioButton } from '../../components/Form/RadioButton';
 import { SelectWithSearch } from '../../components/Form/Select';
 import { FormModal } from '../../components/Modal/FormModal';
 import { Customer } from '../../types';
@@ -24,6 +30,8 @@ interface CreateCustomerProps {
 }
 
 const Clientes: React.FC = () => {
+  const toast = useToast();
+
   const {
     onOpen: onOpenCreateCustomer,
     isOpen: isOpenCreateCustomer,
@@ -54,9 +62,23 @@ const Clientes: React.FC = () => {
     resolver: yupResolver(validationCreateCustomerSchema),
   });
 
-  const handleCreateCustomer = (customerData: Customer) => {
-    onCloseCreateCustomer();
-    console.log(customerData);
+  const handleCreateCustomer = async (customerData: Customer) => {
+    try {
+      onCloseCreateCustomer();
+      console.log(customerData);
+
+      toast({
+        status: 'success',
+        title: 'Cliente criado com sucesso',
+        isClosable: true,
+      });
+    } catch {
+      toast({
+        status: 'error',
+        title: 'Erro ao criar cliente',
+        isClosable: true,
+      });
+    }
   };
 
   const areasToSelect = areas.map(area => {
