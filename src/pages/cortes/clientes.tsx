@@ -20,7 +20,6 @@ import { Header } from '../../components/Dashboard/Content/Header';
 import { FormInput } from '../../components/Form/Input';
 import { SelectWithSearch } from '../../components/Form/Select';
 import { FormModal } from '../../components/Modal/FormModal';
-import { Customer } from '../../types';
 import { areas } from '../../utils/listOfAreas';
 
 interface CreateCustomerProps {
@@ -104,10 +103,6 @@ const Clientes: React.FC = () => {
       const updatedAt = firebase.firestore.Timestamp.fromDate(new Date());
 
       console.log({ firstName, lastName, address, area, telephone });
-
-      if (address) {
-        console.log('sinistro');
-      }
 
       toast({
         status: 'success',
