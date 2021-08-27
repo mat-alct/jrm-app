@@ -8,6 +8,8 @@ import {
   VStack,
 } from '@chakra-ui/react';
 import { yupResolver } from '@hookform/resolvers/yup';
+import firebase from 'firebase/app';
+import Head from 'next/head';
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { RiAddLine, RiRefreshLine } from 'react-icons/ri';
@@ -26,7 +28,9 @@ interface CreateCustomerProps {
   lastName: string;
   telephone?: string;
   address?: string;
-  city?: string;
+  area?: {
+    value: string;
+  };
 }
 
 const Clientes: React.FC = () => {
@@ -62,10 +66,48 @@ const Clientes: React.FC = () => {
     resolver: yupResolver(validationCreateCustomerSchema),
   });
 
-  const handleCreateCustomer = async (customerData: Customer) => {
+  const handleCreateCustomer = async ({
+    firstName,
+    lastName,
+    address,
+    area,
+    telephone,
+  }: CreateCustomerProps) => {
     try {
       onCloseCreateCustomer();
-      console.log(customerData);
+
+      // Function to capitalize and strip first name and last name to save in database
+      const capitalizeAndStrip = (input: string) => {
+        if (input) {
+          const updatedInput = input
+            .replace(/\S+/g, txt => {
+              // uppercase first letter and add rest unchanged
+              return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+            })
+            .trim();
+
+          return updatedInput;
+        }
+
+        return input;
+      };
+
+      // Default props
+      const name = `${capitalizeAndStrip(firstName)} ${capitalizeAndStrip(
+        lastName,
+      )}`;
+      const telephoneAsArray = [telephone];
+      const areaAsConst = area?.value;
+      const city = 'Angra dos Reis';
+      const state = 'Rio de Janeiro';
+      const createdAt = firebase.firestore.Timestamp.fromDate(new Date());
+      const updatedAt = firebase.firestore.Timestamp.fromDate(new Date());
+
+      console.log({ firstName, lastName, address, area, telephone });
+
+      if (address) {
+        console.log('sinistro');
+      }
 
       toast({
         status: 'success',
@@ -89,78 +131,83 @@ const Clientes: React.FC = () => {
   });
 
   return (
-    <Dashboard>
-      <Header pageTitle="Clientes" isLoading={createCustomerIsSubmitting}>
-        <Button
-          colorScheme="gray"
-          leftIcon={<Icon as={RiRefreshLine} fontSize="20" />}
-        >
-          Atualizar
-        </Button>
-        <Button
-          colorScheme="orange"
-          leftIcon={<Icon as={RiAddLine} fontSize="20" />}
-          onClick={onOpenCreateCustomer}
-        >
-          Novo Cliente
-        </Button>
-      </Header>
+    <>
+      <Head>
+        <title>Clientes | JRM Compensados</title>
+      </Head>
+      <Dashboard>
+        <Header pageTitle="Clientes" isLoading={createCustomerIsSubmitting}>
+          <Button
+            colorScheme="gray"
+            leftIcon={<Icon as={RiRefreshLine} fontSize="20" />}
+          >
+            Atualizar
+          </Button>
+          <Button
+            colorScheme="orange"
+            leftIcon={<Icon as={RiAddLine} fontSize="20" />}
+            onClick={onOpenCreateCustomer}
+          >
+            Novo Cliente
+          </Button>
+        </Header>
 
-      {/* Modals */}
+        {/* Modals */}
 
-      {/* New Customer Modal */}
-      <FormModal
-        isOpen={isOpenCreateCustomer}
-        onClose={onCloseCreateCustomer}
-        title="Novo cliente"
-        onSubmit={createCustomerHandleSubmit(handleCreateCustomer)}
-      >
-        <VStack as="form" spacing={4} mx="auto" noValidate>
-          <HStack spacing={8}>
+        {/* New Customer Modal */}
+        <FormModal
+          isOpen={isOpenCreateCustomer}
+          onClose={onCloseCreateCustomer}
+          title="Novo cliente"
+          onSubmit={createCustomerHandleSubmit(handleCreateCustomer)}
+        >
+          <VStack as="form" spacing={4} mx="auto" noValidate>
+            <HStack spacing={8}>
+              <FormInput
+                {...createCustomerRegister('firstName')}
+                error={createCustomerErrors.firstName}
+                maxWidth="none"
+                name="firstName"
+                label="Nome *"
+                size="md"
+              />
+              <FormInput
+                {...createCustomerRegister('lastName')}
+                error={createCustomerErrors.lastName}
+                maxWidth="none"
+                name="lastName"
+                label="Sobrenome *"
+                size="md"
+              />
+            </HStack>
             <FormInput
-              {...createCustomerRegister('firstName')}
-              error={createCustomerErrors.firstName}
+              {...createCustomerRegister('telephone')}
+              error={createCustomerErrors.telephone}
               maxWidth="none"
-              name="firstName"
-              label="Nome *"
+              name="telephone"
+              label="Telefone"
               size="md"
             />
-            <FormInput
-              {...createCustomerRegister('lastName')}
-              error={createCustomerErrors.lastName}
-              maxWidth="none"
-              name="lastName"
-              label="Sobrenome *"
-              size="md"
-            />
-          </HStack>
-          <FormInput
-            {...createCustomerRegister('telephone')}
-            error={createCustomerErrors.telephone}
-            maxWidth="none"
-            name="telephone"
-            label="Telefone"
-            size="md"
-          />
 
-          <FormInput
-            {...createCustomerRegister('address')}
-            error={createCustomerErrors.address}
-            maxWidth="none"
-            name="address"
-            size="md"
-            label="Endereço"
-          />
-          <SelectWithSearch
-            options={areasToSelect}
-            control={createCustomerControl}
-            name="area"
-            label="Bairro"
-            hasDefaultValue="Japuíba"
-          />
-        </VStack>
-      </FormModal>
-    </Dashboard>
+            <FormInput
+              {...createCustomerRegister('address')}
+              error={createCustomerErrors.address}
+              maxWidth="none"
+              name="address"
+              size="md"
+              label="Endereço"
+            />
+            <SelectWithSearch
+              options={areasToSelect}
+              control={createCustomerControl}
+              name="area"
+              label="Bairro"
+              hasDefaultValue="Japuíba"
+            />
+          </VStack>
+        </FormModal>
+      </Dashboard>
+    </>
   );
 };
 
