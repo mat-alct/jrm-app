@@ -44,7 +44,7 @@ interface CreateCustomerProps {
 
 const Clientes: React.FC = () => {
   const toast = useToast();
-  const { createCustomer, getCustomers } = useCustomer();
+  const { createCustomer, getCustomers, removeCustomer } = useCustomer();
   const { data, refetch, isFetching, isLoading } = useQuery('customers', () =>
     getCustomers(),
   );
@@ -135,6 +135,22 @@ const Clientes: React.FC = () => {
         status: 'error',
         title: 'Erro ao criar cliente',
         isClosable: true,
+      });
+    }
+  };
+
+  const handleRemoveCustomer = async (id: string) => {
+    try {
+      await removeCustomer(id);
+
+      toast({
+        status: 'success',
+        title: 'Cliente removido com sucesso',
+      });
+    } catch {
+      toast({
+        status: 'error',
+        title: 'Erro ao remover cliente',
       });
     }
   };
@@ -257,6 +273,7 @@ const Clientes: React.FC = () => {
                         size="sm"
                         aria-label="Editar"
                         icon={<FaEdit />}
+                        disabled={createCustomerIsSubmitting}
                         // onClick={() => handleClickOnUpdatePrice(material.id)}
                       />
                       {/* Remove Material Button */}
@@ -264,10 +281,9 @@ const Clientes: React.FC = () => {
                         colorScheme="orange"
                         size="sm"
                         aria-label="Remover"
-                        // eslint-disable-next-line react/jsx-no-undef
                         icon={<FaTrash />}
-                        // onClick={() => handleRemoveMaterial(material.id)}
-                        // disabled={priceIsSubmitting}
+                        onClick={() => handleRemoveCustomer(customer.id)}
+                        disabled={createCustomerIsSubmitting}
                       />
                     </HStack>
                   </Td>
