@@ -6,7 +6,7 @@ import { v4 } from 'uuid';
 
 import { queryClient } from '../services/queryClient';
 import { Customer } from '../types';
-import { removeUndefined } from '../utils/removeUndefinedFromObjects';
+import { removeUndefinedAndEmptyFields } from '../utils/removeUndefinedAndEmpty';
 
 interface CustomerContext {
   createCustomer: (newCustomerData: Customer) => Promise<void>;
@@ -71,7 +71,7 @@ export const CustomerProvider: React.FC = ({ children }) => {
   // METHODS
 
   const createCustomer = async (newCustomerData: Customer) => {
-    removeUndefined(newCustomerData);
+    removeUndefinedAndEmptyFields(newCustomerData);
 
     await createCustomerMutation.mutateAsync(newCustomerData);
   };

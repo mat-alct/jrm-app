@@ -11,7 +11,7 @@ export interface Material {
 
 export interface Customer {
   name: string;
-  telephone?: string[];
+  telephone?: string;
   email?: string;
   address?: string;
   area?: string;
