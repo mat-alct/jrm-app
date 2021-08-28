@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import {
   Button,
   HStack,
@@ -13,6 +12,7 @@ import Head from 'next/head';
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { RiAddLine, RiRefreshLine } from 'react-icons/ri';
+import { useQuery } from 'react-query';
 import * as Yup from 'yup';
 
 import { Dashboard } from '../../components/Dashboard';
@@ -35,7 +35,10 @@ interface CreateCustomerProps {
 
 const Clientes: React.FC = () => {
   const toast = useToast();
-  const { createCustomer } = useCustomer();
+  const { createCustomer, getCustomers } = useCustomer();
+  const { data, refetch, isFetching, isLoading } = useQuery('customers', () =>
+    getCustomers(),
+  );
 
   const {
     onOpen: onOpenCreateCustomer,
@@ -102,17 +105,6 @@ const Clientes: React.FC = () => {
       const createdAt = firebase.firestore.Timestamp.fromDate(new Date());
       const updatedAt = firebase.firestore.Timestamp.fromDate(new Date());
 
-      console.log({
-        name,
-        createdAt,
-        updatedAt,
-        state,
-        city,
-        area: area?.value,
-        address,
-        telephone,
-      });
-
       await createCustomer({
         name,
         createdAt,
@@ -154,14 +146,17 @@ const Clientes: React.FC = () => {
         <Header pageTitle="Clientes" isLoading={createCustomerIsSubmitting}>
           <Button
             colorScheme="gray"
+            onClick={() => refetch()}
+            disabled={createCustomerIsSubmitting || isFetching}
             leftIcon={<Icon as={RiRefreshLine} fontSize="20" />}
           >
             Atualizar
           </Button>
           <Button
             colorScheme="orange"
-            leftIcon={<Icon as={RiAddLine} fontSize="20" />}
             onClick={onOpenCreateCustomer}
+            disabled={createCustomerIsSubmitting || isFetching}
+            leftIcon={<Icon as={RiAddLine} fontSize="20" />}
           >
             Novo Cliente
           </Button>
