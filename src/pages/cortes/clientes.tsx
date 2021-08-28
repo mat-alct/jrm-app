@@ -32,7 +32,6 @@ import { FormModal } from '../../components/Modal/FormModal';
 import { Pagination } from '../../components/Pagination';
 import { SearchBar } from '../../components/SearchBar';
 import { useCustomer } from '../../hooks/customer';
-import CustomersFromOldApi from '../../utils/dataFromOldApi/customers';
 import { areas } from '../../utils/listOfAreas';
 
 interface CreateCustomerProps {
@@ -46,15 +45,16 @@ interface CreateCustomerProps {
 }
 
 const Clientes: React.FC = () => {
-  const toast = useToast();
-  const { createCustomer, getCustomers, removeCustomer } = useCustomer();
-  const { data, refetch, isFetching, isLoading } = useQuery('customers', () =>
-    getCustomers(),
-  );
-
   const [page, setPage] = useState(1);
   const [searchFilter, setSearchFilter] = useState<string | undefined>(
     undefined,
+  );
+
+  const toast = useToast();
+  const { createCustomer, getCustomers, removeCustomer } = useCustomer();
+  const { data, refetch, isFetching, isLoading } = useQuery(
+    ['customers', page],
+    () => getCustomers(),
   );
 
   const handleSearch = (search: string) => {
@@ -178,32 +178,12 @@ const Clientes: React.FC = () => {
     }
   };
 
-  const handleAddOldCustomers = async () => {
-    CustomersFromOldApi.map(async customer => {
-      await createCustomer({
-        name: customer.name,
-        createdAt: firebase.firestore.Timestamp.fromDate(new Date()),
-        updatedAt: firebase.firestore.Timestamp.fromDate(new Date()),
-        state: customer.state,
-        city: customer.city,
-        area: customer.area,
-        address: customer.street,
-        telephone: customer.telephone[0],
-      });
-    });
-  };
-
   const areasToSelect = areas.map(area => {
     return {
       value: area,
       label: area,
     };
   });
-
-  const registersPerPage = 10;
-
-  const pageStart = (page - 1) * registersPerPage;
-  const pageEnd = page * registersPerPage;
 
   return (
     <>
@@ -215,9 +195,6 @@ const Clientes: React.FC = () => {
           pageTitle="Clientes"
           isLoading={isFetching || isLoading || createCustomerIsSubmitting}
         >
-          <Button onClick={handleAddOldCustomers}>
-            Adicionar dados antigos
-          </Button>
           <SearchBar handleSearch={handleSearch} />
           <Button
             colorScheme="gray"
@@ -305,89 +282,47 @@ const Clientes: React.FC = () => {
             </Tr>
           </Thead>
           <Tbody>
-            {data
-              ?.sort((a, b) => a.name.localeCompare(b.name))
-              .slice(pageStart, pageEnd)
-              .map(customer => {
-                if (searchFilter) {
-                  return (
-                    customer.name === searchFilter ||
-                    (customer.name
-                      .toLowerCase()
-                      .includes(searchFilter.toLowerCase()) && (
-                      <Tr key={customer.id}>
-                        <Td>{customer.name}</Td>
-                        <Td>{customer.telephone}</Td>
-                        <Td>{customer.address}</Td>
-                        <Td>{customer.area}</Td>
-                        <Td>
-                          <HStack spacing={4}>
-                            {/* Update Price button */}
-                            <IconButton
-                              colorScheme="orange"
-                              size="sm"
-                              aria-label="Editar"
-                              icon={<FaEdit />}
-                              disabled={createCustomerIsSubmitting}
-                              // onClick={() => handleClickOnUpdatePrice(material.id)}
-                            />
-                            {/* Remove Material Button */}
-                            <IconButton
-                              colorScheme="orange"
-                              size="sm"
-                              aria-label="Remover"
-                              icon={<FaTrash />}
-                              onClick={() => handleRemoveCustomer(customer.id)}
-                              disabled={createCustomerIsSubmitting}
-                            />
-                          </HStack>
-                        </Td>
-                      </Tr>
-                    ))
-                  );
-                }
-
-                return (
-                  <Tr key={customer.id}>
-                    <Td>{customer.name}</Td>
-                    <Td>{customer.telephone}</Td>
-                    <Td>{customer.address}</Td>
-                    <Td>{customer.area}</Td>
-                    <Td>
-                      <HStack spacing={4}>
-                        {/* Update Price button */}
-                        <IconButton
-                          colorScheme="orange"
-                          size="sm"
-                          aria-label="Editar"
-                          icon={<FaEdit />}
-                          disabled={createCustomerIsSubmitting}
-                          // onClick={() => handleClickOnUpdatePrice(material.id)}
-                        />
-                        {/* Remove Material Button */}
-                        <IconButton
-                          colorScheme="orange"
-                          size="sm"
-                          aria-label="Remover"
-                          icon={<FaTrash />}
-                          onClick={() => handleRemoveCustomer(customer.id)}
-                          disabled={createCustomerIsSubmitting}
-                        />
-                      </HStack>
-                    </Td>
-                  </Tr>
-                );
-              })}
+            {data?.map(customer => {
+              return (
+                <Tr key={customer.id}>
+                  <Td>{customer.name}</Td>
+                  <Td>{customer.telephone}</Td>
+                  <Td>{customer.address}</Td>
+                  <Td>{customer.area}</Td>
+                  <Td>
+                    <HStack spacing={4}>
+                      {/* Update Price button */}
+                      <IconButton
+                        colorScheme="orange"
+                        size="sm"
+                        aria-label="Editar"
+                        icon={<FaEdit />}
+                        disabled={createCustomerIsSubmitting}
+                        // onClick={() => handleClickOnUpdatePrice(material.id)}
+                      />
+                      {/* Remove Material Button */}
+                      <IconButton
+                        colorScheme="orange"
+                        size="sm"
+                        aria-label="Remover"
+                        icon={<FaTrash />}
+                        onClick={() => handleRemoveCustomer(customer.id)}
+                        disabled={createCustomerIsSubmitting}
+                      />
+                    </HStack>
+                  </Td>
+                </Tr>
+              );
+            })}
           </Tbody>
         </Table>
-        {!searchFilter && (
-          <Pagination
-            totalCountOfRegisters={data?.length || 1}
-            registersPerPage={registersPerPage}
-            onPageChange={setPage}
-            currentPage={page}
-          />
-        )}
+
+        <Pagination
+          totalCountOfRegisters={100}
+          registersPerPage={10}
+          onPageChange={setPage}
+          currentPage={page}
+        />
       </Dashboard>
     </>
   );

@@ -77,7 +77,12 @@ export const CustomerProvider: React.FC = ({ children }) => {
   };
 
   const getCustomers = async () => {
-    const response = await firebase.firestore().collection('customers').get();
+    const response = await firebase
+      .firestore()
+      .collection('customers')
+      .orderBy('name')
+      .limit(10)
+      .get();
 
     const allCustomers = response.docs.map(doc =>
       Object.assign(doc.data() as Customer, { id: doc.id }),
