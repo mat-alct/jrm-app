@@ -98,6 +98,19 @@ const Materiais = () => {
     try {
       onClose();
 
+      // Prevent two materials with same name
+      const doesMaterialExists = data?.find(
+        material => material.name === newMaterialData.name,
+      );
+
+      if (doesMaterialExists) {
+        toast({
+          status: 'info',
+          title: 'Dois clientes com o mesmo nome',
+        });
+        throw new Error();
+      }
+
       await createMaterial({
         ...newMaterialData,
         createdAt: firebase.firestore.Timestamp.fromDate(new Date()),

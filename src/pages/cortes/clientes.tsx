@@ -32,6 +32,7 @@ import { FormModal } from '../../components/Modal/FormModal';
 import { Pagination } from '../../components/Pagination';
 import { SearchBar } from '../../components/SearchBar';
 import { useCustomer } from '../../hooks/customer';
+import CustomersFromOldApi from '../../utils/dataFromOldApi/customers';
 import { areas } from '../../utils/listOfAreas';
 
 interface CreateCustomerProps {
@@ -177,6 +178,21 @@ const Clientes: React.FC = () => {
     }
   };
 
+  const handleAddOldCustomers = async () => {
+    CustomersFromOldApi.map(async customer => {
+      await createCustomer({
+        name: customer.name,
+        createdAt: firebase.firestore.Timestamp.fromDate(new Date()),
+        updatedAt: firebase.firestore.Timestamp.fromDate(new Date()),
+        state: customer.state,
+        city: customer.city,
+        area: customer.area,
+        address: customer.street,
+        telephone: customer.telephone[0],
+      });
+    });
+  };
+
   const areasToSelect = areas.map(area => {
     return {
       value: area,
@@ -199,6 +215,9 @@ const Clientes: React.FC = () => {
           pageTitle="Clientes"
           isLoading={isFetching || isLoading || createCustomerIsSubmitting}
         >
+          <Button onClick={handleAddOldCustomers}>
+            Adicionar dados antigos
+          </Button>
           <SearchBar handleSearch={handleSearch} />
           <Button
             colorScheme="gray"
