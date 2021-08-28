@@ -17,7 +17,7 @@ import {
 import { yupResolver } from '@hookform/resolvers/yup';
 import firebase from 'firebase/app';
 import Head from 'next/head';
-import React from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { FaEdit, FaTrash } from 'react-icons/fa';
 import { RiAddLine, RiRefreshLine } from 'react-icons/ri';
@@ -29,6 +29,7 @@ import { Header } from '../../components/Dashboard/Content/Header';
 import { FormInput } from '../../components/Form/Input';
 import { SelectWithSearch } from '../../components/Form/Select';
 import { FormModal } from '../../components/Modal/FormModal';
+import { Pagination } from '../../components/Pagination';
 import { useCustomer } from '../../hooks/customer';
 import { areas } from '../../utils/listOfAreas';
 
@@ -48,6 +49,8 @@ const Clientes: React.FC = () => {
   const { data, refetch, isFetching, isLoading } = useQuery('customers', () =>
     getCustomers(),
   );
+
+  const [page, setPage] = useState(1);
 
   const {
     onOpen: onOpenCreateCustomer,
@@ -173,6 +176,9 @@ const Clientes: React.FC = () => {
     };
   });
 
+  const pageStart = (page - 1) * 10;
+  const pageEnd = page * 10;
+
   return (
     <>
       <Head>
@@ -269,7 +275,7 @@ const Clientes: React.FC = () => {
             </Tr>
           </Thead>
           <Tbody>
-            {data?.map(customer => {
+            {data?.slice(pageStart, pageEnd).map(customer => {
               return (
                 <Tr key={customer.id}>
                   <Td>{customer.name}</Td>
@@ -303,6 +309,12 @@ const Clientes: React.FC = () => {
             })}
           </Tbody>
         </Table>
+        <Pagination
+          totalCountOfRegisters={data?.length || 1}
+          registersPerPage={10}
+          onPageChange={setPage}
+          currentPage={page}
+        />
       </Dashboard>
     </>
   );
