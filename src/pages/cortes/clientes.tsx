@@ -2,6 +2,14 @@ import {
   Button,
   HStack,
   Icon,
+  IconButton,
+  Table,
+  TableCaption,
+  Tbody,
+  Td,
+  Th,
+  Thead,
+  Tr,
   useDisclosure,
   useToast,
   VStack,
@@ -11,6 +19,7 @@ import firebase from 'firebase/app';
 import Head from 'next/head';
 import React from 'react';
 import { useForm } from 'react-hook-form';
+import { FaEdit, FaTrash } from 'react-icons/fa';
 import { RiAddLine, RiRefreshLine } from 'react-icons/ri';
 import { useQuery } from 'react-query';
 import * as Yup from 'yup';
@@ -143,7 +152,10 @@ const Clientes: React.FC = () => {
         <title>Clientes | JRM Compensados</title>
       </Head>
       <Dashboard>
-        <Header pageTitle="Clientes" isLoading={createCustomerIsSubmitting}>
+        <Header
+          pageTitle="Clientes"
+          isLoading={isFetching || isLoading || createCustomerIsSubmitting}
+        >
           <Button
             colorScheme="gray"
             onClick={() => refetch()}
@@ -216,6 +228,54 @@ const Clientes: React.FC = () => {
             />
           </VStack>
         </FormModal>
+
+        {/* Customers table */}
+        <Table variant="striped" colorScheme="orange">
+          <TableCaption>Lista de Clientes</TableCaption>
+          <Thead>
+            <Tr>
+              <Th>Nome</Th>
+              <Th>Telefone</Th>
+              <Th>Endereço</Th>
+              <Th>Bairro</Th>
+              <Th />
+            </Tr>
+          </Thead>
+          <Tbody>
+            {data?.map(customer => {
+              return (
+                <Tr key={customer.id}>
+                  <Td>{customer.name}</Td>
+                  <Td>{customer.telephone}</Td>
+                  <Td>{customer.address}</Td>
+                  <Td>{customer.area}</Td>
+                  <Td>
+                    <HStack spacing={4}>
+                      {/* Update Price button */}
+                      <IconButton
+                        colorScheme="orange"
+                        size="sm"
+                        aria-label="Editar"
+                        icon={<FaEdit />}
+                        // onClick={() => handleClickOnUpdatePrice(material.id)}
+                      />
+                      {/* Remove Material Button */}
+                      <IconButton
+                        colorScheme="orange"
+                        size="sm"
+                        aria-label="Remover"
+                        // eslint-disable-next-line react/jsx-no-undef
+                        icon={<FaTrash />}
+                        // onClick={() => handleRemoveMaterial(material.id)}
+                        // disabled={priceIsSubmitting}
+                      />
+                    </HStack>
+                  </Td>
+                </Tr>
+              );
+            })}
+          </Tbody>
+        </Table>
       </Dashboard>
     </>
   );
