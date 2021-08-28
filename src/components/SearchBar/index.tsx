@@ -28,7 +28,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ handleSearch }) => {
         variant="unstyled"
         px="4"
         ml="2"
-        placeholder="Buscar na plataforma"
+        placeholder="Buscar"
         _placeholder={{ color: 'gray.400' }}
         onChange={e => handleSearch(e.target.value)}
       />

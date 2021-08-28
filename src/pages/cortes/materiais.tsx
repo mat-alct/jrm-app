@@ -30,6 +30,7 @@ import { FormInput } from '../../components/Form/Input';
 import { FormModal } from '../../components/Modal/FormModal';
 import { useMaterial } from '../../hooks/material';
 import { Material } from '../../types';
+import materialsFromOldApi from '../../utils/dataFromOldApi/materials';
 
 interface handleUpdatePriceProps {
   newPrice: number;
@@ -113,9 +114,21 @@ const Materiais = () => {
         status: 'error',
         title: 'Erro ao criar material',
         isClosable: true,
-        description: 'Um erro ocorreu durante a criação do material',
       });
     }
+  };
+
+  const handleAddOldMaterials = async () => {
+    materialsFromOldApi.map(async material => {
+      await createMaterial({
+        name: material.name,
+        height: material.height,
+        width: material.width,
+        price: material.price,
+        createdAt: firebase.firestore.Timestamp.fromDate(new Date()),
+        updatedAt: firebase.firestore.Timestamp.fromDate(new Date()),
+      });
+    });
   };
 
   const handleRemoveMaterial = async (id: string) => {
@@ -177,6 +190,9 @@ const Materiais = () => {
           pageTitle="Materiais"
           isLoading={isFetching || isLoading || priceIsSubmitting}
         >
+          <Button onClick={handleAddOldMaterials}>
+            Adicionar materiais antigos
+          </Button>
           <Button
             colorScheme="gray"
             onClick={() => refetch()}
@@ -268,38 +284,40 @@ const Materiais = () => {
             </Tr>
           </Thead>
           <Tbody>
-            {data?.map(material => {
-              return (
-                <Tr key={material.id}>
-                  <Td>{material.name}</Td>
-                  <Td isNumeric>{material.width}</Td>
-                  <Td isNumeric>{material.height}</Td>
-                  <Td isNumeric>{`R$ ${material.price}`}</Td>
-                  <Td>
-                    <HStack spacing={4}>
-                      {/* Update Price button */}
-                      <IconButton
-                        colorScheme="orange"
-                        size="sm"
-                        aria-label="Editar"
-                        icon={<FaEdit />}
-                        onClick={() => handleClickOnUpdatePrice(material.id)}
-                        disabled={priceIsSubmitting}
-                      />
-                      {/* Remove Material Button */}
-                      <IconButton
-                        colorScheme="orange"
-                        size="sm"
-                        aria-label="Remover"
-                        icon={<FaTrash />}
-                        onClick={() => handleRemoveMaterial(material.id)}
-                        disabled={priceIsSubmitting}
-                      />
-                    </HStack>
-                  </Td>
-                </Tr>
-              );
-            })}
+            {data
+              ?.sort((a, b) => a.name.localeCompare(b.name))
+              .map(material => {
+                return (
+                  <Tr key={material.id}>
+                    <Td>{material.name}</Td>
+                    <Td isNumeric>{material.width}</Td>
+                    <Td isNumeric>{material.height}</Td>
+                    <Td isNumeric>{`R$ ${material.price}`}</Td>
+                    <Td>
+                      <HStack spacing={4}>
+                        {/* Update Price button */}
+                        <IconButton
+                          colorScheme="orange"
+                          size="sm"
+                          aria-label="Editar"
+                          icon={<FaEdit />}
+                          onClick={() => handleClickOnUpdatePrice(material.id)}
+                          disabled={priceIsSubmitting}
+                        />
+                        {/* Remove Material Button */}
+                        <IconButton
+                          colorScheme="orange"
+                          size="sm"
+                          aria-label="Remover"
+                          icon={<FaTrash />}
+                          onClick={() => handleRemoveMaterial(material.id)}
+                          disabled={priceIsSubmitting}
+                        />
+                      </HStack>
+                    </Td>
+                  </Tr>
+                );
+              })}
           </Tbody>
         </Table>
       </Dashboard>
