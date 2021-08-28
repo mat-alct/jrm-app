@@ -305,84 +305,89 @@ const Clientes: React.FC = () => {
             </Tr>
           </Thead>
           <Tbody>
-            {data?.slice(pageStart, pageEnd).map(customer => {
-              if (searchFilter) {
-                return (
-                  customer.name === searchFilter ||
-                  (customer.name
-                    .toLowerCase()
-                    .includes(searchFilter.toLowerCase()) && (
-                    <Tr key={customer.id}>
-                      <Td>{customer.name}</Td>
-                      <Td>{customer.telephone}</Td>
-                      <Td>{customer.address}</Td>
-                      <Td>{customer.area}</Td>
-                      <Td>
-                        <HStack spacing={4}>
-                          {/* Update Price button */}
-                          <IconButton
-                            colorScheme="orange"
-                            size="sm"
-                            aria-label="Editar"
-                            icon={<FaEdit />}
-                            disabled={createCustomerIsSubmitting}
-                            // onClick={() => handleClickOnUpdatePrice(material.id)}
-                          />
-                          {/* Remove Material Button */}
-                          <IconButton
-                            colorScheme="orange"
-                            size="sm"
-                            aria-label="Remover"
-                            icon={<FaTrash />}
-                            onClick={() => handleRemoveCustomer(customer.id)}
-                            disabled={createCustomerIsSubmitting}
-                          />
-                        </HStack>
-                      </Td>
-                    </Tr>
-                  ))
-                );
-              }
+            {data
+              ?.sort((a, b) => a.name.localeCompare(b.name))
+              .slice(pageStart, pageEnd)
+              .map(customer => {
+                if (searchFilter) {
+                  return (
+                    customer.name === searchFilter ||
+                    (customer.name
+                      .toLowerCase()
+                      .includes(searchFilter.toLowerCase()) && (
+                      <Tr key={customer.id}>
+                        <Td>{customer.name}</Td>
+                        <Td>{customer.telephone}</Td>
+                        <Td>{customer.address}</Td>
+                        <Td>{customer.area}</Td>
+                        <Td>
+                          <HStack spacing={4}>
+                            {/* Update Price button */}
+                            <IconButton
+                              colorScheme="orange"
+                              size="sm"
+                              aria-label="Editar"
+                              icon={<FaEdit />}
+                              disabled={createCustomerIsSubmitting}
+                              // onClick={() => handleClickOnUpdatePrice(material.id)}
+                            />
+                            {/* Remove Material Button */}
+                            <IconButton
+                              colorScheme="orange"
+                              size="sm"
+                              aria-label="Remover"
+                              icon={<FaTrash />}
+                              onClick={() => handleRemoveCustomer(customer.id)}
+                              disabled={createCustomerIsSubmitting}
+                            />
+                          </HStack>
+                        </Td>
+                      </Tr>
+                    ))
+                  );
+                }
 
-              return (
-                <Tr key={customer.id}>
-                  <Td>{customer.name}</Td>
-                  <Td>{customer.telephone}</Td>
-                  <Td>{customer.address}</Td>
-                  <Td>{customer.area}</Td>
-                  <Td>
-                    <HStack spacing={4}>
-                      {/* Update Price button */}
-                      <IconButton
-                        colorScheme="orange"
-                        size="sm"
-                        aria-label="Editar"
-                        icon={<FaEdit />}
-                        disabled={createCustomerIsSubmitting}
-                        // onClick={() => handleClickOnUpdatePrice(material.id)}
-                      />
-                      {/* Remove Material Button */}
-                      <IconButton
-                        colorScheme="orange"
-                        size="sm"
-                        aria-label="Remover"
-                        icon={<FaTrash />}
-                        onClick={() => handleRemoveCustomer(customer.id)}
-                        disabled={createCustomerIsSubmitting}
-                      />
-                    </HStack>
-                  </Td>
-                </Tr>
-              );
-            })}
+                return (
+                  <Tr key={customer.id}>
+                    <Td>{customer.name}</Td>
+                    <Td>{customer.telephone}</Td>
+                    <Td>{customer.address}</Td>
+                    <Td>{customer.area}</Td>
+                    <Td>
+                      <HStack spacing={4}>
+                        {/* Update Price button */}
+                        <IconButton
+                          colorScheme="orange"
+                          size="sm"
+                          aria-label="Editar"
+                          icon={<FaEdit />}
+                          disabled={createCustomerIsSubmitting}
+                          // onClick={() => handleClickOnUpdatePrice(material.id)}
+                        />
+                        {/* Remove Material Button */}
+                        <IconButton
+                          colorScheme="orange"
+                          size="sm"
+                          aria-label="Remover"
+                          icon={<FaTrash />}
+                          onClick={() => handleRemoveCustomer(customer.id)}
+                          disabled={createCustomerIsSubmitting}
+                        />
+                      </HStack>
+                    </Td>
+                  </Tr>
+                );
+              })}
           </Tbody>
         </Table>
-        <Pagination
-          totalCountOfRegisters={data?.length || 1}
-          registersPerPage={registersPerPage}
-          onPageChange={setPage}
-          currentPage={page}
-        />
+        {!searchFilter && (
+          <Pagination
+            totalCountOfRegisters={data?.length || 1}
+            registersPerPage={registersPerPage}
+            onPageChange={setPage}
+            currentPage={page}
+          />
+        )}
       </Dashboard>
     </>
   );
