@@ -2,7 +2,11 @@ import { Flex, Icon, Input } from '@chakra-ui/react';
 import React from 'react';
 import { RiSearchLine } from 'react-icons/ri';
 
-export const SearchBar = () => {
+interface SearchBarProps {
+  handleSearch: (search: string) => void;
+}
+
+export const SearchBar: React.FC<SearchBarProps> = ({ handleSearch }) => {
   return (
     <Flex
       as="label"
@@ -26,6 +30,7 @@ export const SearchBar = () => {
         ml="2"
         placeholder="Buscar na plataforma"
         _placeholder={{ color: 'gray.400' }}
+        onChange={e => handleSearch(e.target.value)}
       />
     </Flex>
   );

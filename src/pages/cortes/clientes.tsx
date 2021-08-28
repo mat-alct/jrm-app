@@ -30,6 +30,7 @@ import { FormInput } from '../../components/Form/Input';
 import { SelectWithSearch } from '../../components/Form/Select';
 import { FormModal } from '../../components/Modal/FormModal';
 import { Pagination } from '../../components/Pagination';
+import { SearchBar } from '../../components/SearchBar';
 import { useCustomer } from '../../hooks/customer';
 import { areas } from '../../utils/listOfAreas';
 
@@ -51,6 +52,13 @@ const Clientes: React.FC = () => {
   );
 
   const [page, setPage] = useState(1);
+  const [searchFilter, setSearchFilter] = useState<string | undefined>(
+    undefined,
+  );
+
+  const handleSearch = (search: string) => {
+    setSearchFilter(search);
+  };
 
   const {
     onOpen: onOpenCreateCustomer,
@@ -191,6 +199,7 @@ const Clientes: React.FC = () => {
           pageTitle="Clientes"
           isLoading={isFetching || isLoading || createCustomerIsSubmitting}
         >
+          <SearchBar handleSearch={handleSearch} />
           <Button
             colorScheme="gray"
             onClick={() => refetch()}
@@ -278,6 +287,44 @@ const Clientes: React.FC = () => {
           </Thead>
           <Tbody>
             {data?.slice(pageStart, pageEnd).map(customer => {
+              if (searchFilter) {
+                return (
+                  customer.name === searchFilter ||
+                  (customer.name
+                    .toLowerCase()
+                    .includes(searchFilter.toLowerCase()) && (
+                    <Tr key={customer.id}>
+                      <Td>{customer.name}</Td>
+                      <Td>{customer.telephone}</Td>
+                      <Td>{customer.address}</Td>
+                      <Td>{customer.area}</Td>
+                      <Td>
+                        <HStack spacing={4}>
+                          {/* Update Price button */}
+                          <IconButton
+                            colorScheme="orange"
+                            size="sm"
+                            aria-label="Editar"
+                            icon={<FaEdit />}
+                            disabled={createCustomerIsSubmitting}
+                            // onClick={() => handleClickOnUpdatePrice(material.id)}
+                          />
+                          {/* Remove Material Button */}
+                          <IconButton
+                            colorScheme="orange"
+                            size="sm"
+                            aria-label="Remover"
+                            icon={<FaTrash />}
+                            onClick={() => handleRemoveCustomer(customer.id)}
+                            disabled={createCustomerIsSubmitting}
+                          />
+                        </HStack>
+                      </Td>
+                    </Tr>
+                  ))
+                );
+              }
+
               return (
                 <Tr key={customer.id}>
                   <Td>{customer.name}</Td>
