@@ -47,14 +47,20 @@ export function Pagination({
       spacing="6"
     >
       <Box>
-        <strong>0</strong> - <strong>10</strong> de <strong>100</strong>
+        <strong>{(currentPage - 1) * registersPerPage}</strong> -{' '}
+        <strong>
+          {totalCountOfRegisters > registersPerPage
+            ? currentPage * registersPerPage
+            : totalCountOfRegisters}
+        </strong>{' '}
+        de <strong>{totalCountOfRegisters}</strong>
       </Box>
       <Stack direction="row" spacing="2">
         {currentPage > 1 + siblingsCount && (
           <>
             <PaginationItem onPageChange={onPageChange} number={1} />
             {currentPage > 2 + siblingsCount && (
-              <Text color="gray.300" width="8" textAlign="center">
+              <Text color="gray.900" width="8" textAlign="center">
                 ...
               </Text>
             )}
@@ -88,7 +94,7 @@ export function Pagination({
         {currentPage + siblingsCount < lastPage && (
           <>
             {currentPage + 1 + siblingsCount < lastPage && (
-              <Text color="gray.300" width="8" textAlign="center">
+              <Text color="gray.900" width="8" textAlign="center">
                 ...
               </Text>
             )}

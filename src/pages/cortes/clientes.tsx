@@ -176,8 +176,10 @@ const Clientes: React.FC = () => {
     };
   });
 
-  const pageStart = (page - 1) * 10;
-  const pageEnd = page * 10;
+  const registersPerPage = 10;
+
+  const pageStart = (page - 1) * registersPerPage;
+  const pageEnd = page * registersPerPage;
 
   return (
     <>
@@ -311,7 +313,7 @@ const Clientes: React.FC = () => {
         </Table>
         <Pagination
           totalCountOfRegisters={data?.length || 1}
-          registersPerPage={10}
+          registersPerPage={registersPerPage}
           onPageChange={setPage}
           currentPage={page}
         />
