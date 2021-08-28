@@ -20,6 +20,7 @@ import { Header } from '../../components/Dashboard/Content/Header';
 import { FormInput } from '../../components/Form/Input';
 import { SelectWithSearch } from '../../components/Form/Select';
 import { FormModal } from '../../components/Modal/FormModal';
+import { useCustomer } from '../../hooks/customer';
 import { areas } from '../../utils/listOfAreas';
 
 interface CreateCustomerProps {
@@ -34,6 +35,7 @@ interface CreateCustomerProps {
 
 const Clientes: React.FC = () => {
   const toast = useToast();
+  const { createCustomer } = useCustomer();
 
   const {
     onOpen: onOpenCreateCustomer,
@@ -95,14 +97,23 @@ const Clientes: React.FC = () => {
       const name = `${capitalizeAndStrip(firstName)} ${capitalizeAndStrip(
         lastName,
       )}`;
-      const telephoneAsArray = [telephone];
+      const telephoneAsArray = telephone ? [telephone] : '';
       const areaAsConst = area?.value;
       const city = 'Angra dos Reis';
       const state = 'Rio de Janeiro';
       const createdAt = firebase.firestore.Timestamp.fromDate(new Date());
       const updatedAt = firebase.firestore.Timestamp.fromDate(new Date());
 
-      console.log({ firstName, lastName, address, area, telephone });
+      await createCustomer({
+        name,
+        createdAt,
+        updatedAt,
+        state,
+        city,
+        area: area && areaAsConst,
+        address: address || undefined,
+        telephone: telephoneAsArray || undefined,
+      });
 
       toast({
         status: 'success',
