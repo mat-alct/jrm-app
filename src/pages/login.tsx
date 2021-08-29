@@ -84,6 +84,7 @@ const Login = () => {
                 type="email"
                 error={errors.email}
                 defaultValue="mateus@jrmcompensados.com"
+                maxWidth="350px"
               />
               <FormInput
                 {...register('password')}
@@ -92,6 +93,7 @@ const Login = () => {
                 type="password"
                 error={errors.password}
                 defaultValue="12345678"
+                maxWidth="350px"
               />
               <Button
                 isLoading={isSubmitting}

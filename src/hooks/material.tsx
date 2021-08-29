@@ -103,7 +103,11 @@ export const MaterialProvider: React.FC = ({ children }) => {
   };
 
   const getMaterials = async () => {
-    const response = await firebase.firestore().collection('materials').get();
+    const response = await firebase
+      .firestore()
+      .collection('materials')
+      .orderBy('name')
+      .get();
 
     const allMaterials = response.docs.map(doc =>
       Object.assign(doc.data() as Material, { id: doc.id }),
