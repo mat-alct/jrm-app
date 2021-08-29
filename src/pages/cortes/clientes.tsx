@@ -1,5 +1,6 @@
 import {
   Button,
+  Flex,
   HStack,
   Icon,
   IconButton,
@@ -30,7 +31,6 @@ import { FormInput } from '../../components/Form/Input';
 import { SelectWithSearch } from '../../components/Form/Select';
 import { FormModal } from '../../components/Modal/FormModal';
 import { Pagination } from '../../components/Pagination';
-import { SearchBar } from '../../components/SearchBar';
 import { useCustomer } from '../../hooks/customer';
 import { areas } from '../../utils/listOfAreas';
 
@@ -195,7 +195,6 @@ const Clientes: React.FC = () => {
           pageTitle="Clientes"
           isLoading={isFetching || isLoading || createCustomerIsSubmitting}
         >
-          <SearchBar handleSearch={handleSearch} />
           <Button
             colorScheme="gray"
             onClick={() => refetch()}
@@ -270,6 +269,20 @@ const Clientes: React.FC = () => {
         </FormModal>
 
         {/* Customers table */}
+        {/* Search */}
+        <Flex as="form" justify="flex-start" align="center" maxW="300px" mb={8}>
+          <FormInput
+            name="customerSearch"
+            placeholder="Digite o nome do cliente"
+            size="md"
+            borderRightRadius="none"
+          />
+          <Button colorScheme="orange" type="submit" borderLeftRadius="none">
+            Buscar
+          </Button>
+        </Flex>
+
+        {/* Table */}
         <Table variant="striped" colorScheme="orange">
           <TableCaption>Lista de Clientes</TableCaption>
           <Thead>
