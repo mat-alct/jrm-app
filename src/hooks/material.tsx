@@ -3,6 +3,7 @@ import firebase from 'firebase/app';
 import React, { createContext, useContext } from 'react';
 import { useMutation } from 'react-query';
 import { v4 } from 'uuid';
+import { string } from 'yup/lib/locale';
 
 import { queryClient } from '../services/queryClient';
 import { Material } from '../types';
@@ -11,9 +12,12 @@ interface UpdateMaterialPriceProps {
   id: string;
   newPrice: number;
 }
+
 interface MaterialContext {
   createMaterial: (newMaterialData: Material) => Promise<void>;
-  getMaterials: () => Promise<firebase.firestore.DocumentData | undefined>;
+  getMaterials: () => Promise<
+    (firebase.firestore.DocumentData & { id: string })[]
+  >;
   removeMaterial: (id: string) => Promise<void>;
   updateMaterialPrice: (data: UpdateMaterialPriceProps) => Promise<void>;
 }
@@ -36,16 +40,21 @@ export const MaterialProvider: React.FC = ({ children }) => {
         .set({ ...materialData });
 
       try {
+        const interfaceData = await firebase
+          .firestore()
+          .collection('interfaces')
+          .doc('materials')
+          .get();
+
         await firebase
           .firestore()
           .collection('interfaces')
           .doc('materials')
           .update({
-            [id]: {
-              id,
-              name: materialData.name,
-              price: materialData.price,
-            },
+            materials: [
+              ...interfaceData.data()?.materials,
+              { id, name: materialData.name, price: materialData.price },
+            ],
           });
       } catch {
         await firebase.firestore().collection('materials').doc(id).delete();
@@ -119,13 +128,13 @@ export const MaterialProvider: React.FC = ({ children }) => {
   };
 
   const getMaterials = async () => {
-    const allMaterials = await firebase
-      .firestore()
-      .collection('interfaces')
-      .doc('materials')
-      .get();
+    const response = await firebase.firestore().collection('materials').get();
 
-    return allMaterials.data();
+    const allMaterials = response.docs.map(doc =>
+      Object.assign(doc.data() as Material, { id: doc.id }),
+    );
+
+    return allMaterials;
   };
 
   const removeMaterial = async (id: string) => {
