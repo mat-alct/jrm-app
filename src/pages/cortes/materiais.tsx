@@ -30,6 +30,7 @@ import { FormInput } from '../../components/Form/Input';
 import { FormModal } from '../../components/Modal/FormModal';
 import { useMaterial } from '../../hooks/material';
 import { Material } from '../../types';
+import oldMaterials from '../../utils/dataFromOldApi/materials';
 
 interface handleUpdatePriceProps {
   newPrice: number;
@@ -179,6 +180,25 @@ const Materiais = () => {
     }
   };
 
+  const handleAddOldMaterials = async () => {
+    let timer = 0;
+
+    oldMaterials.map(async material => {
+      setTimeout(async () => {
+        await createMaterial({
+          name: material.name,
+          price: material.price,
+          height: material.height,
+          width: material.width,
+          createdAt: firebase.firestore.Timestamp.fromDate(new Date()),
+          updatedAt: firebase.firestore.Timestamp.fromDate(new Date()),
+        });
+      }, 2000 * timer);
+
+      timer += 1;
+    });
+  };
+
   return (
     <>
       <Head>
@@ -189,6 +209,9 @@ const Materiais = () => {
           pageTitle="Materiais"
           isLoading={isFetching || isLoading || priceIsSubmitting}
         >
+          <Button onClick={handleAddOldMaterials}>
+            Adicionar materiais antigos
+          </Button>
           <Button
             colorScheme="gray"
             onClick={() => refetch()}
