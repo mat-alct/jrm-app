@@ -273,7 +273,8 @@ const Materiais = () => {
           <Thead>
             <Tr>
               <Th>Material</Th>
-
+              <Th isNumeric>Largura (mm)</Th>
+              <Th isNumeric>Altura (mm)</Th>
               <Th isNumeric>Preço</Th>
               <Th />
             </Tr>
@@ -285,6 +286,8 @@ const Materiais = () => {
                 return (
                   <Tr key={material.id}>
                     <Td>{material.name}</Td>
+                    <Td isNumeric>{material.width}</Td>
+                    <Td isNumeric>{material.height}</Td>
                     <Td isNumeric>{`R$ ${material.price}`}</Td>
                     <Td>
                       <HStack spacing={4}>

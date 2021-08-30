@@ -90,6 +90,28 @@ export const MaterialProvider: React.FC = ({ children }) => {
 
   const removeMaterialMutation = useMutation(
     async (id: string) => {
+      // Remove Material from interface
+      const interfaceData = await firebase
+        .firestore()
+        .collection('interfaces')
+        .doc('materials')
+        .get();
+
+      const interfaceFiltered = interfaceData
+        .data()
+        ?.materials.filter(
+          (material: MaterialInterfaceProps) => material.id !== id,
+        );
+
+      await firebase
+        .firestore()
+        .collection('interfaces')
+        .doc('materials')
+        .update({
+          materials: [...interfaceFiltered],
+        });
+
+      // Remove Material from materials collection
       await firebase.firestore().collection('materials').doc(id).delete();
     },
     {
