@@ -69,6 +69,8 @@ export const MaterialProvider: React.FC = ({ children }) => {
           });
       } catch {
         await firebase.firestore().collection('materials').doc(id).delete();
+
+        throw new Error();
       }
     },
     {
@@ -91,28 +93,45 @@ export const MaterialProvider: React.FC = ({ children }) => {
   const removeMaterialMutation = useMutation(
     async (id: string) => {
       // Remove Material from interface
-      const interfaceData = await firebase
-        .firestore()
-        .collection('interfaces')
-        .doc('materials')
-        .get();
+      try {
+        const interfaceData = await firebase
+          .firestore()
+          .collection('interfaces')
+          .doc('materials')
+          .get();
 
-      const interfaceFiltered = interfaceData
-        .data()
-        ?.materials.filter(
-          (material: MaterialInterfaceProps) => material.id !== id,
-        );
+        const interfaceFiltered = interfaceData
+          .data()
+          ?.materials.filter(
+            (material: MaterialInterfaceProps) => material.id !== id,
+          );
 
-      await firebase
-        .firestore()
-        .collection('interfaces')
-        .doc('materials')
-        .update({
-          materials: [...interfaceFiltered],
-        });
+        await firebase
+          .firestore()
+          .collection('interfaces')
+          .doc('materials')
+          .update({
+            materials: [...interfaceFiltered],
+          });
 
-      // Remove Material from materials collection
-      await firebase.firestore().collection('materials').doc(id).delete();
+        try {
+          // Remove Material from materials collection
+          await firebase.firestore().collection('materials').doc(id).delete();
+        } catch {
+          // Add removed material from interface again
+          await firebase
+            .firestore()
+            .collection('interfaces')
+            .doc('materials')
+            .update({
+              materials: [...interfaceData.data()?.materials],
+            });
+
+          throw new Error();
+        }
+      } catch {
+        throw new Error();
+      }
     },
     {
       onSuccess: () => {
