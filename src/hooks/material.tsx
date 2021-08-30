@@ -3,7 +3,6 @@ import firebase from 'firebase/app';
 import React, { createContext, useContext } from 'react';
 import { useMutation } from 'react-query';
 import { v4 } from 'uuid';
-import { string } from 'yup/lib/locale';
 
 import { queryClient } from '../services/queryClient';
 import { Material } from '../types';
@@ -13,11 +12,15 @@ interface UpdateMaterialPriceProps {
   newPrice: number;
 }
 
+interface MaterialInterfaceProps {
+  id: string;
+  name: string;
+  price: string;
+}
+
 interface MaterialContext {
   createMaterial: (newMaterialData: Material) => Promise<void>;
-  getMaterials: () => Promise<
-    (firebase.firestore.DocumentData & { id: string })[]
-  >;
+  getMaterials: () => Promise<MaterialInterfaceProps[]>;
   removeMaterial: (id: string) => Promise<void>;
   updateMaterialPrice: (data: UpdateMaterialPriceProps) => Promise<void>;
 }
@@ -128,11 +131,13 @@ export const MaterialProvider: React.FC = ({ children }) => {
   };
 
   const getMaterials = async () => {
-    const response = await firebase.firestore().collection('materials').get();
+    const response = await firebase
+      .firestore()
+      .collection('interfaces')
+      .doc('materials')
+      .get();
 
-    const allMaterials = response.docs.map(doc =>
-      Object.assign(doc.data() as Material, { id: doc.id }),
-    );
+    const allMaterials: MaterialInterfaceProps[] = response.data()?.materials;
 
     return allMaterials;
   };
