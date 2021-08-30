@@ -15,6 +15,8 @@ interface UpdateMaterialPriceProps {
 interface MaterialInterfaceProps {
   id: string;
   name: string;
+  width: number;
+  height: number;
   price: string;
 }
 
@@ -56,7 +58,13 @@ export const MaterialProvider: React.FC = ({ children }) => {
           .update({
             materials: [
               ...interfaceData.data()?.materials,
-              { id, name: materialData.name, price: materialData.price },
+              {
+                id,
+                name: materialData.name,
+                width: materialData.width,
+                height: materialData.height,
+                price: materialData.price,
+              },
             ],
           });
       } catch {
