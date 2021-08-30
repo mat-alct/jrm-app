@@ -13,9 +13,7 @@ interface UpdateMaterialPriceProps {
 }
 interface MaterialContext {
   createMaterial: (newMaterialData: Material) => Promise<void>;
-  getMaterials: () => Promise<
-    (firebase.firestore.DocumentData & { id: string })[]
-  >;
+  getMaterials: () => Promise<firebase.firestore.DocumentData | undefined>;
   removeMaterial: (id: string) => Promise<void>;
   updateMaterialPrice: (data: UpdateMaterialPriceProps) => Promise<void>;
 }
@@ -44,7 +42,9 @@ export const MaterialProvider: React.FC = ({ children }) => {
           .doc('materials')
           .update({
             [id]: {
+              id,
               name: materialData.name,
+              price: materialData.price,
             },
           });
       } catch {
@@ -119,17 +119,13 @@ export const MaterialProvider: React.FC = ({ children }) => {
   };
 
   const getMaterials = async () => {
-    const response = await firebase
+    const allMaterials = await firebase
       .firestore()
-      .collection('materials')
-      .orderBy('name')
+      .collection('interfaces')
+      .doc('materials')
       .get();
 
-    const allMaterials = response.docs.map(doc =>
-      Object.assign(doc.data() as Material, { id: doc.id }),
-    );
-
-    return allMaterials;
+    return allMaterials.data();
   };
 
   const removeMaterial = async (id: string) => {
