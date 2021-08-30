@@ -29,11 +29,27 @@ export const MaterialProvider: React.FC = ({ children }) => {
 
   const createMaterialMutation = useMutation(
     async (materialData: Material) => {
+      const id = v4();
+
       await firebase
         .firestore()
         .collection('materials')
-        .doc(v4())
-        .set(materialData);
+        .doc(id)
+        .set({ ...materialData });
+
+      try {
+        await firebase
+          .firestore()
+          .collection('interfaces')
+          .doc('materials')
+          .update({
+            [id]: {
+              name: materialData.name,
+            },
+          });
+      } catch {
+        await firebase.firestore().collection('materials').doc(id).delete();
+      }
     },
     {
       onSuccess: () => {

@@ -126,17 +126,6 @@ const Clientes: React.FC = () => {
       const createdAt = firebase.firestore.Timestamp.fromDate(new Date());
       const updatedAt = firebase.firestore.Timestamp.fromDate(new Date());
 
-      // Prevent two customers with same name
-      const doesCustomerExists = data?.find(customer => customer.name === name);
-
-      if (doesCustomerExists) {
-        toast({
-          status: 'info',
-          title: 'Dois clientes com o mesmo nome',
-        });
-        throw new Error();
-      }
-
       await createCustomer({
         name,
         createdAt,
