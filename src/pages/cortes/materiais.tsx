@@ -29,6 +29,7 @@ import * as Yup from 'yup';
 import { Dashboard } from '../../components/Dashboard';
 import { Header } from '../../components/Dashboard/Content/Header';
 import { FormInput } from '../../components/Form/Input';
+import { RadioButton } from '../../components/Form/RadioButton';
 import { FormModal } from '../../components/Modal/FormModal';
 import { useMaterial } from '../../hooks/material';
 import { Material } from '../../types';
@@ -82,6 +83,7 @@ const Materiais = () => {
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<Material>({
     resolver: yupResolver(validationSchema),
@@ -210,28 +212,44 @@ const Materiais = () => {
               maxWidth="none"
               name="name"
               label="Material"
+              size="md"
             />
-            <FormInput
-              {...register('width')}
-              error={errors.width}
-              maxWidth="none"
-              name="width"
-              label="Largura"
-            />
-            <FormInput
-              {...register('height')}
-              error={errors.height}
-              maxWidth="none"
-              name="height"
-              label="Altura"
-            />
-            <FormInput
-              {...register('price')}
-              error={errors.price}
-              maxWidth="none"
-              name="price"
-              label="Preço"
-            />
+            <HStack spacing={8}>
+              <FormInput
+                {...register('width')}
+                error={errors.width}
+                maxWidth="none"
+                name="width"
+                label="Largura"
+                size="md"
+              />
+              <FormInput
+                {...register('height')}
+                error={errors.height}
+                maxWidth="none"
+                name="height"
+                label="Altura"
+                size="md"
+              />
+            </HStack>
+
+            <HStack spacing={8}>
+              <FormInput
+                {...register('price')}
+                error={errors.price}
+                maxWidth="none"
+                name="price"
+                label="Preço"
+                size="md"
+              />
+              <RadioButton
+                name="type"
+                options={['MDF', 'Compensado']}
+                control={control}
+                label="Tipo de material"
+                defaultValue="MDF"
+              />
+            </HStack>
           </VStack>
         </FormModal>
 
