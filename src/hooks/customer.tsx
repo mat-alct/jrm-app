@@ -10,9 +10,9 @@ import { removeUndefinedAndEmptyFields } from '../utils/removeUndefinedAndEmpty'
 
 interface CustomerContext {
   createCustomer: (newCustomerData: Customer) => Promise<void>;
-  getCustomers: () => Promise<
-    (firebase.firestore.DocumentData & { id: string })[]
-  >;
+  getCustomers: (
+    searchFilter: string | undefined,
+  ) => Promise<(firebase.firestore.DocumentData & { id: string })[]>;
   removeCustomer: (id: string) => Promise<void>;
 }
 
@@ -76,19 +76,39 @@ export const CustomerProvider: React.FC = ({ children }) => {
     await createCustomerMutation.mutateAsync(newCustomerData);
   };
 
-  const getCustomers = async () => {
-    const response = await firebase
-      .firestore()
-      .collection('customers')
-      .orderBy('name')
-      .limit(10)
-      .get();
+  const getCustomers = async (searchFilter: string | undefined) => {
+    const capitalizeAndStrip = (input: string) => {
+      if (input) {
+        const updatedInput = input
+          .replace(/\S+/g, txt => {
+            // uppercase first letter and add rest unchanged
+            return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+          })
+          .trim();
 
-    const allCustomers = response.docs.map(doc =>
-      Object.assign(doc.data() as Customer, { id: doc.id }),
-    );
+        return updatedInput;
+      }
 
-    return allCustomers;
+      return input;
+    };
+
+    if (searchFilter) {
+      const response = await firebase
+        .firestore()
+        .collection('customers')
+        .orderBy('name')
+        .startAt(capitalizeAndStrip(searchFilter))
+        .limit(3)
+        .get();
+
+      const allCustomers = response.docs.map(doc =>
+        Object.assign(doc.data() as Customer, { id: doc.id }),
+      );
+
+      return allCustomers;
+    }
+
+    return [];
   };
 
   const removeCustomer = async (id: string) => {

@@ -59,7 +59,7 @@ const Clientes: React.FC = () => {
   const { createCustomer, getCustomers, removeCustomer } = useCustomer();
   const { data, refetch, isFetching, isLoading } = useQuery(
     ['customers', searchFilter],
-    () => getCustomers(),
+    () => getCustomers(searchFilter),
   );
 
   const handleSearch = (search: SearchProps) => {
