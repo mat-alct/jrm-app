@@ -49,7 +49,7 @@ interface RadioButtonProps {
   options: string[];
   label?: string;
   minWFormLabel?: string;
-  control?: Control<any>;
+  control: Control<any>;
   isHorizontal?: boolean;
 }
 

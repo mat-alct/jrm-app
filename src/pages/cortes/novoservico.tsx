@@ -25,12 +25,15 @@ import {
   Tr,
   VStack,
 } from '@chakra-ui/react';
+import { yupResolver } from '@hookform/resolvers/yup';
 import { getDay } from 'date-fns';
 import ptBR from 'date-fns/locale/pt-BR';
 import Head from 'next/head';
 import React, { useState } from 'react';
 import DatePicker, { registerLocale } from 'react-datepicker';
+import { useForm } from 'react-hook-form';
 import { FaEdit, FaTrash } from 'react-icons/fa';
+import * as Yup from 'yup';
 
 import { Dashboard } from '../../components/Dashboard';
 import { FormInput } from '../../components/Form/Input';
@@ -38,8 +41,28 @@ import { RadioButton } from '../../components/Form/RadioButton';
 import { SelectWithSearch } from '../../components/Form/Select';
 import { areas } from '../../utils/listOfAreas';
 
+interface CreateOrderProps {
+  name: string;
+}
+
 const NovoServiço = () => {
   const [startDate, setStartDate] = useState<Date | null>(new Date());
+
+  const validationCreateOrderSchema = Yup.object().shape({
+    name: Yup.string(),
+  });
+
+  const {
+    register: createOrderRegister,
+    handleSubmit: createOrderHandleSubmit,
+    control: createOrderControl,
+    formState: {
+      errors: createOrderErrors,
+      isSubmitting: createOrderIsSubmitting,
+    },
+  } = useForm<CreateOrderProps>({
+    resolver: yupResolver(validationCreateOrderSchema),
+  });
 
   const isWeekday = (date: Date) => {
     const day = getDay(date);
@@ -125,26 +148,26 @@ const NovoServiço = () => {
             <RadioButton
               name="orderType"
               options={['Produção', 'Orçamento']}
-              changeFunction={() => console.log('ok')}
               label="Tipo do pedido:"
+              control={createOrderControl}
             />
             <RadioButton
               name="orderStore"
               options={['Japuíba', 'Frade']}
-              changeFunction={() => console.log('ok')}
               label="Loja do pedido:"
+              control={createOrderControl}
             />
             <RadioButton
               name="deliveryType"
               options={['Retirar na Loja', 'Entrega']}
-              changeFunction={() => console.log('ok')}
               label="Tipo de Entrega:"
+              control={createOrderControl}
             />
             <RadioButton
               name="paymentStatus"
               options={['Receber na Entrega', 'Pago']}
-              changeFunction={() => console.log('ok')}
               label="Pagamento:"
+              control={createOrderControl}
             />
 
             <FormControl display="flex" flexDirection="row">
@@ -166,9 +189,9 @@ const NovoServiço = () => {
               <RadioButton
                 name="discount"
                 options={['Balcão', 'Marceneiro', 'Sem acréscimo']}
-                changeFunction={() => console.log('ok')}
                 label="Desconto:"
                 defaultValue="Balcão"
+                control={createOrderControl}
               />
               <Text w="100%" color="green.500" fontWeight="700" fontSize="lg">
                 R$ 20,00
@@ -194,6 +217,8 @@ const NovoServiço = () => {
           </HStack>
           <HStack mt={8} align="center">
             <SelectWithSearch
+              name="material"
+              control={createOrderControl}
               isClearable
               placeholder="Material"
               minW="450px"
@@ -216,7 +241,8 @@ const NovoServiço = () => {
             />
             <FormInput size="md" name="sideA" placeholder="Medida A" />
             <SelectWithSearch
-              hasDefaultValue
+              control={createOrderControl}
+              name="borderA"
               minW="75px"
               options={[
                 {
@@ -231,7 +257,8 @@ const NovoServiço = () => {
             />
             <FormInput size="md" name="sideB" placeholder="Medida B" />
             <SelectWithSearch
-              hasDefaultValue
+              name="borderB"
+              control={createOrderControl}
               minW="75px"
               options={[
                 {

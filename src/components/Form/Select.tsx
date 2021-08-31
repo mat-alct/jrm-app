@@ -27,7 +27,6 @@ interface SelectWithSearchProps extends BoxProps {
 export const SelectWithSearch: React.FC<SelectWithSearchProps> = ({
   options,
   placeholder,
-
   isClearable = false,
   label,
   name,
