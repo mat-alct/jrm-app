@@ -51,8 +51,9 @@ const Materiais = () => {
   const { createMaterial, getMaterials, removeMaterial, updateMaterialPrice } =
     useMaterial();
   const toast = useToast();
-  const { data, refetch, isFetching, isLoading } = useQuery('materials', () =>
-    getMaterials(),
+  const { data, refetch, isFetching, isLoading } = useQuery(
+    ['materials', type],
+    () => getMaterials(type),
   );
 
   const [updatingMaterialId, setUpdatingMaterialId] = useState('');
