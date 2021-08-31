@@ -15,15 +15,15 @@ initAuth();
 
 function MyApp({ Component, pageProps }: AppProps) {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <ChakraProvider theme={theme}>
+    <ChakraProvider theme={theme}>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
           <Component {...pageProps} />
-        </ChakraProvider>
 
-        <ReactQueryDevtools />
-      </AuthProvider>
-    </QueryClientProvider>
+          <ReactQueryDevtools />
+        </AuthProvider>
+      </QueryClientProvider>
+    </ChakraProvider>
   );
 }
 export default MyApp;

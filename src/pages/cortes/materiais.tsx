@@ -71,6 +71,7 @@ const Materiais = () => {
     price: Yup.number()
       .required('Preço obrigatório')
       .typeError('Preço precisa ser um número'),
+    type: Yup.string().required('Tipo de material obrigatório'),
   });
 
   const validationPriceSchema = Yup.object().shape({
@@ -247,7 +248,6 @@ const Materiais = () => {
                 options={['MDF', 'Compensado']}
                 control={control}
                 label="Tipo de material"
-                defaultValue="MDF"
               />
             </HStack>
           </VStack>
