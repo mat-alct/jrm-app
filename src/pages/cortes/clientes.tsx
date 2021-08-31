@@ -45,6 +45,10 @@ interface CreateCustomerProps {
   };
 }
 
+interface SearchProps {
+  customerName: string;
+}
+
 const Clientes: React.FC = () => {
   const [page, setPage] = useState(1);
   const [searchFilter, setSearchFilter] = useState<string | undefined>(
@@ -54,12 +58,12 @@ const Clientes: React.FC = () => {
   const toast = useToast();
   const { createCustomer, getCustomers, removeCustomer } = useCustomer();
   const { data, refetch, isFetching, isLoading } = useQuery(
-    ['customers', page],
+    ['customers', searchFilter],
     () => getCustomers(),
   );
 
-  const handleSearch = (search: string) => {
-    setSearchFilter(search);
+  const handleSearch = (search: SearchProps) => {
+    setSearchFilter(search.customerName);
   };
 
   const {
@@ -79,6 +83,10 @@ const Clientes: React.FC = () => {
     }),
   });
 
+  const validationSearchSchema = Yup.object().shape({
+    customerName: Yup.string().required(),
+  });
+
   // Create Customer useForm
   const {
     register: createCustomerRegister,
@@ -90,6 +98,15 @@ const Clientes: React.FC = () => {
     },
   } = useForm<CreateCustomerProps>({
     resolver: yupResolver(validationCreateCustomerSchema),
+  });
+
+  // Create Customer Search useForm
+  const {
+    register: searchRegister,
+    handleSubmit: searchHandleSubmit,
+    formState: { errors: searchErrors, isSubmitting: searchIsSubmitting },
+  } = useForm<SearchProps>({
+    resolver: yupResolver(validationSearchSchema),
   });
 
   const handleCreateCustomer = async ({
@@ -185,6 +202,31 @@ const Clientes: React.FC = () => {
           pageTitle="Clientes"
           isLoading={isFetching || isLoading || createCustomerIsSubmitting}
         >
+          {/* Search */}
+          <Flex
+            as="form"
+            justify="flex-start"
+            align="center"
+            maxW="300px"
+            onSubmit={searchHandleSubmit(handleSearch)}
+          >
+            <FormInput
+              {...searchRegister('customerName')}
+              name="customerName"
+              placeholder="Digite o nome do cliente"
+              size="md"
+              borderRightRadius="none"
+              error={searchErrors.customerName}
+            />
+            <Button
+              isDisabled={searchIsSubmitting}
+              colorScheme="orange"
+              type="submit"
+              borderLeftRadius="none"
+            >
+              Buscar
+            </Button>
+          </Flex>
           <Button
             colorScheme="gray"
             onClick={() => refetch()}
@@ -259,18 +301,6 @@ const Clientes: React.FC = () => {
         </FormModal>
 
         {/* Customers table */}
-        {/* Search */}
-        <Flex as="form" justify="flex-start" align="center" maxW="300px" mb={4}>
-          <FormInput
-            name="customerSearch"
-            placeholder="Digite o nome do cliente"
-            size="md"
-            borderRightRadius="none"
-          />
-          <Button colorScheme="orange" type="submit" borderLeftRadius="none">
-            Buscar
-          </Button>
-        </Flex>
 
         {/* If not searched */}
         {!searchFilter && (
