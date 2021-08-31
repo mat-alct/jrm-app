@@ -45,10 +45,9 @@ const Login = () => {
     } catch (err) {
       toast({
         status: 'error',
-        isClosable: true,
+
         title: 'Erro de autenticação',
         description: 'Email ou senha incorretos',
-        position: 'top-right',
       });
     }
   };
@@ -83,8 +82,6 @@ const Login = () => {
                 placeholder="Email"
                 type="email"
                 error={errors.email}
-                defaultValue="mateus@jrmcompensados.com"
-                maxWidth="350px"
               />
               <FormInput
                 {...register('password')}
@@ -92,8 +89,6 @@ const Login = () => {
                 placeholder="Senha"
                 type="password"
                 error={errors.password}
-                defaultValue="12345678"
-                maxWidth="350px"
               />
               <Button
                 isLoading={isSubmitting}

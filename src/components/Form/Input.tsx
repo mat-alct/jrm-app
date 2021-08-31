@@ -12,15 +12,14 @@ type InputProps = ChakraInputProps & {
   name: string;
   label?: string;
   error?: FieldError;
-  maxW?: string;
 };
 
 const InputBase: ForwardRefRenderFunction<HTMLInputElement, InputProps> = (
-  { name, label, error, maxW, ...rest },
+  { name, label, error, ...rest },
   ref,
 ) => {
   return (
-    <FormControl isInvalid={!!error} w="100%" maxW={maxW}>
+    <FormControl isInvalid={!!error}>
       {label && (
         <FormLabel color="gray.700" htmlFor={name}>
           {label}
@@ -31,8 +30,6 @@ const InputBase: ForwardRefRenderFunction<HTMLInputElement, InputProps> = (
         id={name}
         name={name}
         focusBorderColor="orange.500"
-        size="lg"
-        maxW="250px"
         {...rest}
       />
       {!!error && (
