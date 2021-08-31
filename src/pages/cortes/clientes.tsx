@@ -84,7 +84,7 @@ const Clientes: React.FC = () => {
   });
 
   const validationSearchSchema = Yup.object().shape({
-    customerName: Yup.string().required(),
+    customerName: Yup.string(),
   });
 
   // Create Customer useForm
