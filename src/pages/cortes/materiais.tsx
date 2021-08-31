@@ -30,7 +30,6 @@ import { FormInput } from '../../components/Form/Input';
 import { FormModal } from '../../components/Modal/FormModal';
 import { useMaterial } from '../../hooks/material';
 import { Material } from '../../types';
-import oldMaterials from '../../utils/dataFromOldApi/materials';
 
 interface handleUpdatePriceProps {
   newPrice: number;
@@ -52,7 +51,7 @@ const Materiais = () => {
 
   const [updatingMaterialId, setUpdatingMaterialId] = useState('');
 
-  const validationNewMaterialSchema = Yup.object().shape({
+  const validationSchema = Yup.object().shape({
     name: Yup.string().required('Material obrigatório'),
     width: Yup.number()
       .max(2750)
@@ -81,7 +80,7 @@ const Materiais = () => {
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<Material>({
-    resolver: yupResolver(validationNewMaterialSchema),
+    resolver: yupResolver(validationSchema),
   });
 
   // Price useForm
@@ -93,23 +92,9 @@ const Materiais = () => {
     resolver: yupResolver(validationPriceSchema),
   });
 
-  // Close Modal and create a new material
   const handleCreateMaterial = async (newMaterialData: Material) => {
     try {
       onClose();
-
-      // Prevent two materials with same name
-      const doesMaterialExists = data?.find(
-        material => material.name === newMaterialData.name,
-      );
-
-      if (doesMaterialExists) {
-        toast({
-          status: 'info',
-          title: 'Dois clientes com o mesmo nome',
-        });
-        throw new Error();
-      }
 
       await createMaterial({
         ...newMaterialData,
@@ -127,6 +112,7 @@ const Materiais = () => {
         status: 'error',
         title: 'Erro ao criar material',
         isClosable: true,
+        description: 'Um erro ocorreu durante a criação do material',
       });
     }
   };
@@ -150,14 +136,12 @@ const Materiais = () => {
     }
   };
 
-  // Store material id to update price and open modal
   const handleClickOnUpdatePrice = (id: string) => {
     setUpdatingMaterialId(id);
 
     onOpenPrice();
   };
 
-  // Close Modal and update material's price
   const handleUpdatePrice = async ({ newPrice }: handleUpdatePriceProps) => {
     try {
       onClosePrice();
@@ -180,25 +164,6 @@ const Materiais = () => {
     }
   };
 
-  const handleAddOldMaterials = async () => {
-    let timer = 0;
-
-    oldMaterials.map(async material => {
-      setTimeout(async () => {
-        await createMaterial({
-          name: material.name,
-          price: material.price,
-          height: material.height,
-          width: material.width,
-          createdAt: firebase.firestore.Timestamp.fromDate(new Date()),
-          updatedAt: firebase.firestore.Timestamp.fromDate(new Date()),
-        });
-      }, 2000 * timer);
-
-      timer += 1;
-    });
-  };
-
   return (
     <>
       <Head>
@@ -209,16 +174,13 @@ const Materiais = () => {
           pageTitle="Materiais"
           isLoading={isFetching || isLoading || priceIsSubmitting}
         >
-          <Button onClick={handleAddOldMaterials}>
-            Adicionar materiais antigos
-          </Button>
           <Button
             colorScheme="gray"
             onClick={() => refetch()}
             disabled={isSubmitting || isFetching}
             leftIcon={<Icon as={RiRefreshLine} fontSize="20" />}
           >
-            Atualizar
+            Atualizar{' '}
           </Button>
           <Button
             colorScheme="orange"
@@ -230,7 +192,7 @@ const Materiais = () => {
           </Button>
         </Header>
 
-        {/* New Material Modal */}
+        {/* Modals */}
         <FormModal
           isOpen={isOpen}
           title="Novo Material"
@@ -245,34 +207,30 @@ const Materiais = () => {
               name="name"
               label="Material"
             />
-            <HStack spacing={8}>
-              <FormInput
-                {...register('width')}
-                error={errors.width}
-                maxWidth="none"
-                name="width"
-                label="Largura"
-              />
-              <FormInput
-                {...register('height')}
-                error={errors.height}
-                maxWidth="none"
-                name="height"
-                label="Altura"
-              />
-
-              <FormInput
-                {...register('price')}
-                error={errors.price}
-                maxWidth="none"
-                name="price"
-                label="Preço"
-              />
-            </HStack>
+            <FormInput
+              {...register('width')}
+              error={errors.width}
+              maxWidth="none"
+              name="width"
+              label="Largura"
+            />
+            <FormInput
+              {...register('height')}
+              error={errors.height}
+              maxWidth="none"
+              name="height"
+              label="Altura"
+            />
+            <FormInput
+              {...register('price')}
+              error={errors.price}
+              maxWidth="none"
+              name="price"
+              label="Preço"
+            />
           </VStack>
         </FormModal>
 
-        {/* Update price Modal */}
         <FormModal
           isOpen={isOpenPrice}
           title="Atualizar Preço"
@@ -290,7 +248,6 @@ const Materiais = () => {
           </VStack>
         </FormModal>
 
-        {/* Table who lists all materials */}
         <Table variant="striped" colorScheme="orange">
           <TableCaption>Lista de Materiais</TableCaption>
           <Thead>
@@ -314,7 +271,6 @@ const Materiais = () => {
                     <Td isNumeric>{`R$ ${material.price}`}</Td>
                     <Td>
                       <HStack spacing={4}>
-                        {/* Update Price button */}
                         <IconButton
                           colorScheme="orange"
                           size="sm"
@@ -323,7 +279,6 @@ const Materiais = () => {
                           onClick={() => handleClickOnUpdatePrice(material.id)}
                           disabled={priceIsSubmitting}
                         />
-                        {/* Remove Material Button */}
                         <IconButton
                           colorScheme="orange"
                           size="sm"

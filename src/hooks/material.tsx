@@ -11,18 +11,11 @@ interface UpdateMaterialPriceProps {
   id: string;
   newPrice: number;
 }
-
-interface MaterialInterfaceProps {
-  id: string;
-  name: string;
-  width: number;
-  height: number;
-  price: string;
-}
-
 interface MaterialContext {
   createMaterial: (newMaterialData: Material) => Promise<void>;
-  getMaterials: () => Promise<MaterialInterfaceProps[]>;
+  getMaterials: () => Promise<
+    (firebase.firestore.DocumentData & { id: string })[]
+  >;
   removeMaterial: (id: string) => Promise<void>;
   updateMaterialPrice: (data: UpdateMaterialPriceProps) => Promise<void>;
 }
@@ -36,42 +29,11 @@ export const MaterialProvider: React.FC = ({ children }) => {
 
   const createMaterialMutation = useMutation(
     async (materialData: Material) => {
-      const id = v4();
-
       await firebase
         .firestore()
         .collection('materials')
-        .doc(id)
-        .set({ ...materialData });
-
-      try {
-        const interfaceData = await firebase
-          .firestore()
-          .collection('interfaces')
-          .doc('materials')
-          .get();
-
-        await firebase
-          .firestore()
-          .collection('interfaces')
-          .doc('materials')
-          .update({
-            materials: [
-              ...interfaceData.data()?.materials,
-              {
-                id,
-                name: materialData.name,
-                width: materialData.width,
-                height: materialData.height,
-                price: materialData.price,
-              },
-            ],
-          });
-      } catch {
-        await firebase.firestore().collection('materials').doc(id).delete();
-
-        throw new Error();
-      }
+        .doc(v4())
+        .set(materialData);
     },
     {
       onSuccess: () => {
@@ -92,46 +54,7 @@ export const MaterialProvider: React.FC = ({ children }) => {
 
   const removeMaterialMutation = useMutation(
     async (id: string) => {
-      // Remove Material from interface
-      try {
-        const interfaceData = await firebase
-          .firestore()
-          .collection('interfaces')
-          .doc('materials')
-          .get();
-
-        const interfaceFiltered = interfaceData
-          .data()
-          ?.materials.filter(
-            (material: MaterialInterfaceProps) => material.id !== id,
-          );
-
-        await firebase
-          .firestore()
-          .collection('interfaces')
-          .doc('materials')
-          .update({
-            materials: [...interfaceFiltered],
-          });
-
-        try {
-          // Remove Material from materials collection
-          await firebase.firestore().collection('materials').doc(id).delete();
-        } catch {
-          // Add removed material from interface again
-          await firebase
-            .firestore()
-            .collection('interfaces')
-            .doc('materials')
-            .update({
-              materials: [...interfaceData.data()?.materials],
-            });
-
-          throw new Error();
-        }
-      } catch {
-        throw new Error();
-      }
+      await firebase.firestore().collection('materials').doc(id).delete();
     },
     {
       onSuccess: () => {
@@ -180,13 +103,11 @@ export const MaterialProvider: React.FC = ({ children }) => {
   };
 
   const getMaterials = async () => {
-    const response = await firebase
-      .firestore()
-      .collection('interfaces')
-      .doc('materials')
-      .get();
+    const response = await firebase.firestore().collection('materials').get();
 
-    const allMaterials: MaterialInterfaceProps[] = response.data()?.materials;
+    const allMaterials = response.docs.map(doc =>
+      Object.assign(doc.data() as Material, { id: doc.id }),
+    );
 
     return allMaterials;
   };
