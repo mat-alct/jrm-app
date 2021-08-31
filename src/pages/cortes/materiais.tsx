@@ -1,8 +1,12 @@
 import {
   Button,
+  FormControl,
+  FormLabel,
   HStack,
   Icon,
   IconButton,
+  Radio,
+  RadioGroup,
   Table,
   TableCaption,
   Tbody,
@@ -27,6 +31,7 @@ import * as Yup from 'yup';
 import { Dashboard } from '../../components/Dashboard';
 import { Header } from '../../components/Dashboard/Content/Header';
 import { FormInput } from '../../components/Form/Input';
+import { RadioButton } from '../../components/Form/RadioButton';
 import { FormModal } from '../../components/Modal/FormModal';
 import { useMaterial } from '../../hooks/material';
 import { Material } from '../../types';
@@ -37,6 +42,7 @@ interface handleUpdatePriceProps {
 
 const Materiais = () => {
   const { onOpen, isOpen, onClose } = useDisclosure();
+  const [materialFilter, setMaterialFilter] = useState('MDF');
   const {
     onOpen: onOpenPrice,
     isOpen: isOpenPrice,
@@ -247,6 +253,25 @@ const Materiais = () => {
             />
           </VStack>
         </FormModal>
+
+        {/* Filtro de tipo de MDF */}
+        <FormControl display="flex" flexDirection="row">
+          <FormLabel>Tipo de material:</FormLabel>
+          <RadioGroup
+            ml={4}
+            onChange={setMaterialFilter}
+            value={materialFilter}
+            colorScheme="orange"
+            mb={4}
+          >
+            <HStack>
+              <Radio value="MDF" isChecked>
+                MDF
+              </Radio>
+              <Radio value="Compensado">Compensado</Radio>
+            </HStack>
+          </RadioGroup>
+        </FormControl>
 
         <Table variant="striped" colorScheme="orange">
           <TableCaption>Lista de Materiais</TableCaption>
