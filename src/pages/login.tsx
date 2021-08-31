@@ -45,7 +45,6 @@ const Login = () => {
     } catch (err) {
       toast({
         status: 'error',
-
         title: 'Erro de autenticação',
         description: 'Email ou senha incorretos',
       });
