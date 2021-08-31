@@ -272,7 +272,6 @@ const Materiais = () => {
 
         {/* Filtro de tipo de MDF */}
         <RadioGroup
-          ml={4}
           onChange={setMaterialFilter}
           value={materialFilter}
           colorScheme="orange"
