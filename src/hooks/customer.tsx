@@ -98,7 +98,7 @@ export const CustomerProvider: React.FC = ({ children }) => {
         .collection('customers')
         .orderBy('name')
         .startAt(capitalizeAndStrip(searchFilter))
-        .limit(3)
+        .limit(5)
         .get();
 
       const allCustomers = response.docs.map(doc =>

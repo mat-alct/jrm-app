@@ -27,7 +27,7 @@ interface SelectWithSearchProps extends BoxProps {
 export const SelectWithSearch: React.FC<SelectWithSearchProps> = ({
   options,
   placeholder,
-  hasDefaultValue,
+
   isClearable = false,
   label,
   name,
@@ -58,11 +58,6 @@ export const SelectWithSearch: React.FC<SelectWithSearchProps> = ({
         placeholder={placeholder}
         value={field.value}
         onChange={field.onChange}
-        defaultValue={
-          hasDefaultValue
-            ? options[options.map(opt => opt.value).indexOf(hasDefaultValue)]
-            : null
-        }
       />
       {!!errors[name] && (
         // Role is necessary for validation tests

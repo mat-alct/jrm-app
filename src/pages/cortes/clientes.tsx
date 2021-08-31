@@ -295,7 +295,7 @@ const Clientes: React.FC = () => {
               control={createCustomerControl}
               name="area"
               label="Bairro"
-              hasDefaultValue="Japuíba"
+              placeholder="Selecione..."
             />
           </VStack>
         </FormModal>
