@@ -1,7 +1,5 @@
 import {
   Button,
-  FormControl,
-  FormLabel,
   HStack,
   Icon,
   IconButton,
@@ -31,7 +29,6 @@ import * as Yup from 'yup';
 import { Dashboard } from '../../components/Dashboard';
 import { Header } from '../../components/Dashboard/Content/Header';
 import { FormInput } from '../../components/Form/Input';
-import { RadioButton } from '../../components/Form/RadioButton';
 import { FormModal } from '../../components/Modal/FormModal';
 import { useMaterial } from '../../hooks/material';
 import { Material } from '../../types';
@@ -52,8 +49,8 @@ const Materiais = () => {
     useMaterial();
   const toast = useToast();
   const { data, refetch, isFetching, isLoading } = useQuery(
-    ['materials', type],
-    () => getMaterials(type),
+    ['materials', materialFilter],
+    () => getMaterials(materialFilter),
   );
 
   const [updatingMaterialId, setUpdatingMaterialId] = useState('');
@@ -256,24 +253,22 @@ const Materiais = () => {
         </FormModal>
 
         {/* Filtro de tipo de MDF */}
-        <FormControl display="flex" flexDirection="row">
-          <FormLabel>Tipo de material:</FormLabel>
-          <RadioGroup
-            ml={4}
-            onChange={setMaterialFilter}
-            value={materialFilter}
-            colorScheme="orange"
-            mb={4}
-          >
-            <HStack>
-              <Radio value="MDF" isChecked>
-                MDF
-              </Radio>
-              <Radio value="Compensado">Compensado</Radio>
-            </HStack>
-          </RadioGroup>
-        </FormControl>
+        <RadioGroup
+          ml={4}
+          onChange={setMaterialFilter}
+          value={materialFilter}
+          colorScheme="orange"
+          mb={4}
+        >
+          <HStack>
+            <Radio value="MDF" isChecked>
+              MDF
+            </Radio>
+            <Radio value="Compensado">Compensado</Radio>
+          </HStack>
+        </RadioGroup>
 
+        {/* Tabela de dados */}
         <Table variant="striped" colorScheme="orange">
           <TableCaption>Lista de Materiais</TableCaption>
           <Thead>
