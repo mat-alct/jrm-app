@@ -8,6 +8,7 @@ import {
   TableCaption,
   Tbody,
   Td,
+  Text,
   Th,
   Thead,
   Tr,
@@ -259,7 +260,7 @@ const Clientes: React.FC = () => {
 
         {/* Customers table */}
         {/* Search */}
-        <Flex as="form" justify="flex-start" align="center" maxW="300px" mb={8}>
+        <Flex as="form" justify="flex-start" align="center" maxW="300px" mb={4}>
           <FormInput
             name="customerSearch"
             placeholder="Digite o nome do cliente"
@@ -271,60 +272,71 @@ const Clientes: React.FC = () => {
           </Button>
         </Flex>
 
-        {/* Table */}
-        <Table variant="striped" colorScheme="orange">
-          <TableCaption>Lista de Clientes</TableCaption>
-          <Thead>
-            <Tr>
-              <Th>Nome</Th>
-              <Th>Telefone</Th>
-              <Th>Endereço</Th>
-              <Th>Bairro</Th>
-              <Th />
-            </Tr>
-          </Thead>
-          <Tbody>
-            {data?.map(customer => {
-              return (
-                <Tr key={customer.id}>
-                  <Td>{customer.name}</Td>
-                  <Td>{customer.telephone}</Td>
-                  <Td>{customer.address}</Td>
-                  <Td>{customer.area}</Td>
-                  <Td>
-                    <HStack spacing={4}>
-                      {/* Update Price button */}
-                      <IconButton
-                        colorScheme="orange"
-                        size="sm"
-                        aria-label="Editar"
-                        icon={<FaEdit />}
-                        disabled={createCustomerIsSubmitting}
-                        // onClick={() => handleClickOnUpdatePrice(material.id)}
-                      />
-                      {/* Remove Material Button */}
-                      <IconButton
-                        colorScheme="orange"
-                        size="sm"
-                        aria-label="Remover"
-                        icon={<FaTrash />}
-                        onClick={() => handleRemoveCustomer(customer.id)}
-                        disabled={createCustomerIsSubmitting}
-                      />
-                    </HStack>
-                  </Td>
-                </Tr>
-              );
-            })}
-          </Tbody>
-        </Table>
+        {/* If not searched */}
+        {!searchFilter && (
+          <Text color="red" mb={4}>
+            * É necessário pesquisar o cliente para obter os resultados
+          </Text>
+        )}
 
-        <Pagination
-          totalCountOfRegisters={100}
-          registersPerPage={10}
-          onPageChange={setPage}
-          currentPage={page}
-        />
+        {/* Table */}
+        {searchFilter && (
+          <>
+            <Table variant="striped" colorScheme="orange">
+              <TableCaption>Lista de Clientes</TableCaption>
+              <Thead>
+                <Tr>
+                  <Th>Nome</Th>
+                  <Th>Telefone</Th>
+                  <Th>Endereço</Th>
+                  <Th>Bairro</Th>
+                  <Th />
+                </Tr>
+              </Thead>
+              <Tbody>
+                {data?.map(customer => {
+                  return (
+                    <Tr key={customer.id}>
+                      <Td>{customer.name}</Td>
+                      <Td>{customer.telephone}</Td>
+                      <Td>{customer.address}</Td>
+                      <Td>{customer.area}</Td>
+                      <Td>
+                        <HStack spacing={4}>
+                          {/* Update Price button */}
+                          <IconButton
+                            colorScheme="orange"
+                            size="sm"
+                            aria-label="Editar"
+                            icon={<FaEdit />}
+                            disabled={createCustomerIsSubmitting}
+                            // onClick={() => handleClickOnUpdatePrice(material.id)}
+                          />
+                          {/* Remove Material Button */}
+                          <IconButton
+                            colorScheme="orange"
+                            size="sm"
+                            aria-label="Remover"
+                            icon={<FaTrash />}
+                            onClick={() => handleRemoveCustomer(customer.id)}
+                            disabled={createCustomerIsSubmitting}
+                          />
+                        </HStack>
+                      </Td>
+                    </Tr>
+                  );
+                })}
+              </Tbody>
+            </Table>
+
+            <Pagination
+              totalCountOfRegisters={data?.length || 1}
+              registersPerPage={10}
+              onPageChange={setPage}
+              currentPage={page}
+            />
+          </>
+        )}
       </Dashboard>
     </>
   );
