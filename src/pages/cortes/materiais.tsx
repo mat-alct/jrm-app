@@ -1,8 +1,5 @@
 import {
   Button,
-  FormControl,
-  FormErrorMessage,
-  FormLabel,
   HStack,
   Icon,
   IconButton,
@@ -22,13 +19,14 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import firebase from 'firebase/app';
 import Head from 'next/head';
 import React, { useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { FaEdit, FaTrash } from 'react-icons/fa';
 import { RiAddLine, RiRefreshLine } from 'react-icons/ri';
 import { useQuery } from 'react-query';
 
 import { Dashboard } from '../../components/Dashboard';
 import { Header } from '../../components/Dashboard/Content/Header';
+import { FormRadio } from '../../components/Form/FormRadio';
 import { FormInput } from '../../components/Form/Input';
 import { FormModal } from '../../components/Modal/FormModal';
 import { useMaterial } from '../../hooks/material';
@@ -177,32 +175,11 @@ const Materiais = () => {
               />
             </HStack>
 
-            {/* <FormControl isInvalid={!!createMaterialErrors.materialType}>
-              <FormLabel>Categoria</FormLabel>
-              <Controller
-                control={createMaterialControl}
-                name="materialType"
-                render={props => (
-                  <RadioGroup {...props}>
-                    <HStack spacing={4}>
-                      <Radio name="MDF" value="MDF">
-                        MDF
-                      </Radio>
-                      <Radio name="Compensado" value="Compensado">
-                        Compensado
-                      </Radio>
-                    </HStack>
-                  </RadioGroup>
-                )}
-              />
-
-              {!!createMaterialErrors.materialType && (
-                <FormErrorMessage role="alert"> */}
-            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-            {/* {(createMaterialErrors.materialType as any).message}
-                </FormErrorMessage>
-              )}
-            </FormControl> */}
+            <FormRadio
+              control={createMaterialControl}
+              name="materialType"
+              label="Categoria"
+            />
           </VStack>
         </FormModal>
 
