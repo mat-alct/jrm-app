@@ -1,5 +1,8 @@
 import {
   Button,
+  FormControl,
+  FormErrorMessage,
+  FormLabel,
   HStack,
   Icon,
   IconButton,
@@ -19,7 +22,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import firebase from 'firebase/app';
 import Head from 'next/head';
 import React, { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import { FaEdit, FaTrash } from 'react-icons/fa';
 import { RiAddLine, RiRefreshLine } from 'react-icons/ri';
 import { useQuery } from 'react-query';
@@ -27,7 +30,6 @@ import { useQuery } from 'react-query';
 import { Dashboard } from '../../components/Dashboard';
 import { Header } from '../../components/Dashboard/Content/Header';
 import { FormInput } from '../../components/Form/Input';
-import { RadioButton } from '../../components/Form/RadioButton';
 import { FormModal } from '../../components/Modal/FormModal';
 import { useMaterial } from '../../hooks/material';
 import { Material } from '../../types';
@@ -128,7 +130,7 @@ const Materiais = () => {
             disabled={createMaterialIsSubmitting || isFetching}
             leftIcon={<Icon as={RiRefreshLine} fontSize="20" />}
           >
-            Atualizar{' '}
+            Atualizar
           </Button>
           <Button
             colorScheme="orange"
@@ -151,46 +153,49 @@ const Materiais = () => {
             <FormInput
               {...createMaterialRegister('name')}
               error={createMaterialErrors.name}
-              maxWidth="none"
               name="name"
               label="Material"
-              size="md"
             />
             <HStack spacing={8}>
               <FormInput
                 {...createMaterialRegister('width')}
                 error={createMaterialErrors.width}
-                maxWidth="none"
                 name="width"
                 label="Largura"
-                size="md"
               />
               <FormInput
                 {...createMaterialRegister('height')}
                 error={createMaterialErrors.height}
-                maxWidth="none"
                 name="height"
                 label="Altura"
-                size="md"
               />
-            </HStack>
-
-            <HStack spacing={8}>
               <FormInput
                 {...createMaterialRegister('price')}
                 error={createMaterialErrors.price}
-                maxWidth="none"
                 name="price"
                 label="Preço"
-                size="md"
-              />
-              <RadioButton
-                name="type"
-                options={['MDF', 'Compensado']}
-                control={createMaterialControl}
-                label="Tipo de material"
               />
             </HStack>
+
+            <FormControl>
+              <FormLabel>Categoria</FormLabel>
+              <Controller
+                control={createMaterialControl}
+                name="type"
+                render={props => (
+                  <RadioGroup {...props}>
+                    <HStack spacing={4}>
+                      <Radio value="MDF">MDF</Radio>
+                      <Radio value="Compensado">Compensado</Radio>
+                    </HStack>
+                  </RadioGroup>
+                )}
+              />
+
+              {!!createMaterialErrors.type && (
+                <FormErrorMessage>ok</FormErrorMessage>
+              )}
+            </FormControl>
           </VStack>
         </FormModal>
 
@@ -204,7 +209,6 @@ const Materiais = () => {
             <FormInput
               {...updatePriceRegister('newPrice')}
               error={updatePriceErrors.newPrice}
-              maxWidth="none"
               name="newPrice"
               label="Novo preço"
             />
