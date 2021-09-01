@@ -180,6 +180,8 @@ const Materiais = () => {
               name="materialType"
               label="Categoria"
               defaultValue="MDF"
+              isHorizontal
+              options={['MDF', 'Compensado']}
             />
           </VStack>
         </FormModal>

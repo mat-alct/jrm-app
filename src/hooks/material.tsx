@@ -121,7 +121,7 @@ export const MaterialProvider: React.FC = ({ children }) => {
     const response = await firebase
       .firestore()
       .collection('materials')
-      .where('type', '==', type)
+      .where('materialType', '==', type)
       .get();
 
     const materials = response.docs.map(doc =>
