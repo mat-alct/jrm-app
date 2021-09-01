@@ -13,7 +13,6 @@ import {
   Thead,
   Tr,
   useDisclosure,
-  useToast,
   VStack,
 } from '@chakra-ui/react';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -24,7 +23,6 @@ import { useForm } from 'react-hook-form';
 import { FaEdit, FaTrash } from 'react-icons/fa';
 import { RiAddLine, RiRefreshLine } from 'react-icons/ri';
 import { useQuery } from 'react-query';
-import * as Yup from 'yup';
 
 import { Dashboard } from '../../components/Dashboard';
 import { Header } from '../../components/Dashboard/Content/Header';
@@ -52,7 +50,6 @@ const Materiais = () => {
   } = useDisclosure();
   const { createMaterial, getMaterials, removeMaterial, updateMaterialPrice } =
     useMaterial();
-  const toast = useToast();
   const { data, refetch, isFetching, isLoading } = useQuery(
     ['materials', materialFilter],
     () => getMaterials(materialFilter),
@@ -85,76 +82,32 @@ const Materiais = () => {
     resolver: yupResolver(updatePriceSchema),
   });
 
+  // Submit Functions
   const handleCreateMaterial = async (newMaterialData: Material) => {
-    try {
-      onClose();
+    onClose();
 
-      await createMaterial({
-        ...newMaterialData,
-        createdAt: firebase.firestore.Timestamp.fromDate(new Date()),
-        updatedAt: firebase.firestore.Timestamp.fromDate(new Date()),
-      });
-
-      toast({
-        status: 'success',
-        title: 'Material criado com sucesso',
-        isClosable: true,
-      });
-    } catch {
-      toast({
-        status: 'error',
-        title: 'Erro ao criar material',
-        isClosable: true,
-        description: 'Um erro ocorreu durante a criação do material',
-      });
-    }
+    await createMaterial({
+      ...newMaterialData,
+      createdAt: firebase.firestore.Timestamp.fromDate(new Date()),
+      updatedAt: firebase.firestore.Timestamp.fromDate(new Date()),
+    });
   };
 
-  const handleRemoveMaterial = async (id: string) => {
-    try {
-      await removeMaterial(id);
+  const handleUpdatePrice = async ({ newPrice }: updatePriceProps) => {
+    onClosePrice();
 
-      toast({
-        status: 'success',
-        title: 'Material removido com sucesso',
-        isClosable: true,
-      });
-    } catch {
-      toast({
-        status: 'error',
-        title: 'Erro ao remover material',
-        isClosable: true,
-        description: 'Um erro ocorreu durante a remoção do material',
-      });
-    }
+    await updateMaterialPrice({ id: updatingMaterialId, newPrice });
   };
 
+  // Click Functions
   const handleClickOnUpdatePrice = (id: string) => {
     setUpdatingMaterialId(id);
 
     onOpenPrice();
   };
 
-  const handleUpdatePrice = async ({ newPrice }: updatePriceProps) => {
-    try {
-      onClosePrice();
-
-      await updateMaterialPrice({ id: updatingMaterialId, newPrice });
-
-      toast({
-        status: 'success',
-        title: 'Preço atualizado com sucesso',
-        isClosable: true,
-      });
-    } catch {
-      toast({
-        status: 'error',
-        title: 'Erro ao atualizar preço do material',
-        isClosable: true,
-        description:
-          'Um erro ocorreu durante a atualização do preço do material',
-      });
-    }
+  const handleRemoveMaterial = async (id: string) => {
+    await removeMaterial(id);
   };
 
   return (

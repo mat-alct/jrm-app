@@ -99,7 +99,22 @@ export const MaterialProvider: React.FC = ({ children }) => {
   // METHODS
 
   const createMaterial = async (newMaterialData: Material) => {
-    await createMaterialMutation.mutateAsync(newMaterialData);
+    try {
+      await createMaterialMutation.mutateAsync(newMaterialData);
+
+      toast({
+        status: 'success',
+        title: 'Material criado com sucesso',
+        isClosable: true,
+      });
+    } catch {
+      toast({
+        status: 'error',
+        title: 'Erro ao criar material',
+        isClosable: true,
+        description: 'Um erro ocorreu durante a criação do material',
+      });
+    }
   };
 
   const getMaterials = async (type: string) => {
@@ -117,14 +132,45 @@ export const MaterialProvider: React.FC = ({ children }) => {
   };
 
   const removeMaterial = async (id: string) => {
-    await removeMaterialMutation.mutateAsync(id);
+    try {
+      await removeMaterialMutation.mutateAsync(id);
+
+      toast({
+        status: 'success',
+        title: 'Material removido com sucesso',
+        isClosable: true,
+      });
+    } catch {
+      toast({
+        status: 'error',
+        title: 'Erro ao remover material',
+        isClosable: true,
+        description: 'Um erro ocorreu durante a remoção do material',
+      });
+    }
   };
 
   const updateMaterialPrice = async ({
     id,
     newPrice,
   }: UpdateMaterialPriceProps) => {
-    await updatePriceMutation.mutateAsync({ id, newPrice });
+    try {
+      await updatePriceMutation.mutateAsync({ id, newPrice });
+
+      toast({
+        status: 'success',
+        title: 'Preço atualizado com sucesso',
+        isClosable: true,
+      });
+    } catch {
+      toast({
+        status: 'error',
+        title: 'Erro ao atualizar preço do material',
+        isClosable: true,
+        description:
+          'Um erro ocorreu durante a atualização do preço do material',
+      });
+    }
   };
 
   return (
