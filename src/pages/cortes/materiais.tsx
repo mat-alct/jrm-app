@@ -33,8 +33,12 @@ import { RadioButton } from '../../components/Form/RadioButton';
 import { FormModal } from '../../components/Modal/FormModal';
 import { useMaterial } from '../../hooks/material';
 import { Material } from '../../types';
+import {
+  createMaterialSchema,
+  updatePriceSchema,
+} from '../../utils/yup/materiaisValidations';
 
-interface handleUpdatePriceProps {
+interface updatePriceProps {
   newPrice: number;
 }
 
@@ -56,47 +60,29 @@ const Materiais = () => {
 
   const [updatingMaterialId, setUpdatingMaterialId] = useState('');
 
-  const validationSchema = Yup.object().shape({
-    name: Yup.string().required('Material obrigatório'),
-    width: Yup.number()
-      .max(2750)
-      .min(0)
-      .required('Largura obrigatória')
-      .typeError('Largura precisa ser um número'),
-    height: Yup.number()
-      .max(1850)
-      .min(0)
-      .required('Altura obrigatória')
-      .typeError('Altura precisa ser um número'),
-    price: Yup.number()
-      .required('Preço obrigatório')
-      .typeError('Preço precisa ser um número'),
-    type: Yup.string().required('Tipo de material obrigatório'),
-  });
-
-  const validationPriceSchema = Yup.object().shape({
-    newPrice: Yup.number()
-      .required('Preço obrigatório')
-      .typeError('Preço precisa ser um número'),
-  });
-
-  // New Material useForm
+  // createMaterial useForm
   const {
-    register,
-    handleSubmit,
-    control,
-    formState: { errors, isSubmitting },
+    register: createMaterialRegister,
+    handleSubmit: createMaterialHandleSubmit,
+    control: createMaterialControl,
+    formState: {
+      errors: createMaterialErrors,
+      isSubmitting: createMaterialIsSubmitting,
+    },
   } = useForm<Material>({
-    resolver: yupResolver(validationSchema),
+    resolver: yupResolver(createMaterialSchema),
   });
 
-  // Price useForm
+  // updatePrice useForm
   const {
-    register: priceRegister,
-    handleSubmit: priceHandleSubmit,
-    formState: { errors: priceErrors, isSubmitting: priceIsSubmitting },
-  } = useForm<handleUpdatePriceProps>({
-    resolver: yupResolver(validationPriceSchema),
+    register: updatePriceRegister,
+    handleSubmit: updatePriceHandleSubmit,
+    formState: {
+      errors: updatePriceErrors,
+      isSubmitting: updatePriceIsSubmitting,
+    },
+  } = useForm<updatePriceProps>({
+    resolver: yupResolver(updatePriceSchema),
   });
 
   const handleCreateMaterial = async (newMaterialData: Material) => {
@@ -149,7 +135,7 @@ const Materiais = () => {
     onOpenPrice();
   };
 
-  const handleUpdatePrice = async ({ newPrice }: handleUpdatePriceProps) => {
+  const handleUpdatePrice = async ({ newPrice }: updatePriceProps) => {
     try {
       onClosePrice();
 
@@ -179,12 +165,12 @@ const Materiais = () => {
       <Dashboard>
         <Header
           pageTitle="Materiais"
-          isLoading={isFetching || isLoading || priceIsSubmitting}
+          isLoading={isFetching || isLoading || updatePriceIsSubmitting}
         >
           <Button
             colorScheme="gray"
             onClick={() => refetch()}
-            disabled={isSubmitting || isFetching}
+            disabled={createMaterialIsSubmitting || isFetching}
             leftIcon={<Icon as={RiRefreshLine} fontSize="20" />}
           >
             Atualizar{' '}
@@ -192,7 +178,7 @@ const Materiais = () => {
           <Button
             colorScheme="orange"
             onClick={onOpen}
-            disabled={isSubmitting || isFetching}
+            disabled={createMaterialIsSubmitting || isFetching}
             leftIcon={<Icon as={RiAddLine} fontSize="20" />}
           >
             Novo Material
@@ -204,12 +190,12 @@ const Materiais = () => {
           isOpen={isOpen}
           title="Novo Material"
           onClose={onClose}
-          onSubmit={handleSubmit(handleCreateMaterial)}
+          onSubmit={createMaterialHandleSubmit(handleCreateMaterial)}
         >
           <VStack as="form" spacing={4} mx="auto" noValidate>
             <FormInput
-              {...register('name')}
-              error={errors.name}
+              {...createMaterialRegister('name')}
+              error={createMaterialErrors.name}
               maxWidth="none"
               name="name"
               label="Material"
@@ -217,16 +203,16 @@ const Materiais = () => {
             />
             <HStack spacing={8}>
               <FormInput
-                {...register('width')}
-                error={errors.width}
+                {...createMaterialRegister('width')}
+                error={createMaterialErrors.width}
                 maxWidth="none"
                 name="width"
                 label="Largura"
                 size="md"
               />
               <FormInput
-                {...register('height')}
-                error={errors.height}
+                {...createMaterialRegister('height')}
+                error={createMaterialErrors.height}
                 maxWidth="none"
                 name="height"
                 label="Altura"
@@ -236,8 +222,8 @@ const Materiais = () => {
 
             <HStack spacing={8}>
               <FormInput
-                {...register('price')}
-                error={errors.price}
+                {...createMaterialRegister('price')}
+                error={createMaterialErrors.price}
                 maxWidth="none"
                 name="price"
                 label="Preço"
@@ -246,7 +232,7 @@ const Materiais = () => {
               <RadioButton
                 name="type"
                 options={['MDF', 'Compensado']}
-                control={control}
+                control={createMaterialControl}
                 label="Tipo de material"
               />
             </HStack>
@@ -257,12 +243,12 @@ const Materiais = () => {
           isOpen={isOpenPrice}
           title="Atualizar Preço"
           onClose={onClosePrice}
-          onSubmit={priceHandleSubmit(handleUpdatePrice)}
+          onSubmit={updatePriceHandleSubmit(handleUpdatePrice)}
         >
           <VStack as="form" spacing={4} mx="auto" noValidate>
             <FormInput
-              {...priceRegister('newPrice')}
-              error={priceErrors.newPrice}
+              {...updatePriceRegister('newPrice')}
+              error={updatePriceErrors.newPrice}
               maxWidth="none"
               name="newPrice"
               label="Novo preço"
@@ -315,7 +301,7 @@ const Materiais = () => {
                           aria-label="Editar"
                           icon={<FaEdit />}
                           onClick={() => handleClickOnUpdatePrice(material.id)}
-                          disabled={priceIsSubmitting}
+                          disabled={updatePriceIsSubmitting}
                         />
                         <IconButton
                           colorScheme="orange"
@@ -323,7 +309,7 @@ const Materiais = () => {
                           aria-label="Remover"
                           icon={<FaTrash />}
                           onClick={() => handleRemoveMaterial(material.id)}
-                          disabled={priceIsSubmitting}
+                          disabled={updatePriceIsSubmitting}
                         />
                       </HStack>
                     </Td>
