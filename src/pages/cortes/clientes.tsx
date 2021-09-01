@@ -27,8 +27,8 @@ import { useQuery } from 'react-query';
 import { Dashboard } from '../../components/Dashboard';
 import { Header } from '../../components/Dashboard/Content/Header';
 import { FormInput } from '../../components/Form/Input';
+import { FormModal } from '../../components/Form/Modal';
 import { FormSelect } from '../../components/Form/Select';
-import { FormModal } from '../../components/Modal/FormModal';
 import { useCustomer } from '../../hooks/customer';
 import { areas } from '../../utils/listOfAreas';
 import {
