@@ -179,6 +179,7 @@ const Materiais = () => {
               control={createMaterialControl}
               name="materialType"
               label="Categoria"
+              defaultValue="MDF"
             />
           </VStack>
         </FormModal>

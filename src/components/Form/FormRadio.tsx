@@ -1,10 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   FormControl,
   FormErrorMessage,
   FormLabel,
-  HStack,
   Radio,
   RadioGroup,
+  Stack,
 } from '@chakra-ui/react';
 import React from 'react';
 import { Control, useController } from 'react-hook-form';
@@ -13,12 +14,18 @@ interface FormRadioProps {
   name: string;
   label?: string;
   control: Control<any>;
+  defaultValue?: string;
+  options: string[];
+  isHorizontal?: boolean;
 }
 
 export const FormRadio: React.FC<FormRadioProps> = ({
   name,
   label,
   control,
+  defaultValue,
+  options,
+  isHorizontal,
 }) => {
   const {
     field,
@@ -26,22 +33,21 @@ export const FormRadio: React.FC<FormRadioProps> = ({
   } = useController({
     control,
     name,
+    defaultValue,
   });
 
   return (
     <FormControl isInvalid={!!errors[name]}>
-      <FormLabel>{label}</FormLabel>
+      {label && <FormLabel>{label}</FormLabel>}
       <RadioGroup value={field.value} onChange={field.onChange}>
-        <HStack spacing={4}>
-          <Radio name="MDF" value="MDF" isChecked>
-            MDF
-          </Radio>
-          <Radio name="Compensado" value="Compensado">
-            Compensado
-          </Radio>
-        </HStack>
+        <Stack spacing={4} direction={isHorizontal ? 'row' : 'column'}>
+          {options.map(option => (
+            <Radio name={option} id={option} value={option}>
+              {option}
+            </Radio>
+          ))}
+        </Stack>
       </RadioGroup>
-
       {!!errors[name] && (
         <FormErrorMessage role="alert">{errors[name].message}</FormErrorMessage>
       )}
