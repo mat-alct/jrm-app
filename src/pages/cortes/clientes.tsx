@@ -122,17 +122,13 @@ const Clientes: React.FC = () => {
     const name = `${capitalizeAndStrip(firstName)} ${capitalizeAndStrip(
       lastName,
     )}`;
-    const city = 'Angra dos Reis';
-    const state = 'Rio de Janeiro';
-    const createdAt = firebase.firestore.Timestamp.fromDate(new Date());
-    const updatedAt = firebase.firestore.Timestamp.fromDate(new Date());
 
     await createCustomer({
       name,
-      createdAt,
-      updatedAt,
-      state,
-      city,
+      createdAt: firebase.firestore.Timestamp.fromDate(new Date()),
+      updatedAt: firebase.firestore.Timestamp.fromDate(new Date()),
+      state: 'Rio de Janeiro',
+      city: 'Angra dos Reis',
       area: area?.value,
       address,
       telephone,
