@@ -177,25 +177,32 @@ const Materiais = () => {
               />
             </HStack>
 
-            <FormControl>
+            {/* <FormControl isInvalid={!!createMaterialErrors.materialType}>
               <FormLabel>Categoria</FormLabel>
               <Controller
                 control={createMaterialControl}
-                name="type"
+                name="materialType"
                 render={props => (
                   <RadioGroup {...props}>
                     <HStack spacing={4}>
-                      <Radio value="MDF">MDF</Radio>
-                      <Radio value="Compensado">Compensado</Radio>
+                      <Radio name="MDF" value="MDF">
+                        MDF
+                      </Radio>
+                      <Radio name="Compensado" value="Compensado">
+                        Compensado
+                      </Radio>
                     </HStack>
                   </RadioGroup>
                 )}
               />
 
-              {!!createMaterialErrors.type && (
-                <FormErrorMessage>ok</FormErrorMessage>
+              {!!createMaterialErrors.materialType && (
+                <FormErrorMessage role="alert"> */}
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+            {/* {(createMaterialErrors.materialType as any).message}
+                </FormErrorMessage>
               )}
-            </FormControl>
+            </FormControl> */}
           </VStack>
         </FormModal>
 
@@ -223,10 +230,16 @@ const Materiais = () => {
           mb={4}
         >
           <HStack>
-            <Radio value="MDF" isChecked>
+            <Radio value="MDF" isChecked id="mdfFilter" name="mdfFilter">
               MDF
             </Radio>
-            <Radio value="Compensado">Compensado</Radio>
+            <Radio
+              value="Compensado"
+              id="compensadoFilter"
+              name="compensadoFilter"
+            >
+              Compensado
+            </Radio>
           </HStack>
         </RadioGroup>
 

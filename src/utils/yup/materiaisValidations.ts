@@ -15,7 +15,9 @@ export const createMaterialSchema = Yup.object().shape({
   price: Yup.number()
     .required('Preço obrigatório')
     .typeError('Preço precisa ser um número'),
-  type: Yup.string().required('Tipo de material obrigatório'),
+  materialType: Yup.string()
+    .required('Tipo de material obrigatório')
+    .oneOf(['MDF', 'Compensado']),
 });
 
 export const updatePriceSchema = Yup.object().shape({
