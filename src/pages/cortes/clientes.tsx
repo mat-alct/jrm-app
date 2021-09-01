@@ -13,7 +13,6 @@ import {
   Thead,
   Tr,
   useDisclosure,
-  useToast,
   VStack,
 } from '@chakra-ui/react';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -30,7 +29,6 @@ import { Header } from '../../components/Dashboard/Content/Header';
 import { FormInput } from '../../components/Form/Input';
 import { SelectWithSearch } from '../../components/Form/Select';
 import { FormModal } from '../../components/Modal/FormModal';
-import { Pagination } from '../../components/Pagination';
 import { useCustomer } from '../../hooks/customer';
 import { areas } from '../../utils/listOfAreas';
 import {
@@ -53,7 +51,6 @@ interface SearchProps {
 }
 
 const Clientes: React.FC = () => {
-  const [page, setPage] = useState(1);
   const [searchFilter, setSearchFilter] = useState<string | undefined>(
     undefined,
   );
@@ -319,13 +316,6 @@ const Clientes: React.FC = () => {
                 })}
               </Tbody>
             </Table>
-
-            <Pagination
-              totalCountOfRegisters={data?.length || 1}
-              registersPerPage={10}
-              onPageChange={setPage}
-              currentPage={page}
-            />
           </>
         )}
       </Dashboard>
