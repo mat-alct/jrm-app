@@ -27,7 +27,7 @@ import { useQuery } from 'react-query';
 import { Dashboard } from '../../components/Dashboard';
 import { Header } from '../../components/Dashboard/Content/Header';
 import { FormInput } from '../../components/Form/Input';
-import { SelectWithSearch } from '../../components/Form/Select';
+import { FormSelect } from '../../components/Form/Select';
 import { FormModal } from '../../components/Modal/FormModal';
 import { useCustomer } from '../../hooks/customer';
 import { areas } from '../../utils/listOfAreas';
@@ -161,18 +161,11 @@ const Clientes: React.FC = () => {
           isLoading={isFetching || isLoading || createCustomerIsSubmitting}
         >
           {/* Search */}
-          <Flex
-            as="form"
-            justify="flex-start"
-            align="center"
-            maxW="300px"
-            onSubmit={searchHandleSubmit(handleSearch)}
-          >
+          <Flex as="form" onSubmit={searchHandleSubmit(handleSearch)}>
             <FormInput
               {...searchRegister('customerName')}
               name="customerName"
               placeholder="Digite o nome do cliente"
-              size="md"
               borderRightRadius="none"
               error={searchErrors.customerName}
             />
@@ -217,38 +210,30 @@ const Clientes: React.FC = () => {
               <FormInput
                 {...createCustomerRegister('firstName')}
                 error={createCustomerErrors.firstName}
-                maxWidth="none"
                 name="firstName"
                 label="Nome *"
-                size="md"
               />
               <FormInput
                 {...createCustomerRegister('lastName')}
                 error={createCustomerErrors.lastName}
-                maxWidth="none"
                 name="lastName"
                 label="Sobrenome *"
-                size="md"
               />
             </HStack>
             <FormInput
               {...createCustomerRegister('telephone')}
               error={createCustomerErrors.telephone}
-              maxWidth="none"
               name="telephone"
               label="Telefone"
-              size="md"
             />
 
             <FormInput
               {...createCustomerRegister('address')}
               error={createCustomerErrors.address}
-              maxWidth="none"
               name="address"
-              size="md"
               label="Endereço"
             />
-            <SelectWithSearch
+            <FormSelect
               options={areasToSelect}
               control={createCustomerControl}
               name="area"

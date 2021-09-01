@@ -1,10 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import {
-  BoxProps,
-  FormControl,
-  FormErrorMessage,
-  FormLabel,
-} from '@chakra-ui/react';
+import { FormControl, FormErrorMessage, FormLabel } from '@chakra-ui/react';
 import React from 'react';
 import { Control, useController } from 'react-hook-form';
 import Select from 'react-select';
@@ -14,24 +9,24 @@ interface Options {
   label: string;
 }
 //
-interface SelectWithSearchProps extends BoxProps {
+interface FormSelectProps {
   options: Options[];
   name: string;
   placeholder?: string;
-  hasDefaultValue?: string;
+  defaultValue?: string;
   isClearable?: boolean;
   label?: string;
   control: Control<any>;
 }
 
-export const SelectWithSearch: React.FC<SelectWithSearchProps> = ({
+export const FormSelect: React.FC<FormSelectProps> = ({
   options,
   placeholder,
   isClearable = false,
   label,
   name,
   control,
-  ...rest
+  defaultValue,
 }) => {
   const {
     field,
@@ -39,10 +34,11 @@ export const SelectWithSearch: React.FC<SelectWithSearchProps> = ({
   } = useController({
     control,
     name,
+    defaultValue,
   });
 
   return (
-    <FormControl isInvalid={!!errors[name]} w="100%" {...rest}>
+    <FormControl isInvalid={!!errors[name]}>
       {label && (
         <FormLabel color="gray.700" htmlFor={name}>
           {label}
@@ -52,14 +48,12 @@ export const SelectWithSearch: React.FC<SelectWithSearchProps> = ({
         id={name}
         name={name}
         options={options}
-        style={{ marginLeft: 0 }}
         isClearable={isClearable}
         placeholder={placeholder}
-        value={field.value}
+        value={field.value?.value}
         onChange={field.onChange}
       />
       {!!errors[name] && (
-        // Role is necessary for validation tests
         <FormErrorMessage role="alert">{errors[name].message}</FormErrorMessage>
       )}
     </FormControl>

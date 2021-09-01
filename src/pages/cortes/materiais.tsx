@@ -26,8 +26,8 @@ import { useQuery } from 'react-query';
 
 import { Dashboard } from '../../components/Dashboard';
 import { Header } from '../../components/Dashboard/Content/Header';
-import { FormRadio } from '../../components/Form/FormRadio';
 import { FormInput } from '../../components/Form/Input';
+import { FormRadio } from '../../components/Form/Radio';
 import { FormModal } from '../../components/Modal/FormModal';
 import { useMaterial } from '../../hooks/material';
 import { Material } from '../../types';
