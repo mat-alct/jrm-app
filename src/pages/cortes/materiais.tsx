@@ -41,21 +41,23 @@ interface updatePriceProps {
 }
 
 const Materiais = () => {
-  const { onOpen, isOpen, onClose } = useDisclosure();
+  const [updatingMaterialId, setUpdatingMaterialId] = useState('');
   const [materialFilter, setMaterialFilter] = useState('MDF');
+
+  const { createMaterial, getMaterials, removeMaterial, updateMaterialPrice } =
+    useMaterial();
+
   const {
     onOpen: onOpenPrice,
     isOpen: isOpenPrice,
     onClose: onClosePrice,
   } = useDisclosure();
-  const { createMaterial, getMaterials, removeMaterial, updateMaterialPrice } =
-    useMaterial();
+  const { onOpen, isOpen, onClose } = useDisclosure();
+
   const { data, refetch, isFetching, isLoading } = useQuery(
     ['materials', materialFilter],
     () => getMaterials(materialFilter),
   );
-
-  const [updatingMaterialId, setUpdatingMaterialId] = useState('');
 
   // createMaterial useForm
   const {
