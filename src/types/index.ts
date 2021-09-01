@@ -5,7 +5,7 @@ export interface Material {
   width: number;
   height: number;
   price: number;
-  type: ['MDF', 'Compensado'];
+  materialType: ['MDF', 'Compensado'];
   createdAt: firebase.firestore.Timestamp;
   updatedAt: firebase.firestore.Timestamp;
 }

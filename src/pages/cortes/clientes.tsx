@@ -24,7 +24,6 @@ import { useForm } from 'react-hook-form';
 import { FaEdit, FaTrash } from 'react-icons/fa';
 import { RiAddLine, RiRefreshLine } from 'react-icons/ri';
 import { useQuery } from 'react-query';
-import * as Yup from 'yup';
 
 import { Dashboard } from '../../components/Dashboard';
 import { Header } from '../../components/Dashboard/Content/Header';
@@ -34,6 +33,10 @@ import { FormModal } from '../../components/Modal/FormModal';
 import { Pagination } from '../../components/Pagination';
 import { useCustomer } from '../../hooks/customer';
 import { areas } from '../../utils/listOfAreas';
+import {
+  createCustomerSchema,
+  searchCustomerSchema,
+} from '../../utils/yup/clientesValidations';
 
 interface CreateCustomerProps {
   firstName: string;
@@ -72,21 +75,6 @@ const Clientes: React.FC = () => {
     onClose: onCloseCreateCustomer,
   } = useDisclosure();
 
-  const validationCreateCustomerSchema = Yup.object().shape({
-    firstName: Yup.string().required('Nome obrigatório'),
-    lastName: Yup.string().required('Sobrenome obrigatório'),
-    telephone: Yup.string(),
-    address: Yup.string(),
-    area: Yup.object().shape({
-      value: Yup.string(),
-      label: Yup.string(),
-    }),
-  });
-
-  const validationSearchSchema = Yup.object().shape({
-    customerName: Yup.string(),
-  });
-
   // Create Customer useForm
   const {
     register: createCustomerRegister,
@@ -97,7 +85,7 @@ const Clientes: React.FC = () => {
       isSubmitting: createCustomerIsSubmitting,
     },
   } = useForm<CreateCustomerProps>({
-    resolver: yupResolver(validationCreateCustomerSchema),
+    resolver: yupResolver(createCustomerSchema),
   });
 
   // Create Customer Search useForm
@@ -106,7 +94,7 @@ const Clientes: React.FC = () => {
     handleSubmit: searchHandleSubmit,
     formState: { errors: searchErrors, isSubmitting: searchIsSubmitting },
   } = useForm<SearchProps>({
-    resolver: yupResolver(validationSearchSchema),
+    resolver: yupResolver(searchCustomerSchema),
   });
 
   const handleCreateCustomer = async ({
