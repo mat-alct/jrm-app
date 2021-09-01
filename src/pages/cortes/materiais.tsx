@@ -209,7 +209,7 @@ const Materiais = () => {
           colorScheme="orange"
           mb={4}
         >
-          <HStack>
+          <HStack spacing={4}>
             <Radio value="MDF" isChecked id="mdfFilter" name="mdfFilter">
               MDF
             </Radio>

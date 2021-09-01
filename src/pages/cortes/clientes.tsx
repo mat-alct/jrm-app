@@ -157,23 +157,7 @@ const Clientes: React.FC = () => {
           isLoading={isFetching || isLoading || createCustomerIsSubmitting}
         >
           {/* Search */}
-          <Flex as="form" onSubmit={searchHandleSubmit(handleSearch)}>
-            <FormInput
-              {...searchRegister('customerName')}
-              name="customerName"
-              placeholder="Digite o nome do cliente"
-              borderRightRadius="none"
-              error={searchErrors.customerName}
-            />
-            <Button
-              isDisabled={searchIsSubmitting}
-              colorScheme="orange"
-              type="submit"
-              borderLeftRadius="none"
-            >
-              Buscar
-            </Button>
-          </Flex>
+
           <Button
             colorScheme="gray"
             onClick={() => refetch()}
@@ -242,6 +226,28 @@ const Clientes: React.FC = () => {
         {/* Customers table */}
 
         {/* If not searched */}
+        <Flex
+          as="form"
+          onSubmit={searchHandleSubmit(handleSearch)}
+          maxW="300px"
+          mb={4}
+        >
+          <FormInput
+            {...searchRegister('customerName')}
+            name="customerName"
+            placeholder="Digite o nome do cliente"
+            borderRightRadius="none"
+            error={searchErrors.customerName}
+          />
+          <Button
+            isDisabled={searchIsSubmitting}
+            colorScheme="gray"
+            type="submit"
+            borderLeftRadius="none"
+          >
+            Buscar
+          </Button>
+        </Flex>
         {!searchFilter && (
           <Text color="red" mb={4}>
             * É necessário pesquisar o cliente para obter os resultados

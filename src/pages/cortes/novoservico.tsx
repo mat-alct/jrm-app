@@ -12,6 +12,8 @@ import {
   HStack,
   IconButton,
   Image,
+  Radio,
+  RadioGroup,
   Select,
   Switch,
   Table,
@@ -36,9 +38,10 @@ import { FaEdit, FaTrash } from 'react-icons/fa';
 import * as Yup from 'yup';
 
 import { Dashboard } from '../../components/Dashboard';
+import { Header } from '../../components/Dashboard/Content/Header';
 import { FormInput } from '../../components/Form/Input';
 import { RadioButton } from '../../components/Form/RadioButton';
-import { SelectWithSearch } from '../../components/Form/Select';
+import { FormSelect } from '../../components/Form/Select';
 import { areas } from '../../utils/listOfAreas';
 
 interface CreateOrderProps {
@@ -47,6 +50,7 @@ interface CreateOrderProps {
 
 const NovoServiço = () => {
   const [startDate, setStartDate] = useState<Date | null>(new Date());
+  const [isEstimate, setIsEstimate] = useState(0);
 
   const validationCreateOrderSchema = Yup.object().shape({
     name: Yup.string(),
@@ -77,6 +81,205 @@ const NovoServiço = () => {
         <title>Novo Serviço | JRM Compensados</title>
       </Head>
       <Dashboard>
+        <Header pageTitle="Novo Serviço" isLoading={createOrderIsSubmitting}>
+          <RadioGroup value={isEstimate} colorScheme="orange" mb={4} size="lg">
+            <HStack spacing={8}>
+              <Radio value={1} isChecked id="isOrder" name="isOrder">
+                Pedido
+              </Radio>
+              <Radio value={0} id="isEstimate" name="isEstimate">
+                Orçamento
+              </Radio>
+            </HStack>
+          </RadioGroup>
+        </Header>
+
+        {/* Plano de Corte */}
+        <Flex as="article" direction="column" mb={4}>
+          <HStack spacing={4} mt={8}>
+            <Heading color="gray.600" size="lg" whiteSpace="nowrap">
+              Plano de Corte
+            </Heading>
+            <Divider />
+          </HStack>
+          <FormControl mt={4} mb={8}>
+            <FormLabel mb={0}>Base de cálculo</FormLabel>
+            <RadioGroup value={isEstimate} colorScheme="orange">
+              <HStack spacing={4}>
+                <Radio value={0} isChecked id="isOrder" name="isOrder">
+                  Balcão
+                </Radio>
+                <Radio value={1} id="isEstimate" name="isEstimate">
+                  Marceneiro
+                </Radio>
+                <Radio value={1} id="isEstimate" name="isEstimate">
+                  Sem Acréscimo
+                </Radio>
+              </HStack>
+            </RadioGroup>
+          </FormControl>
+
+          <HStack align="center">
+            <FormSelect
+              name="material"
+              control={createOrderControl}
+              isClearable
+              placeholder="Material"
+              options={[
+                {
+                  value: 'ok',
+                  label: 'MDF BRANCO TX 2 FACES COMUM 15MM',
+                },
+                {
+                  value: 'ok2',
+                  label: 'MDF BRANCO TX 2 FACES ULTRA 18MM',
+                },
+              ]}
+            />
+            <FormInput size="md" name="amount" placeholder="Quantidade" />
+            <FormInput size="md" name="sideA" placeholder="Medida A" />
+            <FormSelect
+              control={createOrderControl}
+              name="borderA"
+              options={[
+                {
+                  value: 'ok',
+                  label: '1',
+                },
+                {
+                  value: 'ok2',
+                  label: '2',
+                },
+              ]}
+            />
+            <FormInput size="md" name="sideB" placeholder="Medida B" />
+            <FormSelect
+              name="borderB"
+              control={createOrderControl}
+              options={[
+                {
+                  value: 'ok',
+                  label: '1',
+                },
+                {
+                  value: 'ok2',
+                  label: '2',
+                },
+              ]}
+            />
+            <Button colorScheme="orange" size="md" w="100%">
+              Adicionar
+            </Button>
+          </HStack>
+          <Table colorScheme="orange" my={8}>
+            <TableCaption>Lista de peças</TableCaption>
+            <Thead>
+              <Tr>
+                <Th>Fita de Borda</Th>
+                <Th>Material</Th>
+                <Th isNumeric>Qtd</Th>
+                <Th isNumeric>Lado A</Th>
+                <Th isNumeric>Lado B</Th>
+                <Th isNumeric>Preço</Th>
+                <Th />
+              </Tr>
+            </Thead>
+            <Tbody>
+              <Tr>
+                <Td>
+                  <Image
+                    src="/images/tags/G0P0.svg"
+                    alt="Etiqueta"
+                    boxSize="50px"
+                  />
+                </Td>
+                <Td>MDF BRANCO TX 2 FACES COMUM 15MM</Td>
+                <Td isNumeric>1</Td>
+                <Td isNumeric>2750</Td>
+                <Td isNumeric>1850</Td>
+                <Td isNumeric>R$ 400,00</Td>
+                <Td>
+                  <HStack spacing={4}>
+                    <IconButton
+                      colorScheme="orange"
+                      size="sm"
+                      aria-label="Editar"
+                      icon={<FaEdit />}
+                    />
+                    <IconButton
+                      colorScheme="orange"
+                      size="sm"
+                      aria-label="Remover"
+                      icon={<FaTrash />}
+                    />
+                  </HStack>
+                </Td>
+              </Tr>
+              <Tr>
+                <Td>
+                  <Image
+                    src="/images/tags/G0P0.svg"
+                    alt="Etiqueta"
+                    boxSize="50px"
+                  />
+                </Td>
+                <Td>MDF BRANCO TX 2 FACES COMUM 15MM</Td>
+                <Td isNumeric>1</Td>
+                <Td isNumeric>2750</Td>
+                <Td isNumeric>1850</Td>
+                <Td isNumeric>R$ 400,00</Td>
+                <Td>
+                  <HStack spacing={4}>
+                    <IconButton
+                      colorScheme="orange"
+                      size="sm"
+                      aria-label="Editar"
+                      icon={<FaEdit />}
+                    />
+                    <IconButton
+                      colorScheme="orange"
+                      size="sm"
+                      aria-label="Remover"
+                      icon={<FaTrash />}
+                    />
+                  </HStack>
+                </Td>
+              </Tr>
+              <Tr>
+                <Td>
+                  <Image
+                    src="/images/tags/G0P0.svg"
+                    alt="Etiqueta"
+                    boxSize="50px"
+                  />
+                </Td>
+                <Td>MDF BRANCO TX 2 FACES COMUM 15MM</Td>
+                <Td isNumeric>1</Td>
+                <Td isNumeric>2750</Td>
+                <Td isNumeric>1850</Td>
+                <Td isNumeric>R$ 400,00</Td>
+                <Td>
+                  <HStack spacing={4}>
+                    <IconButton
+                      colorScheme="orange"
+                      size="sm"
+                      aria-label="Editar"
+                      icon={<FaEdit />}
+                    />
+                    <IconButton
+                      colorScheme="orange"
+                      size="sm"
+                      aria-label="Remover"
+                      icon={<FaTrash />}
+                    />
+                  </HStack>
+                </Td>
+              </Tr>
+            </Tbody>
+          </Table>
+        </Flex>
+
+        {/* Cliente */}
         <HStack spacing={4}>
           <Heading color="gray.600" size="lg" whiteSpace="nowrap">
             Cliente
@@ -84,7 +287,6 @@ const NovoServiço = () => {
           <Divider />
         </HStack>
 
-        {/* Cliente */}
         <Flex as="article" direction="column" maxW="700px">
           <FormControl display="flex" alignItems="center" mt={8}>
             <FormLabel htmlFor="customer-signup" mb="0" color="gray.700">
@@ -207,181 +409,6 @@ const NovoServiço = () => {
           </VStack>
         </Flex>
 
-        {/* Plano de Corte */}
-        <Flex as="article" direction="column" mb={16}>
-          <HStack spacing={4} mt={16}>
-            <Heading color="gray.600" size="lg" whiteSpace="nowrap">
-              Plano de Corte
-            </Heading>
-            <Divider />
-          </HStack>
-          <HStack mt={8} align="center">
-            <SelectWithSearch
-              name="material"
-              control={createOrderControl}
-              isClearable
-              placeholder="Material"
-              minW="450px"
-              options={[
-                {
-                  value: 'ok',
-                  label: 'MDF BRANCO TX 2 FACES COMUM 15MM',
-                },
-                {
-                  value: 'ok2',
-                  label: 'MDF BRANCO TX 2 FACES ULTRA 18MM',
-                },
-              ]}
-            />
-            <FormInput
-              size="md"
-              name="amount"
-              placeholder="Quantidade"
-              maxW="125px"
-            />
-            <FormInput size="md" name="sideA" placeholder="Medida A" />
-            <SelectWithSearch
-              control={createOrderControl}
-              name="borderA"
-              minW="75px"
-              options={[
-                {
-                  value: 'ok',
-                  label: '1',
-                },
-                {
-                  value: 'ok2',
-                  label: '2',
-                },
-              ]}
-            />
-            <FormInput size="md" name="sideB" placeholder="Medida B" />
-            <SelectWithSearch
-              name="borderB"
-              control={createOrderControl}
-              minW="75px"
-              options={[
-                {
-                  value: 'ok',
-                  label: '1',
-                },
-                {
-                  value: 'ok2',
-                  label: '2',
-                },
-              ]}
-            />
-            <Button colorScheme="orange" size="md" w="100%">
-              Adicionar
-            </Button>
-          </HStack>
-          <Table colorScheme="orange" my={16}>
-            <TableCaption>Lista de peças</TableCaption>
-            <Thead>
-              <Tr>
-                <Th>Fita de Borda</Th>
-                <Th>Material</Th>
-                <Th isNumeric>Qtd</Th>
-                <Th isNumeric>Lado A</Th>
-                <Th isNumeric>Lado B</Th>
-                <Th isNumeric>Preço</Th>
-                <Th />
-              </Tr>
-            </Thead>
-            <Tbody>
-              <Tr>
-                <Td>
-                  <Image
-                    src="/images/tags/G0P0.svg"
-                    alt="Etiqueta"
-                    boxSize="50px"
-                  />
-                </Td>
-                <Td>MDF BRANCO TX 2 FACES COMUM 15MM</Td>
-                <Td isNumeric>1</Td>
-                <Td isNumeric>2750</Td>
-                <Td isNumeric>1850</Td>
-                <Td isNumeric>R$ 400,00</Td>
-                <Td>
-                  <HStack spacing={4}>
-                    <IconButton
-                      colorScheme="orange"
-                      size="sm"
-                      aria-label="Editar"
-                      icon={<FaEdit />}
-                    />
-                    <IconButton
-                      colorScheme="orange"
-                      size="sm"
-                      aria-label="Remover"
-                      icon={<FaTrash />}
-                    />
-                  </HStack>
-                </Td>
-              </Tr>
-              <Tr>
-                <Td>
-                  <Image
-                    src="/images/tags/G0P0.svg"
-                    alt="Etiqueta"
-                    boxSize="50px"
-                  />
-                </Td>
-                <Td>MDF BRANCO TX 2 FACES COMUM 15MM</Td>
-                <Td isNumeric>1</Td>
-                <Td isNumeric>2750</Td>
-                <Td isNumeric>1850</Td>
-                <Td isNumeric>R$ 400,00</Td>
-                <Td>
-                  <HStack spacing={4}>
-                    <IconButton
-                      colorScheme="orange"
-                      size="sm"
-                      aria-label="Editar"
-                      icon={<FaEdit />}
-                    />
-                    <IconButton
-                      colorScheme="orange"
-                      size="sm"
-                      aria-label="Remover"
-                      icon={<FaTrash />}
-                    />
-                  </HStack>
-                </Td>
-              </Tr>
-              <Tr>
-                <Td>
-                  <Image
-                    src="/images/tags/G0P0.svg"
-                    alt="Etiqueta"
-                    boxSize="50px"
-                  />
-                </Td>
-                <Td>MDF BRANCO TX 2 FACES COMUM 15MM</Td>
-                <Td isNumeric>1</Td>
-                <Td isNumeric>2750</Td>
-                <Td isNumeric>1850</Td>
-                <Td isNumeric>R$ 400,00</Td>
-                <Td>
-                  <HStack spacing={4}>
-                    <IconButton
-                      colorScheme="orange"
-                      size="sm"
-                      aria-label="Editar"
-                      icon={<FaEdit />}
-                    />
-                    <IconButton
-                      colorScheme="orange"
-                      size="sm"
-                      aria-label="Remover"
-                      icon={<FaTrash />}
-                    />
-                  </HStack>
-                </Td>
-              </Tr>
-            </Tbody>
-          </Table>
-        </Flex>
         <Button colorScheme="orange" isFullWidth mb={16}>
           Confirmar
         </Button>
