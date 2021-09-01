@@ -58,7 +58,6 @@ const Clientes: React.FC = () => {
     undefined,
   );
 
-  const toast = useToast();
   const { createCustomer, getCustomers, removeCustomer } = useCustomer();
   const { data, refetch, isFetching, isLoading } = useQuery(
     ['customers', searchFilter],
@@ -104,73 +103,47 @@ const Clientes: React.FC = () => {
     area,
     telephone,
   }: CreateCustomerProps) => {
-    try {
-      onCloseCreateCustomer();
+    onCloseCreateCustomer();
 
-      // Function to capitalize and strip first name and last name to save in database
-      const capitalizeAndStrip = (input: string) => {
-        if (input) {
-          const updatedInput = input
-            .replace(/\S+/g, txt => {
-              // uppercase first letter and add rest unchanged
-              return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
-            })
-            .trim();
+    // Function to capitalize and strip first name and last name to save in database
+    const capitalizeAndStrip = (input: string) => {
+      if (input) {
+        const updatedInput = input
+          .replace(/\S+/g, txt => {
+            // uppercase first letter and add rest unchanged
+            return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+          })
+          .trim();
 
-          return updatedInput;
-        }
+        return updatedInput;
+      }
 
-        return input;
-      };
+      return input;
+    };
 
-      // Default props
-      const name = `${capitalizeAndStrip(firstName)} ${capitalizeAndStrip(
-        lastName,
-      )}`;
-      const city = 'Angra dos Reis';
-      const state = 'Rio de Janeiro';
-      const createdAt = firebase.firestore.Timestamp.fromDate(new Date());
-      const updatedAt = firebase.firestore.Timestamp.fromDate(new Date());
+    // Default props
+    const name = `${capitalizeAndStrip(firstName)} ${capitalizeAndStrip(
+      lastName,
+    )}`;
+    const city = 'Angra dos Reis';
+    const state = 'Rio de Janeiro';
+    const createdAt = firebase.firestore.Timestamp.fromDate(new Date());
+    const updatedAt = firebase.firestore.Timestamp.fromDate(new Date());
 
-      await createCustomer({
-        name,
-        createdAt,
-        updatedAt,
-        state,
-        city,
-        area: area?.value,
-        address,
-        telephone,
-      });
-
-      toast({
-        status: 'success',
-        title: 'Cliente criado com sucesso',
-        isClosable: true,
-      });
-    } catch {
-      toast({
-        status: 'error',
-        title: 'Erro ao criar cliente',
-        isClosable: true,
-      });
-    }
+    await createCustomer({
+      name,
+      createdAt,
+      updatedAt,
+      state,
+      city,
+      area: area?.value,
+      address,
+      telephone,
+    });
   };
 
   const handleRemoveCustomer = async (id: string) => {
-    try {
-      await removeCustomer(id);
-
-      toast({
-        status: 'success',
-        title: 'Cliente removido com sucesso',
-      });
-    } catch {
-      toast({
-        status: 'error',
-        title: 'Erro ao remover cliente',
-      });
-    }
+    await removeCustomer(id);
   };
 
   const areasToSelect = areas.map(area => {

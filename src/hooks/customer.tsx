@@ -71,9 +71,23 @@ export const CustomerProvider: React.FC = ({ children }) => {
   // METHODS
 
   const createCustomer = async (newCustomerData: Customer) => {
-    removeUndefinedAndEmptyFields(newCustomerData);
+    try {
+      removeUndefinedAndEmptyFields(newCustomerData);
 
-    await createCustomerMutation.mutateAsync(newCustomerData);
+      await createCustomerMutation.mutateAsync(newCustomerData);
+
+      toast({
+        status: 'success',
+        title: 'Cliente criado com sucesso',
+        isClosable: true,
+      });
+    } catch {
+      toast({
+        status: 'error',
+        title: 'Erro ao criar cliente',
+        isClosable: true,
+      });
+    }
   };
 
   const getCustomers = async (searchFilter: string | undefined) => {
@@ -112,7 +126,19 @@ export const CustomerProvider: React.FC = ({ children }) => {
   };
 
   const removeCustomer = async (id: string) => {
-    await removeCustomerMutation.mutateAsync(id);
+    try {
+      await removeCustomerMutation.mutateAsync(id);
+
+      toast({
+        status: 'success',
+        title: 'Cliente removido com sucesso',
+      });
+    } catch {
+      toast({
+        status: 'error',
+        title: 'Erro ao remover cliente',
+      });
+    }
   };
 
   return (
