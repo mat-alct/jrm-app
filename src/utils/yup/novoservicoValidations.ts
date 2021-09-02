@@ -38,9 +38,15 @@ export const test = Yup.object().shape({
 
 export const createCutlistSchema = Yup.object().shape({
   materialId: Yup.string().required('Material obrigatório'),
-  amount: Yup.number().required('Quantidade obrigatória'),
-  sideA: Yup.number().required('Lado A obrigatório'),
-  sideB: Yup.number().required('Lado B obrigatório'),
-  borderA: Yup.number().required('Obrigatório'),
-  borderB: Yup.number().required('Obrigatório'),
+  amount: Yup.number()
+    .required('Quantidade obrigatória')
+    .typeError('Número obrigatório'),
+  sideA: Yup.number()
+    .required('Lado A obrigatório')
+    .typeError('Número obrigatório'),
+  sideB: Yup.number()
+    .required('Lado B obrigatório')
+    .typeError('Número obrigatório'),
+  borderA: Yup.number().required('Fita Obrigatória'),
+  borderB: Yup.number().required('Fita Obrigatória'),
 });

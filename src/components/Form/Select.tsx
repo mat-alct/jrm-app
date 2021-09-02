@@ -50,7 +50,7 @@ export const FormSelect: React.FC<FormSelectProps> = ({
         options={options}
         isClearable={isClearable}
         placeholder={placeholder}
-        value={field.value}
+        value={options.find(c => c.value === field.value)}
         onChange={val => field.onChange(val?.value)}
       />
       {!!errors[name] && (
