@@ -5,7 +5,7 @@ import { Control, useController } from 'react-hook-form';
 import Select from 'react-select';
 
 interface Options {
-  value: string;
+  value: string | number;
   label: string;
 }
 //

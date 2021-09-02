@@ -43,6 +43,7 @@ import { Header } from '../../components/Dashboard/Content/Header';
 import { FormInput } from '../../components/Form/Input';
 import { RadioButton } from '../../components/Form/RadioButton';
 import { FormSelect } from '../../components/Form/Select';
+import { useMaterial } from '../../hooks/material';
 import { areas } from '../../utils/listOfAreas';
 import { createCutlistSchema } from '../../utils/yup/novoservicoValidations';
 
@@ -81,16 +82,35 @@ const NovoServiço = () => {
   const [orderType, setOrderType] = useState('Serviço');
 
   // * Cutlist Data
-  const { data: materialData } = useQuery('materials', () =>
-    getMaterialsOptions(),
-  );
+  const { getAllMaterials, materialOptions } = useMaterial();
+
+  const { data: materialData } = useQuery('materials', () => getAllMaterials());
 
   const [cutlist, setCutlist] = useState<Cutlist[]>([]);
   const [pricePercent, setPricePercent] = useState<number>(75);
 
+  const borderOptions = [
+    {
+      value: 0,
+      label: '0',
+    },
+    {
+      value: 1,
+      label: '1',
+    },
+    {
+      value: 2,
+      label: '2',
+    },
+  ];
+
   const updatePricePercent = (percentValue: string) => {
     // TODO: Make all prices from cutlist change when pricePercent is changed
     setPricePercent(Number(percentValue));
+  };
+
+  const handleCreateCutlist = (data: CreateCutlistProps) => {
+    console.log(data);
   };
 
   const {
@@ -192,57 +212,50 @@ const NovoServiço = () => {
             </Text>
           </Flex>
 
-          <HStack as="form" align="center">
-            <Box minW="50%">
+          <HStack
+            as="form"
+            align="center"
+            noValidate
+            onSubmit={createCutlistHandleSubmit(handleCreateCutlist)}
+          >
+            <Box minW="33%">
               <FormSelect
-                name="material"
-                control={createOrderControl}
+                name="materialId"
+                control={createCutlistControl}
                 isClearable
                 placeholder="Material"
-                options={[
-                  {
-                    value: 'materialId',
-                    label: 'MDF BRANCO TX 2 FACES COMUM 15MM',
-                  },
-                  {
-                    value: 'materialId2',
-                    label: 'MDF BRANCO TX 2 FACES ULTRA 18MM',
-                  },
-                ]}
+                options={materialOptions}
               />
             </Box>
-            <FormInput size="md" name="amount" placeholder="Quantidade" />
-            <FormInput size="md" name="sideA" placeholder="Medida A" />
-            <FormSelect
-              control={createOrderControl}
-              name="borderA"
-              options={[
-                {
-                  value: 'ok',
-                  label: '1',
-                },
-                {
-                  value: 'ok2',
-                  label: '2',
-                },
-              ]}
+            <FormInput
+              {...createCutlistRegister('amount')}
+              name="amount"
+              placeholder="Quantidade"
+              error={createCutlistErrors.amount}
             />
-            <FormInput size="md" name="sideB" placeholder="Medida B" />
+            <FormInput
+              {...createCutlistRegister('sideA')}
+              name="sideA"
+              placeholder="Medida A"
+              error={createCutlistErrors.sideA}
+            />
+            <FormSelect
+              control={createCutlistControl}
+              name="borderA"
+              options={borderOptions}
+            />
+            <FormInput
+              {...createCutlistRegister('sideB')}
+              name="sideB"
+              placeholder="Medida B"
+              error={createCutlistErrors.sideB}
+            />
             <FormSelect
               name="borderB"
-              control={createOrderControl}
-              options={[
-                {
-                  value: 'ok',
-                  label: '1',
-                },
-                {
-                  value: 'ok2',
-                  label: '2',
-                },
-              ]}
+              control={createCutlistControl}
+              options={borderOptions}
             />
-            <Button colorScheme="orange" size="md" w="100%">
+            <Button colorScheme="orange" size="md" w="100%" type="submit">
               Adicionar
             </Button>
           </HStack>
