@@ -51,7 +51,7 @@ export const FormSelect: React.FC<FormSelectProps> = ({
         isClearable={isClearable}
         placeholder={placeholder}
         value={field.value}
-        onChange={field.onChange}
+        onChange={val => field.onChange(val?.value)}
       />
       {!!errors[name] && (
         <FormErrorMessage role="alert">{errors[name].message}</FormErrorMessage>
