@@ -35,6 +35,7 @@ import React, { useState } from 'react';
 import DatePicker, { registerLocale } from 'react-datepicker';
 import { useForm } from 'react-hook-form';
 import { FaEdit, FaTrash } from 'react-icons/fa';
+import { useQuery } from 'react-query';
 import * as Yup from 'yup';
 
 import { Dashboard } from '../../components/Dashboard';
@@ -43,6 +44,7 @@ import { FormInput } from '../../components/Form/Input';
 import { RadioButton } from '../../components/Form/RadioButton';
 import { FormSelect } from '../../components/Form/Select';
 import { areas } from '../../utils/listOfAreas';
+import { createCutlistSchema } from '../../utils/yup/novoservicoValidations';
 
 interface CreateOrderProps {
   name: string;
@@ -66,16 +68,44 @@ interface Cutlist {
   price: number;
 }
 
+interface CreateCutlistProps {
+  materialId: string;
+  amount: number;
+  sideA: number;
+  sideB: number;
+  borderA: number;
+  borderB: number;
+}
+
 const NovoServiço = () => {
-  // Cutlist Data
+  const [orderType, setOrderType] = useState('Serviço');
+
+  // * Cutlist Data
+  const { data: materialData } = useQuery('materials', () =>
+    getMaterialsOptions(),
+  );
+
   const [cutlist, setCutlist] = useState<Cutlist[]>([]);
   const [pricePercent, setPricePercent] = useState<number>(75);
 
   const updatePricePercent = (percentValue: string) => {
+    // TODO: Make all prices from cutlist change when pricePercent is changed
     setPricePercent(Number(percentValue));
   };
 
-  const [orderType, setOrderType] = useState('Serviço');
+  const {
+    register: createCutlistRegister,
+    handleSubmit: createCutlistHandleSubmit,
+    control: createCutlistControl,
+    formState: {
+      errors: createCutlistErrors,
+      isSubmitting: createCutlistIsSubmitting,
+    },
+  } = useForm<CreateCutlistProps>({
+    resolver: yupResolver(createCutlistSchema),
+  });
+
+  // * Other data
 
   const [startDate, setStartDate] = useState<Date | null>(new Date());
 
@@ -158,27 +188,29 @@ const NovoServiço = () => {
               </RadioGroup>
             </FormControl>
             <Text whiteSpace="nowrap" fontSize="2xl" color="green.500">
-              R$ 200,00
+              R$ 00,00
             </Text>
           </Flex>
 
-          <HStack align="center">
-            <FormSelect
-              name="material"
-              control={createOrderControl}
-              isClearable
-              placeholder="Material"
-              options={[
-                {
-                  value: 'ok',
-                  label: 'MDF BRANCO TX 2 FACES COMUM 15MM',
-                },
-                {
-                  value: 'ok2',
-                  label: 'MDF BRANCO TX 2 FACES ULTRA 18MM',
-                },
-              ]}
-            />
+          <HStack as="form" align="center">
+            <Box minW="50%">
+              <FormSelect
+                name="material"
+                control={createOrderControl}
+                isClearable
+                placeholder="Material"
+                options={[
+                  {
+                    value: 'materialId',
+                    label: 'MDF BRANCO TX 2 FACES COMUM 15MM',
+                  },
+                  {
+                    value: 'materialId2',
+                    label: 'MDF BRANCO TX 2 FACES ULTRA 18MM',
+                  },
+                ]}
+              />
+            </Box>
             <FormInput size="md" name="amount" placeholder="Quantidade" />
             <FormInput size="md" name="sideA" placeholder="Medida A" />
             <FormSelect

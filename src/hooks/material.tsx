@@ -1,6 +1,6 @@
 import { useToast } from '@chakra-ui/react';
 import firebase from 'firebase/app';
-import React, { createContext, useContext } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 import { useMutation } from 'react-query';
 import { v4 } from 'uuid';
 
@@ -16,14 +16,21 @@ interface MaterialContext {
   getMaterials: (
     type: string,
   ) => Promise<(firebase.firestore.DocumentData & { id: string })[]>;
+  getAllMaterials: () => Promise<
+    (firebase.firestore.DocumentData & { id: string })[]
+  >;
   removeMaterial: (id: string) => Promise<void>;
   updateMaterialPrice: (data: UpdateMaterialPriceProps) => Promise<void>;
+  materialOptions: { value: string; label: string }[];
 }
 
 const MaterialContext = createContext<MaterialContext>({} as MaterialContext);
 
 export const MaterialProvider: React.FC = ({ children }) => {
   const toast = useToast();
+  const [materialOptions, setMaterialOptions] = useState<
+    { value: string; label: string }[]
+  >([]);
 
   // MUTATIONS
 
@@ -131,6 +138,25 @@ export const MaterialProvider: React.FC = ({ children }) => {
     return materials;
   };
 
+  const getAllMaterials = async () => {
+    const response = await firebase.firestore().collection('materials').get();
+
+    const materials = response.docs.map(doc =>
+      Object.assign(doc.data() as Material, { id: doc.id }),
+    );
+
+    const materialsOptions = materials.map(material => {
+      return {
+        value: material.id,
+        label: material.name,
+      };
+    });
+
+    setMaterialOptions(materialsOptions);
+
+    return materials;
+  };
+
   const removeMaterial = async (id: string) => {
     try {
       await removeMaterialMutation.mutateAsync(id);
@@ -180,6 +206,8 @@ export const MaterialProvider: React.FC = ({ children }) => {
         getMaterials,
         removeMaterial,
         updateMaterialPrice,
+        getAllMaterials,
+        materialOptions,
       }}
     >
       {children}
