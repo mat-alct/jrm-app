@@ -48,9 +48,36 @@ interface CreateOrderProps {
   name: string;
 }
 
+interface CutlistMaterial {
+  materialId: string;
+  name: string;
+  width: number;
+  height: number;
+  price: number;
+}
+
+interface Cutlist {
+  material: CutlistMaterial;
+  amount: number;
+  sideA: number;
+  sideB: number;
+  borderA: 0 | 1 | 2;
+  borderB: 0 | 1 | 2;
+  price: number;
+}
+
 const NovoServiço = () => {
+  // Cutlist Data
+  const [cutlist, setCutlist] = useState<Cutlist[]>([]);
+  const [pricePercent, setPricePercent] = useState<number>(75);
+
+  const updatePricePercent = (percentValue: string) => {
+    setPricePercent(Number(percentValue));
+  };
+
+  const [orderType, setOrderType] = useState('Serviço');
+
   const [startDate, setStartDate] = useState<Date | null>(new Date());
-  const [isEstimate, setIsEstimate] = useState(0);
 
   const validationCreateOrderSchema = Yup.object().shape({
     name: Yup.string(),
@@ -81,13 +108,24 @@ const NovoServiço = () => {
         <title>Novo Serviço | JRM Compensados</title>
       </Head>
       <Dashboard>
-        <Header pageTitle="Novo Serviço" isLoading={createOrderIsSubmitting}>
-          <RadioGroup value={isEstimate} colorScheme="orange" mb={4} size="lg">
+        <Header
+          pageTitle={`Novo ${
+            orderType === 'Orçamento' ? 'Orçamento' : 'Serviço'
+          }`}
+          isLoading={createOrderIsSubmitting}
+        >
+          <RadioGroup
+            colorScheme="orange"
+            mb={4}
+            size="lg"
+            value={orderType}
+            onChange={setOrderType}
+          >
             <HStack spacing={8}>
-              <Radio value={1} isChecked id="isOrder" name="isOrder">
+              <Radio isChecked id="isOrder" name="isOrder" value="Serviço">
                 Pedido
               </Radio>
-              <Radio value={0} id="isEstimate" name="isEstimate">
+              <Radio id="isEstimate" name="isEstimate" value="Orçamento">
                 Orçamento
               </Radio>
             </HStack>
@@ -102,22 +140,27 @@ const NovoServiço = () => {
             </Heading>
             <Divider />
           </HStack>
-          <FormControl mt={4} mb={8}>
-            <FormLabel mb={0}>Base de cálculo</FormLabel>
-            <RadioGroup value={isEstimate} colorScheme="orange">
-              <HStack spacing={4}>
-                <Radio value={0} isChecked id="isOrder" name="isOrder">
-                  Balcão
-                </Radio>
-                <Radio value={1} id="isEstimate" name="isEstimate">
-                  Marceneiro
-                </Radio>
-                <Radio value={1} id="isEstimate" name="isEstimate">
-                  Sem Acréscimo
-                </Radio>
-              </HStack>
-            </RadioGroup>
-          </FormControl>
+          <Flex align="center" justify="space-between">
+            <FormControl mt={4} mb={8}>
+              <FormLabel mb={0}>Base de cálculo</FormLabel>
+              <RadioGroup
+                colorScheme="orange"
+                value={pricePercent}
+                onChange={percentValue => updatePricePercent(percentValue)}
+              >
+                <HStack spacing={4}>
+                  <Radio value={75} isChecked>
+                    Balcão
+                  </Radio>
+                  <Radio value={50}>Marceneiro</Radio>
+                  <Radio value={0}>Sem Acréscimo</Radio>
+                </HStack>
+              </RadioGroup>
+            </FormControl>
+            <Text whiteSpace="nowrap" fontSize="2xl" color="green.500">
+              R$ 200,00
+            </Text>
+          </Flex>
 
           <HStack align="center">
             <FormSelect
@@ -171,7 +214,7 @@ const NovoServiço = () => {
               Adicionar
             </Button>
           </HStack>
-          <Table colorScheme="orange" my={8}>
+          <Table colorScheme="orange" my={4}>
             <TableCaption>Lista de peças</TableCaption>
             <Thead>
               <Tr>
@@ -184,98 +227,6 @@ const NovoServiço = () => {
                 <Th />
               </Tr>
             </Thead>
-            <Tbody>
-              <Tr>
-                <Td>
-                  <Image
-                    src="/images/tags/G0P0.svg"
-                    alt="Etiqueta"
-                    boxSize="50px"
-                  />
-                </Td>
-                <Td>MDF BRANCO TX 2 FACES COMUM 15MM</Td>
-                <Td isNumeric>1</Td>
-                <Td isNumeric>2750</Td>
-                <Td isNumeric>1850</Td>
-                <Td isNumeric>R$ 400,00</Td>
-                <Td>
-                  <HStack spacing={4}>
-                    <IconButton
-                      colorScheme="orange"
-                      size="sm"
-                      aria-label="Editar"
-                      icon={<FaEdit />}
-                    />
-                    <IconButton
-                      colorScheme="orange"
-                      size="sm"
-                      aria-label="Remover"
-                      icon={<FaTrash />}
-                    />
-                  </HStack>
-                </Td>
-              </Tr>
-              <Tr>
-                <Td>
-                  <Image
-                    src="/images/tags/G0P0.svg"
-                    alt="Etiqueta"
-                    boxSize="50px"
-                  />
-                </Td>
-                <Td>MDF BRANCO TX 2 FACES COMUM 15MM</Td>
-                <Td isNumeric>1</Td>
-                <Td isNumeric>2750</Td>
-                <Td isNumeric>1850</Td>
-                <Td isNumeric>R$ 400,00</Td>
-                <Td>
-                  <HStack spacing={4}>
-                    <IconButton
-                      colorScheme="orange"
-                      size="sm"
-                      aria-label="Editar"
-                      icon={<FaEdit />}
-                    />
-                    <IconButton
-                      colorScheme="orange"
-                      size="sm"
-                      aria-label="Remover"
-                      icon={<FaTrash />}
-                    />
-                  </HStack>
-                </Td>
-              </Tr>
-              <Tr>
-                <Td>
-                  <Image
-                    src="/images/tags/G0P0.svg"
-                    alt="Etiqueta"
-                    boxSize="50px"
-                  />
-                </Td>
-                <Td>MDF BRANCO TX 2 FACES COMUM 15MM</Td>
-                <Td isNumeric>1</Td>
-                <Td isNumeric>2750</Td>
-                <Td isNumeric>1850</Td>
-                <Td isNumeric>R$ 400,00</Td>
-                <Td>
-                  <HStack spacing={4}>
-                    <IconButton
-                      colorScheme="orange"
-                      size="sm"
-                      aria-label="Editar"
-                      icon={<FaEdit />}
-                    />
-                    <IconButton
-                      colorScheme="orange"
-                      size="sm"
-                      aria-label="Remover"
-                      icon={<FaTrash />}
-                    />
-                  </HStack>
-                </Td>
-              </Tr>
-            </Tbody>
           </Table>
         </Flex>
 
