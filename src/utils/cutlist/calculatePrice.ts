@@ -5,7 +5,7 @@ interface MaterialProps {
 }
 
 interface CutlistProps {
-  quantidade: number;
+  amount: number;
   sideA: number;
   sideB: number;
   borderA: number;
@@ -17,7 +17,7 @@ export const calculateCutlistPrice = (
   cutlistData: CutlistProps,
   pricePercent?: number,
 ): number => {
-  const qtd = cutlistData.quantidade;
+  const qtd = cutlistData.amount;
   const At = material.width * material.height;
   const Ap = cutlistData.sideA * cutlistData.sideB;
   const preço = material.price;

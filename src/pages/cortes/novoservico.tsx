@@ -44,6 +44,7 @@ import { FormInput } from '../../components/Form/Input';
 import { RadioButton } from '../../components/Form/RadioButton';
 import { FormSelect } from '../../components/Form/Select';
 import { useMaterial } from '../../hooks/material';
+import { calculateCutlistPrice } from '../../utils/cutlist/calculatePrice';
 import { areas } from '../../utils/listOfAreas';
 import { createCutlistSchema } from '../../utils/yup/novoservicoValidations';
 
@@ -83,6 +84,15 @@ const NovoServiço = () => {
 
   // * Cutlist Data
   const { getAllMaterials, materialOptions } = useMaterial();
+  const {
+    register: createCutlistRegister,
+    handleSubmit: createCutlistHandleSubmit,
+    control: createCutlistControl,
+    reset: createCutlistReset,
+    formState: { errors: createCutlistErrors },
+  } = useForm<CreateCutlistProps>({
+    resolver: yupResolver(createCutlistSchema),
+  });
 
   const { data: materialData } = useQuery('materials', () => getAllMaterials());
 
@@ -109,21 +119,26 @@ const NovoServiço = () => {
     setPricePercent(Number(percentValue));
   };
 
-  const handleCreateCutlist = (data: CreateCutlistProps) => {
-    console.log(data);
-  };
+  const handleCreateCutlist = (cutlistFormData: CreateCutlistProps) => {
+    createCutlistReset();
 
-  const {
-    register: createCutlistRegister,
-    handleSubmit: createCutlistHandleSubmit,
-    control: createCutlistControl,
-    formState: {
-      errors: createCutlistErrors,
-      isSubmitting: createCutlistIsSubmitting,
-    },
-  } = useForm<CreateCutlistProps>({
-    resolver: yupResolver(createCutlistSchema),
-  });
+    const materialUsed = materialData?.find(
+      material => material.id === cutlistFormData.materialId,
+    );
+
+    if (!materialUsed) {
+      throw new Error();
+    }
+
+    const price = calculateCutlistPrice(
+      {
+        width: materialUsed.width,
+        height: materialUsed.height,
+        price: materialUsed.price,
+      },
+      cutlistFormData,
+    );
+  };
 
   // * Other data
 
@@ -243,6 +258,8 @@ const NovoServiço = () => {
               control={createCutlistControl}
               name="borderA"
               options={borderOptions}
+              placeholder="Fita A"
+              defaultValue={0}
             />
             <FormInput
               {...createCutlistRegister('sideB')}
@@ -254,6 +271,8 @@ const NovoServiço = () => {
               name="borderB"
               control={createCutlistControl}
               options={borderOptions}
+              placeholder="Fita B"
+              defaultValue={0}
             />
             <Button colorScheme="orange" size="md" w="100%" type="submit">
               Adicionar

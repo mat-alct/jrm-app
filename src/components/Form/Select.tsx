@@ -13,7 +13,7 @@ interface FormSelectProps {
   options: Options[];
   name: string;
   placeholder?: string;
-  defaultValue?: string;
+  defaultValue?: string | number;
   isClearable?: boolean;
   label?: string;
   control: Control<any>;
