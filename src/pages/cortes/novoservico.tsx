@@ -123,6 +123,33 @@ const NovoServiço = () => {
   const updatePricePercent = (percentValue: string) => {
     // TODO: Make all prices from cutlist change when pricePercent is changed
     setPricePercent(Number(percentValue));
+
+    const cutlistWithUpdatedPrice = cutlist.map(cut => {
+      const { amount, borderB, borderA, sideB, sideA } = cut;
+
+      const priceUpdated = calculateCutlistPrice(
+        {
+          width: cut.material.width,
+          height: cut.material.height,
+          price: cut.material.price,
+        },
+        {
+          amount,
+          borderA,
+          borderB,
+          sideA,
+          sideB,
+        },
+        Number(percentValue),
+      );
+
+      return {
+        ...cut,
+        price: priceUpdated,
+      };
+    });
+
+    setCutlist([...cutlistWithUpdatedPrice]);
   };
 
   const handleCreateCutlist = (cutlistFormData: CreateCutlistProps) => {
@@ -285,7 +312,7 @@ const NovoServiço = () => {
                     Balcão
                   </Radio>
                   <Radio value={50}>Marceneiro</Radio>
-                  <Radio value={0}>Sem Acréscimo</Radio>
+                  <Radio value={1}>Sem Acréscimo</Radio>
                 </HStack>
               </RadioGroup>
             </FormControl>
