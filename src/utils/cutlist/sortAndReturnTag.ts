@@ -8,6 +8,12 @@ import G2P0 from '../../../public/images/tags/G2P0.svg';
 import G2P1 from '../../../public/images/tags/G2P1.svg';
 import G2P2 from '../../../public/images/tags/G2P2.svg';
 
+interface AvatarProps {
+  src: string;
+  width: string;
+  height: string;
+}
+
 type sortCutlistDataProps = {
   sideA: number;
   sideB: number;
@@ -18,7 +24,7 @@ type sortCutlistDataProps = {
 type sortCutlistDataReturn = {
   gside: number;
   pside: number;
-  avatar: string;
+  avatar: AvatarProps;
 };
 
 export const sortCutlistData = ({
@@ -31,7 +37,7 @@ export const sortCutlistData = ({
   let pside: number;
   let gborder: number;
   let pborder: number;
-  let avatar: string;
+  let avatar: AvatarProps;
 
   // Sort sizes
   if (sideA >= sideB) {

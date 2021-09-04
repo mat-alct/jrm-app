@@ -45,6 +45,7 @@ import { RadioButton } from '../../components/Form/RadioButton';
 import { FormSelect } from '../../components/Form/Select';
 import { useMaterial } from '../../hooks/material';
 import { calculateCutlistPrice } from '../../utils/cutlist/calculatePrice';
+import { sortCutlistData } from '../../utils/cutlist/sortAndReturnTag';
 import { areas } from '../../utils/listOfAreas';
 import { createCutlistSchema } from '../../utils/yup/novoservicoValidations';
 
@@ -65,11 +66,23 @@ interface Cutlist {
   amount: number;
   sideA: number;
   sideB: number;
-  borderA: 0 | 1 | 2;
-  borderB: 0 | 1 | 2;
+  borderA: number;
+  borderB: number;
   price: number;
 }
 
+interface AvatarProps {
+  height: number;
+  src: string;
+  width: number;
+}
+
+interface CutlistTable {
+  gside: number;
+  pside: number;
+  material: string;
+  price: number;
+}
 interface CreateCutlistProps {
   materialId: string;
   amount: number;
@@ -138,6 +151,25 @@ const NovoServiço = () => {
       },
       cutlistFormData,
     );
+
+    setCutlist(prevValue => [
+      ...prevValue,
+      {
+        material: {
+          materialId: cutlistFormData.materialId,
+          height: materialUsed.height,
+          width: materialUsed.width,
+          name: materialUsed.name,
+          price: materialUsed.price,
+        },
+        amount: cutlistFormData.amount,
+        borderA: cutlistFormData.borderA,
+        borderB: cutlistFormData.borderB,
+        sideA: cutlistFormData.sideA,
+        sideB: cutlistFormData.sideB,
+        price,
+      },
+    ]);
   };
 
   // * Other data
@@ -291,6 +323,52 @@ const NovoServiço = () => {
                 <Th />
               </Tr>
             </Thead>
+            <Tbody>
+              {cutlist.map(cutlistMapped => {
+                const { avatar, gside, pside } = sortCutlistData({
+                  sideA: cutlistMapped.sideA,
+                  sideB: cutlistMapped.sideB,
+                  borderA: cutlistMapped.borderA,
+                  borderB: cutlistMapped.borderB,
+                });
+
+                return (
+                  <Tr>
+                    <Td>
+                      <img
+                        src={avatar.src}
+                        alt="Etiqueta"
+                        width="45px"
+                        height="45px"
+                      />
+                    </Td>
+                    <Td>{cutlistMapped.material.name}</Td>
+                    <Td isNumeric>{cutlistMapped.amount}</Td>
+                    <Td isNumeric>{gside}</Td>
+                    <Td isNumeric>{pside}</Td>
+                    <Td isNumeric>{cutlistMapped.price}</Td>
+                    <Td>
+                      <HStack spacing={4}>
+                        {/* Update Price button */}
+                        <IconButton
+                          colorScheme="orange"
+                          size="sm"
+                          aria-label="Editar"
+                          icon={<FaEdit />}
+                        />
+                        {/* Remove Material Button */}
+                        <IconButton
+                          colorScheme="orange"
+                          size="sm"
+                          aria-label="Remover"
+                          icon={<FaTrash />}
+                        />
+                      </HStack>
+                    </Td>
+                  </Tr>
+                );
+              })}
+            </Tbody>
           </Table>
         </Flex>
 
