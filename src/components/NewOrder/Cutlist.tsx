@@ -83,6 +83,7 @@ export const Cutlist: React.FC<CutlistPageProps> = ({
     formState: { errors: createCutlistErrors },
   } = useForm<CreateCutlistProps>({
     resolver: yupResolver(createCutlistSchema),
+    reValidateMode: 'onSubmit',
   });
 
   const { getAllMaterials, materialOptions } = useMaterial();
@@ -275,15 +276,6 @@ export const Cutlist: React.FC<CutlistPageProps> = ({
           name="amount"
           placeholder="Quantidade"
           error={createCutlistErrors.amount}
-          onKeyUp={e => {
-            if (e.key === 'ArrowRight') {
-              createCutlistSetFocus('sideA');
-            }
-
-            if (e.key === 'ArrowLeft') {
-              createCutlistSetFocus('materialId');
-            }
-          }}
         />
         <FormInput
           {...createCutlistRegister('sideA')}
@@ -315,68 +307,70 @@ export const Cutlist: React.FC<CutlistPageProps> = ({
           Adicionar
         </Button>
       </HStack>
-      <Table colorScheme="orange" my={4}>
-        <TableCaption>Lista de peças</TableCaption>
-        <Thead>
-          <Tr>
-            <Th>Fita de Borda</Th>
-            <Th>Material</Th>
-            <Th isNumeric>Qtd</Th>
-            <Th isNumeric>Lado A</Th>
-            <Th isNumeric>Lado B</Th>
-            <Th isNumeric>Preço</Th>
-            <Th />
-          </Tr>
-        </Thead>
-        <Tbody>
-          {cutlist.map(cutlistMapped => {
-            const { avatar, gside, pside } = sortCutlistData({
-              sideA: cutlistMapped.sideA,
-              sideB: cutlistMapped.sideB,
-              borderA: cutlistMapped.borderA,
-              borderB: cutlistMapped.borderB,
-            });
 
-            return (
-              <Tr>
-                <Td>
-                  <img
-                    src={avatar.src}
-                    alt="Etiqueta"
-                    width="45px"
-                    height="45px"
-                  />
-                </Td>
-                <Td>{cutlistMapped.material.name}</Td>
-                <Td isNumeric>{cutlistMapped.amount}</Td>
-                <Td isNumeric>{gside}</Td>
-                <Td isNumeric>{pside}</Td>
-                <Td isNumeric>{cutlistMapped.price}</Td>
-                <Td>
-                  <HStack spacing={4}>
-                    {/* Update Price button */}
-                    <IconButton
-                      colorScheme="orange"
-                      size="sm"
-                      aria-label="Editar"
-                      icon={<FaEdit />}
-                      onClick={() => updateCut(cutlistMapped.id)}
+      {/* Tabela de peças */}
+      {cutlist.length > 0 && (
+        <Table colorScheme="orange" mt={4}>
+          <TableCaption>Lista de peças</TableCaption>
+          <Thead>
+            <Tr>
+              <Th>Fita de Borda</Th>
+              <Th>Material</Th>
+              <Th isNumeric>Qtd</Th>
+              <Th isNumeric>Lado A</Th>
+              <Th isNumeric>Lado B</Th>
+              <Th isNumeric>Preço</Th>
+              <Th />
+            </Tr>
+          </Thead>
+          <Tbody>
+            {cutlist.map(cutlistMapped => {
+              const { avatar, gside, pside } = sortCutlistData({
+                sideA: cutlistMapped.sideA,
+                sideB: cutlistMapped.sideB,
+                borderA: cutlistMapped.borderA,
+                borderB: cutlistMapped.borderB,
+              });
+
+              return (
+                <Tr>
+                  <Td>
+                    <img
+                      src={avatar.src}
+                      alt="Etiqueta"
+                      width="45px"
+                      height="45px"
                     />
-                    {/* Remove Material Button */}
-                    <IconButton
-                      colorScheme="orange"
-                      size="sm"
-                      aria-label="Remover"
-                      icon={<FaTrash />}
-                      onClick={() => removeCut(cutlistMapped.id)}
-                    />
-                  </HStack>
-                </Td>
-              </Tr>
-            );
-          })}
-        </Tbody>
-      </Table>
+                  </Td>
+                  <Td>{cutlistMapped.material.name}</Td>
+                  <Td isNumeric>{cutlistMapped.amount}</Td>
+                  <Td isNumeric>{gside}</Td>
+                  <Td isNumeric>{pside}</Td>
+                  <Td isNumeric>{cutlistMapped.price}</Td>
+                  <Td>
+                    <HStack spacing={4}>
+                      <IconButton
+                        colorScheme="orange"
+                        size="sm"
+                        aria-label="Editar"
+                        icon={<FaEdit />}
+                        onClick={() => updateCut(cutlistMapped.id)}
+                      />
+                      <IconButton
+                        colorScheme="orange"
+                        size="sm"
+                        aria-label="Remover"
+                        icon={<FaTrash />}
+                        onClick={() => removeCut(cutlistMapped.id)}
+                      />
+                    </HStack>
+                  </Td>
+                </Tr>
+              );
+            })}
+          </Tbody>
+        </Table>
+      )}
     </Flex>
   );
 };

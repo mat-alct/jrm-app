@@ -43,10 +43,14 @@ export const createCutlistSchema = Yup.object().shape({
     .typeError('Número obrigatório'),
   sideA: Yup.number()
     .required('Lado A obrigatório')
+    .min(60, 'Tamanho mínimo: 60mm')
+    .max(2750, 'Tamanho máximo: 2750mm')
     .typeError('Número obrigatório'),
   sideB: Yup.number()
     .required('Lado B obrigatório')
-    .typeError('Número obrigatório'),
+    .typeError('Número obrigatório')
+    .min(60, 'Tamanho mínimo: 60mm')
+    .max(2750, 'Tamanho máximo: 2750mm'),
   borderA: Yup.number().required('Fita Obrigatória'),
   borderB: Yup.number().required('Fita Obrigatória'),
 });

@@ -57,16 +57,6 @@ interface Cutlist {
   price: number;
 }
 
-interface CreateCutlistProps {
-  materialId: string;
-  // some values need to be string to reset form
-  amount: number | string;
-  sideA: number | string;
-  sideB: number | string;
-  borderA: number;
-  borderB: number;
-}
-
 const NovoServiço = () => {
   const [orderType, setOrderType] = useState('Serviço');
 
@@ -145,9 +135,9 @@ const NovoServiço = () => {
         <Cutlist cutlist={cutlist} updateCutlist={updateCutlist} />
 
         {/* Cliente */}
-        <HStack spacing={4}>
+        <HStack spacing={4} mt={8}>
           <Heading color="gray.600" size="lg" whiteSpace="nowrap">
-            Cliente
+            Dados do Pedido
           </Heading>
           <Divider />
         </HStack>
@@ -201,41 +191,28 @@ const NovoServiço = () => {
           </Flex>
         </Flex>
 
-        {/* Pedidos */}
-
-        <HStack spacing={4} mt={16}>
-          <Heading color="gray.600" size="lg" whiteSpace="nowrap">
-            Pedido
-          </Heading>
-          <Divider />
-        </HStack>
-
         <Flex as="article" direction="column" maxW="700px">
           <VStack align="left" mt={8} spacing={8}>
-            <RadioButton
-              name="orderType"
-              options={['Produção', 'Orçamento']}
-              label="Tipo do pedido:"
-              control={createOrderControl}
-            />
-            <RadioButton
-              name="orderStore"
-              options={['Japuíba', 'Frade']}
-              label="Loja do pedido:"
-              control={createOrderControl}
-            />
-            <RadioButton
-              name="deliveryType"
-              options={['Retirar na Loja', 'Entrega']}
-              label="Tipo de Entrega:"
-              control={createOrderControl}
-            />
-            <RadioButton
-              name="paymentStatus"
-              options={['Receber na Entrega', 'Pago']}
-              label="Pagamento:"
-              control={createOrderControl}
-            />
+            <HStack>
+              <RadioButton
+                name="orderStore"
+                options={['Japuíba', 'Frade']}
+                label="Loja do pedido:"
+                control={createOrderControl}
+              />
+              <RadioButton
+                name="deliveryType"
+                options={['Retirar na Loja', 'Entrega']}
+                label="Tipo de Entrega:"
+                control={createOrderControl}
+              />
+              <RadioButton
+                name="paymentStatus"
+                options={['Receber na Entrega', 'Pago']}
+                label="Pagamento:"
+                control={createOrderControl}
+              />
+            </HStack>
 
             <FormControl display="flex" flexDirection="row">
               <FormLabel color="gray.700" mb={0} minW="150px">
@@ -252,19 +229,6 @@ const NovoServiço = () => {
               </Box>
             </FormControl>
 
-            <HStack whiteSpace="nowrap" spacing={4}>
-              <RadioButton
-                name="discount"
-                options={['Balcão', 'Marceneiro', 'Sem acréscimo']}
-                label="Desconto:"
-                defaultValue="Balcão"
-                control={createOrderControl}
-              />
-              <Text w="100%" color="green.500" fontWeight="700" fontSize="lg">
-                R$ 20,00
-              </Text>
-            </HStack>
-
             <Flex direction="column">
               <Text mb="8px" color="gray.700" fontWeight="bold" mt={4}>
                 Observações:
@@ -274,7 +238,7 @@ const NovoServiço = () => {
           </VStack>
         </Flex>
 
-        <Button colorScheme="orange" isFullWidth mb={16}>
+        <Button colorScheme="orange" isFullWidth my={16}>
           Confirmar
         </Button>
       </Dashboard>
