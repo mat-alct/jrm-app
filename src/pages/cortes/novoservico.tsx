@@ -269,7 +269,14 @@ const NovoServiço = () => {
               </RadioGroup>
             </FormControl>
             <Text whiteSpace="nowrap" fontSize="2xl" color="green.500">
-              R$ 00,00
+              {new Intl.NumberFormat('pt-BR', {
+                style: 'currency',
+                currency: 'BRL',
+              }).format(
+                cutlist.reduce((prev, curr) => {
+                  return prev + curr.price;
+                }, 0),
+              )}
             </Text>
           </Flex>
 
