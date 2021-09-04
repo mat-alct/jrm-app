@@ -36,6 +36,7 @@ import DatePicker, { registerLocale } from 'react-datepicker';
 import { useForm } from 'react-hook-form';
 import { FaEdit, FaTrash } from 'react-icons/fa';
 import { useQuery } from 'react-query';
+import { v4 } from 'uuid';
 import * as Yup from 'yup';
 
 import { Dashboard } from '../../components/Dashboard';
@@ -62,6 +63,7 @@ interface CutlistMaterial {
 }
 
 interface Cutlist {
+  id: string;
   material: CutlistMaterial;
   amount: number;
   sideA: number;
@@ -71,23 +73,11 @@ interface Cutlist {
   price: number;
 }
 
-interface AvatarProps {
-  height: number;
-  src: string;
-  width: number;
-}
-
-interface CutlistTable {
-  gside: number;
-  pside: number;
-  material: string;
-  price: number;
-}
 interface CreateCutlistProps {
   materialId: string;
-  amount: number;
-  sideA: number;
-  sideB: number;
+  amount: number | string;
+  sideA: number | string;
+  sideB: number | string;
   borderA: number;
   borderB: number;
 }
@@ -102,6 +92,7 @@ const NovoServiço = () => {
     handleSubmit: createCutlistHandleSubmit,
     control: createCutlistControl,
     reset: createCutlistReset,
+    setValue: createCutlistSetValue,
     formState: { errors: createCutlistErrors },
   } = useForm<CreateCutlistProps>({
     resolver: yupResolver(createCutlistSchema),
@@ -133,7 +124,11 @@ const NovoServiço = () => {
   };
 
   const handleCreateCutlist = (cutlistFormData: CreateCutlistProps) => {
-    createCutlistReset();
+    // Reset Form
+    createCutlistReset({ sideA: '', sideB: '', amount: '' });
+    createCutlistSetValue('borderA', 0);
+    createCutlistSetValue('borderB', 0);
+    createCutlistSetValue('materialId', cutlistFormData.materialId);
 
     const materialUsed = materialData?.find(
       material => material.id === cutlistFormData.materialId,
@@ -143,33 +138,48 @@ const NovoServiço = () => {
       throw new Error();
     }
 
+    // transform all values in numbers
+    const cutlistFormDataTransformed = {
+      ...cutlistFormData,
+      amount: Number(cutlistFormData.amount),
+      sideA: Number(cutlistFormData.sideA),
+      sideB: Number(cutlistFormData.sideB),
+    };
+
     const price = calculateCutlistPrice(
       {
         width: materialUsed.width,
         height: materialUsed.height,
         price: materialUsed.price,
       },
-      cutlistFormData,
+      cutlistFormDataTransformed,
     );
 
     setCutlist(prevValue => [
       ...prevValue,
       {
+        id: v4(),
         material: {
-          materialId: cutlistFormData.materialId,
+          materialId: cutlistFormDataTransformed.materialId,
           height: materialUsed.height,
           width: materialUsed.width,
           name: materialUsed.name,
           price: materialUsed.price,
         },
-        amount: cutlistFormData.amount,
-        borderA: cutlistFormData.borderA,
-        borderB: cutlistFormData.borderB,
-        sideA: cutlistFormData.sideA,
-        sideB: cutlistFormData.sideB,
+        amount: cutlistFormDataTransformed.amount,
+        borderA: cutlistFormDataTransformed.borderA,
+        borderB: cutlistFormDataTransformed.borderB,
+        sideA: cutlistFormDataTransformed.sideA,
+        sideB: cutlistFormDataTransformed.sideB,
         price,
       },
     ]);
+  };
+
+  const removeCut = (cutId: string) => {
+    const cutlistFiltered = cutlist.filter(cut => cut.id !== cutId);
+
+    setCutlist([...cutlistFiltered]);
   };
 
   // * Other data
@@ -262,7 +272,6 @@ const NovoServiço = () => {
           <HStack
             as="form"
             align="center"
-            noValidate
             onSubmit={createCutlistHandleSubmit(handleCreateCutlist)}
           >
             <Box minW="33%">
@@ -362,6 +371,7 @@ const NovoServiço = () => {
                           size="sm"
                           aria-label="Remover"
                           icon={<FaTrash />}
+                          onClick={() => removeCut(cutlistMapped.id)}
                         />
                       </HStack>
                     </Td>
