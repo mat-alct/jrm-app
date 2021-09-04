@@ -75,6 +75,7 @@ interface Cutlist {
 
 interface CreateCutlistProps {
   materialId: string;
+  // some values need to be string to reset form
   amount: number | string;
   sideA: number | string;
   sideB: number | string;
@@ -93,6 +94,7 @@ const NovoServiço = () => {
     control: createCutlistControl,
     reset: createCutlistReset,
     setValue: createCutlistSetValue,
+    setFocus: createCutlistSetFocus,
     formState: { errors: createCutlistErrors },
   } = useForm<CreateCutlistProps>({
     resolver: yupResolver(createCutlistSchema),
@@ -138,7 +140,7 @@ const NovoServiço = () => {
       throw new Error();
     }
 
-    // transform all values in numbers
+    // Make a copy of cutlistFormData and transform string values in
     const cutlistFormDataTransformed = {
       ...cutlistFormData,
       amount: Number(cutlistFormData.amount),
@@ -174,6 +176,8 @@ const NovoServiço = () => {
         price,
       },
     ]);
+
+    createCutlistSetFocus('amount');
   };
 
   const removeCut = (cutId: string) => {
@@ -271,7 +275,7 @@ const NovoServiço = () => {
 
           <HStack
             as="form"
-            align="center"
+            align="flex"
             onSubmit={createCutlistHandleSubmit(handleCreateCutlist)}
           >
             <Box minW="33%">
