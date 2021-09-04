@@ -10,45 +10,29 @@ import {
   FormLabel,
   Heading,
   HStack,
-  IconButton,
   Radio,
   RadioGroup,
   Select,
   Switch,
-  Table,
-  TableCaption,
-  Tbody,
-  Td,
   Text,
   Textarea,
-  Th,
-  Thead,
-  Tr,
   VStack,
 } from '@chakra-ui/react';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { getDay } from 'date-fns';
 import ptBR from 'date-fns/locale/pt-BR';
 import Head from 'next/head';
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import DatePicker, { registerLocale } from 'react-datepicker';
 import { useForm } from 'react-hook-form';
-import { FaEdit, FaTrash } from 'react-icons/fa';
-import { useQuery } from 'react-query';
-import { v4 } from 'uuid';
 import * as Yup from 'yup';
 
 import { Dashboard } from '../../components/Dashboard';
 import { Header } from '../../components/Dashboard/Content/Header';
 import { FormInput } from '../../components/Form/Input';
 import { RadioButton } from '../../components/Form/RadioButton';
-import { FormSelect } from '../../components/Form/Select';
 import { Cutlist } from '../../components/NewOrder/Cutlist';
-import { useMaterial } from '../../hooks/material';
-import { calculateCutlistPrice } from '../../utils/cutlist/calculatePrice';
-import { sortCutlistData } from '../../utils/cutlist/sortAndReturnTag';
 import { areas } from '../../utils/listOfAreas';
-import { createCutlistSchema } from '../../utils/yup/novoservicoValidations';
 
 interface CreateOrderProps {
   name: string;
