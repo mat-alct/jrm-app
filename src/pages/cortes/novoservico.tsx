@@ -11,7 +11,6 @@ import {
   Heading,
   HStack,
   IconButton,
-  Image,
   Radio,
   RadioGroup,
   Select,
@@ -31,7 +30,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { getDay } from 'date-fns';
 import ptBR from 'date-fns/locale/pt-BR';
 import Head from 'next/head';
-import React, { useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import DatePicker, { registerLocale } from 'react-datepicker';
 import { useForm } from 'react-hook-form';
 import { FaEdit, FaTrash } from 'react-icons/fa';
@@ -44,6 +43,7 @@ import { Header } from '../../components/Dashboard/Content/Header';
 import { FormInput } from '../../components/Form/Input';
 import { RadioButton } from '../../components/Form/RadioButton';
 import { FormSelect } from '../../components/Form/Select';
+import { Cutlist } from '../../components/NewOrder/Cutlist';
 import { useMaterial } from '../../hooks/material';
 import { calculateCutlistPrice } from '../../utils/cutlist/calculatePrice';
 import { sortCutlistData } from '../../utils/cutlist/sortAndReturnTag';
@@ -87,152 +87,18 @@ const NovoServiço = () => {
   const [orderType, setOrderType] = useState('Serviço');
 
   // * Cutlist Data
-  const { getAllMaterials, materialOptions } = useMaterial();
-  const {
-    register: createCutlistRegister,
-    handleSubmit: createCutlistHandleSubmit,
-    control: createCutlistControl,
-    reset: createCutlistReset,
-    setValue: createCutlistSetValue,
-    setFocus: createCutlistSetFocus,
-    formState: { errors: createCutlistErrors },
-  } = useForm<CreateCutlistProps>({
-    resolver: yupResolver(createCutlistSchema),
-  });
-
-  const { data: materialData } = useQuery('materials', () => getAllMaterials());
-
   const [cutlist, setCutlist] = useState<Cutlist[]>([]);
-  const [pricePercent, setPricePercent] = useState<number>(75);
 
-  const borderOptions = [
-    {
-      value: 0,
-      label: '0',
+  const updateCutlist = useCallback(
+    (cutlistData: Cutlist[], maintainOldValues = true) => {
+      if (maintainOldValues) {
+        setCutlist(prevValue => [...prevValue, ...cutlistData]);
+      } else {
+        setCutlist([...cutlistData]);
+      }
     },
-    {
-      value: 1,
-      label: '1',
-    },
-    {
-      value: 2,
-      label: '2',
-    },
-  ];
-
-  const updatePricePercent = (percentValue: string) => {
-    // TODO: Make all prices from cutlist change when pricePercent is changed
-    setPricePercent(Number(percentValue));
-
-    const cutlistWithUpdatedPrice = cutlist.map(cut => {
-      const { amount, borderB, borderA, sideB, sideA } = cut;
-
-      const priceUpdated = calculateCutlistPrice(
-        {
-          width: cut.material.width,
-          height: cut.material.height,
-          price: cut.material.price,
-        },
-        {
-          amount,
-          borderA,
-          borderB,
-          sideA,
-          sideB,
-        },
-        Number(percentValue),
-      );
-
-      return {
-        ...cut,
-        price: priceUpdated,
-      };
-    });
-
-    setCutlist([...cutlistWithUpdatedPrice]);
-  };
-
-  const handleCreateCutlist = (cutlistFormData: CreateCutlistProps) => {
-    // Reset Form
-    createCutlistReset({ sideA: '', sideB: '', amount: '' });
-    createCutlistSetValue('borderA', 0);
-    createCutlistSetValue('borderB', 0);
-    createCutlistSetValue('materialId', cutlistFormData.materialId);
-
-    const materialUsed = materialData?.find(
-      material => material.id === cutlistFormData.materialId,
-    );
-
-    if (!materialUsed) {
-      throw new Error();
-    }
-
-    // Make a copy of cutlistFormData and transform string values in
-    const cutlistFormDataTransformed = {
-      ...cutlistFormData,
-      amount: Number(cutlistFormData.amount),
-      sideA: Number(cutlistFormData.sideA),
-      sideB: Number(cutlistFormData.sideB),
-    };
-
-    const price = calculateCutlistPrice(
-      {
-        width: materialUsed.width,
-        height: materialUsed.height,
-        price: materialUsed.price,
-      },
-      cutlistFormDataTransformed,
-    );
-
-    setCutlist(prevValue => [
-      ...prevValue,
-      {
-        id: v4(),
-        material: {
-          materialId: cutlistFormDataTransformed.materialId,
-          height: materialUsed.height,
-          width: materialUsed.width,
-          name: materialUsed.name,
-          price: materialUsed.price,
-        },
-        amount: cutlistFormDataTransformed.amount,
-        borderA: cutlistFormDataTransformed.borderA,
-        borderB: cutlistFormDataTransformed.borderB,
-        sideA: cutlistFormDataTransformed.sideA,
-        sideB: cutlistFormDataTransformed.sideB,
-        price,
-      },
-    ]);
-
-    createCutlistSetFocus('amount');
-  };
-
-  const removeCut = (cutId: string) => {
-    const cutlistFiltered = cutlist.filter(cut => cut.id !== cutId);
-
-    setCutlist([...cutlistFiltered]);
-  };
-
-  const updateCut = (cutId: string) => {
-    const cutToUpdate = cutlist.find(cut => cut.id === cutId);
-
-    if (!cutToUpdate) {
-      throw new Error();
-    }
-
-    const { amount, sideA, sideB, borderA, borderB, material } = cutToUpdate;
-
-    // Set values to form
-    createCutlistSetValue('amount', amount);
-    createCutlistSetValue('sideA', sideA);
-    createCutlistSetValue('sideB', sideB);
-    createCutlistSetValue('borderA', borderA);
-    createCutlistSetValue('borderB', borderB);
-    createCutlistSetValue('materialId', material.materialId);
-
-    // Remove from cutlist table
-    removeCut(cutId);
-  };
+    [],
+  );
 
   // * Other data
 
@@ -292,155 +158,7 @@ const NovoServiço = () => {
         </Header>
 
         {/* Plano de Corte */}
-        <Flex as="article" direction="column" mb={4}>
-          <HStack spacing={4} mt={8}>
-            <Heading color="gray.600" size="lg" whiteSpace="nowrap">
-              Plano de Corte
-            </Heading>
-            <Divider />
-          </HStack>
-          <Flex align="center" justify="space-between">
-            <FormControl mt={4} mb={8}>
-              <FormLabel mb={0}>Base de cálculo</FormLabel>
-              <RadioGroup
-                colorScheme="orange"
-                value={pricePercent}
-                onChange={percentValue => updatePricePercent(percentValue)}
-              >
-                <HStack spacing={4}>
-                  <Radio value={75} isChecked>
-                    Balcão
-                  </Radio>
-                  <Radio value={50}>Marceneiro</Radio>
-                  <Radio value={1}>Sem Acréscimo</Radio>
-                </HStack>
-              </RadioGroup>
-            </FormControl>
-            <Text whiteSpace="nowrap" fontSize="2xl" color="green.500">
-              {new Intl.NumberFormat('pt-BR', {
-                style: 'currency',
-                currency: 'BRL',
-              }).format(
-                cutlist.reduce((prev, curr) => {
-                  return prev + curr.price;
-                }, 0),
-              )}
-            </Text>
-          </Flex>
-
-          <HStack
-            as="form"
-            align="flex"
-            onSubmit={createCutlistHandleSubmit(handleCreateCutlist)}
-          >
-            <Box minW="33%">
-              <FormSelect
-                name="materialId"
-                control={createCutlistControl}
-                isClearable
-                placeholder="Material"
-                options={materialOptions}
-              />
-            </Box>
-            <FormInput
-              {...createCutlistRegister('amount')}
-              name="amount"
-              placeholder="Quantidade"
-              error={createCutlistErrors.amount}
-            />
-            <FormInput
-              {...createCutlistRegister('sideA')}
-              name="sideA"
-              placeholder="Medida A"
-              error={createCutlistErrors.sideA}
-            />
-            <FormSelect
-              control={createCutlistControl}
-              name="borderA"
-              options={borderOptions}
-              placeholder="Fita A"
-              defaultValue={0}
-            />
-            <FormInput
-              {...createCutlistRegister('sideB')}
-              name="sideB"
-              placeholder="Medida B"
-              error={createCutlistErrors.sideB}
-            />
-            <FormSelect
-              name="borderB"
-              control={createCutlistControl}
-              options={borderOptions}
-              placeholder="Fita B"
-              defaultValue={0}
-            />
-            <Button colorScheme="orange" size="md" w="100%" type="submit">
-              Adicionar
-            </Button>
-          </HStack>
-          <Table colorScheme="orange" my={4}>
-            <TableCaption>Lista de peças</TableCaption>
-            <Thead>
-              <Tr>
-                <Th>Fita de Borda</Th>
-                <Th>Material</Th>
-                <Th isNumeric>Qtd</Th>
-                <Th isNumeric>Lado A</Th>
-                <Th isNumeric>Lado B</Th>
-                <Th isNumeric>Preço</Th>
-                <Th />
-              </Tr>
-            </Thead>
-            <Tbody>
-              {cutlist.map(cutlistMapped => {
-                const { avatar, gside, pside } = sortCutlistData({
-                  sideA: cutlistMapped.sideA,
-                  sideB: cutlistMapped.sideB,
-                  borderA: cutlistMapped.borderA,
-                  borderB: cutlistMapped.borderB,
-                });
-
-                return (
-                  <Tr>
-                    <Td>
-                      <img
-                        src={avatar.src}
-                        alt="Etiqueta"
-                        width="45px"
-                        height="45px"
-                      />
-                    </Td>
-                    <Td>{cutlistMapped.material.name}</Td>
-                    <Td isNumeric>{cutlistMapped.amount}</Td>
-                    <Td isNumeric>{gside}</Td>
-                    <Td isNumeric>{pside}</Td>
-                    <Td isNumeric>{cutlistMapped.price}</Td>
-                    <Td>
-                      <HStack spacing={4}>
-                        {/* Update Price button */}
-                        <IconButton
-                          colorScheme="orange"
-                          size="sm"
-                          aria-label="Editar"
-                          icon={<FaEdit />}
-                          onClick={() => updateCut(cutlistMapped.id)}
-                        />
-                        {/* Remove Material Button */}
-                        <IconButton
-                          colorScheme="orange"
-                          size="sm"
-                          aria-label="Remover"
-                          icon={<FaTrash />}
-                          onClick={() => removeCut(cutlistMapped.id)}
-                        />
-                      </HStack>
-                    </Td>
-                  </Tr>
-                );
-              })}
-            </Tbody>
-          </Table>
-        </Flex>
+        <Cutlist cutlist={cutlist} updateCutlist={updateCutlist} />
 
         {/* Cliente */}
         <HStack spacing={4}>
