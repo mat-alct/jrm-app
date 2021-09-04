@@ -186,6 +186,27 @@ const NovoServiço = () => {
     setCutlist([...cutlistFiltered]);
   };
 
+  const updateCut = (cutId: string) => {
+    const cutToUpdate = cutlist.find(cut => cut.id === cutId);
+
+    if (!cutToUpdate) {
+      throw new Error();
+    }
+
+    const { amount, sideA, sideB, borderA, borderB, material } = cutToUpdate;
+
+    // Set values to form
+    createCutlistSetValue('amount', amount);
+    createCutlistSetValue('sideA', sideA);
+    createCutlistSetValue('sideB', sideB);
+    createCutlistSetValue('borderA', borderA);
+    createCutlistSetValue('borderB', borderB);
+    createCutlistSetValue('materialId', material.materialId);
+
+    // Remove from cutlist table
+    removeCut(cutId);
+  };
+
   // * Other data
 
   const [startDate, setStartDate] = useState<Date | null>(new Date());
@@ -375,6 +396,7 @@ const NovoServiço = () => {
                           size="sm"
                           aria-label="Editar"
                           icon={<FaEdit />}
+                          onClick={() => updateCut(cutlistMapped.id)}
                         />
                         {/* Remove Material Button */}
                         <IconButton
