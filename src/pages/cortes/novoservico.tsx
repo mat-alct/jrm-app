@@ -1,5 +1,4 @@
 import {
-  Box,
   Button,
   Divider,
   Flex,
@@ -19,6 +18,7 @@ import firebase from 'firebase/app';
 import Head from 'next/head';
 import React, { useCallback, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { useQuery } from 'react-query';
 import * as Yup from 'yup';
 
 import { Dashboard } from '../../components/Dashboard';
@@ -27,6 +27,8 @@ import { FormInput } from '../../components/Form/Input';
 import { FormRadio } from '../../components/Form/Radio';
 import { FormSelect } from '../../components/Form/Select';
 import { Cutlist } from '../../components/NewOrder/Cutlist';
+import { SearchBar } from '../../components/SearchBar';
+import { useCustomer } from '../../hooks/customer';
 import { useOrder } from '../../hooks/order';
 import { areas } from '../../utils/listOfAreas';
 import { normalizeTelephoneInput } from '../../utils/normalizeTelephone';
@@ -66,6 +68,18 @@ interface Cutlist {
 const NovoServiço = () => {
   // Change between "Serviço" e "Orçamento"
   const [orderType, setOrderType] = useState('Serviço');
+
+  // change between customer registered or not
+  const [customerRegistered, setCustomerRegistered] = useState(true);
+  const [searchFilter, setSearchFilter] = useState<string | undefined>(
+    undefined,
+  );
+
+  const { getCustomers } = useCustomer();
+  const { data, refetch, isFetching, isLoading } = useQuery(
+    ['customers', searchFilter],
+    () => getCustomers(searchFilter),
+  );
 
   // NormalizeTelephone
   const [tel, setTel] = useState('');
@@ -175,6 +189,10 @@ const NovoServiço = () => {
     });
   };
 
+  const handleSearch = (search: string) => {
+    setSearchFilter(search);
+  };
+
   return (
     <>
       <Head>
@@ -229,6 +247,11 @@ const NovoServiço = () => {
           </FormControl>
 
           <Flex direction="column" align="left" mt={8}>
+            {customerRegistered && (
+              <>
+                <SearchBar handleUpdateSearch={handleSearch} />
+              </>
+            )}
             <HStack spacing={8} align="flex-start">
               <FormInput
                 {...createOrderRegister('firstName')}
@@ -301,9 +324,9 @@ const NovoServiço = () => {
 
                   <FormRadio
                     options={[
-                      'Receber na Entrega',
-                      'Parcialmente Pago',
                       'Pago',
+                      'Parcialmente Pago',
+                      'Receber na Entrega',
                     ]}
                     label="Pagamento:"
                     name="paymentType"

@@ -5,7 +5,7 @@ import { Sidebar } from './Sidebar';
 
 export const Dashboard: React.FC = ({ children }) => {
   return (
-    <Flex bg="#FFFAFA" w="100%">
+    <Flex bg="#FFF" w="100%">
       <Sidebar />
       <Content>{children}</Content>
     </Flex>

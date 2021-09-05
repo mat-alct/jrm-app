@@ -1,37 +1,52 @@
-import { Flex, Icon, Input } from '@chakra-ui/react';
+import { Button, Flex } from '@chakra-ui/react';
+import { yupResolver } from '@hookform/resolvers/yup';
 import React from 'react';
-import { RiSearchLine } from 'react-icons/ri';
+import { useForm } from 'react-hook-form';
+
+import { searchCustomerSchema } from '../../utils/yup/clientesValidations';
+import { FormInput } from '../Form/Input';
 
 interface SearchBarProps {
-  handleSearch: (search: string) => void;
+  handleUpdateSearch: (search: string) => void;
 }
 
-export const SearchBar: React.FC<SearchBarProps> = ({ handleSearch }) => {
+interface SearchProps {
+  customerName: string;
+}
+
+export const SearchBar: React.FC<SearchBarProps> = ({ handleUpdateSearch }) => {
+  // Create Customer Search useForm
+  const {
+    register: searchRegister,
+    handleSubmit: searchHandleSubmit,
+    formState: { errors: searchErrors, isSubmitting: searchIsSubmitting },
+  } = useForm<SearchProps>({
+    resolver: yupResolver(searchCustomerSchema),
+  });
+
+  const handleSearch = () => {};
   return (
     <Flex
-      as="label"
-      flex="1"
-      py="2"
-      px="4"
-      maxWidth={400}
-      alignSelf="center"
-      color="gray.400"
-      position="relative"
-      bg="#fff"
-      borderRadius="full"
-      border="1px solid"
-      borderColor="gray.200"
+      as="form"
+      onSubmit={searchHandleSubmit(handleSearch)}
+      maxW="300px"
+      mb={4}
     >
-      <Icon as={RiSearchLine} fontSize="20" />
-      <Input
-        color="gray.700"
-        variant="unstyled"
-        px="4"
-        ml="2"
-        placeholder="Buscar"
-        _placeholder={{ color: 'gray.400' }}
-        onChange={e => handleSearch(e.target.value)}
+      <FormInput
+        {...searchRegister('customerName')}
+        name="customerName"
+        placeholder="Digite o nome do cliente"
+        borderRightRadius="none"
+        error={searchErrors.customerName}
       />
+      <Button
+        isDisabled={searchIsSubmitting}
+        colorScheme="gray"
+        type="submit"
+        borderLeftRadius="none"
+      >
+        Buscar
+      </Button>
     </Flex>
   );
 };
