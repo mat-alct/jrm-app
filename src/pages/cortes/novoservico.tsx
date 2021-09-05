@@ -109,10 +109,32 @@ const NovoServiço = () => {
   });
 
   const handleSubmitOrder = async (orderData: CreateOrderProps) => {
+    // Function to capitalize and strip first name and last name to save in database
+    const capitalizeAndStrip = (input: string) => {
+      if (input) {
+        const updatedInput = input
+          .replace(/\S+/g, txt => {
+            // uppercase first letter and add rest unchanged
+            return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+          })
+          .trim();
+
+        return updatedInput;
+      }
+
+      return input;
+    };
+
+    // Default props
+    const name = `${capitalizeAndStrip(
+      orderData.firstName,
+    )} ${capitalizeAndStrip(orderData.lastName)}`;
+
+    // If it's a estimate, uses createEstimate function and end submit
     if (orderType === 'Orçamento') {
       await createEstimate({
         cutlist,
-        name: `${orderData.firstName} ${orderData.lastName}`,
+        name,
         telephone: orderData.telephone,
         createdAt: firebase.firestore.Timestamp.fromDate(new Date()),
         updatedAt: firebase.firestore.Timestamp.fromDate(new Date()),
@@ -121,11 +143,20 @@ const NovoServiço = () => {
       return;
     }
 
+    // Create data with customer data
+    const customer = {
+      name,
+      telephone: orderData.telephone,
+      address: orderData.address,
+      area: orderData.area,
+      city: orderData.city,
+      state: 'Rio de Janeiro',
+      customerId: '',
+    };
+
     await createOrder({
       cutlist,
-      customer: {
-        name: orderData.firstName,
-      },
+      customer,
       orderStatus: 'Em produção',
       orderStore: orderData.orderStore,
       paymentType: orderData.paymentType,

@@ -82,6 +82,7 @@ export const OrderProvider: React.FC = ({ children }) => {
   const createOrder = async (orderData: Order) => {
     try {
       removeUndefinedAndEmptyFields(orderData);
+      removeUndefinedAndEmptyFields(orderData.customer);
 
       await createOrderMutation.mutateAsync(orderData);
 
