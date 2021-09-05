@@ -25,6 +25,7 @@ import { Dashboard } from '../../components/Dashboard';
 import { Header } from '../../components/Dashboard/Content/Header';
 import { FormInput } from '../../components/Form/Input';
 import { FormRadio } from '../../components/Form/Radio';
+import { FormSelect } from '../../components/Form/Select';
 import { Cutlist } from '../../components/NewOrder/Cutlist';
 import { areas } from '../../utils/listOfAreas';
 
@@ -32,7 +33,13 @@ interface CreateOrderProps {
   firstName: string;
   lastName: string;
   telephone: string;
-  customerId: string;
+  address: string;
+  area: string;
+  city: string;
+  orderStore: string;
+  deliveryType: string;
+  paymentType: string;
+  ps: string;
 }
 
 interface CutlistMaterial {
@@ -55,6 +62,7 @@ interface Cutlist {
 }
 
 const NovoServiço = () => {
+  // Change between "Serviço" e "Orçamento"
   const [orderType, setOrderType] = useState('Serviço');
 
   // * Cutlist Data
@@ -74,7 +82,16 @@ const NovoServiço = () => {
   // * Other data
 
   const validationCreateOrderSchema = Yup.object().shape({
-    name: Yup.string(),
+    firstName: Yup.string().required(),
+    lastName: Yup.string().required(),
+    telephone: Yup.string(),
+    address: Yup.string(),
+    area: Yup.string(),
+    city: Yup.string(),
+    orderStore: Yup.string(),
+    deliveryType: Yup.string(),
+    paymentType: Yup.string(),
+    ps: Yup.string(),
   });
 
   const {
@@ -88,6 +105,10 @@ const NovoServiço = () => {
   } = useForm<CreateOrderProps>({
     resolver: yupResolver(validationCreateOrderSchema),
   });
+
+  const handleSubmitOrder = (data: CreateOrderProps) => {
+    console.log(data);
+  };
 
   return (
     <>
@@ -130,7 +151,12 @@ const NovoServiço = () => {
           <Divider />
         </HStack>
 
-        <Flex as="article" direction="column" maxW="1100px">
+        <Flex
+          as="form"
+          direction="column"
+          maxW="1100px"
+          onSubmit={createOrderHandleSubmit(handleSubmitOrder)}
+        >
           <FormControl display="flex" alignItems="center" mt={8}>
             <FormLabel htmlFor="customer-signup" mb="0" color="gray.700">
               Utilizar cliente com cadastro?
@@ -139,41 +165,55 @@ const NovoServiço = () => {
           </FormControl>
 
           <Flex direction="column" align="left" mt={8}>
-            <HStack spacing={8}>
-              <FormInput name="customerFirstName" label="Nome" />
-              <FormInput name="customerLastName" label="Sobrenome" />
-              <FormInput name="customerTelephone" label="Telefone" />
+            <HStack spacing={8} align="flex-start">
+              <FormInput
+                {...createOrderRegister('firstName')}
+                name="firstName"
+                label="Nome"
+                error={createOrderErrors.firstName}
+              />
+              <FormInput
+                {...createOrderRegister('lastName')}
+                name="lastName"
+                label="Sobrenome"
+                error={createOrderErrors.lastName}
+              />
+              <FormInput
+                {...createOrderRegister('telephone')}
+                error={createOrderErrors.telephone}
+                name="telephone"
+                label="Telefone"
+              />
             </HStack>
             {orderType === 'Serviço' && (
               <>
-                <HStack spacing={8} mt={4}>
-                  <FormInput name="customerStreet" label="Endereço" />
-                  <FormControl>
-                    <FormLabel htmlFor="area-switch" color="gray.700">
-                      Bairro
-                    </FormLabel>
-                    <Select name="customerArea" w="100%" defaultValue="Japuíba">
-                      {areas.map(area => (
-                        <option key={area} value={area}>
-                          {area}
-                        </option>
-                      ))}
-                    </Select>
-                  </FormControl>
-                  <FormControl>
-                    <FormLabel htmlFor="city-switch" color="gray.700">
-                      Cidade
-                    </FormLabel>
-                    <Select name="customerCity">
-                      <option value="angra" selected>
-                        Angra dos Reis
-                      </option>
-                      <option value="paraty">Paraty</option>
-                    </Select>
-                  </FormControl>
+                <HStack spacing={8} mt={4} align="flex-start">
+                  <FormInput
+                    {...createOrderRegister('address')}
+                    error={createOrderErrors.address}
+                    name="address"
+                    label="Endereço"
+                  />
+                  <FormSelect
+                    options={areas.map(area => {
+                      return { value: area, label: area };
+                    })}
+                    name="area"
+                    control={createOrderControl}
+                    label="Bairro"
+                  />
+                  <FormSelect
+                    options={[
+                      { value: 'Angra dos Reis', label: 'Angra dos Reis' },
+                      { value: 'Paraty', label: 'Paraty' },
+                    ]}
+                    name="city"
+                    control={createOrderControl}
+                    label="Cidade"
+                  />
                 </HStack>
                 <VStack align="left" mt={8} spacing={8}>
-                  <HStack>
+                  <HStack align="flex-start">
                     <FormRadio
                       options={['Japuíba', 'Frade']}
                       label="Loja do pedido:"
@@ -198,7 +238,7 @@ const NovoServiço = () => {
                           'Pago',
                         ]}
                         label="Pagamento:"
-                        name="paymentStatus"
+                        name="paymentType"
                         control={createOrderControl}
                         isHorizontal
                       />
@@ -209,17 +249,21 @@ const NovoServiço = () => {
                     <Text mb="8px" color="gray.700" fontWeight="bold">
                       Observações:
                     </Text>
-                    <Textarea size="sm" />
+                    <Textarea
+                      {...createOrderRegister('ps')}
+                      error={createOrderErrors.ps}
+                      size="sm"
+                    />
                   </Flex>
                 </VStack>
               </>
             )}
           </Flex>
-        </Flex>
 
-        <Button colorScheme="orange" isFullWidth my={16}>
-          Confirmar
-        </Button>
+          <Button colorScheme="orange" isFullWidth my={16} type="submit">
+            Confirmar
+          </Button>
+        </Flex>
       </Dashboard>
     </>
   );
