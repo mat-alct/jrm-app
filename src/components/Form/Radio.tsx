@@ -39,7 +39,11 @@ export const FormRadio: React.FC<FormRadioProps> = ({
   return (
     <FormControl isInvalid={!!errors[name]}>
       {label && <FormLabel>{label}</FormLabel>}
-      <RadioGroup value={field.value} onChange={field.onChange}>
+      <RadioGroup
+        value={field.value}
+        onChange={field.onChange}
+        colorScheme="orange"
+      >
         <Stack spacing={4} direction={isHorizontal ? 'row' : 'column'}>
           {options.map(option => (
             <Radio name={option} id={option} value={option}>

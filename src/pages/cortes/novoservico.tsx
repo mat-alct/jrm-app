@@ -212,7 +212,6 @@ const NovoServiço = () => {
         <Flex
           as="form"
           direction="column"
-          maxW="1100px"
           onSubmit={createOrderHandleSubmit(handleSubmitOrder)}
         >
           <FormControl display="flex" alignItems="center" mt={8}>
@@ -271,37 +270,33 @@ const NovoServiço = () => {
                   />
                 </HStack>
                 <VStack align="left" mt={8} spacing={8}>
-                  <HStack align="flex-start">
-                    <FormRadio
-                      options={['Japuíba', 'Frade']}
-                      label="Loja do pedido:"
-                      name="orderStore"
-                      control={createOrderControl}
-                      isHorizontal
-                    />
+                  <FormRadio
+                    options={['Japuíba', 'Frade']}
+                    label="Loja do pedido:"
+                    name="orderStore"
+                    control={createOrderControl}
+                    isHorizontal
+                  />
 
-                    <FormRadio
-                      options={['Retirar na Loja', 'Entrega']}
-                      label="Tipo de Entrega:"
-                      name="deliveryType"
-                      control={createOrderControl}
-                      isHorizontal
-                    />
+                  <FormRadio
+                    options={['Retirar na Loja', 'Entrega']}
+                    label="Tipo de Entrega:"
+                    name="deliveryType"
+                    control={createOrderControl}
+                    isHorizontal
+                  />
 
-                    <Box minW="500px" w="100%">
-                      <FormRadio
-                        options={[
-                          'Receber na Entrega',
-                          'Parcialmente Pago',
-                          'Pago',
-                        ]}
-                        label="Pagamento:"
-                        name="paymentType"
-                        control={createOrderControl}
-                        isHorizontal
-                      />
-                    </Box>
-                  </HStack>
+                  <FormRadio
+                    options={[
+                      'Receber na Entrega',
+                      'Parcialmente Pago',
+                      'Pago',
+                    ]}
+                    label="Pagamento:"
+                    name="paymentType"
+                    control={createOrderControl}
+                    isHorizontal
+                  />
 
                   <Flex direction="column">
                     <Text mb="8px" color="gray.700" fontWeight="bold">

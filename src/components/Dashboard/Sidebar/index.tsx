@@ -15,7 +15,7 @@ export const Sidebar = () => {
   return (
     <Flex
       direction="column"
-      maxW="15rem"
+      maxW="17rem"
       minH="100vh"
       h="100%"
       w="100%"
@@ -26,7 +26,7 @@ export const Sidebar = () => {
       <Image
         src="/images/logo.svg"
         alt="Logotipo"
-        boxSize="120px"
+        boxSize="160px"
         mx="auto"
         mb={12}
         mt={8}
