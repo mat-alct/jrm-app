@@ -81,7 +81,7 @@ const NovoServiço = () => {
   );
 
   // * Order data
-  const { createEstimate } = useOrder();
+  const { createEstimate, createOrder } = useOrder();
 
   const validationCreateOrderSchema = Yup.object().shape({
     firstName: Yup.string().required(),
@@ -113,10 +113,28 @@ const NovoServiço = () => {
       await createEstimate({
         cutlist,
         name: `${orderData.firstName} ${orderData.lastName}`,
+        telephone: orderData.telephone,
         createdAt: firebase.firestore.Timestamp.fromDate(new Date()),
         updatedAt: firebase.firestore.Timestamp.fromDate(new Date()),
       });
+
+      return;
     }
+
+    await createOrder({
+      cutlist,
+      customer: {
+        name: orderData.firstName,
+      },
+      orderStatus: 'Em produção',
+      orderStore: orderData.orderStore,
+      paymentType: orderData.paymentType,
+      deliveryType: orderData.deliveryType,
+      seller: 'Mateus',
+      ps: orderData.ps,
+      createdAt: firebase.firestore.Timestamp.fromDate(new Date()),
+      updatedAt: firebase.firestore.Timestamp.fromDate(new Date()),
+    });
   };
 
   return (

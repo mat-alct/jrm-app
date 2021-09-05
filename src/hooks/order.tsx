@@ -6,6 +6,7 @@ import { v4 } from 'uuid';
 
 import { queryClient } from '../services/queryClient';
 import { Estimate, Order } from '../types';
+import { removeUndefinedAndEmptyFields } from '../utils/removeUndefinedAndEmpty';
 
 interface OrderContext {
   createEstimate: (estimateData: Estimate) => Promise<void>;
@@ -62,6 +63,8 @@ export const OrderProvider: React.FC = ({ children }) => {
 
   const createEstimate = async (estimateData: Estimate) => {
     try {
+      removeUndefinedAndEmptyFields(estimateData);
+
       await createEstimateMutation.mutateAsync(estimateData);
 
       toast({
@@ -78,6 +81,8 @@ export const OrderProvider: React.FC = ({ children }) => {
 
   const createOrder = async (orderData: Order) => {
     try {
+      removeUndefinedAndEmptyFields(orderData);
+
       await createOrderMutation.mutateAsync(orderData);
 
       toast({
