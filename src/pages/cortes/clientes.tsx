@@ -118,7 +118,6 @@ const Clientes: React.FC = () => {
       return input;
     };
 
-    // Default props
     const name = `${capitalizeAndStrip(firstName)} ${capitalizeAndStrip(
       lastName,
     )}`;

@@ -1,4 +1,7 @@
-const normalizeInput = (value: string, previousValue: string): string => {
+export const normalizeTelephoneInput = (
+  value: string,
+  previousValue: string,
+): string => {
   // return nothing if no value
   if (!value) return value;
 
@@ -23,5 +26,3 @@ const normalizeInput = (value: string, previousValue: string): string => {
 
   return '';
 };
-
-export default normalizeInput;

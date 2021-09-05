@@ -22,6 +22,7 @@ export const Sidebar = () => {
       align="flex-start"
       borderRight="1px solid"
       borderColor="gray.200"
+      position="sticky"
     >
       <Image
         src="/images/logo.svg"

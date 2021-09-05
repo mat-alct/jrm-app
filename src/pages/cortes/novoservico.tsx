@@ -29,6 +29,7 @@ import { FormSelect } from '../../components/Form/Select';
 import { Cutlist } from '../../components/NewOrder/Cutlist';
 import { useOrder } from '../../hooks/order';
 import { areas } from '../../utils/listOfAreas';
+import { normalizeTelephoneInput } from '../../utils/normalizeTelephone';
 
 interface CreateOrderProps {
   firstName: string;
@@ -65,6 +66,9 @@ interface Cutlist {
 const NovoServiço = () => {
   // Change between "Serviço" e "Orçamento"
   const [orderType, setOrderType] = useState('Serviço');
+
+  // NormalizeTelephone
+  const [tel, setTel] = useState('');
 
   // * Cutlist Data
   const [cutlist, setCutlist] = useState<Cutlist[]>([]);
@@ -135,7 +139,7 @@ const NovoServiço = () => {
       await createEstimate({
         cutlist,
         name,
-        telephone: orderData.telephone,
+        telephone: orderData.telephone.replace(/[^A-Z0-9]/gi, ''),
         createdAt: firebase.firestore.Timestamp.fromDate(new Date()),
         updatedAt: firebase.firestore.Timestamp.fromDate(new Date()),
       });
@@ -146,7 +150,7 @@ const NovoServiço = () => {
     // Create data with customer data
     const customer = {
       name,
-      telephone: orderData.telephone,
+      telephone: orderData.telephone.replace(/[^A-Z0-9]/gi, ''),
       address: orderData.address,
       area: orderData.area,
       city: orderData.city,
@@ -240,6 +244,12 @@ const NovoServiço = () => {
                 error={createOrderErrors.telephone}
                 name="telephone"
                 label="Telefone"
+                value={tel}
+                onChange={e =>
+                  setTel((prevValue: string): string =>
+                    normalizeTelephoneInput(e.target.value, prevValue),
+                  )
+                }
               />
             </HStack>
             {orderType === 'Serviço' && (
