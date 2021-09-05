@@ -21,3 +21,30 @@ export interface Customer {
   createdAt: firebase.firestore.Timestamp;
   updatedAt: firebase.firestore.Timestamp;
 }
+
+// Cutlist
+
+export interface CutlistMaterial {
+  materialId: string;
+  name: string;
+  width: number;
+  height: number;
+  price: number;
+}
+
+interface Cutlist {
+  id: string;
+  material: CutlistMaterial;
+  amount: number;
+  sideA: number;
+  sideB: number;
+  borderA: number;
+  borderB: number;
+  price: number;
+}
+
+export interface Estimate {
+  name: string;
+  telephone?: string;
+  cutlist: Cutlist[];
+}
