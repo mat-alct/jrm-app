@@ -47,4 +47,28 @@ export interface Estimate {
   name: string;
   telephone?: string;
   cutlist: Cutlist[];
+  createdAt: firebase.firestore.Timestamp;
+  updatedAt: firebase.firestore.Timestamp;
+}
+
+export interface Order {
+  cutlist: Cutlist[];
+  customer: {
+    name: string;
+    telephone?: string;
+    email?: string;
+    address?: string;
+    area?: string;
+    city?: string;
+    state?: string;
+    customerId?: string;
+  };
+  orderStore: string;
+  deliveryType: string;
+  paymentType: string;
+  seller: string;
+  orderStatus: string;
+  ps?: string;
+  createdAt: firebase.firestore.Timestamp;
+  updatedAt: firebase.firestore.Timestamp;
 }

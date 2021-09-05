@@ -5,10 +5,11 @@ import { useMutation } from 'react-query';
 import { v4 } from 'uuid';
 
 import { queryClient } from '../services/queryClient';
-import { Estimate } from '../types';
+import { Estimate, Order } from '../types';
 
 interface OrderContext {
   createEstimate: (estimateData: Estimate) => Promise<void>;
+  createOrder: (orderData: Order) => Promise<void>;
 }
 
 const OrderContext = createContext<OrderContext>({} as OrderContext);
@@ -32,9 +33,28 @@ export const OrderProvider: React.FC = ({ children }) => {
       onError: () => {
         toast({
           status: 'error',
-          title: 'Erro ao criar cliente',
+          title: 'Erro ao criar orçamento',
           description:
-            'Um erro ocorreu durante a criação do cliente pelo React Query',
+            'Um erro ocorreu durante a criação do orçamento pelo React Query',
+        });
+      },
+    },
+  );
+
+  const createOrderMutation = useMutation(
+    async (orderData: Order) => {
+      await firebase.firestore().collection('orders').doc(v4()).set(orderData);
+    },
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries('orders');
+      },
+      onError: () => {
+        toast({
+          status: 'error',
+          title: 'Erro ao criar pedido',
+          description:
+            'Um erro ocorreu durante a criação do pedido pelo React Query',
         });
       },
     },
@@ -56,8 +76,24 @@ export const OrderProvider: React.FC = ({ children }) => {
     }
   };
 
+  const createOrder = async (orderData: Order) => {
+    try {
+      await createOrderMutation.mutateAsync(orderData);
+
+      toast({
+        status: 'success',
+        description: 'Pedido criado com sucesso',
+      });
+    } catch {
+      toast({
+        status: 'error',
+        description: 'Erro ao criar pedido',
+      });
+    }
+  };
+
   return (
-    <OrderContext.Provider value={{ createEstimate }}>
+    <OrderContext.Provider value={{ createEstimate, createOrder }}>
       {children}
     </OrderContext.Provider>
   );

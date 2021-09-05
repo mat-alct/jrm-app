@@ -15,6 +15,7 @@ import {
   VStack,
 } from '@chakra-ui/react';
 import { yupResolver } from '@hookform/resolvers/yup';
+import firebase from 'firebase/app';
 import Head from 'next/head';
 import React, { useCallback, useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -112,6 +113,8 @@ const NovoServiço = () => {
       await createEstimate({
         cutlist,
         name: `${orderData.firstName} ${orderData.lastName}`,
+        createdAt: firebase.firestore.Timestamp.fromDate(new Date()),
+        updatedAt: firebase.firestore.Timestamp.fromDate(new Date()),
       });
     }
   };
