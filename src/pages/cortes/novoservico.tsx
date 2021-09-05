@@ -129,10 +129,13 @@ const NovoServiço = () => {
       return input;
     };
 
-    // Default props
     const name = `${capitalizeAndStrip(
       orderData.firstName,
     )} ${capitalizeAndStrip(orderData.lastName)}`;
+
+    // Set createdAt and updatedAt values to now
+    const createdAt = firebase.firestore.Timestamp.fromDate(new Date());
+    const updatedAt = firebase.firestore.Timestamp.fromDate(new Date());
 
     // If it's a estimate, uses createEstimate function and end submit
     if (orderType === 'Orçamento') {
@@ -140,14 +143,14 @@ const NovoServiço = () => {
         cutlist,
         name,
         telephone: orderData.telephone.replace(/[^A-Z0-9]/gi, ''),
-        createdAt: firebase.firestore.Timestamp.fromDate(new Date()),
-        updatedAt: firebase.firestore.Timestamp.fromDate(new Date()),
+        createdAt,
+        updatedAt,
       });
 
       return;
     }
 
-    // Create data with customer data
+    // Create a customer const with all customer data
     const customer = {
       name,
       telephone: orderData.telephone.replace(/[^A-Z0-9]/gi, ''),
@@ -167,8 +170,8 @@ const NovoServiço = () => {
       deliveryType: orderData.deliveryType,
       seller: 'Mateus',
       ps: orderData.ps,
-      createdAt: firebase.firestore.Timestamp.fromDate(new Date()),
-      updatedAt: firebase.firestore.Timestamp.fromDate(new Date()),
+      createdAt,
+      updatedAt,
     });
   };
 

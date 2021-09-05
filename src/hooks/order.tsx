@@ -13,6 +13,14 @@ interface OrderContext {
   createOrder: (orderData: Order) => Promise<void>;
 }
 
+interface OrderPropsWithOrderCode extends Order {
+  orderCode: number;
+}
+
+interface EstimatePropsWithEstimateCode extends Estimate {
+  estimateCode: number;
+}
+
 const OrderContext = createContext<OrderContext>({} as OrderContext);
 
 export const OrderProvider: React.FC = ({ children }) => {
@@ -20,7 +28,7 @@ export const OrderProvider: React.FC = ({ children }) => {
 
   // MUTATIONS
   const createEstimateMutation = useMutation(
-    async (estimateData: Estimate) => {
+    async (estimateData: EstimatePropsWithEstimateCode) => {
       await firebase
         .firestore()
         .collection('estimates')
@@ -43,7 +51,7 @@ export const OrderProvider: React.FC = ({ children }) => {
   );
 
   const createOrderMutation = useMutation(
-    async (orderData: Order) => {
+    async (orderData: OrderPropsWithOrderCode) => {
       await firebase.firestore().collection('orders').doc(v4()).set(orderData);
     },
     {
@@ -65,7 +73,32 @@ export const OrderProvider: React.FC = ({ children }) => {
     try {
       removeUndefinedAndEmptyFields(estimateData);
 
-      await createEstimateMutation.mutateAsync(estimateData);
+      // Get auto increment code from counters collection
+      const estimateCodeData = await firebase
+        .firestore()
+        .collection('counters')
+        .doc('estimates')
+        .get()
+        .then(doc => doc.data());
+
+      if (!estimateCodeData?.code) {
+        throw new Error();
+      }
+
+      // Store estimate data in firebase
+      await createEstimateMutation.mutateAsync({
+        ...estimateData,
+        estimateCode: estimateCodeData.code,
+      });
+
+      // Increment +1 in firebase counter collection to use in new estimates
+      const increment = firebase.firestore.FieldValue.increment(1);
+
+      await firebase
+        .firestore()
+        .collection('counters')
+        .doc('orders')
+        .update({ code: increment });
 
       toast({
         status: 'success',
@@ -84,7 +117,32 @@ export const OrderProvider: React.FC = ({ children }) => {
       removeUndefinedAndEmptyFields(orderData);
       removeUndefinedAndEmptyFields(orderData.customer);
 
-      await createOrderMutation.mutateAsync(orderData);
+      // Get auto increment code from counters collection
+      const orderCodeData = await firebase
+        .firestore()
+        .collection('counters')
+        .doc('orders')
+        .get()
+        .then(doc => doc.data());
+
+      if (!orderCodeData?.code) {
+        throw new Error();
+      }
+
+      // Store order data in firebase
+      await createOrderMutation.mutateAsync({
+        ...orderData,
+        orderCode: orderCodeData.code,
+      });
+
+      // Increment +1 in firebase counter collection to use in new orders
+      const increment = firebase.firestore.FieldValue.increment(1);
+
+      await firebase
+        .firestore()
+        .collection('counters')
+        .doc('orders')
+        .update({ code: increment });
 
       toast({
         status: 'success',
