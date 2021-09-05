@@ -24,7 +24,10 @@ export const SearchBar: React.FC<SearchBarProps> = ({ handleUpdateSearch }) => {
     resolver: yupResolver(searchCustomerSchema),
   });
 
-  const handleSearch = () => {};
+  const handleSearch = (search: SearchProps) => {
+    handleUpdateSearch(search.customerName);
+  };
+
   return (
     <Flex
       as="form"

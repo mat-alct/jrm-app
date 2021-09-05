@@ -1,6 +1,5 @@
 import {
   Button,
-  Flex,
   HStack,
   Icon,
   IconButton,
@@ -29,12 +28,10 @@ import { Header } from '../../components/Dashboard/Content/Header';
 import { FormInput } from '../../components/Form/Input';
 import { FormModal } from '../../components/Form/Modal';
 import { FormSelect } from '../../components/Form/Select';
+import { SearchBar } from '../../components/SearchBar';
 import { useCustomer } from '../../hooks/customer';
 import { areas } from '../../utils/listOfAreas';
-import {
-  createCustomerSchema,
-  searchCustomerSchema,
-} from '../../utils/yup/clientesValidations';
+import { createCustomerSchema } from '../../utils/yup/clientesValidations';
 
 interface CreateCustomerProps {
   firstName: string;
@@ -44,10 +41,6 @@ interface CreateCustomerProps {
   area?: {
     value: string;
   };
-}
-
-interface SearchProps {
-  customerName: string;
 }
 
 const Clientes: React.FC = () => {
@@ -60,10 +53,6 @@ const Clientes: React.FC = () => {
     ['customers', searchFilter],
     () => getCustomers(searchFilter),
   );
-
-  const handleSearch = (search: SearchProps) => {
-    setSearchFilter(search.customerName);
-  };
 
   const {
     onOpen: onOpenCreateCustomer,
@@ -82,15 +71,6 @@ const Clientes: React.FC = () => {
     },
   } = useForm<CreateCustomerProps>({
     resolver: yupResolver(createCustomerSchema),
-  });
-
-  // Create Customer Search useForm
-  const {
-    register: searchRegister,
-    handleSubmit: searchHandleSubmit,
-    formState: { errors: searchErrors, isSubmitting: searchIsSubmitting },
-  } = useForm<SearchProps>({
-    resolver: yupResolver(searchCustomerSchema),
   });
 
   const handleCreateCustomer = async ({
@@ -136,6 +116,10 @@ const Clientes: React.FC = () => {
 
   const handleRemoveCustomer = async (id: string) => {
     await removeCustomer(id);
+  };
+
+  const handleSearch = (search: string) => {
+    setSearchFilter(search);
   };
 
   const areasToSelect = areas.map(area => {
@@ -225,28 +209,8 @@ const Clientes: React.FC = () => {
         {/* Customers table */}
 
         {/* If not searched */}
-        <Flex
-          as="form"
-          onSubmit={searchHandleSubmit(handleSearch)}
-          maxW="300px"
-          mb={4}
-        >
-          <FormInput
-            {...searchRegister('customerName')}
-            name="customerName"
-            placeholder="Digite o nome do cliente"
-            borderRightRadius="none"
-            error={searchErrors.customerName}
-          />
-          <Button
-            isDisabled={searchIsSubmitting}
-            colorScheme="gray"
-            type="submit"
-            borderLeftRadius="none"
-          >
-            Buscar
-          </Button>
-        </Flex>
+        <SearchBar handleUpdateSearch={handleSearch} />
+
         {!searchFilter && (
           <Text color="red" mb={4}>
             * É necessário pesquisar o cliente para obter os resultados
