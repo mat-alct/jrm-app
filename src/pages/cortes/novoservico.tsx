@@ -9,7 +9,6 @@ import {
   HStack,
   Radio,
   RadioGroup,
-  Select,
   Switch,
   Text,
   Textarea,
@@ -27,6 +26,7 @@ import { FormInput } from '../../components/Form/Input';
 import { FormRadio } from '../../components/Form/Radio';
 import { FormSelect } from '../../components/Form/Select';
 import { Cutlist } from '../../components/NewOrder/Cutlist';
+import { useOrder } from '../../hooks/order';
 import { areas } from '../../utils/listOfAreas';
 
 interface CreateOrderProps {
@@ -79,7 +79,8 @@ const NovoServiço = () => {
     [],
   );
 
-  // * Other data
+  // * Order data
+  const { createEstimate } = useOrder();
 
   const validationCreateOrderSchema = Yup.object().shape({
     firstName: Yup.string().required(),
@@ -106,8 +107,13 @@ const NovoServiço = () => {
     resolver: yupResolver(validationCreateOrderSchema),
   });
 
-  const handleSubmitOrder = (data: CreateOrderProps) => {
-    console.log(data);
+  const handleSubmitOrder = async (orderData: CreateOrderProps) => {
+    if (orderType === 'Orçamento') {
+      await createEstimate({
+        cutlist,
+        name: `${orderData.firstName} ${orderData.lastName}`,
+      });
+    }
   };
 
   return (
