@@ -350,6 +350,7 @@ export const OrderData: React.FC<OrderDataProps> = ({ orderType, cutlist }) => {
                 label="Bairro"
                 isDisabled={Boolean(customerId)}
                 placeholder="Selecione o bairro..."
+                isClearable
               />
               <FormSelect
                 options={[
@@ -361,6 +362,7 @@ export const OrderData: React.FC<OrderDataProps> = ({ orderType, cutlist }) => {
                 label="Cidade"
                 isDisabled={Boolean(customerId)}
                 placeholder="Selecione a cidade..."
+                isClearable
               />
             </HStack>
 
