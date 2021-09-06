@@ -17,6 +17,7 @@ interface FormSelectProps {
   isClearable?: boolean;
   label?: string;
   control: Control<any>;
+  isDisabled?: boolean;
 }
 
 export const FormSelect: React.FC<FormSelectProps> = ({
@@ -27,6 +28,7 @@ export const FormSelect: React.FC<FormSelectProps> = ({
   name,
   control,
   defaultValue,
+  isDisabled,
 }) => {
   const {
     field,
@@ -50,6 +52,7 @@ export const FormSelect: React.FC<FormSelectProps> = ({
         options={options}
         isClearable={isClearable}
         placeholder={placeholder}
+        isDisabled={isDisabled}
         value={options.find(c => c.value === field.value)}
         onChange={val => field.onChange(val?.value)}
       />

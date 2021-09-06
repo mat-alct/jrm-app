@@ -78,6 +78,7 @@ const NovoServiço = () => {
   const [searchFilter, setSearchFilter] = useState<string | undefined>(
     undefined,
   );
+  const [customerId, setCustomerId] = useState('');
 
   const { getCustomers } = useCustomer();
   const { data: searchedCustomers } = useQuery(
@@ -176,7 +177,7 @@ const NovoServiço = () => {
       area: orderData.area,
       city: orderData.city,
       state: 'Rio de Janeiro',
-      customerId: '',
+      customerId,
     };
 
     await createOrder({
@@ -256,21 +257,33 @@ const NovoServiço = () => {
 
         {customerRegistered && searchedCustomers && (
           <List mt={8} spacing={4}>
-            {searchedCustomers?.map(customer => (
-              <ListItem>
-                <Flex align="center">
-                  <Flex direction="column">
-                    <Heading fontSize="24px">{`${customer.name}`}</Heading>
-                    <Text>{`${customer?.address || 'Rua não cadastrada'}, ${
-                      customer?.area || 'Bairro não cadastrado'
-                    } | Tel: ${
-                      customer?.telephone || 'Telefone não cadastrado'
-                    }`}</Text>
+            <HStack spacing={8}>
+              {searchedCustomers?.map(customer => (
+                <ListItem>
+                  <Flex align="center">
+                    <Flex direction="column">
+                      <Text fontWeight="700">{`${customer.name}`}</Text>
+                      <Text fontSize="sm">{`${
+                        customer?.address || 'Rua não cadastrada'
+                      }, ${customer?.area || 'Bairro não cadastrado'}`}</Text>
+                      <Text fontSize="sm">{`Tel: ${
+                        customer?.telephone || 'Telefone não cadastrado'
+                      }`}</Text>
+                      <Button
+                        colorScheme={
+                          customer.id === customerId ? 'green' : 'gray'
+                        }
+                        onClick={() => setCustomerId(customer.id)}
+                      >
+                        {customer.id === customerId
+                          ? 'Selecionado'
+                          : 'Selecionar'}
+                      </Button>
+                    </Flex>
                   </Flex>
-                  <Button ml={8}>Selecionar</Button>
-                </Flex>
-              </ListItem>
-            ))}
+                </ListItem>
+              ))}
+            </HStack>
           </List>
         )}
 
@@ -286,12 +299,14 @@ const NovoServiço = () => {
                 name="firstName"
                 label="Nome"
                 error={createOrderErrors.firstName}
+                isReadOnly={Boolean(customerId)}
               />
               <FormInput
                 {...createOrderRegister('lastName')}
                 name="lastName"
                 label="Sobrenome"
                 error={createOrderErrors.lastName}
+                isReadOnly={Boolean(customerId)}
               />
               <FormInput
                 {...createOrderRegister('telephone')}
@@ -304,6 +319,7 @@ const NovoServiço = () => {
                     normalizeTelephoneInput(e.target.value, prevValue),
                   )
                 }
+                isReadOnly={Boolean(customerId)}
               />
             </HStack>
 
@@ -315,6 +331,7 @@ const NovoServiço = () => {
                     error={createOrderErrors.address}
                     name="address"
                     label="Endereço"
+                    isReadOnly={Boolean(customerId)}
                   />
                   <FormSelect
                     options={areas.map(area => {
@@ -323,6 +340,7 @@ const NovoServiço = () => {
                     name="area"
                     control={createOrderControl}
                     label="Bairro"
+                    isDisabled={Boolean(customerId)}
                   />
                   <FormSelect
                     options={[
@@ -332,6 +350,7 @@ const NovoServiço = () => {
                     name="city"
                     control={createOrderControl}
                     label="Cidade"
+                    isDisabled={Boolean(customerId)}
                   />
                 </HStack>
 
