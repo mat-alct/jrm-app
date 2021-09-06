@@ -20,7 +20,7 @@ import {
 import { yupResolver } from '@hookform/resolvers/yup';
 import firebase from 'firebase/app';
 import Head from 'next/head';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useQuery } from 'react-query';
 import * as Yup from 'yup';
@@ -73,6 +73,42 @@ interface Cutlist {
 }
 
 const NovoServiço = () => {
+  // * Cutlist Data
+  const [cutlist, setCutlist] = useState<Cutlist[]>([]);
+
+  const updateCutlist = useCallback(
+    (cutlistData: Cutlist[], maintainOldValues = true) => {
+      if (maintainOldValues) {
+        setCutlist(prevValue => {
+          localStorage.setItem(
+            'app@jrmcompensados:cutlist',
+            JSON.stringify([...prevValue, ...cutlistData]),
+          );
+
+          return [...prevValue, ...cutlistData];
+        });
+      } else {
+        setCutlist([...cutlistData]);
+
+        localStorage.setItem(
+          'app@jrmcompensados:cutlist',
+          JSON.stringify([...cutlistData]),
+        );
+      }
+    },
+    [],
+  );
+
+  useEffect(() => {
+    const cutlistFromStorage = localStorage.getItem(
+      'app@jrmcompensados:cutlist',
+    );
+
+    if (cutlistFromStorage) {
+      setCutlist(JSON.parse(cutlistFromStorage));
+    }
+  }, []);
+
   // Change between "Serviço" e "Orçamento"
   const [orderType, setOrderType] = useState('Serviço');
 
@@ -144,20 +180,6 @@ const NovoServiço = () => {
 
     setCustomerId(id);
   };
-
-  // * Cutlist Data
-  const [cutlist, setCutlist] = useState<Cutlist[]>([]);
-
-  const updateCutlist = useCallback(
-    (cutlistData: Cutlist[], maintainOldValues = true) => {
-      if (maintainOldValues) {
-        setCutlist(prevValue => [...prevValue, ...cutlistData]);
-      } else {
-        setCutlist([...cutlistData]);
-      }
-    },
-    [],
-  );
 
   // * Order data
   const { createEstimate, createOrder } = useOrder();
