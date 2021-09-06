@@ -11,6 +11,9 @@ import { removeUndefinedAndEmptyFields } from '../utils/removeUndefinedAndEmpty'
 interface OrderContext {
   createEstimate: (estimateData: Estimate) => Promise<void>;
   createOrder: (orderData: Order) => Promise<void>;
+  getOrders: (
+    orderFilter: string,
+  ) => Promise<firebase.firestore.DocumentData & { id: string }[]>;
 }
 
 interface OrderPropsWithOrderCode extends Order {
@@ -156,8 +159,37 @@ export const OrderProvider: React.FC = ({ children }) => {
     }
   };
 
+  const getOrders = async (orderFilter: string) => {
+    if (orderFilter === 'Orçamento') {
+      const allEstimates = await firebase
+        .firestore()
+        .collection('estimates')
+        .get()
+        .then(response =>
+          response.docs.map(doc =>
+            Object.assign(doc.data() as Estimate, { id: doc.id }),
+          ),
+        );
+
+      return allEstimates;
+    }
+
+    const allOrders = await firebase
+      .firestore()
+      .collection('orders')
+      .where('orderStatus', '==', orderFilter)
+      .get()
+      .then(response =>
+        response.docs.map(doc =>
+          Object.assign(doc.data() as Order, { id: doc.id }),
+        ),
+      );
+
+    return allOrders;
+  };
+
   return (
-    <OrderContext.Provider value={{ createEstimate, createOrder }}>
+    <OrderContext.Provider value={{ createEstimate, createOrder, getOrders }}>
       {children}
     </OrderContext.Provider>
   );
