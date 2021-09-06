@@ -93,6 +93,7 @@ const NovoServiço = () => {
     handleSubmit: createOrderHandleSubmit,
     control: createOrderControl,
     setValue: createOrderSetValue,
+    setError: createOrderSetError,
     formState: {
       errors: createOrderErrors,
       isSubmitting: createOrderIsSubmitting,
@@ -159,6 +160,37 @@ const NovoServiço = () => {
   const { createEstimate, createOrder } = useOrder();
 
   const handleSubmitOrder = async (orderData: CreateOrderProps) => {
+    // Check if it's delivery and address is present in orderData. If address is not present, throw a validation error.
+    if (orderData.deliveryType === 'Entrega' && orderData.address === '') {
+      createOrderSetError('address', {
+        type: 'required',
+        message:
+          'Pedido marcado como entrega. O endereço é obrigatório nesse caso.',
+      });
+
+      return;
+    }
+
+    if (orderData.deliveryType === 'Entrega' && orderData.area === undefined) {
+      createOrderSetError('area', {
+        type: 'required',
+        message:
+          'Pedido marcado como entrega. O bairro é obrigatório nesse caso.',
+      });
+
+      return;
+    }
+
+    if (orderData.deliveryType === 'Entrega' && orderData.city === undefined) {
+      createOrderSetError('city', {
+        type: 'required',
+        message:
+          'Pedido marcado como entrega. A cidade é obrigatória nesse caso.',
+      });
+
+      return;
+    }
+
     // Function to capitalize and strip first name and last name to save in database
     const capitalizeAndStrip = (input: string) => {
       if (input) {
