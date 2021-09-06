@@ -43,6 +43,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
         name="customerName"
         placeholder="Digite o nome do cliente"
         borderRightRadius="none"
+        formNoValidate
         error={searchErrors.customerName}
       />
       <Button

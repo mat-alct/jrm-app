@@ -1,4 +1,5 @@
 import {
+  Box,
   Button,
   Divider,
   Flex,
@@ -6,6 +7,8 @@ import {
   FormLabel,
   Heading,
   HStack,
+  List,
+  ListItem,
   Radio,
   RadioGroup,
   Switch,
@@ -77,7 +80,7 @@ const NovoServiço = () => {
   );
 
   const { getCustomers } = useCustomer();
-  const { data, refetch, isFetching, isLoading } = useQuery(
+  const { data: searchedCustomers } = useQuery(
     ['customers', searchFilter],
     () => getCustomers(searchFilter),
   );
@@ -235,88 +238,104 @@ const NovoServiço = () => {
           <Divider />
         </HStack>
 
+        <FormControl display="flex" alignItems="center" maxW="300px" mt={4}>
+          <FormLabel htmlFor="customer-signup" mb="0" color="gray.700">
+            Utilizar cliente com cadastro?
+          </FormLabel>
+          <Switch
+            value="ok"
+            id="customer-signup"
+            colorScheme="orange"
+            onChange={setCustomerRegistered.toggle}
+          />
+        </FormControl>
+
+        {customerRegistered && (
+          <SearchBar mt={4} handleUpdateSearch={handleSearch} minW="400px" />
+        )}
+
+        {customerRegistered && searchedCustomers && (
+          <List mt={8} spacing={4}>
+            {searchedCustomers?.map(customer => (
+              <ListItem>
+                <Flex align="center">
+                  <Flex direction="column">
+                    <Heading fontSize="24px">{`${customer.name}`}</Heading>
+                    <Text>{`${customer?.address || 'Rua não cadastrada'}, ${
+                      customer?.area || 'Bairro não cadastrado'
+                    } | Tel: ${
+                      customer?.telephone || 'Telefone não cadastrado'
+                    }`}</Text>
+                  </Flex>
+                  <Button ml={8}>Selecionar</Button>
+                </Flex>
+              </ListItem>
+            ))}
+          </List>
+        )}
+
         <Flex
           as="form"
           direction="column"
           onSubmit={createOrderHandleSubmit(handleSubmitOrder)}
         >
-          <FormControl display="flex" alignItems="center" mt={8} maxW="300px">
-            <FormLabel htmlFor="customer-signup" mb="0" color="gray.700">
-              Utilizar cliente com cadastro?
-            </FormLabel>
-            <Switch
-              value="ok"
-              id="customer-signup"
-              colorScheme="orange"
-              onChange={setCustomerRegistered.toggle}
-            />
-          </FormControl>
-
-          {customerRegistered && (
-            <SearchBar handleUpdateSearch={handleSearch} mt={4} />
-          )}
-
           <Flex direction="column" align="left" mt={8}>
-            {!customerRegistered && (
-              <HStack spacing={8} align="flex-start">
-                <FormInput
-                  {...createOrderRegister('firstName')}
-                  name="firstName"
-                  label="Nome"
-                  error={createOrderErrors.firstName}
-                />
-                <FormInput
-                  {...createOrderRegister('lastName')}
-                  name="lastName"
-                  label="Sobrenome"
-                  error={createOrderErrors.lastName}
-                />
-                <FormInput
-                  {...createOrderRegister('telephone')}
-                  error={createOrderErrors.telephone}
-                  name="telephone"
-                  label="Telefone"
-                  value={tel}
-                  onChange={e =>
-                    setTel((prevValue: string): string =>
-                      normalizeTelephoneInput(e.target.value, prevValue),
-                    )
-                  }
-                />
-              </HStack>
-            )}
+            <HStack spacing={8} align="flex-start">
+              <FormInput
+                {...createOrderRegister('firstName')}
+                name="firstName"
+                label="Nome"
+                error={createOrderErrors.firstName}
+              />
+              <FormInput
+                {...createOrderRegister('lastName')}
+                name="lastName"
+                label="Sobrenome"
+                error={createOrderErrors.lastName}
+              />
+              <FormInput
+                {...createOrderRegister('telephone')}
+                error={createOrderErrors.telephone}
+                name="telephone"
+                label="Telefone"
+                value={tel}
+                onChange={e =>
+                  setTel((prevValue: string): string =>
+                    normalizeTelephoneInput(e.target.value, prevValue),
+                  )
+                }
+              />
+            </HStack>
 
             {orderType === 'Serviço' && (
               <>
-                {!customerRegistered && (
-                  <HStack spacing={8} mt={4} align="flex-start">
-                    <FormInput
-                      {...createOrderRegister('address')}
-                      error={createOrderErrors.address}
-                      name="address"
-                      label="Endereço"
-                    />
-                    <FormSelect
-                      options={areas.map(area => {
-                        return { value: area, label: area };
-                      })}
-                      name="area"
-                      control={createOrderControl}
-                      label="Bairro"
-                    />
-                    <FormSelect
-                      options={[
-                        { value: 'Angra dos Reis', label: 'Angra dos Reis' },
-                        { value: 'Paraty', label: 'Paraty' },
-                      ]}
-                      name="city"
-                      control={createOrderControl}
-                      label="Cidade"
-                    />
-                  </HStack>
-                )}
+                <HStack spacing={8} mt={4} mb={4} align="flex-start">
+                  <FormInput
+                    {...createOrderRegister('address')}
+                    error={createOrderErrors.address}
+                    name="address"
+                    label="Endereço"
+                  />
+                  <FormSelect
+                    options={areas.map(area => {
+                      return { value: area, label: area };
+                    })}
+                    name="area"
+                    control={createOrderControl}
+                    label="Bairro"
+                  />
+                  <FormSelect
+                    options={[
+                      { value: 'Angra dos Reis', label: 'Angra dos Reis' },
+                      { value: 'Paraty', label: 'Paraty' },
+                    ]}
+                    name="city"
+                    control={createOrderControl}
+                    label="Cidade"
+                  />
+                </HStack>
 
-                <VStack align="left" mt={8} spacing={8}>
+                <VStack align="left" mt={4} spacing={8}>
                   <FormRadio
                     options={['Japuíba', 'Frade']}
                     label="Loja do pedido:"
