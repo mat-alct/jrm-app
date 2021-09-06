@@ -1,5 +1,4 @@
 import {
-  Box,
   Button,
   Divider,
   Flex,
@@ -272,7 +271,11 @@ const NovoServiço = () => {
             value="ok"
             id="customer-signup"
             colorScheme="orange"
-            onChange={setCustomerRegistered.toggle}
+            onChange={() => {
+              setCustomerId('');
+
+              setCustomerRegistered.toggle();
+            }}
           />
         </FormControl>
 
@@ -366,6 +369,7 @@ const NovoServiço = () => {
                     control={createOrderControl}
                     label="Bairro"
                     isDisabled={Boolean(customerId)}
+                    placeholder="Selecione o bairro..."
                   />
                   <FormSelect
                     options={[
@@ -376,6 +380,7 @@ const NovoServiço = () => {
                     control={createOrderControl}
                     label="Cidade"
                     isDisabled={Boolean(customerId)}
+                    placeholder="Selecione a cidade..."
                   />
                 </HStack>
 
