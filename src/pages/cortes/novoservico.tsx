@@ -26,6 +26,7 @@ import * as Yup from 'yup';
 
 import { Dashboard } from '../../components/Dashboard';
 import { Header } from '../../components/Dashboard/Content/Header';
+import { FormDatePicker } from '../../components/Form/DatePicker';
 import { FormInput } from '../../components/Form/Input';
 import { FormRadio } from '../../components/Form/Radio';
 import { FormSelect } from '../../components/Form/Select';
@@ -417,6 +418,8 @@ const NovoServiço = () => {
                     isHorizontal
                     isLabelHorizontal
                   />
+
+                  <FormDatePicker />
 
                   <Flex direction="column">
                     <Text mb="8px" color="gray.700" fontWeight="bold">
