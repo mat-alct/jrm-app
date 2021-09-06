@@ -31,7 +31,7 @@ export interface CutlistMaterial {
   price: number;
 }
 
-interface Cutlist {
+export interface Cutlist {
   id: string;
   material: CutlistMaterial;
   amount: number;

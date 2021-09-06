@@ -9,10 +9,24 @@ import {
   List,
   ListItem,
   Switch,
+  Text,
+  Textarea,
+  useBoolean,
   VStack,
 } from '@chakra-ui/react';
-import React from 'react';
+import { yupResolver } from '@hookform/resolvers/yup';
+import firebase from 'firebase/app';
+import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { useQuery } from 'react-query';
 
+import { useCustomer } from '../../hooks/customer';
+import { useOrder } from '../../hooks/order';
+import { Cutlist } from '../../types';
+import { capitalizeAndStrip } from '../../utils/capitalizeAndStripString';
+import { areas } from '../../utils/listOfAreas';
+import { normalizeTelephoneInput } from '../../utils/normalizeTelephone';
+import { createOrderSchema } from '../../utils/yup/novoservicoValidations';
 import { FormDatePicker } from '../Form/DatePicker';
 import { FormInput } from '../Form/Input';
 import { FormRadio } from '../Form/Radio';
@@ -20,30 +34,226 @@ import { FormSelect } from '../Form/Select';
 import { SearchBar } from '../SearchBar';
 
 interface OrderDataProps {
-  orderType: 'Serviço' | 'Orçamento';
+  orderType: string;
+  cutlist: Cutlist[];
 }
 
-export const OrderData: React.FC<OrderDataProps> = ({ orderType }) => {
+interface CreateOrderProps {
+  firstName: string;
+  lastName: string;
+  telephone: string;
+  address: string;
+  area: string;
+  city: string;
+  orderStore: string;
+  deliveryType: string;
+  paymentType: string;
+  deliveryDate: Date;
+  ps: string;
+  sellerPassword: string;
+}
+
+export const OrderData: React.FC<OrderDataProps> = ({ orderType, cutlist }) => {
+  const {
+    register: createOrderRegister,
+    handleSubmit: createOrderHandleSubmit,
+    control: createOrderControl,
+    setValue: createOrderSetValue,
+    setError: createOrderSetError,
+    formState: { errors: createOrderErrors },
+  } = useForm<CreateOrderProps>({
+    resolver: yupResolver(createOrderSchema),
+  });
+
+  // CustomerID if a customer is registered
+  const [customerId, setCustomerId] = useState('');
+
+  // State used to normalize tel number
+  const [tel, setTel] = useState('');
+
+  // change between customer registered or not
+  const [customerRegistered, setCustomerRegistered] = useBoolean(false);
+
+  // Find customers using react-query based on searchFilter
+  const [searchFilter, setSearchFilter] = useState<string | undefined>(
+    undefined,
+  );
+
+  const { getCustomers } = useCustomer();
+
+  // Customers found in search. Automatically updates after a new search
+  const { data: searchedCustomers } = useQuery(
+    ['customers', searchFilter],
+    () => getCustomers(searchFilter),
+  );
+
+  // Update searchFilter
+  const handleSearch = (search: string) => {
+    setSearchFilter(search);
+  };
+
+  // Set a customer ID if a registered customer is selected.
+  const handleSetCustomerId = (id: string) => {
+    // unselect customer if it's already selected
+    if (customerId === id) {
+      setCustomerId('');
+
+      return;
+    }
+
+    const customerSelected = searchedCustomers?.find(
+      customer => customer.id === id,
+    );
+
+    if (!customerSelected) {
+      throw new Error();
+    }
+
+    // Set customer fields with registered customer data.
+    // All fields will be readonly after it, unless you unselect a registered customer.
+    createOrderSetValue('firstName', customerSelected.name.split(' ')[0]);
+    createOrderSetValue('lastName', customerSelected.name.split(' ')[1]);
+    setTel(normalizeTelephoneInput(customerSelected.telephone, ''));
+    createOrderSetValue('address', customerSelected.address);
+    createOrderSetValue('area', customerSelected.area);
+    createOrderSetValue('city', customerSelected.city);
+
+    setCustomerId(id);
+  };
+
+  const { createEstimate, createOrder } = useOrder();
+
+  const handleSubmitOrder = async (orderData: CreateOrderProps) => {
+    // Check seller password. Set an error in sellerPassword input if it's incorrect.
+    const sellerDoc = await firebase
+      .firestore()
+      .collection('sellers')
+      .doc(orderData.sellerPassword)
+      .get()
+      .then(doc => doc.data() as { name: string });
+
+    if (!sellerDoc) {
+      createOrderSetError('sellerPassword', {
+        type: 'value',
+        message: 'Senha inválida',
+      });
+
+      return;
+    }
+
+    const seller = sellerDoc.name;
+
+    // Check if it's delivery and [address, area, city and telephone] are present in orderData.
+    // If address is not present, throw a validation error.
+    if (orderData.deliveryType === 'Entrega' && orderData.telephone === '') {
+      createOrderSetError('telephone', {
+        type: 'required',
+        message:
+          'Pedido marcado como entrega. O telefone é obrigatório nesse caso.',
+      });
+
+      return;
+    }
+
+    if (orderData.deliveryType === 'Entrega' && orderData.address === '') {
+      createOrderSetError('address', {
+        type: 'required',
+        message:
+          'Pedido marcado como entrega. O endereço é obrigatório nesse caso.',
+      });
+
+      return;
+    }
+
+    if (orderData.deliveryType === 'Entrega' && orderData.area === undefined) {
+      createOrderSetError('area', {
+        type: 'required',
+        message:
+          'Pedido marcado como entrega. O bairro é obrigatório nesse caso.',
+      });
+
+      return;
+    }
+
+    if (orderData.deliveryType === 'Entrega' && orderData.city === undefined) {
+      createOrderSetError('city', {
+        type: 'required',
+        message:
+          'Pedido marcado como entrega. A cidade é obrigatória nesse caso.',
+      });
+
+      return;
+    }
+
+    // Create a name const with firstName and lastName capitalized and striped
+    const name = `${capitalizeAndStrip(
+      orderData.firstName,
+    )} ${capitalizeAndStrip(orderData.lastName)}`;
+
+    // Set createdAt and updatedAt values to now
+    const createdAt = firebase.firestore.Timestamp.fromDate(new Date());
+    const updatedAt = firebase.firestore.Timestamp.fromDate(new Date());
+
+    // Create a customer const with all customer data
+    const customer = {
+      name,
+      telephone: orderData.telephone.replace(/[^A-Z0-9]/gi, ''),
+      address: orderData.address,
+      area: orderData.area,
+      city: orderData.city,
+      state: 'Rio de Janeiro',
+      customerId,
+    };
+
+    // If it's a estimate, uses createEstimate function and end submit
+    if (orderType === 'Orçamento') {
+      await createEstimate({
+        cutlist,
+        name,
+        customerId,
+        telephone: orderData.telephone.replace(/[^A-Z0-9]/gi, ''),
+        createdAt,
+        updatedAt,
+      });
+
+      return;
+    }
+
+    await createOrder({
+      cutlist,
+      customer,
+      orderStatus: 'Em produção',
+      orderStore: orderData.orderStore,
+      paymentType: orderData.paymentType,
+      deliveryType: orderData.deliveryType,
+      seller,
+      ps: orderData.ps,
+      deliveryDate: orderData.deliveryDate,
+      createdAt,
+      updatedAt,
+    });
+  };
+
   return (
     <>
-      <HStack spacing={4} mt={8}>
+      <HStack spacing={4} mt={8} mb={4}>
         <Heading color="gray.600" size="lg" whiteSpace="nowrap">
           Dados do Pedido
         </Heading>
         <Divider />
       </HStack>
 
+      {/* Use registered customer switch */}
       <FormControl display="flex" alignItems="center" maxW="300px" mt={4}>
-        <FormLabel htmlFor="customer-signup" mb="0" color="gray.700">
+        <FormLabel mb="0" color="gray.700">
           Utilizar cliente com cadastro?
         </FormLabel>
         <Switch
-          value="ok"
-          id="customer-signup"
           colorScheme="orange"
           onChange={() => {
             setCustomerId('');
 
+            // alter customRegistered true/false
             setCustomerRegistered.toggle();
           }}
         />

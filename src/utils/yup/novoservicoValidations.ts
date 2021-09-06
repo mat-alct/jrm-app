@@ -1,39 +1,18 @@
 import * as Yup from 'yup';
 
-export const test = Yup.object().shape({
-  material: Yup.object().shape({
-    materialId: Yup.string().required(
-      'Material precisa existir no banco de dados',
-    ),
-    name: Yup.string().required('Nome do material obrigatório'),
-    width: Yup.number()
-      .required('Largura do material obrigatória')
-      .min(0)
-      .max(2750)
-      .typeError('Largura precisa ser um número'),
-    height: Yup.number()
-      .required('Altura do material obrigatória')
-      .min(0)
-      .max(1850)
-      .typeError('Altura precisa ser um número'),
-    price: Yup.number()
-      .required('Preço do material obrigatório')
-      .typeError('Preço precisa ser um número'),
-  }),
-  amount: Yup.number()
-    .required('Quantidade obrigatória')
-    .typeError('Quantidade precisa ser um número'),
-  sideA: Yup.number()
-    .required('Lado A obrigatório')
-    .min(60, 'Tamanho mínimo de 60mm')
-    .max(2750, 'Tamanho máximo de 2750'),
-  sideB: Yup.number()
-    .required('Lado B obrigatório')
-    .min(60, 'Tamanho mínimo de 60mm')
-    .max(2750, 'Tamanho máximo de 2750'),
-  borderA: Yup.number().required('Obrigatório'),
-  borderB: Yup.number().required('Obrigatório'),
-  price: Yup.number().required('Obrigatório'),
+export const createOrderSchema = Yup.object().shape({
+  firstName: Yup.string().required('Nome obrigatório'),
+  lastName: Yup.string().required('Sobrenome obrigatório'),
+  telephone: Yup.string(),
+  address: Yup.string(),
+  area: Yup.string(),
+  city: Yup.string(),
+  orderStore: Yup.string(),
+  deliveryType: Yup.string(),
+  paymentType: Yup.string(),
+  ps: Yup.string(),
+  deliveryDate: Yup.date().required('Data de Entrega obrigatória'),
+  sellerPassword: Yup.string().required('Senha do vendedor obrigatória'),
 });
 
 export const createCutlistSchema = Yup.object().shape({
