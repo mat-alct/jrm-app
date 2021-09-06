@@ -1,4 +1,5 @@
 import {
+  Box,
   Button,
   Divider,
   Flex,
@@ -49,6 +50,7 @@ interface CreateOrderProps {
   paymentType: string;
   deliveryDate: Date;
   ps: string;
+  sellerPassword: string;
 }
 
 interface CutlistMaterial {
@@ -75,8 +77,8 @@ const NovoServiço = () => {
   const [orderType, setOrderType] = useState('Serviço');
 
   const validationCreateOrderSchema = Yup.object().shape({
-    firstName: Yup.string().required(),
-    lastName: Yup.string().required(),
+    firstName: Yup.string().required('Nome obrigatório'),
+    lastName: Yup.string().required('Sobrenome obrigatório'),
     telephone: Yup.string(),
     address: Yup.string(),
     area: Yup.string(),
@@ -86,6 +88,7 @@ const NovoServiço = () => {
     paymentType: Yup.string(),
     ps: Yup.string(),
     deliveryDate: Yup.date().required('Data de Entrega obrigatória'),
+    sellerPassword: Yup.string().required('Senha do vendedor obrigatória'),
   });
 
   const {
@@ -160,7 +163,37 @@ const NovoServiço = () => {
   const { createEstimate, createOrder } = useOrder();
 
   const handleSubmitOrder = async (orderData: CreateOrderProps) => {
+    // Check seller password
+
+    const sellerDoc = await firebase
+      .firestore()
+      .collection('sellers')
+      .doc(orderData.sellerPassword)
+      .get()
+      .then(doc => doc.data() as { name: string });
+
+    if (!sellerDoc) {
+      createOrderSetError('sellerPassword', {
+        type: 'value',
+        message: 'Senha inválida',
+      });
+
+      return;
+    }
+
+    const seller = sellerDoc.name;
+
     // Check if it's delivery and address is present in orderData. If address is not present, throw a validation error.
+    if (orderData.deliveryType === 'Entrega' && orderData.telephone === '') {
+      createOrderSetError('telephone', {
+        type: 'required',
+        message:
+          'Pedido marcado como entrega. O telefone é obrigatório nesse caso.',
+      });
+
+      return;
+    }
+
     if (orderData.deliveryType === 'Entrega' && orderData.address === '') {
       createOrderSetError('address', {
         type: 'required',
@@ -248,7 +281,7 @@ const NovoServiço = () => {
       orderStore: orderData.orderStore,
       paymentType: orderData.paymentType,
       deliveryType: orderData.deliveryType,
-      seller: 'Mateus',
+      seller,
       ps: orderData.ps,
       deliveryDate: orderData.deliveryDate,
       createdAt,
@@ -336,6 +369,7 @@ const NovoServiço = () => {
                         customer?.telephone || 'Telefone não cadastrado'
                       }`}</Text>
                       <Button
+                        size="sm"
                         colorScheme={
                           customer.id === customerId ? 'green' : 'gray'
                         }
@@ -459,6 +493,17 @@ const NovoServiço = () => {
                     control={createOrderControl}
                   />
 
+                  <FormInput
+                    {...createOrderRegister('sellerPassword')}
+                    error={createOrderErrors.sellerPassword}
+                    name="sellerPassword"
+                    label="Senha:"
+                    type="password"
+                    size="sm"
+                    maxW="150px"
+                    isHorizontal
+                  />
+
                   <Flex direction="column">
                     <Text mb="8px" color="gray.700" fontWeight="bold">
                       Observações:
@@ -473,6 +518,8 @@ const NovoServiço = () => {
               </>
             )}
           </Flex>
+
+          <Box mt={8} />
 
           <Button
             colorScheme="orange"

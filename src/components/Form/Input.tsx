@@ -12,16 +12,21 @@ type InputProps = ChakraInputProps & {
   name: string;
   label?: string;
   error?: FieldError;
+  isHorizontal?: boolean;
 };
 
 const InputBase: ForwardRefRenderFunction<HTMLInputElement, InputProps> = (
-  { name, label, error, ...rest },
+  { name, label, error, isHorizontal, ...rest },
   ref,
 ) => {
   return (
-    <FormControl isInvalid={!!error}>
+    <FormControl
+      isInvalid={!!error}
+      display={isHorizontal ? 'flex' : ''}
+      alignItems={isHorizontal ? 'center' : ''}
+    >
       {label && (
-        <FormLabel color="gray.700" htmlFor={name}>
+        <FormLabel htmlFor={name} mb={isHorizontal ? 0 : 2}>
           {label}
         </FormLabel>
       )}
@@ -34,7 +39,9 @@ const InputBase: ForwardRefRenderFunction<HTMLInputElement, InputProps> = (
       />
       {!!error && (
         // Role is necessary for validation tests
-        <FormErrorMessage role="alert">{error.message}</FormErrorMessage>
+        <FormErrorMessage role="alert" ml={isHorizontal ? 4 : 0}>
+          {error.message}
+        </FormErrorMessage>
       )}
     </FormControl>
   );
