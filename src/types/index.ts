@@ -68,6 +68,7 @@ export interface Order {
   paymentType: string;
   seller: string;
   orderStatus: string;
+  deliveryDate: Date;
   ps?: string;
   createdAt: firebase.firestore.Timestamp;
   updatedAt: firebase.firestore.Timestamp;
