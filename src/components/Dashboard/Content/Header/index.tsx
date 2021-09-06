@@ -12,7 +12,7 @@ export const Header: React.FC<HeaderProps> = ({
   isLoading,
 }) => {
   return (
-    <Flex align="center" justify="space-between" mb={8}>
+    <Flex align="flex-end" justify="space-between" mb={8}>
       <Heading color="gray.700">
         {pageTitle}{' '}
         {isLoading && <Spinner size="sm" color="gray.500" marginLeft="4" />}

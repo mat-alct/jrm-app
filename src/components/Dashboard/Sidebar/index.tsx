@@ -46,7 +46,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ sidebarWidth }) => {
           <NavLink icon={FaSlack} href="/cortes/novoservico">
             Novo serviço
           </NavLink>
-          <NavLink icon={FaClipboardList} href="#">
+          <NavLink icon={FaClipboardList} href="/cortes/listadecortes">
             Listar serviços
           </NavLink>
           <NavLink icon={FaUser} href="/cortes/clientes">

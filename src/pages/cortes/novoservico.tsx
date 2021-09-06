@@ -61,7 +61,6 @@ const NovoServiço = () => {
         >
           <RadioGroup
             colorScheme="orange"
-            mb={4}
             size="lg"
             value={orderType}
             onChange={setOrderType}
