@@ -36,9 +36,9 @@ import { createCustomerSchema } from '../../utils/yup/clientesValidations';
 interface CreateCustomerProps {
   firstName: string;
   lastName: string;
-  telephone?: string;
-  address?: string;
-  area?: string;
+  telephone: string;
+  address: string;
+  area: string;
 }
 
 const Clientes: React.FC = () => {

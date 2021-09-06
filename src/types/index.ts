@@ -12,12 +12,11 @@ export interface Material {
 
 export interface Customer {
   name: string;
-  telephone?: string;
-  email?: string;
-  address?: string;
-  area?: string;
-  city?: string;
-  state?: string;
+  telephone: string;
+  address: string;
+  area: string;
+  city: string;
+  state: string;
   createdAt: firebase.firestore.Timestamp;
   updatedAt: firebase.firestore.Timestamp;
 }
