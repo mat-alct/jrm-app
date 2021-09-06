@@ -13,15 +13,17 @@ interface OrderContext {
   createOrder: (orderData: Order) => Promise<void>;
   getOrders: (
     orderFilter: string,
-  ) => Promise<firebase.firestore.DocumentData & { id: string }[]>;
+  ) => Promise<(firebase.firestore.DocumentData & { id: string })[]>;
 }
 
 interface OrderPropsWithOrderCode extends Order {
   orderCode: number;
+  orderPrice: number;
 }
 
 interface EstimatePropsWithEstimateCode extends Estimate {
   estimateCode: number;
+  estimatePrice: number;
 }
 
 const OrderContext = createContext<OrderContext>({} as OrderContext);
@@ -88,10 +90,16 @@ export const OrderProvider: React.FC = ({ children }) => {
         throw new Error();
       }
 
+      // Create a const that takes total price
+      const estimatePrice = estimateData.cutlist.reduce((prev, curr) => {
+        return prev + curr.price;
+      }, 0);
+
       // Store estimate data in firebase
       await createEstimateMutation.mutateAsync({
         ...estimateData,
         estimateCode: estimateCodeData.code,
+        estimatePrice,
       });
 
       // Increment +1 in firebase counter collection to use in new estimates
@@ -132,10 +140,16 @@ export const OrderProvider: React.FC = ({ children }) => {
         throw new Error();
       }
 
+      // Create a const that takes total price
+      const orderPrice = orderData.cutlist.reduce((prev, curr) => {
+        return prev + curr.price;
+      }, 0);
+
       // Store order data in firebase
       await createOrderMutation.mutateAsync({
         ...orderData,
         orderCode: orderCodeData.code,
+        orderPrice,
       });
 
       // Increment +1 in firebase counter collection to use in new orders
@@ -174,16 +188,15 @@ export const OrderProvider: React.FC = ({ children }) => {
       return allEstimates;
     }
 
-    const allOrders = await firebase
+    const response = await firebase
       .firestore()
       .collection('orders')
       .where('orderStatus', '==', orderFilter)
-      .get()
-      .then(response =>
-        response.docs.map(doc =>
-          Object.assign(doc.data() as Order, { id: doc.id }),
-        ),
-      );
+      .get();
+
+    const allOrders = response.docs.map(doc =>
+      Object.assign(doc.data() as Order, { id: doc.id }),
+    );
 
     return allOrders;
   };
