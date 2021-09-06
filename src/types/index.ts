@@ -45,6 +45,7 @@ interface Cutlist {
 export interface Estimate {
   name: string;
   telephone?: string;
+  customerId?: string;
   cutlist: Cutlist[];
   createdAt: firebase.firestore.Timestamp;
   updatedAt: firebase.firestore.Timestamp;

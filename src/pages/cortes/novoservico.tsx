@@ -172,6 +172,7 @@ const NovoServiço = () => {
       return input;
     };
 
+    // Create a name const with firstName and lastName capitalized and striped
     const name = `${capitalizeAndStrip(
       orderData.firstName,
     )} ${capitalizeAndStrip(orderData.lastName)}`;
@@ -179,19 +180,6 @@ const NovoServiço = () => {
     // Set createdAt and updatedAt values to now
     const createdAt = firebase.firestore.Timestamp.fromDate(new Date());
     const updatedAt = firebase.firestore.Timestamp.fromDate(new Date());
-
-    // If it's a estimate, uses createEstimate function and end submit
-    if (orderType === 'Orçamento') {
-      await createEstimate({
-        cutlist,
-        name,
-        telephone: orderData.telephone.replace(/[^A-Z0-9]/gi, ''),
-        createdAt,
-        updatedAt,
-      });
-
-      return;
-    }
 
     // Create a customer const with all customer data
     const customer = {
@@ -203,6 +191,20 @@ const NovoServiço = () => {
       state: 'Rio de Janeiro',
       customerId,
     };
+
+    // If it's a estimate, uses createEstimate function and end submit
+    if (orderType === 'Orçamento') {
+      await createEstimate({
+        cutlist,
+        name,
+        customerId,
+        telephone: orderData.telephone.replace(/[^A-Z0-9]/gi, ''),
+        createdAt,
+        updatedAt,
+      });
+
+      return;
+    }
 
     await createOrder({
       cutlist,
@@ -428,8 +430,15 @@ const NovoServiço = () => {
             )}
           </Flex>
 
-          <Button colorScheme="orange" isFullWidth my={16} type="submit">
-            Confirmar
+          <Button
+            colorScheme="orange"
+            size="lg"
+            isFullWidth
+            my={16}
+            type="submit"
+            disabled={cutlist.length < 1}
+          >
+            Confirmar Pedido
           </Button>
         </Flex>
       </Dashboard>
