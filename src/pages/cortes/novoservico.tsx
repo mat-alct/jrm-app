@@ -393,6 +393,7 @@ const NovoServiço = () => {
                     name="orderStore"
                     control={createOrderControl}
                     isHorizontal
+                    isLabelHorizontal
                   />
 
                   <FormRadio
@@ -401,6 +402,7 @@ const NovoServiço = () => {
                     name="deliveryType"
                     control={createOrderControl}
                     isHorizontal
+                    isLabelHorizontal
                   />
 
                   <FormRadio
@@ -413,6 +415,7 @@ const NovoServiço = () => {
                     name="paymentType"
                     control={createOrderControl}
                     isHorizontal
+                    isLabelHorizontal
                   />
 
                   <Flex direction="column">

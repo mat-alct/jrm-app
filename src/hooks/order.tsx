@@ -97,7 +97,7 @@ export const OrderProvider: React.FC = ({ children }) => {
       await firebase
         .firestore()
         .collection('counters')
-        .doc('orders')
+        .doc('estimates')
         .update({ code: increment });
 
       toast({

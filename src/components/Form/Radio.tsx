@@ -17,6 +17,7 @@ interface FormRadioProps {
   defaultValue?: string;
   options: string[];
   isHorizontal?: boolean;
+  isLabelHorizontal?: boolean;
 }
 
 export const FormRadio: React.FC<FormRadioProps> = ({
@@ -26,6 +27,7 @@ export const FormRadio: React.FC<FormRadioProps> = ({
   defaultValue,
   options,
   isHorizontal,
+  isLabelHorizontal,
 }) => {
   const {
     field,
@@ -37,8 +39,13 @@ export const FormRadio: React.FC<FormRadioProps> = ({
   });
 
   return (
-    <FormControl isInvalid={!!errors[name]}>
-      {label && <FormLabel>{label}</FormLabel>}
+    <FormControl
+      isInvalid={!!errors[name]}
+      display={isLabelHorizontal ? 'flex' : ''}
+    >
+      {label && (
+        <FormLabel mb={isLabelHorizontal ? '0' : ''}>{label}</FormLabel>
+      )}
       <RadioGroup
         value={field.value}
         onChange={field.onChange}
