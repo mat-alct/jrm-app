@@ -212,7 +212,7 @@ const Clientes: React.FC = () => {
         <SearchBar handleUpdateSearch={handleSearch} />
 
         {!searchFilter && (
-          <Text color="red" mb={4}>
+          <Text color="red" my={4}>
             * É necessário pesquisar o cliente para obter os resultados
           </Text>
         )}

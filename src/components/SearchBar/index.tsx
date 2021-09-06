@@ -1,4 +1,4 @@
-import { Button, Flex } from '@chakra-ui/react';
+import { Button, Flex, FlexProps } from '@chakra-ui/react';
 import { yupResolver } from '@hookform/resolvers/yup';
 import React from 'react';
 import { useForm } from 'react-hook-form';
@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { searchCustomerSchema } from '../../utils/yup/clientesValidations';
 import { FormInput } from '../Form/Input';
 
-interface SearchBarProps {
+interface SearchBarProps extends FlexProps {
   handleUpdateSearch: (search: string) => void;
 }
 
@@ -14,7 +14,10 @@ interface SearchProps {
   customerName: string;
 }
 
-export const SearchBar: React.FC<SearchBarProps> = ({ handleUpdateSearch }) => {
+export const SearchBar: React.FC<SearchBarProps> = ({
+  handleUpdateSearch,
+  ...rest
+}) => {
   // Create Customer Search useForm
   const {
     register: searchRegister,
@@ -33,7 +36,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ handleUpdateSearch }) => {
       as="form"
       onSubmit={searchHandleSubmit(handleSearch)}
       maxW="300px"
-      mb={4}
+      {...rest}
     >
       <FormInput
         {...searchRegister('customerName')}

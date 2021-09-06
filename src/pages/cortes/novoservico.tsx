@@ -11,6 +11,7 @@ import {
   Switch,
   Text,
   Textarea,
+  useBoolean,
   VStack,
 } from '@chakra-ui/react';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -70,7 +71,7 @@ const NovoServiço = () => {
   const [orderType, setOrderType] = useState('Serviço');
 
   // change between customer registered or not
-  const [customerRegistered, setCustomerRegistered] = useState(true);
+  const [customerRegistered, setCustomerRegistered] = useBoolean(false);
   const [searchFilter, setSearchFilter] = useState<string | undefined>(
     undefined,
   );
@@ -239,72 +240,82 @@ const NovoServiço = () => {
           direction="column"
           onSubmit={createOrderHandleSubmit(handleSubmitOrder)}
         >
-          <FormControl display="flex" alignItems="center" mt={8}>
+          <FormControl display="flex" alignItems="center" mt={8} maxW="300px">
             <FormLabel htmlFor="customer-signup" mb="0" color="gray.700">
               Utilizar cliente com cadastro?
             </FormLabel>
-            <Switch id="customer-signup" />
+            <Switch
+              value="ok"
+              id="customer-signup"
+              colorScheme="orange"
+              onChange={setCustomerRegistered.toggle}
+            />
           </FormControl>
 
+          {customerRegistered && (
+            <SearchBar handleUpdateSearch={handleSearch} mt={4} />
+          )}
+
           <Flex direction="column" align="left" mt={8}>
-            {customerRegistered && (
-              <>
-                <SearchBar handleUpdateSearch={handleSearch} />
-              </>
+            {!customerRegistered && (
+              <HStack spacing={8} align="flex-start">
+                <FormInput
+                  {...createOrderRegister('firstName')}
+                  name="firstName"
+                  label="Nome"
+                  error={createOrderErrors.firstName}
+                />
+                <FormInput
+                  {...createOrderRegister('lastName')}
+                  name="lastName"
+                  label="Sobrenome"
+                  error={createOrderErrors.lastName}
+                />
+                <FormInput
+                  {...createOrderRegister('telephone')}
+                  error={createOrderErrors.telephone}
+                  name="telephone"
+                  label="Telefone"
+                  value={tel}
+                  onChange={e =>
+                    setTel((prevValue: string): string =>
+                      normalizeTelephoneInput(e.target.value, prevValue),
+                    )
+                  }
+                />
+              </HStack>
             )}
-            <HStack spacing={8} align="flex-start">
-              <FormInput
-                {...createOrderRegister('firstName')}
-                name="firstName"
-                label="Nome"
-                error={createOrderErrors.firstName}
-              />
-              <FormInput
-                {...createOrderRegister('lastName')}
-                name="lastName"
-                label="Sobrenome"
-                error={createOrderErrors.lastName}
-              />
-              <FormInput
-                {...createOrderRegister('telephone')}
-                error={createOrderErrors.telephone}
-                name="telephone"
-                label="Telefone"
-                value={tel}
-                onChange={e =>
-                  setTel((prevValue: string): string =>
-                    normalizeTelephoneInput(e.target.value, prevValue),
-                  )
-                }
-              />
-            </HStack>
+
             {orderType === 'Serviço' && (
               <>
-                <HStack spacing={8} mt={4} align="flex-start">
-                  <FormInput
-                    {...createOrderRegister('address')}
-                    error={createOrderErrors.address}
-                    name="address"
-                    label="Endereço"
-                  />
-                  <FormSelect
-                    options={areas.map(area => {
-                      return { value: area, label: area };
-                    })}
-                    name="area"
-                    control={createOrderControl}
-                    label="Bairro"
-                  />
-                  <FormSelect
-                    options={[
-                      { value: 'Angra dos Reis', label: 'Angra dos Reis' },
-                      { value: 'Paraty', label: 'Paraty' },
-                    ]}
-                    name="city"
-                    control={createOrderControl}
-                    label="Cidade"
-                  />
-                </HStack>
+                {!customerRegistered && (
+                  <HStack spacing={8} mt={4} align="flex-start">
+                    <FormInput
+                      {...createOrderRegister('address')}
+                      error={createOrderErrors.address}
+                      name="address"
+                      label="Endereço"
+                    />
+                    <FormSelect
+                      options={areas.map(area => {
+                        return { value: area, label: area };
+                      })}
+                      name="area"
+                      control={createOrderControl}
+                      label="Bairro"
+                    />
+                    <FormSelect
+                      options={[
+                        { value: 'Angra dos Reis', label: 'Angra dos Reis' },
+                        { value: 'Paraty', label: 'Paraty' },
+                      ]}
+                      name="city"
+                      control={createOrderControl}
+                      label="Cidade"
+                    />
+                  </HStack>
+                )}
+
                 <VStack align="left" mt={8} spacing={8}>
                   <FormRadio
                     options={['Japuíba', 'Frade']}
