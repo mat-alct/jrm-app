@@ -333,7 +333,7 @@ export const Cutlist: React.FC<CutlistPageProps> = ({
               });
 
               return (
-                <Tr>
+                <Tr key={cutlistMapped.id}>
                   <Td>
                     <img
                       src={avatar.src}

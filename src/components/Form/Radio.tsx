@@ -46,7 +46,7 @@ export const FormRadio: React.FC<FormRadioProps> = ({
       >
         <Stack spacing={4} direction={isHorizontal ? 'row' : 'column'}>
           {options.map(option => (
-            <Radio name={option} id={option} value={option}>
+            <Radio name={option} id={option} value={option} key={option}>
               {option}
             </Radio>
           ))}

@@ -73,39 +73,6 @@ const NovoServiço = () => {
   // Change between "Serviço" e "Orçamento"
   const [orderType, setOrderType] = useState('Serviço');
 
-  // change between customer registered or not
-  const [customerRegistered, setCustomerRegistered] = useBoolean(false);
-  const [searchFilter, setSearchFilter] = useState<string | undefined>(
-    undefined,
-  );
-  const [customerId, setCustomerId] = useState('');
-
-  const { getCustomers } = useCustomer();
-  const { data: searchedCustomers } = useQuery(
-    ['customers', searchFilter],
-    () => getCustomers(searchFilter),
-  );
-
-  // NormalizeTelephone
-  const [tel, setTel] = useState('');
-
-  // * Cutlist Data
-  const [cutlist, setCutlist] = useState<Cutlist[]>([]);
-
-  const updateCutlist = useCallback(
-    (cutlistData: Cutlist[], maintainOldValues = true) => {
-      if (maintainOldValues) {
-        setCutlist(prevValue => [...prevValue, ...cutlistData]);
-      } else {
-        setCutlist([...cutlistData]);
-      }
-    },
-    [],
-  );
-
-  // * Order data
-  const { createEstimate, createOrder } = useOrder();
-
   const validationCreateOrderSchema = Yup.object().shape({
     firstName: Yup.string().required(),
     lastName: Yup.string().required(),
@@ -123,6 +90,7 @@ const NovoServiço = () => {
     register: createOrderRegister,
     handleSubmit: createOrderHandleSubmit,
     control: createOrderControl,
+    setValue: createOrderSetValue,
     formState: {
       errors: createOrderErrors,
       isSubmitting: createOrderIsSubmitting,
@@ -130,6 +98,63 @@ const NovoServiço = () => {
   } = useForm<CreateOrderProps>({
     resolver: yupResolver(validationCreateOrderSchema),
   });
+
+  // change between customer registered or not
+  const [customerRegistered, setCustomerRegistered] = useBoolean(false);
+  // NormalizeTelephone
+  const [tel, setTel] = useState('');
+  const [searchFilter, setSearchFilter] = useState<string | undefined>(
+    undefined,
+  );
+  const [customerId, setCustomerId] = useState('');
+
+  const { getCustomers } = useCustomer();
+  const { data: searchedCustomers } = useQuery(
+    ['customers', searchFilter],
+    () => getCustomers(searchFilter),
+  );
+
+  const handleSetCustomerId = (id: string) => {
+    if (customerId === id) {
+      setCustomerId('');
+
+      return;
+    }
+
+    const customerSelected = searchedCustomers?.find(
+      customer => customer.id === id,
+    );
+
+    if (!customerSelected) {
+      throw new Error();
+    }
+
+    createOrderSetValue('firstName', customerSelected.name.split(' ')[0]);
+    createOrderSetValue('lastName', customerSelected.name.split(' ')[1]);
+    setTel(normalizeTelephoneInput(customerSelected.telephone, ''));
+    createOrderSetValue('address', customerSelected.address);
+    createOrderSetValue('area', customerSelected.area);
+    createOrderSetValue('city', customerSelected.city);
+
+    setCustomerId(id);
+  };
+
+  // * Cutlist Data
+  const [cutlist, setCutlist] = useState<Cutlist[]>([]);
+
+  const updateCutlist = useCallback(
+    (cutlistData: Cutlist[], maintainOldValues = true) => {
+      if (maintainOldValues) {
+        setCutlist(prevValue => [...prevValue, ...cutlistData]);
+      } else {
+        setCutlist([...cutlistData]);
+      }
+    },
+    [],
+  );
+
+  // * Order data
+  const { createEstimate, createOrder } = useOrder();
 
   const handleSubmitOrder = async (orderData: CreateOrderProps) => {
     // Function to capitalize and strip first name and last name to save in database
@@ -259,7 +284,7 @@ const NovoServiço = () => {
           <List mt={8} spacing={4}>
             <HStack spacing={8}>
               {searchedCustomers?.map(customer => (
-                <ListItem>
+                <ListItem key={customer.id}>
                   <Flex align="center">
                     <Flex direction="column">
                       <Text fontWeight="700">{`${customer.name}`}</Text>
@@ -273,7 +298,7 @@ const NovoServiço = () => {
                         colorScheme={
                           customer.id === customerId ? 'green' : 'gray'
                         }
-                        onClick={() => setCustomerId(customer.id)}
+                        onClick={() => handleSetCustomerId(customer.id)}
                       >
                         {customer.id === customerId
                           ? 'Selecionado'
