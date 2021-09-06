@@ -5,10 +5,7 @@ export const createCustomerSchema = Yup.object().shape({
   lastName: Yup.string().required('Sobrenome obrigatório'),
   telephone: Yup.string(),
   address: Yup.string(),
-  area: Yup.object().shape({
-    value: Yup.string(),
-    label: Yup.string(),
-  }),
+  area: Yup.string(),
 });
 
 export const searchCustomerSchema = Yup.object().shape({

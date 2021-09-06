@@ -38,9 +38,7 @@ interface CreateCustomerProps {
   lastName: string;
   telephone?: string;
   address?: string;
-  area?: {
-    value: string;
-  };
+  area?: string;
 }
 
 const Clientes: React.FC = () => {
@@ -108,7 +106,7 @@ const Clientes: React.FC = () => {
       updatedAt: firebase.firestore.Timestamp.fromDate(new Date()),
       state: 'Rio de Janeiro',
       city: 'Angra dos Reis',
-      area: area?.value,
+      area,
       address,
       telephone,
     });
