@@ -15,14 +15,13 @@ export const Sidebar = () => {
   return (
     <Flex
       direction="column"
-      maxW="17rem"
+      w="17rem"
       minH="100vh"
       h="100%"
-      w="100%"
       align="flex-start"
       borderRight="1px solid"
       borderColor="gray.200"
-      position="sticky"
+      position="fixed"
     >
       <Image
         src="/images/logo.svg"
