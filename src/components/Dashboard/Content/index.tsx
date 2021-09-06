@@ -1,10 +1,15 @@
 import { Box, Flex } from '@chakra-ui/react';
 import React from 'react';
 
-export const Content: React.FC = ({ children }) => {
+interface ContentProps {
+  sidebarWidth: string;
+}
+
+export const Content: React.FC<ContentProps> = ({ children, sidebarWidth }) => {
   return (
     <Flex w="100%">
-      <Box h="100%" w="17rem" />
+      {/* Box with the size of sidebar. Used to align */}
+      <Box h="100%" w={sidebarWidth} />
       <Flex
         direction="column"
         as="main"

@@ -6,16 +6,21 @@ import {
   FaRegSquare,
   FaSlack,
   FaUser,
+  FaUserAstronaut,
 } from 'react-icons/fa';
 
 import { NavLink } from './NavLink';
 import { NavSection } from './NavSection';
 
-export const Sidebar = () => {
+interface SidebarProps {
+  sidebarWidth: string;
+}
+
+export const Sidebar: React.FC<SidebarProps> = ({ sidebarWidth }) => {
   return (
     <Flex
       direction="column"
-      w="17rem"
+      w={sidebarWidth}
       minH="100vh"
       h="100%"
       align="flex-start"
@@ -54,6 +59,9 @@ export const Sidebar = () => {
         <NavSection title="Administração">
           <NavLink icon={FaPen} href="#">
             Contas
+          </NavLink>
+          <NavLink icon={FaUserAstronaut} href="/administracao/vendedores">
+            Vendedores
           </NavLink>
         </NavSection>
       </VStack>

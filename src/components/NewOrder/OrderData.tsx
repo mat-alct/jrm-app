@@ -330,6 +330,7 @@ export const OrderData: React.FC<OrderDataProps> = ({ orderType, cutlist }) => {
           />
         </HStack>
 
+        {/* Inputs will not be displayed if it's a estimate */}
         {orderType === 'Serviço' && (
           <>
             <HStack spacing={8} mt={8} align="flex-start">
