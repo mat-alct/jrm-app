@@ -47,6 +47,7 @@ interface CreateOrderProps {
   orderStore: string;
   deliveryType: string;
   paymentType: string;
+  deliveryDate: Date;
   ps: string;
 }
 
@@ -84,6 +85,7 @@ const NovoServiço = () => {
     deliveryType: Yup.string(),
     paymentType: Yup.string(),
     ps: Yup.string(),
+    deliveryDate: Yup.date().required('Data de Entrega obrigatória'),
   });
 
   const {
@@ -193,32 +195,34 @@ const NovoServiço = () => {
       customerId,
     };
 
+    console.log(orderData.deliveryDate);
+
     // If it's a estimate, uses createEstimate function and end submit
-    if (orderType === 'Orçamento') {
-      await createEstimate({
-        cutlist,
-        name,
-        customerId,
-        telephone: orderData.telephone.replace(/[^A-Z0-9]/gi, ''),
-        createdAt,
-        updatedAt,
-      });
+    // if (orderType === 'Orçamento') {
+    //   await createEstimate({
+    //     cutlist,
+    //     name,
+    //     customerId,
+    //     telephone: orderData.telephone.replace(/[^A-Z0-9]/gi, ''),
+    //     createdAt,
+    //     updatedAt,
+    //   });
 
-      return;
-    }
+    //   return;
+    // }
 
-    await createOrder({
-      cutlist,
-      customer,
-      orderStatus: 'Em produção',
-      orderStore: orderData.orderStore,
-      paymentType: orderData.paymentType,
-      deliveryType: orderData.deliveryType,
-      seller: 'Mateus',
-      ps: orderData.ps,
-      createdAt,
-      updatedAt,
-    });
+    // await createOrder({
+    //   cutlist,
+    //   customer,
+    //   orderStatus: 'Em produção',
+    //   orderStore: orderData.orderStore,
+    //   paymentType: orderData.paymentType,
+    //   deliveryType: orderData.deliveryType,
+    //   seller: 'Mateus',
+    //   ps: orderData.ps,
+    //   createdAt,
+    //   updatedAt,
+    // });
   };
 
   const handleSearch = (search: string) => {
@@ -419,7 +423,10 @@ const NovoServiço = () => {
                     isLabelHorizontal
                   />
 
-                  <FormDatePicker />
+                  <FormDatePicker
+                    name="deliveryDate"
+                    control={createOrderControl}
+                  />
 
                   <Flex direction="column">
                     <Text mb="8px" color="gray.700" fontWeight="bold">
