@@ -12,6 +12,7 @@ import {
   Tr,
   useToast,
 } from '@chakra-ui/react';
+import { format } from 'date-fns';
 import firebase from 'firebase/app';
 import Router from 'next/router';
 import React, { useState } from 'react';
@@ -140,7 +141,12 @@ const Cortes: React.FC = () => {
                   <Td>{order.customer.name}</Td>
                   <Td>{order.orderStore}</Td>
                   <Td>{order.orderStatus}</Td>
-                  <Td isNumeric>25/11/21</Td>
+                  <Td isNumeric>
+                    {format(
+                      new Date(order.deliveryDate.seconds * 1000),
+                      'dd/MM/yyyy',
+                    )}
+                  </Td>
                   <Td isNumeric>{`R$ ${order.orderPrice},00`}</Td>
                   <Td>
                     <HStack spacing={4}>
