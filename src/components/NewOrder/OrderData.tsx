@@ -240,7 +240,7 @@ export const OrderData: React.FC<OrderDataProps> = ({
       await createOrder({
         cutlist,
         customer,
-        orderStatus: 'Em produção',
+        orderStatus: 'Em Produção',
         orderStore: orderData.orderStore,
         paymentType: orderData.paymentType,
         deliveryType: orderData.deliveryType,

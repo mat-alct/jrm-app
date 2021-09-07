@@ -32,10 +32,10 @@ import { Header } from '../../components/Dashboard/Content/Header';
 import { Loader } from '../../components/Loader';
 import { Tags } from '../../components/Printables/Tags';
 import { useOrder } from '../../hooks/order';
-import { Estimate } from '../../types';
+import { Estimate, Order } from '../../types';
 
 const Cortes: React.FC = () => {
-  const [ordersFilter, setOrdersFilter] = useState('Em produção');
+  const [ordersFilter, setOrdersFilter] = useState('Em Produção');
   const toast = useToast();
   const { getOrders } = useOrder();
 
@@ -60,6 +60,34 @@ const Cortes: React.FC = () => {
         cutlist: JSON.stringify(estimateData.cutlist),
         estimateId: estimateData.id,
       },
+    });
+  };
+
+  // Function to finish a cutlist
+  const updateCutlistStatus = async (id: string) => {
+    let nextState;
+
+    const order = await firebase
+      .firestore()
+      .collection('orders')
+      .doc(id)
+      .get()
+      .then(doc => Object.assign(doc.data() as Order, { id: doc.id }));
+
+    switch (order.orderStatus) {
+      case 'Em Produção':
+        nextState = 'Liberado para Transporte';
+        break;
+      case 'Liberado para Transporte':
+        nextState = 'Concluído';
+        break;
+      default:
+        nextState = null;
+        break;
+    }
+
+    await firebase.firestore().collection('orders').doc(id).update({
+      orderStatus: nextState,
     });
   };
 
@@ -103,16 +131,16 @@ const Cortes: React.FC = () => {
             <HStack spacing={4}>
               <Radio
                 isChecked
-                id="Em produção"
-                name="Em produção"
-                value="Em produção"
+                id="Em Produção"
+                name="Em Produção"
+                value="Em Produção"
               >
                 Em produção
               </Radio>
               <Radio
-                id="Liberado para transporte"
-                name="Liberado para transporte"
-                value="Liberado para transporte"
+                id="Liberado para Transporte"
+                name="Liberado para Transporte"
+                value="Liberado para Transporte"
               >
                 Liberados para transporte
               </Radio>
@@ -184,12 +212,15 @@ const Cortes: React.FC = () => {
                           icon={<FaEdit />}
                         />
 
-                        <IconButton
-                          colorScheme="orange"
-                          size="sm"
-                          aria-label="Concluir"
-                          icon={<FaCheck />}
-                        />
+                        {order.orderStatus !== 'Concluído' && (
+                          <IconButton
+                            colorScheme="orange"
+                            size="sm"
+                            aria-label="Concluir"
+                            onClick={() => updateCutlistStatus(order.id)}
+                            icon={<FaCheck />}
+                          />
+                        )}
                       </HStack>
                     </Td>
                   </Tr>

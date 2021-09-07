@@ -14,10 +14,12 @@ import firebase from 'firebase/app';
 import React, { useEffect, useRef, useState } from 'react';
 import { FaTag } from 'react-icons/fa';
 import { useReactToPrint } from 'react-to-print';
+import { v4 } from 'uuid';
 
 import { sortCutlistData } from '../../utils/cutlist/sortAndReturnTag';
 
 type CutlistProps = {
+  id: string;
   gside: number;
   pside: number;
   avatar: {
@@ -52,6 +54,7 @@ export const Tags: React.FC<TagsProps> = ({ order }) => {
         });
 
         tags.push({
+          id: v4(),
           gside,
           pside,
           avatar,
@@ -163,6 +166,7 @@ export const Tags: React.FC<TagsProps> = ({ order }) => {
                       width="33%"
                       h="120px"
                       border="1px solid gray.300"
+                      key={cut.id}
                     >
                       <Image
                         src={cut.avatar.src}
