@@ -148,7 +148,7 @@ export const OrderResume: React.FC<OrderResumeProps> = ({ order }) => {
             {/* Cutlist */}
             <List mt={8}>
               {order.cutlist.map((cut: any) => (
-                <ListItem>
+                <ListItem key={cut.id}>
                   {`${cut.amount} - ${cut.material.name} - ${cut.sideA} [ ${cut.borderA} ] x ${cut.sideB} [ ${cut.borderB} ] | R$ ${cut.price},00`}
                 </ListItem>
               ))}
