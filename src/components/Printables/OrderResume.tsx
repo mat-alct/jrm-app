@@ -87,7 +87,7 @@ export const OrderResume: React.FC<OrderResumeProps> = ({ order }) => {
                 </Box>
                 <Box mt={2}>
                   <Heading mb={0} size="md">
-                    Data
+                    Data do Pedido
                   </Heading>
                   <Divider mb="4px" />
                   <Text fontSize="14px">

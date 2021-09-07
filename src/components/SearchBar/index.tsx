@@ -12,10 +12,12 @@ interface SearchBarProps extends FlexProps {
 
 interface SearchProps {
   customerName: string;
+  placeholder?: string;
 }
 
 export const SearchBar: React.FC<SearchBarProps> = ({
   handleUpdateSearch,
+  placeholder,
   ...rest
 }) => {
   // Create Customer Search useForm
@@ -41,7 +43,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
       <FormInput
         {...searchRegister('customerName')}
         name="customerName"
-        placeholder="Digite o nome do cliente"
+        placeholder={placeholder || 'Digite o nome do cliente'}
         borderRightRadius="none"
         formNoValidate
         error={searchErrors.customerName}

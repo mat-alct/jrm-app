@@ -87,7 +87,7 @@ export const EstimateResume: React.FC<EstimateResumeProps> = ({ estimate }) => {
                 </Box>
                 <Box mt={2}>
                   <Heading mb={0} size="md">
-                    Data
+                    Data do Orçamento
                   </Heading>
                   <Divider mb="4px" />
                   <Text fontSize="14px">

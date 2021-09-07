@@ -127,17 +127,18 @@ const Cortes: React.FC = () => {
   };
 
   // Search order function
-  const [searchFilter, setSearchFilter] = useState<string | undefined>(
+  const [searchFilter, setSearchFilter] = useState<number | undefined>(
     undefined,
   );
   const [searchType, setSearchType] = useState<string>('orders');
 
   const handleSearchOrder = async (search: string) => {
-    setSearchFilter(search);
+    setSearchFilter(Number(search));
   };
 
-  const { data: searchData } = useQuery(['orders', searchFilter], () =>
-    getOrdersBySearch(searchFilter, searchType),
+  const { data: searchData } = useQuery(
+    ['orders', searchFilter, searchType],
+    () => getOrdersBySearch(searchFilter, searchType),
   );
 
   return (
@@ -148,41 +149,47 @@ const Cortes: React.FC = () => {
 
       <Dashboard>
         <Header pageTitle="Lista de Cortes">
-          <RadioGroup
-            colorScheme="orange"
-            size="lg"
-            value={ordersFilter}
-            onChange={setOrdersFilter}
-          >
-            <HStack spacing={4}>
-              <Radio
-                isChecked
-                id="Em Produção"
-                name="Em Produção"
-                value="Em Produção"
-              >
-                Em produção
-              </Radio>
-              <Radio
-                id="Liberado para Transporte"
-                name="Liberado para Transporte"
-                value="Liberado para Transporte"
-              >
-                Liberados para transporte
-              </Radio>
-              <Radio id="Concluído" name="Concluído" value="Concluído">
-                Concluídos
-              </Radio>
-              <Radio id="Orçamento" name="Orçamento" value="Orçamento">
-                Orçamentos
-              </Radio>
-            </HStack>
-          </RadioGroup>
+          {searchData && searchData.length === 0 && (
+            <RadioGroup
+              colorScheme="orange"
+              size="lg"
+              value={ordersFilter}
+              onChange={setOrdersFilter}
+            >
+              <HStack spacing={4}>
+                <Radio
+                  isChecked
+                  id="Em Produção"
+                  name="Em Produção"
+                  value="Em Produção"
+                >
+                  Em produção
+                </Radio>
+                <Radio
+                  id="Liberado para Transporte"
+                  name="Liberado para Transporte"
+                  value="Liberado para Transporte"
+                >
+                  Liberados para transporte
+                </Radio>
+                <Radio id="Concluído" name="Concluído" value="Concluído">
+                  Concluídos
+                </Radio>
+                <Radio id="Orçamento" name="Orçamento" value="Orçamento">
+                  Orçamentos
+                </Radio>
+              </HStack>
+            </RadioGroup>
+          )}
         </Header>
 
         {/* SearchBar */}
         <Flex direction="column">
-          <SearchBar handleUpdateSearch={handleSearchOrder} minW="300px" />
+          <SearchBar
+            handleUpdateSearch={handleSearchOrder}
+            minW="300px"
+            placeholder="Digite o número do pedido"
+          />
           <RadioGroup
             colorScheme="orange"
             value={searchType}
@@ -200,110 +207,227 @@ const Cortes: React.FC = () => {
           </RadioGroup>
         </Flex>
 
-        <Table variant="simple" colorScheme="orange" mt={8}>
-          <TableCaption>Lista de Cortes</TableCaption>
-          <Thead>
-            <Tr>
-              <Th>Código</Th>
-              <Th>Cliente</Th>
-              {ordersFilter !== 'Orçamento' && <Th>Loja</Th>}
-              <Th>Status</Th>
-              {ordersFilter !== 'Orçamento' && (
-                <Th isNumeric>Data de Entrega</Th>
-              )}
-              <Th isNumeric>Preço</Th>
-              <Th />
-            </Tr>
-          </Thead>
-          <Tbody>
-            {/* Table in case of NOT estimate */}
-            {ordersFilter !== 'Orçamento' &&
-              ordersData
-                ?.sort((a, b) => b.orderCode - a.orderCode)
-                .map(order => (
-                  <Tr key={order.id}>
-                    <Td>{order.orderCode}</Td>
-                    <Td>{order.customer.name}</Td>
-                    <Td>{order.orderStore}</Td>
-                    <Td>{order.orderStatus}</Td>
-                    <Td isNumeric>
-                      {format(
-                        new Date(order.deliveryDate.seconds * 1000),
-                        'dd/MM/yyyy',
-                      )}
-                    </Td>
-                    <Td isNumeric>{`R$ ${order.orderPrice},00`}</Td>
-                    <Td>
-                      <HStack spacing={4}>
-                        <OrderResume order={order} />
-
-                        <Tags order={order} />
-
-                        <IconButton
-                          colorScheme="orange"
-                          size="sm"
-                          onClick={() => handleRemove(order.id, 'orders')}
-                          aria-label="Remover"
-                          icon={<FaTrash />}
-                        />
-                        {order.orderStatus !== 'Concluído' && (
-                          <>
-                            <IconButton
-                              colorScheme="orange"
-                              size="sm"
-                              disabled
-                              aria-label="Editar"
-                              icon={<FaEdit />}
-                            />
-                            <IconButton
-                              colorScheme="orange"
-                              size="sm"
-                              aria-label="Concluir"
-                              onClick={() => updateCutlistStatus(order.id)}
-                              icon={<FaCheck />}
-                            />
-                          </>
+        {/* Lista de cortes caso não exista busca */}
+        {searchData && searchData.length === 0 && (
+          <Table variant="simple" colorScheme="orange" mt={8}>
+            <TableCaption>Lista de Cortes</TableCaption>
+            <Thead>
+              <Tr>
+                <Th>Código</Th>
+                <Th>Cliente</Th>
+                {ordersFilter !== 'Orçamento' && <Th>Loja</Th>}
+                <Th>Status</Th>
+                {ordersFilter !== 'Orçamento' && (
+                  <Th isNumeric>Data de Entrega</Th>
+                )}
+                <Th isNumeric>Preço</Th>
+                <Th />
+              </Tr>
+            </Thead>
+            <Tbody>
+              {/* Table in case of NOT estimate */}
+              {ordersFilter !== 'Orçamento' &&
+                ordersData
+                  ?.sort((a, b) => b.orderCode - a.orderCode)
+                  .map(order => (
+                    <Tr key={order.id}>
+                      <Td>{order.orderCode}</Td>
+                      <Td>{order.customer.name}</Td>
+                      <Td>{order.orderStore}</Td>
+                      <Td>{order.orderStatus}</Td>
+                      <Td isNumeric>
+                        {format(
+                          new Date(order.deliveryDate.seconds * 1000),
+                          'dd/MM/yyyy',
                         )}
-                      </HStack>
-                    </Td>
-                  </Tr>
-                ))}
+                      </Td>
+                      <Td isNumeric>{`R$ ${order.orderPrice},00`}</Td>
+                      <Td>
+                        <HStack spacing={4}>
+                          <OrderResume order={order} />
 
-            {/* Table in case of estimate */}
-            {ordersFilter === 'Orçamento' &&
-              ordersData
-                ?.sort((a, b) => b.estimateCode - a.estimateCode)
-                .map(estimate => (
-                  <Tr key={estimate.id}>
-                    <Td>{estimate.estimateCode}</Td>
-                    <Td>{estimate.name}</Td>
-                    <Td>Orçamento</Td>
-                    <Td isNumeric>{`R$ ${estimate.estimatePrice},00`}</Td>
-                    <Td>
-                      <HStack spacing={4}>
-                        <EstimateResume estimate={estimate} />
+                          <Tags order={order} />
 
-                        <IconButton
-                          colorScheme="orange"
-                          size="sm"
-                          aria-label="Remover"
-                          onClick={() => handleRemove(estimate.id, 'estimates')}
-                          icon={<FaTrash />}
-                        />
+                          <IconButton
+                            colorScheme="orange"
+                            size="sm"
+                            onClick={() => handleRemove(order.id, 'orders')}
+                            aria-label="Remover"
+                            icon={<FaTrash />}
+                          />
+                          {order.orderStatus !== 'Concluído' && (
+                            <>
+                              <IconButton
+                                colorScheme="orange"
+                                size="sm"
+                                disabled
+                                aria-label="Editar"
+                                icon={<FaEdit />}
+                              />
+                              <IconButton
+                                colorScheme="orange"
+                                size="sm"
+                                aria-label="Concluir"
+                                onClick={() => updateCutlistStatus(order.id)}
+                                icon={<FaCheck />}
+                              />
+                            </>
+                          )}
+                        </HStack>
+                      </Td>
+                    </Tr>
+                  ))}
 
-                        <IconButton
-                          colorScheme="orange"
-                          size="sm"
-                          aria-label="Aprovar"
-                          icon={<FaHandshake />}
-                          onClick={() => approveEstimate(estimate.id)}
-                        />
-                      </HStack>
-                    </Td>
-                  </Tr>
-                ))}
-          </Tbody>
-        </Table>
+              {/* Table in case of estimate */}
+              {ordersFilter === 'Orçamento' &&
+                ordersData
+                  ?.sort((a, b) => b.estimateCode - a.estimateCode)
+                  .map(estimate => (
+                    <Tr key={estimate.id}>
+                      <Td>{estimate.estimateCode}</Td>
+                      <Td>{estimate.name}</Td>
+                      <Td>Orçamento</Td>
+                      <Td isNumeric>{`R$ ${estimate.estimatePrice},00`}</Td>
+                      <Td>
+                        <HStack spacing={4}>
+                          <EstimateResume estimate={estimate} />
+
+                          <IconButton
+                            colorScheme="orange"
+                            size="sm"
+                            aria-label="Remover"
+                            onClick={() =>
+                              handleRemove(estimate.id, 'estimates')
+                            }
+                            icon={<FaTrash />}
+                          />
+
+                          <IconButton
+                            colorScheme="orange"
+                            size="sm"
+                            aria-label="Aprovar"
+                            icon={<FaHandshake />}
+                            onClick={() => approveEstimate(estimate.id)}
+                          />
+                        </HStack>
+                      </Td>
+                    </Tr>
+                  ))}
+            </Tbody>
+          </Table>
+        )}
+
+        {/* Lista de cortes caso não exista busca */}
+        {searchData && searchData.length > 0 && (
+          <Table variant="simple" colorScheme="orange" mt={8}>
+            <TableCaption>Lista de Cortes</TableCaption>
+            <Thead>
+              <Tr>
+                <Th>Código</Th>
+                <Th>Cliente</Th>
+                {ordersFilter !== 'Orçamento' && <Th>Loja</Th>}
+                <Th>Status</Th>
+                {ordersFilter !== 'Orçamento' && (
+                  <Th isNumeric>Data de Entrega</Th>
+                )}
+                <Th isNumeric>Preço</Th>
+                <Th />
+              </Tr>
+            </Thead>
+            <Tbody>
+              {/* Table in case of NOT estimate */}
+              {searchType !== 'estimates' &&
+                searchData
+                  ?.sort((a, b) => b.orderCode - a.orderCode)
+                  .map(order => (
+                    <Tr key={order.id}>
+                      <Td>{order.orderCode}</Td>
+                      <Td>{order.customer.name}</Td>
+                      <Td>{order.orderStore}</Td>
+                      <Td>{order.orderStatus}</Td>
+                      <Td isNumeric>
+                        {format(
+                          new Date(order.deliveryDate.seconds * 1000),
+                          'dd/MM/yyyy',
+                        )}
+                      </Td>
+                      <Td isNumeric>{`R$ ${order.orderPrice},00`}</Td>
+                      <Td>
+                        <HStack spacing={4}>
+                          <OrderResume order={order} />
+
+                          <Tags order={order} />
+
+                          <IconButton
+                            colorScheme="orange"
+                            size="sm"
+                            onClick={() => handleRemove(order.id, 'orders')}
+                            aria-label="Remover"
+                            icon={<FaTrash />}
+                          />
+                          {order.orderStatus !== 'Concluído' && (
+                            <>
+                              <IconButton
+                                colorScheme="orange"
+                                size="sm"
+                                disabled
+                                aria-label="Editar"
+                                icon={<FaEdit />}
+                              />
+                              <IconButton
+                                colorScheme="orange"
+                                size="sm"
+                                aria-label="Concluir"
+                                onClick={() => updateCutlistStatus(order.id)}
+                                icon={<FaCheck />}
+                              />
+                            </>
+                          )}
+                        </HStack>
+                      </Td>
+                    </Tr>
+                  ))}
+
+              {/* Table in case of estimate */}
+              {searchType === 'estimates' &&
+                searchData
+                  ?.sort((a, b) => b.estimateCode - a.estimateCode)
+                  .map(estimate => (
+                    <Tr key={estimate.id}>
+                      <Td>{estimate.estimateCode}</Td>
+                      <Td>{estimate.name}</Td>
+                      <Td>Orçamento</Td>
+                      <Td isNumeric>{`R$ ${estimate.estimatePrice},00`}</Td>
+                      <Td>
+                        <HStack spacing={4}>
+                          <EstimateResume estimate={estimate} />
+
+                          <IconButton
+                            colorScheme="orange"
+                            size="sm"
+                            aria-label="Remover"
+                            onClick={() =>
+                              handleRemove(estimate.id, 'estimates')
+                            }
+                            icon={<FaTrash />}
+                          />
+
+                          <IconButton
+                            colorScheme="orange"
+                            size="sm"
+                            aria-label="Aprovar"
+                            icon={<FaHandshake />}
+                            onClick={() => approveEstimate(estimate.id)}
+                          />
+                        </HStack>
+                      </Td>
+                    </Tr>
+                  ))}
+            </Tbody>
+          </Table>
+        )}
+
+        {/* Table in case of search */}
       </Dashboard>
     </>
   );
