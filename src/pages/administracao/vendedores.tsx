@@ -2,6 +2,7 @@ import { Button, Flex, Heading, HStack, useToast } from '@chakra-ui/react';
 import { yupResolver } from '@hookform/resolvers/yup';
 import firebase from 'firebase/app';
 import Head from 'next/head';
+import { useRouter } from 'next/router';
 import { AuthAction, withAuthUser } from 'next-firebase-auth';
 import React from 'react';
 import { useForm } from 'react-hook-form';
@@ -22,6 +23,8 @@ interface SellersProps {
 
 const Vendedores: React.FC = () => {
   const toast = useToast();
+
+  const { push } = useRouter();
 
   const createSellerSchema = Yup.object().shape({
     firstName: Yup.string().required('Nome obrigatório'),
@@ -89,6 +92,8 @@ const Vendedores: React.FC = () => {
         status: 'success',
         description: 'Vendedor criado com sucesso',
       });
+
+      push({ pathname: '/' });
     } catch {
       toast({
         status: 'error',
