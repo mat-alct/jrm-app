@@ -4,13 +4,12 @@ import {
   Box,
   Divider,
   Flex,
-  Grid,
-  GridItem,
   Heading,
   IconButton,
   Image,
   Text,
 } from '@chakra-ui/react';
+import { format } from 'date-fns';
 import firebase from 'firebase/app';
 import React, { useEffect, useRef, useState } from 'react';
 import { FaTag } from 'react-icons/fa';
@@ -64,7 +63,7 @@ export const Tags: React.FC<TagsProps> = ({ order }) => {
     });
 
     setTagCutlist(allTags);
-  }, []);
+  }, [order.cutlist]);
 
   const handlePrint = useReactToPrint({
     content: () => componentRef.current,
@@ -94,12 +93,11 @@ export const Tags: React.FC<TagsProps> = ({ order }) => {
             </Heading>
 
             <Flex mt={4} direction="column" align="flex-start">
-              <Text fontSize="13px">{`Data de Entrega: ${order.deliveryDate}`}</Text>
+              <Text fontSize="13px">{`Data de Entrega: ${format(
+                new Date(order.deliveryDate.seconds * 1000),
+                'dd/MM/yyyy',
+              )}`}</Text>
               <Text fontSize="13px">{`Tipo de entrega: ${order.deliveryType}`}</Text>
-              <Text fontSize="13px">
-                {order.customer.telephone &&
-                  `Telefone: ${order.customer.telephone}`}
-              </Text>
               {order.deliveryType === 'Entrega' && (
                 <Text fontSize="13px">
                   {order.customer.address &&
@@ -108,12 +106,18 @@ export const Tags: React.FC<TagsProps> = ({ order }) => {
                     }, ${order.customer?.city || 'Cidade não informada'}`}
                 </Text>
               )}
+              <Text fontSize="13px">
+                {order.customer.telephone &&
+                  `Telefone: ${order.customer.telephone}`}
+              </Text>
+              <Text fontSize="13px">{`Vendedor: ${order.seller}`}</Text>
               <Text fontSize="13px">{`Preço: R$ ${order.orderPrice},00`}</Text>
 
               {order?.ps && (
                 <Text
                   fontSize="13px"
                   maxW="650px"
+                  fontWeight="700"
                 >{`Observações: ${order.ps}`}</Text>
               )}
             </Flex>
@@ -122,12 +126,12 @@ export const Tags: React.FC<TagsProps> = ({ order }) => {
                 return (
                   <Flex direction="row" key={cut.id}>
                     {cut.sideA >= cut.sideB && (
-                      <Text fontSize="13px" ml={8}>
+                      <Text fontSize="13px">
                         {`${cut.amount} - ${cut.sideA} [ ${cut.borderA} ] x ${cut.sideB} [ ${cut.borderB} ] - ${cut.material.name}`}
                       </Text>
                     )}
                     {cut.sideB > cut.sideA && (
-                      <Text fontSize="13px" ml={8}>
+                      <Text fontSize="13px">
                         {`${cut.amount} - ${cut.sideB} [ ${cut.borderB} ] x ${cut.sideA} [ ${cut.borderA} ] - ${cut.material.name}`}
                       </Text>
                     )}
