@@ -2,6 +2,7 @@ import { Button, Flex, Heading, HStack, useToast } from '@chakra-ui/react';
 import { yupResolver } from '@hookform/resolvers/yup';
 import firebase from 'firebase/app';
 import Head from 'next/head';
+import { AuthAction, withAuthUser } from 'next-firebase-auth';
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import * as Yup from 'yup';
@@ -9,6 +10,7 @@ import * as Yup from 'yup';
 import { Dashboard } from '../../components/Dashboard';
 import { Header } from '../../components/Dashboard/Content/Header';
 import { FormInput } from '../../components/Form/Input';
+import { Loader } from '../../components/Loader';
 import { capitalizeAndStrip } from '../../utils/capitalizeAndStripString';
 
 interface SellersProps {
@@ -150,4 +152,10 @@ const Vendedores: React.FC = () => {
   );
 };
 
-export default Vendedores;
+export default withAuthUser({
+  whenAuthed: AuthAction.RENDER,
+  whenUnauthedAfterInit: AuthAction.REDIRECT_TO_LOGIN,
+  whenUnauthedBeforeInit: AuthAction.SHOW_LOADER,
+  authPageURL: '/login',
+  LoaderComponent: Loader,
+})(Vendedores);

@@ -1,10 +1,12 @@
 import { HStack, Radio, RadioGroup } from '@chakra-ui/react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
+import { AuthAction, withAuthUser } from 'next-firebase-auth';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { Dashboard } from '../../components/Dashboard';
 import { Header } from '../../components/Dashboard/Content/Header';
+import { Loader } from '../../components/Loader';
 import { Cutlist } from '../../components/NewOrder/Cutlist';
 import { OrderData } from '../../components/NewOrder/OrderData';
 import { Cutlist as CutlistType } from '../../types';
@@ -109,4 +111,10 @@ const NovoServiço = () => {
   );
 };
 
-export default NovoServiço;
+export default withAuthUser({
+  whenAuthed: AuthAction.RENDER,
+  whenUnauthedAfterInit: AuthAction.REDIRECT_TO_LOGIN,
+  whenUnauthedBeforeInit: AuthAction.SHOW_LOADER,
+  authPageURL: '/login',
+  LoaderComponent: Loader,
+})(NovoServiço);

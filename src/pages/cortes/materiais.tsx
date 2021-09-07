@@ -18,6 +18,7 @@ import {
 import { yupResolver } from '@hookform/resolvers/yup';
 import firebase from 'firebase/app';
 import Head from 'next/head';
+import { AuthAction, withAuthUser } from 'next-firebase-auth';
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { FaEdit, FaTrash } from 'react-icons/fa';
@@ -29,6 +30,7 @@ import { Header } from '../../components/Dashboard/Content/Header';
 import { FormInput } from '../../components/Form/Input';
 import { FormModal } from '../../components/Form/Modal';
 import { FormRadio } from '../../components/Form/Radio';
+import { Loader } from '../../components/Loader';
 import { useMaterial } from '../../hooks/material';
 import { Material } from '../../types';
 import {
@@ -275,4 +277,10 @@ const Materiais = () => {
   );
 };
 
-export default Materiais;
+export default withAuthUser({
+  whenAuthed: AuthAction.RENDER,
+  whenUnauthedAfterInit: AuthAction.REDIRECT_TO_LOGIN,
+  whenUnauthedBeforeInit: AuthAction.SHOW_LOADER,
+  authPageURL: '/login',
+  LoaderComponent: Loader,
+})(Materiais);

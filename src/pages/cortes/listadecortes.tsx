@@ -16,6 +16,7 @@ import { format } from 'date-fns';
 import firebase from 'firebase/app';
 import Head from 'next/head';
 import Router from 'next/router';
+import { AuthAction, withAuthUser } from 'next-firebase-auth';
 import React, { useState } from 'react';
 import {
   FaCheck,
@@ -28,6 +29,7 @@ import { useQuery } from 'react-query';
 
 import { Dashboard } from '../../components/Dashboard';
 import { Header } from '../../components/Dashboard/Content/Header';
+import { Loader } from '../../components/Loader';
 import { Tags } from '../../components/Printables/Tags';
 import { useOrder } from '../../hooks/order';
 import { Estimate } from '../../types';
@@ -238,4 +240,10 @@ const Cortes: React.FC = () => {
   );
 };
 
-export default Cortes;
+export default withAuthUser({
+  whenAuthed: AuthAction.RENDER,
+  whenUnauthedAfterInit: AuthAction.REDIRECT_TO_LOGIN,
+  whenUnauthedBeforeInit: AuthAction.SHOW_LOADER,
+  authPageURL: '/login',
+  LoaderComponent: Loader,
+})(Cortes);
