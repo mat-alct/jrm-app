@@ -18,13 +18,7 @@ import Head from 'next/head';
 import Router from 'next/router';
 import { AuthAction, withAuthUser } from 'next-firebase-auth';
 import React, { useState } from 'react';
-import {
-  FaCheck,
-  FaEdit,
-  FaHandshake,
-  FaRegFileAlt,
-  FaTrash,
-} from 'react-icons/fa';
+import { FaCheck, FaEdit, FaHandshake, FaTrash } from 'react-icons/fa';
 import { useQuery } from 'react-query';
 
 import { Dashboard } from '../../components/Dashboard';
@@ -69,28 +63,42 @@ const Cortes: React.FC = () => {
   const updateCutlistStatus = async (id: string) => {
     let nextState;
 
-    const order = await firebase
-      .firestore()
-      .collection('orders')
-      .doc(id)
-      .get()
-      .then(doc => Object.assign(doc.data() as Order, { id: doc.id }));
+    try {
+      const order = await firebase
+        .firestore()
+        .collection('orders')
+        .doc(id)
+        .get()
+        .then(doc => Object.assign(doc.data() as Order, { id: doc.id }));
 
-    switch (order.orderStatus) {
-      case 'Em Produção':
-        nextState = 'Liberado para Transporte';
-        break;
-      case 'Liberado para Transporte':
-        nextState = 'Concluído';
-        break;
-      default:
-        nextState = null;
-        break;
+      switch (order.orderStatus) {
+        case 'Em Produção':
+          nextState = 'Liberado para Transporte';
+          break;
+        case 'Liberado para Transporte':
+          nextState = 'Concluído';
+          break;
+        default:
+          nextState = null;
+          break;
+      }
+
+      await firebase.firestore().collection('orders').doc(id).update({
+        orderStatus: nextState,
+      });
+
+      refetch();
+
+      toast({
+        status: 'success',
+        description: `Status atualizado de ${order.orderStatus} para ${nextState}`,
+      });
+    } catch {
+      toast({
+        status: 'error',
+        description: 'Erro ao concluir etapa do pedido',
+      });
     }
-
-    await firebase.firestore().collection('orders').doc(id).update({
-      orderStatus: nextState,
-    });
   };
 
   // Functions to remove order and estimates
