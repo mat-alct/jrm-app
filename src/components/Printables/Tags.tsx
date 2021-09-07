@@ -76,7 +76,15 @@ export const Tags: React.FC<TagsProps> = ({ order }) => {
     <Flex>
       <div style={{ display: 'none' }} className="print-container">
         <Flex ref={componentRef} direction="column" px={16} py={8}>
-          <Flex direction="column" h="100vh">
+          <Flex
+            direction="column"
+            h={
+              (tagCutlist && tagCutlist.length > 15) ||
+              order.cutlist.length > 12
+                ? '100vh'
+                : ''
+            }
+          >
             <Heading
               textAlign="center"
               size="lg"
@@ -103,7 +111,10 @@ export const Tags: React.FC<TagsProps> = ({ order }) => {
               <Text fontSize="13px">{`Preço: R$ ${order.orderPrice},00`}</Text>
 
               {order?.ps && (
-                <Text fontSize="13px">{`Observações: ${order.ps}`}</Text>
+                <Text
+                  fontSize="13px"
+                  maxW="650px"
+                >{`Observações: ${order.ps}`}</Text>
               )}
             </Flex>
             <Flex direction="column" mt={4}>
@@ -111,12 +122,12 @@ export const Tags: React.FC<TagsProps> = ({ order }) => {
                 return (
                   <Flex direction="row" key={cut.id}>
                     {cut.sideA >= cut.sideB && (
-                      <Text fontSize="13px">
+                      <Text fontSize="13px" ml={8}>
                         {`${cut.amount} - ${cut.sideA} [ ${cut.borderA} ] x ${cut.sideB} [ ${cut.borderB} ] - ${cut.material.name}`}
                       </Text>
                     )}
                     {cut.sideB > cut.sideA && (
-                      <Text fontSize="13px">
+                      <Text fontSize="13px" ml={8}>
                         {`${cut.amount} - ${cut.sideB} [ ${cut.borderB} ] x ${cut.sideA} [ ${cut.borderA} ] - ${cut.material.name}`}
                       </Text>
                     )}
@@ -133,7 +144,7 @@ export const Tags: React.FC<TagsProps> = ({ order }) => {
                 0,
               )} peça(s)`}</Text>
             </Flex>
-            <Divider mt={4} />
+            <Divider mt={4} mb={4} />
           </Flex>
 
           <Box display="block">
@@ -143,7 +154,12 @@ export const Tags: React.FC<TagsProps> = ({ order }) => {
                 return (
                   <>
                     <div className="page-break" />
-                    <Box float="left" width="33%" h="120px">
+                    <Box
+                      float="left"
+                      width="33%"
+                      h="120px"
+                      border="1px solid gray.300"
+                    >
                       <Image
                         src={cut.avatar.src}
                         width="50px"
