@@ -16,13 +16,13 @@ import React, { useRef } from 'react';
 import { FaRegFileAlt, FaWhatsapp } from 'react-icons/fa';
 import { useReactToPrint } from 'react-to-print';
 
-interface OrderResumeProps {
-  order: firebase.firestore.DocumentData & {
+interface EstimateResumeProps {
+  estimate: firebase.firestore.DocumentData & {
     id: string;
   };
 }
 
-export const OrderResume: React.FC<OrderResumeProps> = ({ order }) => {
+export const EstimateResume: React.FC<EstimateResumeProps> = ({ estimate }) => {
   const componentRef = useRef(null);
 
   const handlePrint = useReactToPrint({
@@ -41,7 +41,7 @@ export const OrderResume: React.FC<OrderResumeProps> = ({ order }) => {
             <Flex align="center" justify="space-between">
               <Heading color="gray.900">JRM Compensados</Heading>
 
-              <Heading color="gray.400">PEDIDO DE CORTE</Heading>
+              <Heading color="gray.400">PEDIDO DE ORÇAMENTO</Heading>
             </Flex>
             <Divider my={4} />
 
@@ -83,7 +83,7 @@ export const OrderResume: React.FC<OrderResumeProps> = ({ order }) => {
                     Código
                   </Heading>
                   <Divider mb="4px" />
-                  <Text fontSize="14px">{order.orderCode}</Text>
+                  <Text fontSize="14px">{estimate.estimateCode}</Text>
                 </Box>
                 <Box mt={2}>
                   <Heading mb={0} size="md">
@@ -92,7 +92,7 @@ export const OrderResume: React.FC<OrderResumeProps> = ({ order }) => {
                   <Divider mb="4px" />
                   <Text fontSize="14px">
                     {format(
-                      new Date(order.createdAt.seconds * 1000),
+                      new Date(estimate.createdAt.seconds * 1000),
                       'dd/MM/yyyy',
                     )}
                   </Text>
@@ -101,53 +101,28 @@ export const OrderResume: React.FC<OrderResumeProps> = ({ order }) => {
             </Flex>
 
             {/* Lower container */}
-            <Flex mt={8} w="100%" justify="space-between">
-              <div>
-                <Heading size="lg">Pedido</Heading>
-                <Divider style={{ margin: '0px 0px 8px 0px' }} />
-                <Text>{`Loja do Pedido: ${order.orderStore}`}</Text>
-                <Text>{`Vendedor: ${order.seller}`}</Text>
-
-                <Text>{`Tipo de Entrega: ${order.deliveryType}`}</Text>
-                <Text>{`Status do Pagamento: ${order.paymentType}`}</Text>
-                {order?.ps && (
-                  <Text maxW="350px">{`Observações: ${order.ps}`}</Text>
-                )}
-                <Text style={{ fontWeight: 'bold' }}>
-                  {`Prazo: Até ${format(
-                    new Date(order.deliveryDate.seconds * 1000),
-                    'dd/MM/yyyy',
-                  )}`}
-                </Text>
-              </div>
+            <Flex mt={8} w="100%">
               <div>
                 <Heading size="lg">Cliente</Heading>
                 <Divider style={{ margin: '0px 0px 8px 0px' }} />
-                <Text>{`Nome: ${order.customer.name}`}</Text>
-                {order.customer.address && (
-                  <Text>
-                    {`Endereço: ${order.customer.address}, ${
-                      order.customer?.area || 'Bairro não informado'
-                    }`}
-                  </Text>
-                )}
+                <Text>{`Nome: ${estimate.name}`}</Text>
 
-                {order.customer.telephone && (
+                {estimate.telephone && (
                   <Text>
-                    {`Telefone: (${order.customer.telephone.substring(
+                    {`Telefone: (${estimate.telephone.substring(
                       0,
                       2,
-                    )}) ${order.customer.telephone.substring(
+                    )}) ${estimate.telephone.substring(
                       2,
                       7,
-                    )} - ${order.customer.telephone.substring(7, 11)}`}
+                    )} - ${estimate.telephone.substring(7, 11)}`}
                   </Text>
                 )}
               </div>
             </Flex>
             {/* Cutlist */}
             <List mt={8}>
-              {order.cutlist.map((cut: any) => (
+              {estimate.cutlist.map((cut: any) => (
                 <ListItem key={cut.id}>
                   {`${cut.amount} - ${cut.material.name} - ${cut.sideA} [ ${cut.borderA} ] x ${cut.sideB} [ ${cut.borderB} ] | R$ ${cut.price},00`}
                 </ListItem>
@@ -158,7 +133,7 @@ export const OrderResume: React.FC<OrderResumeProps> = ({ order }) => {
               ml="auto"
               size="md"
               color="green.700"
-            >{`R$ ${order.orderPrice},00`}</Heading>
+            >{`R$ ${estimate.estimatePrice},00`}</Heading>
           </Flex>
         </Flex>
       </div>

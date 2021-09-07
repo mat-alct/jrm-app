@@ -30,6 +30,7 @@ import { useQuery } from 'react-query';
 import { Dashboard } from '../../components/Dashboard';
 import { Header } from '../../components/Dashboard/Content/Header';
 import { Loader } from '../../components/Loader';
+import { EstimateResume } from '../../components/Printables/EstimateResume';
 import { OrderResume } from '../../components/Printables/OrderResume';
 import { Tags } from '../../components/Printables/Tags';
 import { useOrder } from '../../hooks/order';
@@ -235,12 +236,7 @@ const Cortes: React.FC = () => {
                     <Td isNumeric>{`R$ ${estimate.estimatePrice},00`}</Td>
                     <Td>
                       <HStack spacing={4}>
-                        <IconButton
-                          colorScheme="orange"
-                          size="sm"
-                          aria-label="Comprovante"
-                          icon={<FaRegFileAlt />}
-                        />
+                        <EstimateResume estimate={estimate} />
 
                         <IconButton
                           colorScheme="orange"
