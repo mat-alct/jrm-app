@@ -11,13 +11,23 @@ import {
   Thead,
   Tr,
 } from '@chakra-ui/react';
+import firebase from 'firebase/app';
+import Router from 'next/router';
 import React, { useState } from 'react';
-import { FaCheck, FaEdit, FaRegFileAlt, FaTag, FaTrash } from 'react-icons/fa';
+import {
+  FaCheck,
+  FaEdit,
+  FaHandshake,
+  FaRegFileAlt,
+  FaTag,
+  FaTrash,
+} from 'react-icons/fa';
 import { useQuery } from 'react-query';
 
 import { Dashboard } from '../../components/Dashboard';
 import { Header } from '../../components/Dashboard/Content/Header';
 import { useOrder } from '../../hooks/order';
+import { Estimate } from '../../types';
 
 const Cortes: React.FC = () => {
   const [ordersFilter, setOrdersFilter] = useState('Em produção');
@@ -26,6 +36,26 @@ const Cortes: React.FC = () => {
   const { data: ordersData } = useQuery(['orders', ordersFilter], () =>
     getOrders(ordersFilter),
   );
+
+  // Function to approve a estimate and push to new order page
+  const approveEstimate = async (id: string) => {
+    const estimateData = await firebase
+      .firestore()
+      .collection('estimates')
+      .doc(id)
+      .get()
+      .then(doc => Object.assign(doc.data() as Estimate, { id: doc.id }));
+
+    // Push to new order page with estimate params
+    Router.push({
+      pathname: '/cortes/novoservico',
+      query: {
+        orderType: 'estimate',
+        cutlist: JSON.stringify(estimateData.cutlist),
+        estimateId: estimateData.id,
+      },
+    });
+  };
 
   return (
     <Dashboard>
@@ -157,8 +187,9 @@ const Cortes: React.FC = () => {
                       <IconButton
                         colorScheme="orange"
                         size="sm"
-                        aria-label="Concluir"
-                        icon={<FaCheck />}
+                        aria-label="Aprovar"
+                        icon={<FaHandshake />}
+                        onClick={() => approveEstimate(estimate.id)}
                       />
                     </HStack>
                   </Td>

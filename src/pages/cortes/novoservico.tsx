@@ -1,5 +1,6 @@
 import { HStack, Radio, RadioGroup } from '@chakra-ui/react';
 import Head from 'next/head';
+import { useRouter } from 'next/router';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { Dashboard } from '../../components/Dashboard';
@@ -11,6 +12,8 @@ import { Cutlist as CutlistType } from '../../types';
 const NovoServiço = () => {
   // * Cutlist Data
   const [cutlist, setCutlist] = useState<CutlistType[]>([]);
+
+  const { query } = useRouter();
 
   const updateCutlist = useCallback(
     (cutlistData: CutlistType[], maintainOldValues = true) => {
@@ -36,6 +39,15 @@ const NovoServiço = () => {
   );
 
   useEffect(() => {
+    // If exists a estimate query, use the cutlist in the query, set local storage and end useEffect function
+    if (query.cutlist && typeof query.cutlist === 'string') {
+      setCutlist(JSON.parse(query.cutlist));
+
+      localStorage.setItem('app@jrmcompensados:cutlist', query.cutlist);
+
+      return;
+    }
+
     const cutlistFromStorage = localStorage.getItem(
       'app@jrmcompensados:cutlist',
     );
@@ -43,10 +55,18 @@ const NovoServiço = () => {
     if (cutlistFromStorage) {
       setCutlist(JSON.parse(cutlistFromStorage));
     }
-  }, []);
+  }, [query.cutlist]);
 
   // Change between "Serviço" e "Orçamento"
   const [orderType, setOrderType] = useState<string>('Serviço');
+
+  const [estimateId] = useState<string | undefined>(() => {
+    if (query.estimateId && typeof query.estimateId === 'string') {
+      return query.estimateId;
+    }
+
+    return undefined;
+  });
 
   return (
     <>
@@ -79,7 +99,11 @@ const NovoServiço = () => {
         {/* Plano de Corte */}
         <Cutlist cutlist={cutlist} updateCutlist={updateCutlist} />
 
-        <OrderData orderType={orderType} cutlist={cutlist} />
+        <OrderData
+          orderType={orderType}
+          cutlist={cutlist}
+          estimateId={estimateId}
+        />
       </Dashboard>
     </>
   );

@@ -39,6 +39,7 @@ import { SearchBar } from '../SearchBar';
 interface OrderDataProps {
   orderType: string;
   cutlist: Cutlist[];
+  estimateId: string | undefined;
 }
 
 interface CreateOrderProps {
@@ -56,7 +57,11 @@ interface CreateOrderProps {
   sellerPassword: string;
 }
 
-export const OrderData: React.FC<OrderDataProps> = ({ orderType, cutlist }) => {
+export const OrderData: React.FC<OrderDataProps> = ({
+  orderType,
+  cutlist,
+  estimateId,
+}) => {
   const {
     register: createOrderRegister,
     handleSubmit: createOrderHandleSubmit,
@@ -247,6 +252,15 @@ export const OrderData: React.FC<OrderDataProps> = ({ orderType, cutlist }) => {
       });
 
       localStorage.removeItem('app@jrmcompensados:cutlist');
+
+      // Remove estimate with same if if it exists in query params
+      if (estimateId) {
+        await firebase
+          .firestore()
+          .collection('estimates')
+          .doc(estimateId)
+          .delete();
+      }
 
       // Push to listadecortes page
       router.push('/cortes/listadecortes');
