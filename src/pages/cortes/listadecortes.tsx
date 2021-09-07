@@ -67,65 +67,103 @@ const Cortes: React.FC = () => {
           <Tr>
             <Th>Código</Th>
             <Th>Cliente</Th>
-            <Th>Loja</Th>
+            {ordersFilter !== 'Orçamento' && <Th>Loja</Th>}
             <Th>Status</Th>
-            <Th isNumeric>Data de Entrega</Th>
+            {ordersFilter !== 'Orçamento' && <Th isNumeric>Data de Entrega</Th>}
             <Th isNumeric>Preço</Th>
             <Th />
           </Tr>
         </Thead>
         <Tbody>
-          {ordersData
-            ?.sort((a, b) => b.orderCode - a.orderCode)
-            .map(order => (
-              <Tr key={order.id}>
-                <Td>{order.orderCode}</Td>
-                <Td>{order.customer.name}</Td>
-                <Td>{order.orderStore}</Td>
-                <Td>{order.orderStatus}</Td>
-                <Td isNumeric>25/11/21</Td>
-                <Td isNumeric>{`R$ ${
-                  order.orderPrice || order.estimatePrice
-                },00`}</Td>
-                <Td>
-                  <HStack spacing={4}>
-                    <IconButton
-                      colorScheme="orange"
-                      size="sm"
-                      aria-label="Remover"
-                      icon={<FaRegFileAlt />}
-                    />
-                    <IconButton
-                      colorScheme="orange"
-                      size="sm"
-                      aria-label="Remover"
-                      icon={<FaTag />}
-                    />
+          {/* Table in case of NOT estimate */}
+          {ordersFilter !== 'Orçamento' &&
+            ordersData
+              ?.sort((a, b) => b.orderCode - a.orderCode)
+              .map(order => (
+                <Tr key={order.id}>
+                  <Td>{order.orderCode}</Td>
+                  <Td>{order.customer.name}</Td>
+                  <Td>{order.orderStore}</Td>
+                  <Td>{order.orderStatus}</Td>
+                  <Td isNumeric>25/11/21</Td>
+                  <Td isNumeric>{`R$ ${order.orderPrice},00`}</Td>
+                  <Td>
+                    <HStack spacing={4}>
+                      <IconButton
+                        colorScheme="orange"
+                        size="sm"
+                        aria-label="Remover"
+                        icon={<FaRegFileAlt />}
+                      />
+                      <IconButton
+                        colorScheme="orange"
+                        size="sm"
+                        aria-label="Remover"
+                        icon={<FaTag />}
+                      />
 
-                    <IconButton
-                      colorScheme="orange"
-                      size="sm"
-                      aria-label="Remover"
-                      icon={<FaTrash />}
-                    />
-                    <IconButton
-                      colorScheme="orange"
-                      size="sm"
-                      disabled
-                      aria-label="Editar"
-                      icon={<FaEdit />}
-                    />
+                      <IconButton
+                        colorScheme="orange"
+                        size="sm"
+                        aria-label="Remover"
+                        icon={<FaTrash />}
+                      />
+                      <IconButton
+                        colorScheme="orange"
+                        size="sm"
+                        disabled
+                        aria-label="Editar"
+                        icon={<FaEdit />}
+                      />
 
-                    <IconButton
-                      colorScheme="orange"
-                      size="sm"
-                      aria-label="Concluir"
-                      icon={<FaCheck />}
-                    />
-                  </HStack>
-                </Td>
-              </Tr>
-            ))}
+                      <IconButton
+                        colorScheme="orange"
+                        size="sm"
+                        aria-label="Concluir"
+                        icon={<FaCheck />}
+                      />
+                    </HStack>
+                  </Td>
+                </Tr>
+              ))}
+
+          {/* Table in case of estimate */}
+          {ordersFilter === 'Orçamento' &&
+            ordersData
+              ?.sort((a, b) => b.estimateCode - a.estimateCode)
+              .map(estimate => (
+                <Tr key={estimate.id}>
+                  <Td>{estimate.estimateCode}</Td>
+                  <Td>{estimate.name}</Td>
+                  <Td>Orçamento</Td>
+                  <Td isNumeric>25/11/21</Td>
+                  <Td isNumeric>{`R$ ${estimate.estimatePrice},00`}</Td>
+                  <Td>
+                    <HStack spacing={4}>
+                      <IconButton
+                        colorScheme="orange"
+                        size="sm"
+                        aria-label="Comprovante"
+                        icon={<FaRegFileAlt />}
+                      />
+
+                      <IconButton
+                        colorScheme="orange"
+                        size="sm"
+                        aria-label="Remover"
+                        icon={<FaTrash />}
+                      />
+
+                      <IconButton
+                        colorScheme="orange"
+                        size="sm"
+                        aria-label="Concluir"
+                        icon={<FaCheck />}
+                      />
+                    </HStack>
+                  </Td>
+                </Tr>
+              ))}
         </Tbody>
       </Table>
     </Dashboard>
