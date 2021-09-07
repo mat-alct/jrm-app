@@ -30,6 +30,7 @@ import { useQuery } from 'react-query';
 import { Dashboard } from '../../components/Dashboard';
 import { Header } from '../../components/Dashboard/Content/Header';
 import { Loader } from '../../components/Loader';
+import { OrderResume } from '../../components/Printables/OrderResume';
 import { Tags } from '../../components/Printables/Tags';
 import { useOrder } from '../../hooks/order';
 import { Estimate, Order } from '../../types';
@@ -188,12 +189,7 @@ const Cortes: React.FC = () => {
                     <Td isNumeric>{`R$ ${order.orderPrice},00`}</Td>
                     <Td>
                       <HStack spacing={4}>
-                        <IconButton
-                          colorScheme="orange"
-                          size="sm"
-                          aria-label="Remover"
-                          icon={<FaRegFileAlt />}
-                        />
+                        <OrderResume order={order} />
 
                         <Tags order={order} />
 
@@ -204,22 +200,23 @@ const Cortes: React.FC = () => {
                           aria-label="Remover"
                           icon={<FaTrash />}
                         />
-                        <IconButton
-                          colorScheme="orange"
-                          size="sm"
-                          disabled
-                          aria-label="Editar"
-                          icon={<FaEdit />}
-                        />
-
                         {order.orderStatus !== 'Concluído' && (
-                          <IconButton
-                            colorScheme="orange"
-                            size="sm"
-                            aria-label="Concluir"
-                            onClick={() => updateCutlistStatus(order.id)}
-                            icon={<FaCheck />}
-                          />
+                          <>
+                            <IconButton
+                              colorScheme="orange"
+                              size="sm"
+                              disabled
+                              aria-label="Editar"
+                              icon={<FaEdit />}
+                            />
+                            <IconButton
+                              colorScheme="orange"
+                              size="sm"
+                              aria-label="Concluir"
+                              onClick={() => updateCutlistStatus(order.id)}
+                              icon={<FaCheck />}
+                            />
+                          </>
                         )}
                       </HStack>
                     </Td>
