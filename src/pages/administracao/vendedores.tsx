@@ -60,7 +60,7 @@ const Vendedores: React.FC = () => {
       .doc(sellerData.password)
       .get();
 
-    if (doesPasswordExist) {
+    if (doesPasswordExist.exists) {
       createSellerSetError('password', {
         type: 'value',
         message: 'Não é possível utilizar essa senha',

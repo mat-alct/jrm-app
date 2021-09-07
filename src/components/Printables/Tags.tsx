@@ -159,14 +159,13 @@ export const Tags: React.FC<TagsProps> = ({ order }) => {
               ?.sort((a, b) => b.gside - a.gside)
               .map((cut, index) => {
                 return (
-                  <>
+                  <div key={cut.id}>
                     <div className="page-break" />
                     <Box
                       float="left"
                       width="33%"
                       h="120px"
                       border="1px solid gray.300"
-                      key={cut.id}
                     >
                       <Image
                         src={cut.avatar.src}
@@ -189,7 +188,7 @@ export const Tags: React.FC<TagsProps> = ({ order }) => {
                         index + 1
                       }/${tagCutlist.length}`}</Text>
                     </Box>
-                  </>
+                  </div>
                 );
               })}
           </Box>

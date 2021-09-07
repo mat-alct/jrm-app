@@ -69,7 +69,7 @@ export const EstimateResume: React.FC<EstimateResumeProps> = ({ estimate }) => {
                   <Text>Japuíba, Angra dos Reis - RJ</Text>
                   <Text display="flex" flexDirection="row" alignItems="center">
                     <FaWhatsapp />
-                    <Text ml={2}>(24) 99969-4543</Text>
+                    (24) 99969-4543
                   </Text>
                 </Box>
                 <Box mt={2}>
