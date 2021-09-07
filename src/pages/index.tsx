@@ -1,5 +1,3 @@
-import { Button } from '@chakra-ui/react';
-import firebase from 'firebase/app';
 import Head from 'next/head';
 import { AuthAction, withAuthUser } from 'next-firebase-auth';
 
