@@ -1,4 +1,5 @@
 import {
+  Flex,
   HStack,
   IconButton,
   Radio,
@@ -27,13 +28,14 @@ import { Loader } from '../../components/Loader';
 import { EstimateResume } from '../../components/Printables/EstimateResume';
 import { OrderResume } from '../../components/Printables/OrderResume';
 import { Tags } from '../../components/Printables/Tags';
+import { SearchBar } from '../../components/SearchBar';
 import { useOrder } from '../../hooks/order';
 import { Estimate, Order } from '../../types';
 
 const Cortes: React.FC = () => {
   const [ordersFilter, setOrdersFilter] = useState('Em Produção');
   const toast = useToast();
-  const { getOrders } = useOrder();
+  const { getOrders, getOrdersBySearch } = useOrder();
 
   const { data: ordersData, refetch } = useQuery(['orders', ordersFilter], () =>
     getOrders(ordersFilter),
@@ -124,6 +126,20 @@ const Cortes: React.FC = () => {
     }
   };
 
+  // Search order function
+  const [searchFilter, setSearchFilter] = useState<string | undefined>(
+    undefined,
+  );
+  const [searchType, setSearchType] = useState<string>('orders');
+
+  const handleSearchOrder = async (search: string) => {
+    setSearchFilter(search);
+  };
+
+  const { data: searchData } = useQuery(['orders', searchFilter], () =>
+    getOrdersBySearch(searchFilter, searchType),
+  );
+
   return (
     <>
       <Head>
@@ -163,7 +179,28 @@ const Cortes: React.FC = () => {
             </HStack>
           </RadioGroup>
         </Header>
-        <Table variant="simple" colorScheme="orange">
+
+        {/* SearchBar */}
+        <Flex direction="column">
+          <SearchBar handleUpdateSearch={handleSearchOrder} minW="300px" />
+          <RadioGroup
+            colorScheme="orange"
+            value={searchType}
+            onChange={setSearchType}
+            mt={4}
+          >
+            <HStack spacing={4}>
+              <Radio isChecked id="orders" name="orders" value="orders">
+                Pedidos
+              </Radio>
+              <Radio id="estimates" name="estimates" value="estimates">
+                Orçamentos
+              </Radio>
+            </HStack>
+          </RadioGroup>
+        </Flex>
+
+        <Table variant="simple" colorScheme="orange" mt={8}>
           <TableCaption>Lista de Cortes</TableCaption>
           <Thead>
             <Tr>

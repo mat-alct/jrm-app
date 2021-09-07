@@ -6,6 +6,7 @@ import { v4 } from 'uuid';
 
 import { queryClient } from '../services/queryClient';
 import { Estimate, Order } from '../types';
+import { capitalizeAndStrip } from '../utils/capitalizeAndStripString';
 import { removeUndefinedAndEmptyFields } from '../utils/removeUndefinedAndEmpty';
 
 interface OrderContext {
@@ -13,6 +14,10 @@ interface OrderContext {
   createOrder: (orderData: Order) => Promise<void>;
   getOrders: (
     orderFilter: string,
+  ) => Promise<(firebase.firestore.DocumentData & { id: string })[]>;
+  getOrdersBySearch: (
+    searchFilter: string | undefined,
+    type: string,
   ) => Promise<(firebase.firestore.DocumentData & { id: string })[]>;
 }
 
@@ -201,8 +206,33 @@ export const OrderProvider: React.FC = ({ children }) => {
     return allOrders;
   };
 
+  const getOrdersBySearch = async (
+    searchFilter: string | undefined,
+    type: string,
+  ) => {
+    if (searchFilter) {
+      const response = await firebase
+        .firestore()
+        .collection(type)
+        .orderBy('code')
+        .startAt(capitalizeAndStrip(searchFilter))
+        .limit(5)
+        .get();
+
+      const allOrders = response.docs.map(doc =>
+        Object.assign(doc.data(), { id: doc.id }),
+      );
+
+      return allOrders;
+    }
+
+    return [];
+  };
+
   return (
-    <OrderContext.Provider value={{ createEstimate, createOrder, getOrders }}>
+    <OrderContext.Provider
+      value={{ createEstimate, createOrder, getOrders, getOrdersBySearch }}
+    >
       {children}
     </OrderContext.Provider>
   );
