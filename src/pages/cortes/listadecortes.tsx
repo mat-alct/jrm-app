@@ -84,7 +84,9 @@ const Cortes: React.FC = () => {
                 <Td>{order.orderStore}</Td>
                 <Td>{order.orderStatus}</Td>
                 <Td isNumeric>25/11/21</Td>
-                <Td isNumeric>{`R$ ${order.cutlist.price},00`}</Td>
+                <Td isNumeric>{`R$ ${
+                  order.orderPrice || order.estimatePrice
+                },00`}</Td>
                 <Td>
                   <HStack spacing={4}>
                     <IconButton
@@ -109,6 +111,7 @@ const Cortes: React.FC = () => {
                     <IconButton
                       colorScheme="orange"
                       size="sm"
+                      disabled
                       aria-label="Editar"
                       icon={<FaEdit />}
                     />

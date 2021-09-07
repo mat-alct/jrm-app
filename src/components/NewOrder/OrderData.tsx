@@ -1,4 +1,6 @@
+/* eslint-disable no-empty */
 import {
+  Box,
   Button,
   Divider,
   Flex,
@@ -16,6 +18,7 @@ import {
 } from '@chakra-ui/react';
 import { yupResolver } from '@hookform/resolvers/yup';
 import firebase from 'firebase/app';
+import { useRouter } from 'next/router';
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useQuery } from 'react-query';
@@ -64,6 +67,8 @@ export const OrderData: React.FC<OrderDataProps> = ({ orderType, cutlist }) => {
   } = useForm<CreateOrderProps>({
     resolver: yupResolver(createOrderSchema),
   });
+
+  const router = useRouter();
 
   // CustomerID if a customer is registered
   const [customerId, setCustomerId] = useState('');
@@ -207,31 +212,45 @@ export const OrderData: React.FC<OrderDataProps> = ({ orderType, cutlist }) => {
 
     // If it's a estimate, uses createEstimate function and end submit
     if (orderType === 'Orçamento') {
-      await createEstimate({
+      try {
+        await createEstimate({
+          cutlist,
+          name,
+          customerId,
+          telephone: orderData.telephone.replace(/[^A-Z0-9]/gi, ''),
+          createdAt,
+          updatedAt,
+        });
+
+        localStorage.removeItem('app@jrmcompensados:cutlist');
+
+        // Push to listadecortes page
+        router.push('/cortes/listadecortes');
+
+        return;
+      } catch {}
+    }
+
+    try {
+      await createOrder({
         cutlist,
-        name,
-        customerId,
-        telephone: orderData.telephone.replace(/[^A-Z0-9]/gi, ''),
+        customer,
+        orderStatus: 'Em produção',
+        orderStore: orderData.orderStore,
+        paymentType: orderData.paymentType,
+        deliveryType: orderData.deliveryType,
+        seller,
+        ps: orderData.ps,
+        deliveryDate: orderData.deliveryDate,
         createdAt,
         updatedAt,
       });
 
-      return;
-    }
+      localStorage.removeItem('app@jrmcompensados:cutlist');
 
-    await createOrder({
-      cutlist,
-      customer,
-      orderStatus: 'Em produção',
-      orderStore: orderData.orderStore,
-      paymentType: orderData.paymentType,
-      deliveryType: orderData.deliveryType,
-      seller,
-      ps: orderData.ps,
-      deliveryDate: orderData.deliveryDate,
-      createdAt,
-      updatedAt,
-    });
+      // Push to listadecortes page
+      router.push('/cortes/listadecortes');
+    } catch {}
   };
 
   return (
@@ -399,17 +418,6 @@ export const OrderData: React.FC<OrderDataProps> = ({ orderType, cutlist }) => {
                 control={createOrderControl}
               />
 
-              <FormInput
-                {...createOrderRegister('sellerPassword')}
-                error={createOrderErrors.sellerPassword}
-                name="sellerPassword"
-                label="Senha:"
-                type="password"
-                size="sm"
-                maxW="150px"
-                isHorizontal
-              />
-
               <Flex direction="column">
                 <Text mb="8px" color="gray.700" fontWeight="bold">
                   Observações:
@@ -424,11 +432,24 @@ export const OrderData: React.FC<OrderDataProps> = ({ orderType, cutlist }) => {
           </>
         )}
 
+        <Box mt={16} mx="auto">
+          <FormInput
+            {...createOrderRegister('sellerPassword')}
+            error={createOrderErrors.sellerPassword}
+            name="sellerPassword"
+            label="Senha:"
+            type="password"
+            maxW="300px"
+            variant="flushed"
+            isHorizontal
+          />
+        </Box>
+
         <Button
           colorScheme="orange"
           size="lg"
           isFullWidth
-          my={16}
+          my={8}
           type="submit"
           disabled={cutlist.length < 1}
         >

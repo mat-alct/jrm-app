@@ -245,7 +245,7 @@ const Clientes: React.FC = () => {
                             size="sm"
                             aria-label="Editar"
                             icon={<FaEdit />}
-                            disabled={createCustomerIsSubmitting}
+                            disabled
                             // onClick={() => handleClickOnUpdatePrice(material.id)}
                           />
                           {/* Remove Material Button */}
