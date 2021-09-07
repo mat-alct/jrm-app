@@ -20,13 +20,13 @@ import {
   FaEdit,
   FaHandshake,
   FaRegFileAlt,
-  FaTag,
   FaTrash,
 } from 'react-icons/fa';
 import { useQuery } from 'react-query';
 
 import { Dashboard } from '../../components/Dashboard';
 import { Header } from '../../components/Dashboard/Content/Header';
+import { Tags } from '../../components/Printables/Tags';
 import { useOrder } from '../../hooks/order';
 import { Estimate } from '../../types';
 
@@ -35,7 +35,7 @@ const Cortes: React.FC = () => {
   const toast = useToast();
   const { getOrders } = useOrder();
 
-  const { data: ordersData } = useQuery(['orders', ordersFilter], () =>
+  const { data: ordersData, refetch } = useQuery(['orders', ordersFilter], () =>
     getOrders(ordersFilter),
   );
 
@@ -63,6 +63,8 @@ const Cortes: React.FC = () => {
   const handleRemove = async (id: string, type: 'orders' | 'estimates') => {
     try {
       await firebase.firestore().collection(type).doc(id).delete();
+
+      refetch();
 
       toast({
         status: 'success',
@@ -148,12 +150,8 @@ const Cortes: React.FC = () => {
                         aria-label="Remover"
                         icon={<FaRegFileAlt />}
                       />
-                      <IconButton
-                        colorScheme="orange"
-                        size="sm"
-                        aria-label="Remover"
-                        icon={<FaTag />}
-                      />
+
+                      <Tags order={order} />
 
                       <IconButton
                         colorScheme="orange"

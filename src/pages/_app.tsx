@@ -1,4 +1,5 @@
 import 'firebase/firestore';
+import '../styles/reactPrintStyles.css';
 
 import { ChakraProvider } from '@chakra-ui/react';
 import type { AppProps } from 'next/app';
