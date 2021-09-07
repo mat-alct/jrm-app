@@ -254,6 +254,7 @@ const Cortes: React.FC = () => {
                             onClick={() => handleRemove(order.id, 'orders')}
                             aria-label="Remover"
                             icon={<FaTrash />}
+                            disabled
                           />
                           {order.orderStatus !== 'Concluído' && (
                             <>
@@ -296,6 +297,7 @@ const Cortes: React.FC = () => {
                             colorScheme="orange"
                             size="sm"
                             aria-label="Remover"
+                            disabled
                             onClick={() =>
                               handleRemove(estimate.id, 'estimates')
                             }
@@ -363,6 +365,7 @@ const Cortes: React.FC = () => {
                             size="sm"
                             onClick={() => handleRemove(order.id, 'orders')}
                             aria-label="Remover"
+                            disabled
                             icon={<FaTrash />}
                           />
                           {order.orderStatus !== 'Concluído' && (
@@ -406,6 +409,7 @@ const Cortes: React.FC = () => {
                             colorScheme="orange"
                             size="sm"
                             aria-label="Remover"
+                            disabled
                             onClick={() =>
                               handleRemove(estimate.id, 'estimates')
                             }

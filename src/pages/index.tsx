@@ -13,7 +13,6 @@ const Home = () => {
         <title>Início | JRM Compensados</title>
       </Head>
       <Dashboard />
-      <Button onClick={() => firebase.auth().signOut()}>Sair</Button>
     </>
   );
 };

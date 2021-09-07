@@ -1,9 +1,11 @@
 import { Flex, Image, VStack } from '@chakra-ui/react';
+import firebase from 'firebase/app';
 import {
   FaClipboardList,
   FaHome,
   FaPen,
   FaRegSquare,
+  FaSignOutAlt,
   FaSlack,
   FaUser,
   FaUserAstronaut,
@@ -62,6 +64,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ sidebarWidth }) => {
           </NavLink>
           <NavLink icon={FaUserAstronaut} href="/administracao/vendedores">
             Vendedores
+          </NavLink>
+        </NavSection>
+        <NavSection title="Conta">
+          <NavLink
+            icon={FaSignOutAlt}
+            href="/login"
+            onClick={() => firebase.auth().signOut()}
+          >
+            Sair
           </NavLink>
         </NavSection>
       </VStack>
