@@ -10,6 +10,7 @@ import {
   Th,
   Thead,
   Tr,
+  useToast,
 } from '@chakra-ui/react';
 import firebase from 'firebase/app';
 import Router from 'next/router';
@@ -31,6 +32,7 @@ import { Estimate } from '../../types';
 
 const Cortes: React.FC = () => {
   const [ordersFilter, setOrdersFilter] = useState('Em produção');
+  const toast = useToast();
   const { getOrders } = useOrder();
 
   const { data: ordersData } = useQuery(['orders', ordersFilter], () =>
@@ -55,6 +57,27 @@ const Cortes: React.FC = () => {
         estimateId: estimateData.id,
       },
     });
+  };
+
+  // Functions to remove order and estimates
+  const handleRemove = async (id: string, type: 'orders' | 'estimates') => {
+    try {
+      await firebase.firestore().collection(type).doc(id).delete();
+
+      toast({
+        status: 'success',
+        description: `${
+          type === 'orders' ? 'Pedido' : 'Orçamento'
+        } excluído com sucesso`,
+      });
+    } catch {
+      toast({
+        status: 'error',
+        description: `Erro ao remover ${
+          type === 'orders' ? 'Pedido' : 'Orçamento'
+        }`,
+      });
+    }
   };
 
   return (
@@ -135,6 +158,7 @@ const Cortes: React.FC = () => {
                       <IconButton
                         colorScheme="orange"
                         size="sm"
+                        onClick={() => handleRemove(order.id, 'orders')}
                         aria-label="Remover"
                         icon={<FaTrash />}
                       />
@@ -166,7 +190,6 @@ const Cortes: React.FC = () => {
                   <Td>{estimate.estimateCode}</Td>
                   <Td>{estimate.name}</Td>
                   <Td>Orçamento</Td>
-                  <Td isNumeric>25/11/21</Td>
                   <Td isNumeric>{`R$ ${estimate.estimatePrice},00`}</Td>
                   <Td>
                     <HStack spacing={4}>
@@ -181,6 +204,7 @@ const Cortes: React.FC = () => {
                         colorScheme="orange"
                         size="sm"
                         aria-label="Remover"
+                        onClick={() => handleRemove(estimate.id, 'estimates')}
                         icon={<FaTrash />}
                       />
 
