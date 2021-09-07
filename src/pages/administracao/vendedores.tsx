@@ -1,6 +1,7 @@
 import { Button, Flex, Heading, HStack, useToast } from '@chakra-ui/react';
 import { yupResolver } from '@hookform/resolvers/yup';
 import firebase from 'firebase/app';
+import Head from 'next/head';
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import * as Yup from 'yup';
@@ -95,52 +96,57 @@ const Vendedores: React.FC = () => {
   };
 
   return (
-    <Dashboard>
-      <Header pageTitle="Vendedores" />
-      <Flex
-        as="form"
-        direction="column"
-        onSubmit={createSellerHandleSubmit(handleSubmitSeller)}
-        maxW="1366px"
-      >
-        <Heading mt={8}>Criar vendedor</Heading>
-        <HStack spacing={8} mt={4} alignItems="flex-end">
-          <FormInput
-            {...createSellerRegister('firstName')}
-            label="Nome"
-            name="firstName"
-            error={createCutlistErrors.firstName}
-            size="lg"
-          />
-          <FormInput
-            {...createSellerRegister('lastName')}
-            label="Sobrenome"
-            name="lastName"
-            size="lg"
-            error={createCutlistErrors.lastName}
-          />
-          <FormInput
-            {...createSellerRegister('password')}
-            label="Senha"
-            name="password"
-            error={createCutlistErrors.password}
-            type="password"
-            size="lg"
-          />
-          <FormInput
-            {...createSellerRegister('confirmPassword')}
-            label="Confirmação de senha"
-            name="confirmPassword"
-            error={createCutlistErrors.confirmPassword}
-            type="password"
-            size="lg"
-          />
-          <Button size="lg" type="submit" colorScheme="orange" minW="150px">
-            Criar
-          </Button>
-        </HStack>
-      </Flex>
-    </Dashboard>
+    <>
+      <Head>
+        <title>Vendedores | JRM Compensados</title>
+      </Head>
+      <Dashboard>
+        <Header pageTitle="Vendedores" />
+        <Flex
+          as="form"
+          direction="column"
+          onSubmit={createSellerHandleSubmit(handleSubmitSeller)}
+          maxW="1366px"
+        >
+          <Heading mt={8}>Criar vendedor</Heading>
+          <HStack spacing={8} mt={4} alignItems="flex-end">
+            <FormInput
+              {...createSellerRegister('firstName')}
+              label="Nome"
+              name="firstName"
+              error={createCutlistErrors.firstName}
+              size="lg"
+            />
+            <FormInput
+              {...createSellerRegister('lastName')}
+              label="Sobrenome"
+              name="lastName"
+              size="lg"
+              error={createCutlistErrors.lastName}
+            />
+            <FormInput
+              {...createSellerRegister('password')}
+              label="Senha"
+              name="password"
+              error={createCutlistErrors.password}
+              type="password"
+              size="lg"
+            />
+            <FormInput
+              {...createSellerRegister('confirmPassword')}
+              label="Confirmação de senha"
+              name="confirmPassword"
+              error={createCutlistErrors.confirmPassword}
+              type="password"
+              size="lg"
+            />
+            <Button size="lg" type="submit" colorScheme="orange" minW="150px">
+              Criar
+            </Button>
+          </HStack>
+        </Flex>
+      </Dashboard>
+    </>
   );
 };
 

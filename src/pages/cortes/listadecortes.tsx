@@ -14,6 +14,7 @@ import {
 } from '@chakra-ui/react';
 import { format } from 'date-fns';
 import firebase from 'firebase/app';
+import Head from 'next/head';
 import Router from 'next/router';
 import React, { useState } from 'react';
 import {
@@ -84,148 +85,156 @@ const Cortes: React.FC = () => {
   };
 
   return (
-    <Dashboard>
-      <Header pageTitle="Lista de Cortes">
-        <RadioGroup
-          colorScheme="orange"
-          size="lg"
-          value={ordersFilter}
-          onChange={setOrdersFilter}
-        >
-          <HStack spacing={4}>
-            <Radio
-              isChecked
-              id="Em produção"
-              name="Em produção"
-              value="Em produção"
-            >
-              Em produção
-            </Radio>
-            <Radio
-              id="Liberado para transporte"
-              name="Liberado para transporte"
-              value="Liberado para transporte"
-            >
-              Liberados para transporte
-            </Radio>
-            <Radio id="Concluído" name="Concluído" value="Concluído">
-              Concluídos
-            </Radio>
-            <Radio id="Orçamento" name="Orçamento" value="Orçamento">
-              Orçamentos
-            </Radio>
-          </HStack>
-        </RadioGroup>
-      </Header>
-      <Table variant="simple" colorScheme="orange">
-        <TableCaption>Lista de Cortes</TableCaption>
-        <Thead>
-          <Tr>
-            <Th>Código</Th>
-            <Th>Cliente</Th>
-            {ordersFilter !== 'Orçamento' && <Th>Loja</Th>}
-            <Th>Status</Th>
-            {ordersFilter !== 'Orçamento' && <Th isNumeric>Data de Entrega</Th>}
-            <Th isNumeric>Preço</Th>
-            <Th />
-          </Tr>
-        </Thead>
-        <Tbody>
-          {/* Table in case of NOT estimate */}
-          {ordersFilter !== 'Orçamento' &&
-            ordersData
-              ?.sort((a, b) => b.orderCode - a.orderCode)
-              .map(order => (
-                <Tr key={order.id}>
-                  <Td>{order.orderCode}</Td>
-                  <Td>{order.customer.name}</Td>
-                  <Td>{order.orderStore}</Td>
-                  <Td>{order.orderStatus}</Td>
-                  <Td isNumeric>
-                    {format(
-                      new Date(order.deliveryDate.seconds * 1000),
-                      'dd/MM/yyyy',
-                    )}
-                  </Td>
-                  <Td isNumeric>{`R$ ${order.orderPrice},00`}</Td>
-                  <Td>
-                    <HStack spacing={4}>
-                      <IconButton
-                        colorScheme="orange"
-                        size="sm"
-                        aria-label="Remover"
-                        icon={<FaRegFileAlt />}
-                      />
+    <>
+      <Head>
+        <title>Cortes | JRM Compensados</title>
+      </Head>
 
-                      <Tags order={order} />
+      <Dashboard>
+        <Header pageTitle="Lista de Cortes">
+          <RadioGroup
+            colorScheme="orange"
+            size="lg"
+            value={ordersFilter}
+            onChange={setOrdersFilter}
+          >
+            <HStack spacing={4}>
+              <Radio
+                isChecked
+                id="Em produção"
+                name="Em produção"
+                value="Em produção"
+              >
+                Em produção
+              </Radio>
+              <Radio
+                id="Liberado para transporte"
+                name="Liberado para transporte"
+                value="Liberado para transporte"
+              >
+                Liberados para transporte
+              </Radio>
+              <Radio id="Concluído" name="Concluído" value="Concluído">
+                Concluídos
+              </Radio>
+              <Radio id="Orçamento" name="Orçamento" value="Orçamento">
+                Orçamentos
+              </Radio>
+            </HStack>
+          </RadioGroup>
+        </Header>
+        <Table variant="simple" colorScheme="orange">
+          <TableCaption>Lista de Cortes</TableCaption>
+          <Thead>
+            <Tr>
+              <Th>Código</Th>
+              <Th>Cliente</Th>
+              {ordersFilter !== 'Orçamento' && <Th>Loja</Th>}
+              <Th>Status</Th>
+              {ordersFilter !== 'Orçamento' && (
+                <Th isNumeric>Data de Entrega</Th>
+              )}
+              <Th isNumeric>Preço</Th>
+              <Th />
+            </Tr>
+          </Thead>
+          <Tbody>
+            {/* Table in case of NOT estimate */}
+            {ordersFilter !== 'Orçamento' &&
+              ordersData
+                ?.sort((a, b) => b.orderCode - a.orderCode)
+                .map(order => (
+                  <Tr key={order.id}>
+                    <Td>{order.orderCode}</Td>
+                    <Td>{order.customer.name}</Td>
+                    <Td>{order.orderStore}</Td>
+                    <Td>{order.orderStatus}</Td>
+                    <Td isNumeric>
+                      {format(
+                        new Date(order.deliveryDate.seconds * 1000),
+                        'dd/MM/yyyy',
+                      )}
+                    </Td>
+                    <Td isNumeric>{`R$ ${order.orderPrice},00`}</Td>
+                    <Td>
+                      <HStack spacing={4}>
+                        <IconButton
+                          colorScheme="orange"
+                          size="sm"
+                          aria-label="Remover"
+                          icon={<FaRegFileAlt />}
+                        />
 
-                      <IconButton
-                        colorScheme="orange"
-                        size="sm"
-                        onClick={() => handleRemove(order.id, 'orders')}
-                        aria-label="Remover"
-                        icon={<FaTrash />}
-                      />
-                      <IconButton
-                        colorScheme="orange"
-                        size="sm"
-                        disabled
-                        aria-label="Editar"
-                        icon={<FaEdit />}
-                      />
+                        <Tags order={order} />
 
-                      <IconButton
-                        colorScheme="orange"
-                        size="sm"
-                        aria-label="Concluir"
-                        icon={<FaCheck />}
-                      />
-                    </HStack>
-                  </Td>
-                </Tr>
-              ))}
+                        <IconButton
+                          colorScheme="orange"
+                          size="sm"
+                          onClick={() => handleRemove(order.id, 'orders')}
+                          aria-label="Remover"
+                          icon={<FaTrash />}
+                        />
+                        <IconButton
+                          colorScheme="orange"
+                          size="sm"
+                          disabled
+                          aria-label="Editar"
+                          icon={<FaEdit />}
+                        />
 
-          {/* Table in case of estimate */}
-          {ordersFilter === 'Orçamento' &&
-            ordersData
-              ?.sort((a, b) => b.estimateCode - a.estimateCode)
-              .map(estimate => (
-                <Tr key={estimate.id}>
-                  <Td>{estimate.estimateCode}</Td>
-                  <Td>{estimate.name}</Td>
-                  <Td>Orçamento</Td>
-                  <Td isNumeric>{`R$ ${estimate.estimatePrice},00`}</Td>
-                  <Td>
-                    <HStack spacing={4}>
-                      <IconButton
-                        colorScheme="orange"
-                        size="sm"
-                        aria-label="Comprovante"
-                        icon={<FaRegFileAlt />}
-                      />
+                        <IconButton
+                          colorScheme="orange"
+                          size="sm"
+                          aria-label="Concluir"
+                          icon={<FaCheck />}
+                        />
+                      </HStack>
+                    </Td>
+                  </Tr>
+                ))}
 
-                      <IconButton
-                        colorScheme="orange"
-                        size="sm"
-                        aria-label="Remover"
-                        onClick={() => handleRemove(estimate.id, 'estimates')}
-                        icon={<FaTrash />}
-                      />
+            {/* Table in case of estimate */}
+            {ordersFilter === 'Orçamento' &&
+              ordersData
+                ?.sort((a, b) => b.estimateCode - a.estimateCode)
+                .map(estimate => (
+                  <Tr key={estimate.id}>
+                    <Td>{estimate.estimateCode}</Td>
+                    <Td>{estimate.name}</Td>
+                    <Td>Orçamento</Td>
+                    <Td isNumeric>{`R$ ${estimate.estimatePrice},00`}</Td>
+                    <Td>
+                      <HStack spacing={4}>
+                        <IconButton
+                          colorScheme="orange"
+                          size="sm"
+                          aria-label="Comprovante"
+                          icon={<FaRegFileAlt />}
+                        />
 
-                      <IconButton
-                        colorScheme="orange"
-                        size="sm"
-                        aria-label="Aprovar"
-                        icon={<FaHandshake />}
-                        onClick={() => approveEstimate(estimate.id)}
-                      />
-                    </HStack>
-                  </Td>
-                </Tr>
-              ))}
-        </Tbody>
-      </Table>
-    </Dashboard>
+                        <IconButton
+                          colorScheme="orange"
+                          size="sm"
+                          aria-label="Remover"
+                          onClick={() => handleRemove(estimate.id, 'estimates')}
+                          icon={<FaTrash />}
+                        />
+
+                        <IconButton
+                          colorScheme="orange"
+                          size="sm"
+                          aria-label="Aprovar"
+                          icon={<FaHandshake />}
+                          onClick={() => approveEstimate(estimate.id)}
+                        />
+                      </HStack>
+                    </Td>
+                  </Tr>
+                ))}
+          </Tbody>
+        </Table>
+      </Dashboard>
+    </>
   );
 };
 
