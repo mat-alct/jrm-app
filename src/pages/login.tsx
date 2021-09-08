@@ -6,7 +6,6 @@ import { useRouter } from 'next/router';
 import { AuthAction, withAuthUser } from 'next-firebase-auth';
 import React from 'react';
 import { useForm } from 'react-hook-form';
-import * as Yup from 'yup';
 
 import { FormInput } from '../components/Form/Input';
 import { Loader } from '../components/Loader';
@@ -59,7 +58,7 @@ const Login = () => {
         <Flex
           align="center"
           justify="center"
-          maxW="700px"
+          maxW={['700px', '700px', '700px', '700px', '500px', '700px']}
           w="100%"
           mx={['auto', 'auto', 'auto', 'auto', '']}
         >
