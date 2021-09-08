@@ -10,10 +10,12 @@ import {
   HStack,
   List,
   ListItem,
+  Stack,
   Switch,
   Text,
   Textarea,
   useBoolean,
+  useBreakpointValue,
   VStack,
 } from '@chakra-ui/react';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -74,6 +76,7 @@ export const OrderData: React.FC<OrderDataProps> = ({
   });
 
   const router = useRouter();
+  const isLabelHorizontal = useBreakpointValue([false, false, false, true]);
 
   // CustomerID if a customer is registered
   const [customerId, setCustomerId] = useState('');
@@ -299,7 +302,7 @@ export const OrderData: React.FC<OrderDataProps> = ({
       {customerRegistered && searchedCustomers && (
         // List of searched customers
         <List mt={8} spacing={4}>
-          <HStack spacing={8}>
+          <HStack spacing={[4, 4, 4, 8]}>
             {searchedCustomers?.map(customer => (
               <ListItem key={customer.id}>
                 <Flex align="center">
@@ -333,13 +336,18 @@ export const OrderData: React.FC<OrderDataProps> = ({
         mt={8}
         onSubmit={createOrderHandleSubmit(handleSubmitOrder)}
       >
-        <HStack spacing={8} align="flex-start">
+        <Stack
+          direction={['column', 'column', 'column', 'row']}
+          spacing={[4, 4, 4, 8]}
+          align="flex-start"
+        >
           <FormInput
             {...createOrderRegister('firstName')}
             name="firstName"
             label="Nome"
             error={createOrderErrors.firstName}
             isReadOnly={Boolean(customerId)}
+            size="md"
           />
           <FormInput
             {...createOrderRegister('lastName')}
@@ -347,6 +355,7 @@ export const OrderData: React.FC<OrderDataProps> = ({
             label="Sobrenome"
             error={createOrderErrors.lastName}
             isReadOnly={Boolean(customerId)}
+            size="md"
           />
           <FormInput
             {...createOrderRegister('telephone')}
@@ -360,19 +369,26 @@ export const OrderData: React.FC<OrderDataProps> = ({
               )
             }
             isReadOnly={Boolean(customerId)}
+            size="md"
           />
-        </HStack>
+        </Stack>
 
         {/* Inputs will not be displayed if it's a estimate */}
         {orderType === 'Serviço' && (
           <>
-            <HStack spacing={8} mt={8} align="flex-start">
+            <Stack
+              direction={['column', 'column', 'column', 'row']}
+              spacing={[4, 4, 4, 8]}
+              mt={[4, 4, 4, 8]}
+              align="flex-start"
+            >
               <FormInput
                 {...createOrderRegister('address')}
                 error={createOrderErrors.address}
                 name="address"
                 label="Endereço"
                 isReadOnly={Boolean(customerId)}
+                size="md"
               />
               <FormSelect
                 options={areas.map(area => {
@@ -397,16 +413,16 @@ export const OrderData: React.FC<OrderDataProps> = ({
                 placeholder="Selecione a cidade..."
                 isClearable
               />
-            </HStack>
+            </Stack>
 
-            <VStack align="left" mt={8} spacing={8}>
+            <VStack align="left" mt={8} spacing={[4, 4, 4, 8]}>
               <FormRadio
                 options={['Japuíba', 'Frade']}
                 label="Loja do pedido:"
                 name="orderStore"
                 control={createOrderControl}
                 isHorizontal
-                isLabelHorizontal
+                isLabelHorizontal={isLabelHorizontal}
               />
 
               <FormRadio
@@ -415,7 +431,7 @@ export const OrderData: React.FC<OrderDataProps> = ({
                 name="deliveryType"
                 control={createOrderControl}
                 isHorizontal
-                isLabelHorizontal
+                isLabelHorizontal={isLabelHorizontal}
               />
 
               <FormRadio
@@ -424,7 +440,7 @@ export const OrderData: React.FC<OrderDataProps> = ({
                 name="paymentType"
                 control={createOrderControl}
                 isHorizontal
-                isLabelHorizontal
+                isLabelHorizontal={isLabelHorizontal}
               />
 
               <FormDatePicker
@@ -446,7 +462,7 @@ export const OrderData: React.FC<OrderDataProps> = ({
           </>
         )}
 
-        <Box mt={16} mx="auto">
+        <Box mt={[8, 8, 8, 16]} mx="auto">
           <FormInput
             {...createOrderRegister('sellerPassword')}
             error={createOrderErrors.sellerPassword}

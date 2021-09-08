@@ -4,6 +4,6 @@ import { Dashboard } from '../../../components/Dashboard';
 
 describe('Component: Dashboard', () => {
   it('render the component', () => {
-    render(<Dashboard />); //
+    render(<Dashboard />);
   });
 });

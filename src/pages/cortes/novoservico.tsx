@@ -83,11 +83,10 @@ const NovoServiço = () => {
         >
           <RadioGroup
             colorScheme="orange"
-            size="lg"
             value={orderType}
             onChange={setOrderType}
           >
-            <HStack spacing={8}>
+            <HStack spacing={[4, 4, 8]}>
               <Radio isChecked id="isOrder" name="isOrder" value="Serviço">
                 Pedido
               </Radio>

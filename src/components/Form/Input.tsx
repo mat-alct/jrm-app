@@ -38,8 +38,8 @@ const InputBase: ForwardRefRenderFunction<HTMLInputElement, InputProps> = (
         id={name}
         name={name}
         focusBorderColor="orange.500"
-        {...rest}
         size={inputSize}
+        {...rest}
       />
       {!!error && (
         // Role is necessary for validation tests

@@ -8,7 +8,7 @@ export const Content: React.FC = ({ children }) => {
         direction="column"
         as="main"
         py={[4, 4, 8, 8, 16]}
-        px={[8, 8, 16, 16, 32]}
+        px={[8, 8, 16, 16, 16]}
         w="100%"
       >
         {children}

@@ -23,10 +23,7 @@ export const Header: React.FC<HeaderProps> = ({
   isLoading,
 }) => {
   const { onOpen } = useSidebarDrawer();
-  const isWideVersion = useBreakpointValue({
-    base: false,
-    lg: true,
-  });
+  const isWideVersion = useBreakpointValue([false, false, false, false, true]);
 
   return (
     <Flex
@@ -34,7 +31,7 @@ export const Header: React.FC<HeaderProps> = ({
       w="100%"
       align="center"
       justify="space-between"
-      mb={8}
+      mb={[8, 8, 8, 16]}
     >
       <Flex justify="space-between" align="center" mb={[4, 4, 4, 4, 0]}>
         {/* Hamburguer Menu Item */}
