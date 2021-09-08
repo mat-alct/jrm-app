@@ -1,4 +1,11 @@
-import { Button, Flex, Heading, HStack, useToast } from '@chakra-ui/react';
+import {
+  Button,
+  Flex,
+  Heading,
+  HStack,
+  Stack,
+  useToast,
+} from '@chakra-ui/react';
 import { yupResolver } from '@hookform/resolvers/yup';
 import firebase from 'firebase/app';
 import Head from 'next/head';
@@ -108,15 +115,21 @@ const Vendedores: React.FC = () => {
         <title>Vendedores | JRM Compensados</title>
       </Head>
       <Dashboard>
-        <Header pageTitle="Vendedores" />
+        <Header pageTitle="Novo vendedor" />
         <Flex
           as="form"
           direction="column"
           onSubmit={createSellerHandleSubmit(handleSubmitSeller)}
-          maxW="1366px"
+          maxW={['350px', '350px', '600px', '600px']}
+          w="100%"
+          mx="auto"
         >
-          <Heading mt={8}>Criar vendedor</Heading>
-          <HStack spacing={8} mt={4} alignItems="flex-end">
+          <Stack
+            direction="column"
+            spacing={[4, 4, 4, 8]}
+            mt={4}
+            alignItems="flex-end"
+          >
             <FormInput
               {...createSellerRegister('firstName')}
               label="Nome"
@@ -147,10 +160,16 @@ const Vendedores: React.FC = () => {
               type="password"
               size="lg"
             />
-            <Button size="lg" type="submit" colorScheme="orange" minW="150px">
+            <Button
+              isFullWidth
+              size="lg"
+              type="submit"
+              colorScheme="orange"
+              minW="150px"
+            >
               Criar
             </Button>
-          </HStack>
+          </Stack>
         </Flex>
       </Dashboard>
     </>
