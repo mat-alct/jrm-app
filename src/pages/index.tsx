@@ -3,6 +3,7 @@ import { AuthAction, withAuthUser } from 'next-firebase-auth';
 import React from 'react';
 
 import { Dashboard } from '../components/Dashboard';
+import { Header } from '../components/Dashboard/Content/Header';
 import { Loader } from '../components/Loader';
 
 const Home = () => {
@@ -11,7 +12,9 @@ const Home = () => {
       <Head>
         <title>Início | JRM Compensados</title>
       </Head>
-      <Dashboard />
+      <Dashboard>
+        <Header pageTitle="Início" />
+      </Dashboard>
     </>
   );
 };
