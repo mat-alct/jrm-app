@@ -10,6 +10,7 @@ import * as Yup from 'yup';
 
 import { FormInput } from '../components/Form/Input';
 import { Loader } from '../components/Loader';
+import { loginSchema } from '../utils/yup/pages/login';
 
 interface LoginProps {
   email: string;
@@ -20,21 +21,12 @@ const Login = () => {
   const toast = useToast();
   const router = useRouter();
 
-  const validationSchema = Yup.object().shape({
-    email: Yup.string()
-      .email('Necessário que esteja em formato de email')
-      .required('Email obrigatório'),
-    password: Yup.string()
-      .required('Senha obrigatória')
-      .min(8, 'Senha precisa de no mínimo 8 dígitos'),
-  });
-
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<LoginProps>({
-    resolver: yupResolver(validationSchema),
+    resolver: yupResolver(loginSchema),
   });
 
   const onSubmit = async ({ email, password }: LoginProps) => {
@@ -61,10 +53,16 @@ const Login = () => {
         <Box
           bg="url(/images/logInBackground.png)"
           h="100%"
-          flex="1"
+          flex={['0', '0', '0', '0', '1', '1']}
           bgSize="cover"
         />
-        <Flex align="center" justify="center" maxW="700px" w="100%">
+        <Flex
+          align="center"
+          justify="center"
+          maxW="700px"
+          w="100%"
+          mx={['auto', 'auto', 'auto', 'auto', '']}
+        >
           <Flex
             as="form"
             direction="column"
