@@ -1,5 +1,6 @@
 import Head from 'next/head';
 import { AuthAction, withAuthUser } from 'next-firebase-auth';
+import React from 'react';
 
 import { Dashboard } from '../components/Dashboard';
 import { Loader } from '../components/Loader';

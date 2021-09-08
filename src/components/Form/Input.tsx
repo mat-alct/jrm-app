@@ -4,6 +4,7 @@ import {
   FormLabel,
   Input,
   InputProps as ChakraInputProps,
+  useBreakpointValue,
 } from '@chakra-ui/react';
 import React, { forwardRef, ForwardRefRenderFunction } from 'react';
 import { FieldError } from 'react-hook-form';
@@ -19,6 +20,8 @@ const InputBase: ForwardRefRenderFunction<HTMLInputElement, InputProps> = (
   { name, label, error, isHorizontal, ...rest },
   ref,
 ) => {
+  const inputSize = useBreakpointValue(['sm', 'sm', 'md', 'md', 'lg', 'lg']);
+
   return (
     <FormControl
       isInvalid={!!error}
@@ -36,6 +39,7 @@ const InputBase: ForwardRefRenderFunction<HTMLInputElement, InputProps> = (
         name={name}
         focusBorderColor="orange.500"
         {...rest}
+        size={inputSize}
       />
       {!!error && (
         // Role is necessary for validation tests

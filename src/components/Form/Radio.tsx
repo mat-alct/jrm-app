@@ -6,6 +6,7 @@ import {
   Radio,
   RadioGroup,
   Stack,
+  useBreakpointValue,
 } from '@chakra-ui/react';
 import React from 'react';
 import { Control, useController } from 'react-hook-form';
@@ -37,6 +38,7 @@ export const FormRadio: React.FC<FormRadioProps> = ({
     name,
     defaultValue,
   });
+  const radioSize = useBreakpointValue(['sm', 'sm', 'md', 'md', 'lg', 'lg']);
 
   return (
     <FormControl
@@ -50,10 +52,17 @@ export const FormRadio: React.FC<FormRadioProps> = ({
         value={field.value}
         onChange={field.onChange}
         colorScheme="orange"
+        size={radioSize}
       >
         <Stack spacing={4} direction={isHorizontal ? 'row' : 'column'}>
           {options.map(option => (
-            <Radio name={option} id={option} value={option} key={option}>
+            <Radio
+              size={radioSize}
+              name={option}
+              id={option}
+              value={option}
+              key={option}
+            >
               {option}
             </Radio>
           ))}
