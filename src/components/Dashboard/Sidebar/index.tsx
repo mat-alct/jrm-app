@@ -1,81 +1,45 @@
-import { Flex, Image, VStack } from '@chakra-ui/react';
-import firebase from 'firebase/app';
 import {
-  FaClipboardList,
-  FaHome,
-  FaPen,
-  FaRegSquare,
-  FaSignOutAlt,
-  FaSlack,
-  FaUser,
-  FaUserAstronaut,
-} from 'react-icons/fa';
+  Box,
+  Drawer,
+  DrawerBody,
+  DrawerCloseButton,
+  DrawerContent,
+  DrawerHeader,
+  DrawerOverlay,
+  useBreakpointValue,
+} from '@chakra-ui/react';
+import React from 'react';
 
-import { NavLink } from './NavLink';
-import { NavSection } from './NavSection';
+import { useSidebarDrawer } from '../../../hooks/sidebar';
+import { SidebarNav } from './SidebarNav';
 
-interface SidebarProps {
-  sidebarWidth: string;
-}
+export const Sidebar = () => {
+  const { isOpen, onClose } = useSidebarDrawer();
 
-export const Sidebar: React.FC<SidebarProps> = ({ sidebarWidth }) => {
+  const isDrawerSidebar = useBreakpointValue({
+    base: true,
+    lg: false,
+  });
+
+  if (isDrawerSidebar) {
+    return (
+      <Drawer isOpen={isOpen} placement="left" onClose={onClose}>
+        <DrawerOverlay>
+          <DrawerContent p="4">
+            <DrawerCloseButton mt="6" />
+            <DrawerHeader>Navegação</DrawerHeader>
+            <DrawerBody mb={4}>
+              <SidebarNav />
+            </DrawerBody>
+          </DrawerContent>
+        </DrawerOverlay>
+      </Drawer>
+    );
+  }
+
   return (
-    <Flex
-      direction="column"
-      w={sidebarWidth}
-      minH="100vh"
-      h="100%"
-      align="flex-start"
-      borderRight="1px solid"
-      borderColor="gray.200"
-      position="fixed"
-    >
-      <Image
-        src="/images/logo.svg"
-        alt="Logotipo"
-        boxSize="160px"
-        mx="auto"
-        mb={12}
-        mt={8}
-      />
-      <VStack spacing={12} ml={8} align="flex-start">
-        <NavSection title=" Geral">
-          <NavLink icon={FaHome} href="/">
-            Início
-          </NavLink>
-        </NavSection>
-        <NavSection title="Cortes">
-          <NavLink icon={FaSlack} href="/cortes/novoservico">
-            Novo serviço
-          </NavLink>
-          <NavLink icon={FaClipboardList} href="/cortes/listadecortes">
-            Listar serviços
-          </NavLink>
-          <NavLink icon={FaUser} href="/cortes/clientes">
-            Clientes
-          </NavLink>
-          <NavLink icon={FaRegSquare} href="/cortes/materiais">
-            Materiais
-          </NavLink>
-        </NavSection>
-        <NavSection title="Administração">
-          <NavLink icon={FaPen} href="#">
-            Contas
-          </NavLink>
-          <NavLink icon={FaUserAstronaut} href="/administracao/vendedores">
-            Vendedores
-          </NavLink>
-        </NavSection>
-        <NavSection title="Conta">
-          <NavLink
-            icon={FaSignOutAlt}
-            href="/login"
-            onClick={() => firebase.auth().signOut()}
-          >
-            Sair
-          </NavLink>
-        </NavSection>
-      </VStack>
-    </Flex>
+    <Box as="aside" w="64" mr="8">
+      <SidebarNav />
+    </Box>
   );
 };
