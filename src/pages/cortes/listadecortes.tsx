@@ -216,7 +216,12 @@ const Cortes: React.FC = () => {
         {/* Lista de cortes caso não exista busca */}
         {searchData && searchData.length === 0 && (
           <Box overflowX="auto">
-            <Table variant="simple" colorScheme="orange" mt={8}>
+            <Table
+              variant="simple"
+              colorScheme="orange"
+              mt={8}
+              whiteSpace="nowrap"
+            >
               <TableCaption>Lista de Cortes</TableCaption>
               <Thead>
                 <Tr>
@@ -329,7 +334,12 @@ const Cortes: React.FC = () => {
 
         {/* Lista de cortes caso não exista busca */}
         {searchData && searchData.length > 0 && (
-          <Table variant="simple" colorScheme="orange" mt={8}>
+          <Table
+            variant="simple"
+            colorScheme="orange"
+            mt={8}
+            whiteSpace="nowrap"
+          >
             <TableCaption>Lista de Cortes</TableCaption>
             <Thead>
               <Tr>
