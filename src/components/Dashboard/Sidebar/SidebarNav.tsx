@@ -21,9 +21,9 @@ export const SidebarNav: React.FC = () => {
       minH="100vh"
       h="100%"
       align="flex-start"
-      borderRight={['', '', '', '', '1px solid']}
-      borderColor={['', '', '', '', 'gray.200']}
-      w={['', '', '', '', '17rem']}
+      borderRight={['', '', '', '1px solid']}
+      borderColor={['', '', '', 'gray.200']}
+      w={['', '', '', '17rem']}
       position={[null, null, null, null, 'fixed']}
     >
       <Image

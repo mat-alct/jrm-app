@@ -1,11 +1,4 @@
-import {
-  Button,
-  Flex,
-  Heading,
-  HStack,
-  Stack,
-  useToast,
-} from '@chakra-ui/react';
+import { Button, Flex, Stack, useToast } from '@chakra-ui/react';
 import { yupResolver } from '@hookform/resolvers/yup';
 import firebase from 'firebase/app';
 import Head from 'next/head';

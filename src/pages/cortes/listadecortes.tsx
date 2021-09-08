@@ -12,6 +12,7 @@ import {
   Th,
   Thead,
   Tr,
+  useBreakpointValue,
   useToast,
 } from '@chakra-ui/react';
 import { format } from 'date-fns';
@@ -41,6 +42,8 @@ const Cortes: React.FC = () => {
   const { data: ordersData, refetch } = useQuery(['orders', ordersFilter], () =>
     getOrders(ordersFilter),
   );
+
+  const radioSize = useBreakpointValue(['sm', 'sm', 'md', 'md', 'lg', 'lg']);
 
   // Function to approve a estimate and push to new order page
   const approveEstimate = async (id: string) => {
@@ -153,7 +156,7 @@ const Cortes: React.FC = () => {
           {searchData && searchData.length === 0 && (
             <RadioGroup
               colorScheme="orange"
-              size="lg"
+              size={radioSize}
               value={ordersFilter}
               onChange={setOrdersFilter}
             >
@@ -164,14 +167,16 @@ const Cortes: React.FC = () => {
                   name="Em Produção"
                   value="Em Produção"
                 >
-                  Em produção
+                  {radioSize === 'sm' ? 'Produção' : 'Em produção'}
                 </Radio>
                 <Radio
                   id="Liberado para Transporte"
                   name="Liberado para Transporte"
                   value="Liberado para Transporte"
                 >
-                  Liberados para transporte
+                  {radioSize === 'sm'
+                    ? 'Liberados'
+                    : 'Liberados para transporte'}
                 </Radio>
                 <Radio id="Concluído" name="Concluído" value="Concluído">
                   Concluídos

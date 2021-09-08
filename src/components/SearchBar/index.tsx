@@ -37,7 +37,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
     <Flex
       as="form"
       onSubmit={searchHandleSubmit(handleSearch)}
-      maxW="300px"
+      maxW={[null, null, null, '300px']}
       {...rest}
     >
       <FormInput
@@ -47,6 +47,8 @@ export const SearchBar: React.FC<SearchBarProps> = ({
         borderRightRadius="none"
         formNoValidate
         error={searchErrors.customerName}
+        size="md"
+        w="100%"
       />
       <Button
         isDisabled={searchIsSubmitting}

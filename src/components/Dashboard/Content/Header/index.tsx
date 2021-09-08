@@ -23,7 +23,7 @@ export const Header: React.FC<HeaderProps> = ({
   isLoading,
 }) => {
   const { onOpen } = useSidebarDrawer();
-  const isWideVersion = useBreakpointValue([false, false, false, false, true]);
+  const isWideVersion = useBreakpointValue([false, false, false, true]);
 
   return (
     <Flex

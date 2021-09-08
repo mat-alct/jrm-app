@@ -16,7 +16,7 @@ import { SidebarNav } from './SidebarNav';
 export const Sidebar = () => {
   const { isOpen, onClose } = useSidebarDrawer();
 
-  const isDrawerSidebar = useBreakpointValue([true, true, true, true, false]);
+  const isDrawerSidebar = useBreakpointValue([true, true, true, false]);
 
   if (isDrawerSidebar) {
     return (
