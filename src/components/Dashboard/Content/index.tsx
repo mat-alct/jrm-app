@@ -8,11 +8,8 @@ export const Content: React.FC = ({ children }) => {
         direction="column"
         as="main"
         py={[4, 4, 8, 8, 16]}
-        px={8}
-        ml={[null, null, null, null, 16, 32]}
+        px={[8, 8, 16, 16, 32]}
         w="100%"
-        maxW="1366px"
-        mx="auto"
       >
         {children}
       </Flex>
