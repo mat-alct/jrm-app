@@ -127,6 +127,7 @@ export const OrderData: React.FC<OrderDataProps> = ({
     createOrderSetValue('firstName', customerSelected.name.split(' ')[0]);
     createOrderSetValue('lastName', customerSelected.name.split(' ')[1]);
     setTel(normalizeTelephoneInput(customerSelected.telephone, ''));
+    createOrderSetValue('telephone', customerSelected.telephone);
     createOrderSetValue('address', customerSelected.address);
     createOrderSetValue('area', customerSelected.area);
     createOrderSetValue('city', customerSelected.city);
