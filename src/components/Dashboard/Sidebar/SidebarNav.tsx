@@ -3,7 +3,6 @@ import firebase from 'firebase/app';
 import {
   FaClipboardList,
   FaHome,
-  FaPen,
   FaRegSquare,
   FaSignOutAlt,
   FaSlack,
@@ -34,7 +33,7 @@ export const SidebarNav: React.FC = () => {
         mb={12}
         mt={8}
       />
-      <VStack spacing={12} ml={8} align="flex-start">
+      <VStack spacing={8} ml={8} align="flex-start">
         <NavSection title=" Geral">
           <NavLink icon={FaHome} href="/">
             Início
@@ -55,11 +54,8 @@ export const SidebarNav: React.FC = () => {
           </NavLink>
         </NavSection>
         <NavSection title="Administração">
-          <NavLink icon={FaPen} href="#">
-            Contas
-          </NavLink>
           <NavLink icon={FaUserAstronaut} href="/administracao/vendedores">
-            Vendedores
+            Novo vendedor
           </NavLink>
         </NavSection>
         <NavSection title="Conta">
