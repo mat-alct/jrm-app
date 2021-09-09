@@ -296,17 +296,17 @@ export const OrderData: React.FC<OrderDataProps> = ({
       </FormControl>
 
       {customerRegistered && (
-        <SearchBar mt={4} handleUpdateSearch={handleSearch} minW="400px" />
+        <SearchBar mt={4} handleUpdateSearch={handleSearch} minW="300px" />
       )}
 
       {customerRegistered && searchedCustomers && (
         // List of searched customers
         <List mt={8} spacing={4}>
-          <HStack spacing={[4, 4, 4, 8]}>
+          <Stack direction={['column', 'column', 'row']} spacing={[4, 4, 4, 8]}>
             {searchedCustomers?.map(customer => (
               <ListItem key={customer.id}>
                 <Flex align="center">
-                  <Flex direction="column">
+                  <Flex direction="column" w="100%">
                     <Text fontWeight="700">{`${customer.name}`}</Text>
                     <Text fontSize="sm">{`${customer.address}, ${customer.area}`}</Text>
                     <Text fontSize="sm">{`Tel: ${customer.telephone}`}</Text>
@@ -325,7 +325,7 @@ export const OrderData: React.FC<OrderDataProps> = ({
                 </Flex>
               </ListItem>
             ))}
-          </HStack>
+          </Stack>
         </List>
       )}
 

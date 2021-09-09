@@ -234,7 +234,11 @@ export const Cutlist: React.FC<CutlistPageProps> = ({
         </Heading>
         <Divider />
       </HStack>
-      <Flex align="center" justify="space-between">
+      <Flex
+        align="center"
+        justify={['center', 'space-between']}
+        direction={['column', 'row']}
+      >
         <FormControl mt={4} mb={8}>
           <FormLabel mb={0}>Base de cálculo</FormLabel>
           <RadioGroup
@@ -254,8 +258,9 @@ export const Cutlist: React.FC<CutlistPageProps> = ({
         </FormControl>
         <Text
           whiteSpace="nowrap"
-          fontSize={['sm', 'md', 'xl', '2xl', '3xl']}
+          fontSize={['md', 'md', 'xl', '2xl', '3xl']}
           color="green.500"
+          mb={[8, 0]}
         >
           {new Intl.NumberFormat('pt-BR', {
             style: 'currency',
