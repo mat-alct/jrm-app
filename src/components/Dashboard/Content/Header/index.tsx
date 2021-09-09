@@ -1,4 +1,5 @@
 import {
+  Box,
   Flex,
   Heading,
   HStack,
@@ -27,13 +28,18 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <Flex
-      direction={['column', 'column', 'column', 'column', 'row']}
+      direction={['column', 'column', 'column', 'row']}
       w="100%"
       align="center"
       justify="space-between"
       mb={[8, 8, 8, 16]}
     >
-      <Flex justify="space-between" align="center" mb={[4, 4, 4, 4, 0]}>
+      <Flex
+        align={['space-between', 'space-between', 'space-between', 'center']}
+        justify="space-between"
+        mb={[4, 4, 4, 4, 0]}
+        w={['100%', '100%', '100%', '']}
+      >
         {/* Hamburguer Menu Item */}
         {!isWideVersion && (
           <IconButton
@@ -50,6 +56,9 @@ export const Header: React.FC<HeaderProps> = ({
           {pageTitle}
           {isLoading && <Spinner size="sm" color="gray.500" marginLeft="4" />}
         </Heading>
+
+        {/* Box to align IconButton left and Heading center in mobile */}
+        {!isWideVersion && <Box />}
       </Flex>
 
       <HStack spacing={4}>{children}</HStack>
