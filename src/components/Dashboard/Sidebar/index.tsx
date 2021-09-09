@@ -35,7 +35,7 @@ export const Sidebar = () => {
   }
 
   return (
-    <Box as="aside" w="64" mr="8">
+    <Box as="aside">
       <SidebarNav />
     </Box>
   );

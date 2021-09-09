@@ -52,7 +52,7 @@ export const Header: React.FC<HeaderProps> = ({
           />
         )}
 
-        <Heading color="gray.700" ml={[8, 8, 4, 4, 0]}>
+        <Heading color="gray.700">
           {pageTitle}
           {isLoading && <Spinner size="sm" color="gray.500" marginLeft="4" />}
         </Heading>

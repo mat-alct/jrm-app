@@ -24,7 +24,7 @@ export const SidebarNav: React.FC = () => {
       borderRight={['', '', '', '1px solid']}
       borderColor={['', '', '', 'gray.200']}
       w={['', '', '', '17rem']}
-      position={[null, null, null, null, 'fixed']}
+      position={[null, null, null, 'fixed']}
     >
       <Image
         src="/images/logo.svg"

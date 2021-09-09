@@ -340,7 +340,12 @@ export const Cutlist: React.FC<CutlistPageProps> = ({
       {/* Tabela de peças */}
       <Box overflowX="auto">
         {cutlist.length > 0 && (
-          <Table colorScheme="orange" mt={8} size={tableSize}>
+          <Table
+            colorScheme="orange"
+            mt={8}
+            size={tableSize}
+            whiteSpace="nowrap"
+          >
             <TableCaption>Lista de peças</TableCaption>
             <Thead>
               <Tr>
