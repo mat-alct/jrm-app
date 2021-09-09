@@ -159,6 +159,7 @@ const Cortes: React.FC = () => {
               size={radioSize}
               value={ordersFilter}
               onChange={setOrdersFilter}
+              whiteSpace="nowrap"
             >
               <HStack spacing={4}>
                 <Radio

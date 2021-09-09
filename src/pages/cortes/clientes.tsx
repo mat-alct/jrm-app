@@ -1,4 +1,5 @@
 import {
+  Box,
   Button,
   HStack,
   Icon,
@@ -11,6 +12,7 @@ import {
   Th,
   Thead,
   Tr,
+  useBreakpointValue,
   useDisclosure,
   VStack,
 } from '@chakra-ui/react';
@@ -44,6 +46,7 @@ interface CreateCustomerProps {
 }
 
 const Clientes: React.FC = () => {
+  const buttonSize = useBreakpointValue(['sm', 'sm', 'sm', 'md']);
   const [searchFilter, setSearchFilter] = useState<string | undefined>(
     undefined,
   );
@@ -146,6 +149,7 @@ const Clientes: React.FC = () => {
             onClick={() => refetch()}
             disabled={createCustomerIsSubmitting || isFetching}
             leftIcon={<Icon as={RiRefreshLine} fontSize="20" />}
+            size={buttonSize}
           >
             Atualizar
           </Button>
@@ -154,6 +158,7 @@ const Clientes: React.FC = () => {
             onClick={onOpenCreateCustomer}
             disabled={createCustomerIsSubmitting || isFetching}
             leftIcon={<Icon as={RiAddLine} fontSize="20" />}
+            size={buttonSize}
           >
             Novo Cliente
           </Button>
@@ -219,8 +224,13 @@ const Clientes: React.FC = () => {
 
         {/* Table */}
         {searchFilter && (
-          <>
-            <Table variant="striped" colorScheme="orange">
+          <Box overflowX="auto">
+            <Table
+              variant="striped"
+              colorScheme="orange"
+              mt={4}
+              whiteSpace="nowrap"
+            >
               <TableCaption>Lista de Clientes</TableCaption>
               <Thead>
                 <Tr>
@@ -266,7 +276,7 @@ const Clientes: React.FC = () => {
                 })}
               </Tbody>
             </Table>
-          </>
+          </Box>
         )}
       </Dashboard>
     </>

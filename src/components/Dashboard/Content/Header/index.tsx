@@ -35,9 +35,9 @@ export const Header: React.FC<HeaderProps> = ({
       mb={[8, 8, 8, 16]}
     >
       <Flex
-        align={['space-between', 'space-between', 'space-between', 'center']}
+        align="center"
         justify="space-between"
-        mb={[4, 4, 4, 4, 0]}
+        mb={[4, 4, 4, 0]}
         w={['100%', '100%', '100%', '']}
       >
         {/* Hamburguer Menu Item */}

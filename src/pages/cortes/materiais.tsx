@@ -1,4 +1,5 @@
 import {
+  Box,
   Button,
   HStack,
   Icon,
@@ -12,6 +13,7 @@ import {
   Th,
   Thead,
   Tr,
+  useBreakpointValue,
   useDisclosure,
   VStack,
 } from '@chakra-ui/react';
@@ -43,6 +45,8 @@ interface updatePriceProps {
 }
 
 const Materiais = () => {
+  const buttonSize = useBreakpointValue(['sm', 'sm', 'sm', 'md']);
+
   const [updatingMaterialId, setUpdatingMaterialId] = useState('');
   const [materialFilter, setMaterialFilter] = useState('MDF');
 
@@ -129,6 +133,7 @@ const Materiais = () => {
             onClick={() => refetch()}
             disabled={createMaterialIsSubmitting || isFetching}
             leftIcon={<Icon as={RiRefreshLine} fontSize="20" />}
+            size={buttonSize}
           >
             Atualizar
           </Button>
@@ -137,6 +142,7 @@ const Materiais = () => {
             onClick={onOpen}
             disabled={createMaterialIsSubmitting || isFetching}
             leftIcon={<Icon as={RiAddLine} fontSize="20" />}
+            size={buttonSize}
           >
             Novo Material
           </Button>
@@ -226,52 +232,56 @@ const Materiais = () => {
         </RadioGroup>
 
         {/* Tabela de dados */}
-        <Table variant="striped" colorScheme="orange">
-          <TableCaption>Lista de Materiais</TableCaption>
-          <Thead>
-            <Tr>
-              <Th>Material</Th>
-              <Th isNumeric>Largura (mm)</Th>
-              <Th isNumeric>Altura (mm)</Th>
-              <Th isNumeric>Preço</Th>
-              <Th />
-            </Tr>
-          </Thead>
-          <Tbody>
-            {data
-              ?.sort((a, b) => a.name.localeCompare(b.name))
-              .map(material => {
-                return (
-                  <Tr key={material.id}>
-                    <Td>{material.name}</Td>
-                    <Td isNumeric>{material.width}</Td>
-                    <Td isNumeric>{material.height}</Td>
-                    <Td isNumeric>{`R$ ${material.price}`}</Td>
-                    <Td>
-                      <HStack spacing={4}>
-                        <IconButton
-                          colorScheme="orange"
-                          size="sm"
-                          aria-label="Editar"
-                          icon={<FaEdit />}
-                          onClick={() => handleClickOnUpdatePrice(material.id)}
-                          disabled={updatePriceIsSubmitting}
-                        />
-                        <IconButton
-                          colorScheme="orange"
-                          size="sm"
-                          aria-label="Remover"
-                          icon={<FaTrash />}
-                          onClick={() => handleRemoveMaterial(material.id)}
-                          disabled={updatePriceIsSubmitting}
-                        />
-                      </HStack>
-                    </Td>
-                  </Tr>
-                );
-              })}
-          </Tbody>
-        </Table>
+        <Box overflowX="auto">
+          <Table variant="striped" colorScheme="orange" whiteSpace="nowrap">
+            <TableCaption>Lista de Materiais</TableCaption>
+            <Thead>
+              <Tr>
+                <Th>Material</Th>
+                <Th isNumeric>Largura (mm)</Th>
+                <Th isNumeric>Altura (mm)</Th>
+                <Th isNumeric>Preço</Th>
+                <Th />
+              </Tr>
+            </Thead>
+            <Tbody>
+              {data
+                ?.sort((a, b) => a.name.localeCompare(b.name))
+                .map(material => {
+                  return (
+                    <Tr key={material.id}>
+                      <Td>{material.name}</Td>
+                      <Td isNumeric>{material.width}</Td>
+                      <Td isNumeric>{material.height}</Td>
+                      <Td isNumeric>{`R$ ${material.price}`}</Td>
+                      <Td>
+                        <HStack spacing={4}>
+                          <IconButton
+                            colorScheme="orange"
+                            size="sm"
+                            aria-label="Editar"
+                            icon={<FaEdit />}
+                            onClick={() =>
+                              handleClickOnUpdatePrice(material.id)
+                            }
+                            disabled={updatePriceIsSubmitting}
+                          />
+                          <IconButton
+                            colorScheme="orange"
+                            size="sm"
+                            aria-label="Remover"
+                            icon={<FaTrash />}
+                            onClick={() => handleRemoveMaterial(material.id)}
+                            disabled={updatePriceIsSubmitting}
+                          />
+                        </HStack>
+                      </Td>
+                    </Tr>
+                  );
+                })}
+            </Tbody>
+          </Table>
+        </Box>
       </Dashboard>
     </>
   );
