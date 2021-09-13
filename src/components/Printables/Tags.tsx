@@ -43,6 +43,7 @@ export const Tags: React.FC<TagsProps> = ({ order }) => {
 
   useEffect(() => {
     const allTags = order.cutlist.flatMap((cut: any) => {
+      console.log(cut);
       const tags = [];
 
       for (let i = 0; i < cut.amount; i += 1) {
@@ -178,7 +179,7 @@ export const Tags: React.FC<TagsProps> = ({ order }) => {
                         {`${cut.gside} x ${cut.pside}`}
                       </Text>
                       <Text fontSize="8px" textAlign="center">
-                        COMPENSADO COMPEWIT COMUM 04MM
+                        {cut.material}
                       </Text>
                       <Text
                         fontSize="8px"
