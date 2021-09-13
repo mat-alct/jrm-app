@@ -43,7 +43,6 @@ export const Tags: React.FC<TagsProps> = ({ order }) => {
 
   useEffect(() => {
     const allTags = order.cutlist.flatMap((cut: any) => {
-      console.log(cut);
       const tags = [];
 
       for (let i = 0; i < cut.amount; i += 1) {
