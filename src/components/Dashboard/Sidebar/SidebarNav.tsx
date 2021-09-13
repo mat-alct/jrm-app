@@ -1,6 +1,7 @@
 import { Flex, Image, VStack } from '@chakra-ui/react';
 import firebase from 'firebase/app';
 import {
+  FaBackward,
   FaClipboardList,
   FaHome,
   FaRegSquare,
@@ -59,6 +60,9 @@ export const SidebarNav: React.FC = () => {
           </NavLink>
         </NavSection>
         <NavSection title="Conta">
+          <NavLink icon={FaBackward} href="https://jrmcomp.netlify.app/">
+            Site antigo
+          </NavLink>
           <NavLink
             icon={FaSignOutAlt}
             href="/login"
