@@ -285,9 +285,7 @@ export const Cutlist: React.FC<CutlistPageProps> = ({
             control={createCutlistControl}
             isClearable
             placeholder="Material"
-            options={materialOptions.sort((a, b) =>
-              a.value.localeCompare(b.value),
-            )}
+            options={materialOptions}
           />
         </Box>
         <Box w="100%" maxW={[null, null, null, '60px']}>
