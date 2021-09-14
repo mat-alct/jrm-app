@@ -277,7 +277,7 @@ export const Cutlist: React.FC<CutlistPageProps> = ({
         as="form"
         align="flex"
         onSubmit={createCutlistHandleSubmit(handleCreateCutlist)}
-        direction={['column', 'column', 'column', 'row']}
+        direction={['column', 'column', 'column', 'column', 'row']}
       >
         <Box minW="33%">
           <FormSelect
@@ -288,7 +288,7 @@ export const Cutlist: React.FC<CutlistPageProps> = ({
             options={materialOptions}
           />
         </Box>
-        <Box w="100%" maxW={[null, null, null, '60px']}>
+        <Box w="100%" maxW={[null, null, null, null, '60px']}>
           <FormInput
             {...createCutlistRegister('amount')}
             name="amount"
