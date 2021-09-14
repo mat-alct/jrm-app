@@ -1,10 +1,11 @@
 import { Flex, Image, VStack } from '@chakra-ui/react';
 import firebase from 'firebase/app';
+import { BsArrowLeftRight } from 'react-icons/bs';
 import {
-  FaBackward,
   FaClipboardList,
   FaHome,
   FaRegSquare,
+  FaShoppingCart,
   FaSignOutAlt,
   FaSlack,
   FaUser,
@@ -31,10 +32,10 @@ export const SidebarNav: React.FC = () => {
         alt="Logotipo"
         boxSize="160px"
         mx="auto"
-        mb={12}
-        mt={8}
+        mb={8}
+        mt={4}
       />
-      <VStack spacing={8} ml={8} align="flex-start">
+      <VStack spacing={8} ml={[4, 4, 4, 8]} align="flex-start">
         <NavSection title=" Geral">
           <NavLink icon={FaHome} href="/">
             Início
@@ -58,11 +59,14 @@ export const SidebarNav: React.FC = () => {
           <NavLink icon={FaUserAstronaut} href="/administracao/vendedores">
             Novo vendedor
           </NavLink>
+          <NavLink icon={BsArrowLeftRight} href="#">
+            Transferencias
+          </NavLink>
+          <NavLink icon={FaShoppingCart} href="#">
+            Compras
+          </NavLink>
         </NavSection>
         <NavSection title="Conta">
-          <NavLink icon={FaBackward} href="https://jrmcomp.netlify.app/">
-            Site antigo
-          </NavLink>
           <NavLink
             icon={FaSignOutAlt}
             href="/login"
