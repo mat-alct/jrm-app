@@ -155,10 +155,10 @@ const Transferencias: React.FC = () => {
 
   return (
     <Dashboard>
-      <Header pageTitle="Transferência de Materiais" />
-      <Flex direction="column">
+      <Header pageTitle="Transferências" />
+      <Flex direction="column" w="100%">
         <Stack
-          direction="row"
+          direction={['column', 'column', 'row']}
           spacing={8}
           as="form"
           noValidate
@@ -166,7 +166,7 @@ const Transferencias: React.FC = () => {
           align="flex-end"
           onSubmit={materialRequestHandleSubmit(submitMaterialRequest)}
         >
-          <Box minW="66%" w="100%">
+          <Box minW="50%" w="100%">
             <FormInput
               {...materialRequestRegister('materialRequest')}
               name="materialRequest"
@@ -192,12 +192,18 @@ const Transferencias: React.FC = () => {
             type="submit"
             colorScheme="orange"
             aria-label="Adicionar"
+            w="100%"
           >
             Adicionar
           </IconButton>
         </Stack>
       </Flex>
-      <Flex direction="row" mt={16} align="flex-start" h="100%">
+      <Flex
+        direction={['column', 'column', 'column', 'row']}
+        mt={16}
+        align="flex-start"
+        h="100%"
+      >
         <VStack spacing={4} align="flex-start">
           <Heading mb={8} size="lg">
             Enviar da Japuíba para o Frade
