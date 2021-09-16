@@ -5,7 +5,6 @@ import {
   FaClipboardList,
   FaHome,
   FaRegSquare,
-  FaShoppingCart,
   FaSignOutAlt,
   FaSlack,
   FaUser,
@@ -59,11 +58,8 @@ export const SidebarNav: React.FC = () => {
           <NavLink icon={FaUserAstronaut} href="/administracao/vendedores">
             Novo vendedor
           </NavLink>
-          <NavLink icon={BsArrowLeftRight} href="#">
+          <NavLink icon={BsArrowLeftRight} href="/administracao/transferencias">
             Transferencias
-          </NavLink>
-          <NavLink icon={FaShoppingCart} href="#">
-            Compras
           </NavLink>
         </NavSection>
         <NavSection title="Conta">
