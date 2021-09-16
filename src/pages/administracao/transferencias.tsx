@@ -16,7 +16,7 @@ import {
 import { yupResolver } from '@hookform/resolvers/yup';
 import React from 'react';
 import { useForm } from 'react-hook-form';
-import { FaCheck, FaPlus, FaTrash } from 'react-icons/fa';
+import { FaPlus, FaTrash } from 'react-icons/fa';
 import * as Yup from 'yup';
 
 import { Dashboard } from '../../components/Dashboard';
@@ -38,14 +38,15 @@ const Transferencias: React.FC = () => {
   const {
     register: materialRequestRegister,
     handleSubmit: materialRequestHandleSubmit,
-    setError: materialRequestSetError,
-    setValue: materialRequestSetValue,
     control: materialRequestControl,
     formState: { errors: materialRequestErrors },
   } = useForm<materialRequestProps>({
     resolver: yupResolver(materialRequestSchema),
-    reValidateMode: 'onSubmit',
   });
+
+  const submitMaterialRequest = (submitMaterialData: materialRequestProps) => {
+    console.log(submitMaterialData);
+  };
 
   return (
     <Dashboard>
@@ -56,11 +57,13 @@ const Transferencias: React.FC = () => {
           spacing={8}
           as="form"
           noValidate
-          align="flex-end"
           maxW="700px"
+          align="flex-end"
+          onSubmit={materialRequestHandleSubmit(submitMaterialRequest)}
         >
           <Box minW="66%" w="100%">
             <FormInput
+              {...materialRequestRegister('materialRequest')}
               name="materialRequest"
               error={materialRequestErrors.materialRequest}
               label="Precisamos de:"
@@ -78,6 +81,7 @@ const Transferencias: React.FC = () => {
             label="Na loja do(a):"
             placeholder=""
           />
+
           <IconButton
             icon={<FaPlus />}
             type="submit"
@@ -101,7 +105,7 @@ const Transferencias: React.FC = () => {
                   2 Fitas de Borda 35mm Brancas
                 </Text>
                 <HStack spacing={4}>
-                  <Checkbox size="lg" colorScheme="orange" defaultIsChecked>
+                  <Checkbox size="lg" colorScheme="orange">
                     Separado
                   </Checkbox>
                   <IconButton
