@@ -73,3 +73,10 @@ export interface Order {
   createdAt: firebase.firestore.Timestamp;
   updatedAt: firebase.firestore.Timestamp;
 }
+
+export interface MaterialRequest {
+  material: string;
+  requestStore: string;
+  isSeparated: boolean;
+  createdAt: firebase.firestore.Timestamp;
+}
