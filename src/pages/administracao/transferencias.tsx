@@ -10,6 +10,7 @@ import {
   ListItem,
   Stack,
   Text,
+  useBreakpointValue,
   useToast,
   VStack,
 } from '@chakra-ui/react';
@@ -36,6 +37,7 @@ interface materialRequestProps {
 
 const Transferencias: React.FC = () => {
   const toast = useToast();
+  const isSmall = useBreakpointValue([true, true, true, true, false]);
 
   const materialRequestSchema = Yup.object().shape({
     materialRequest: Yup.string().required('Material obrigatório'),
@@ -199,7 +201,7 @@ const Transferencias: React.FC = () => {
         </Stack>
       </Flex>
       <Flex
-        direction={['column', 'column', 'column', 'row']}
+        direction={['column', 'column', 'column', 'column', 'row']}
         mt={16}
         align="flex-start"
         h="100%"
@@ -215,9 +217,16 @@ const Transferencias: React.FC = () => {
               .map(request => {
                 return (
                   <ListItem key={request.id}>
-                    <HStack spacing={16}>
+                    <HStack spacing={[8, 8, 16]}>
                       <Text
-                        fontSize="20px"
+                        fontSize={[
+                          '16px',
+                          '16px',
+                          '16px',
+                          '16px',
+                          '16px',
+                          '20px',
+                        ]}
                         color={request.isSeparated ? 'gray.300' : 'gray.900'}
                         fontWeight="700"
                       >
@@ -251,7 +260,18 @@ const Transferencias: React.FC = () => {
               })}
           </List>
         </VStack>
-        <Divider h="500px" orientation="vertical" mx={16} color="red" />
+
+        {isSmall ? (
+          <Divider mx={[0, 0, 0, 0, 16]} my={[8, 8, 8, 8, 0]} />
+        ) : (
+          <Divider
+            mx={[0, 0, 0, 0, 16]}
+            my={[8, 8, 8, 8, 0]}
+            orientation="vertical"
+            h="500px"
+          />
+        )}
+
         <VStack spacing={4} align="flex-start">
           <Heading mb={8} size="lg">
             Enviar do Frade para a Japuíba
@@ -263,9 +283,16 @@ const Transferencias: React.FC = () => {
               .map(request => {
                 return (
                   <ListItem key={request.id}>
-                    <HStack spacing={16}>
+                    <HStack spacing={[8, 8, 16]}>
                       <Text
-                        fontSize="20px"
+                        fontSize={[
+                          '16px',
+                          '16px',
+                          '16px',
+                          '16px',
+                          '16px',
+                          '20px',
+                        ]}
                         color={request.isSeparated ? 'gray.300' : 'gray.900'}
                         fontWeight="700"
                       >
