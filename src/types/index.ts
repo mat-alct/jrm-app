@@ -1,13 +1,13 @@
-import firebase from 'firebase/app';
+import { Timestamp } from 'firebase/firestore';
 
 export interface Material {
   name: string;
   width: number;
   height: number;
   price: number;
-  materialType: ['MDF', 'Compensado'];
-  createdAt: firebase.firestore.Timestamp;
-  updatedAt: firebase.firestore.Timestamp;
+  materialType: 'MDF' | 'Compensado'; // Tipo corrigido para união
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
 }
 
 export interface Customer {
@@ -17,8 +17,8 @@ export interface Customer {
   area: string;
   city: string;
   state: string;
-  createdAt: firebase.firestore.Timestamp;
-  updatedAt: firebase.firestore.Timestamp;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
 }
 
 // Cutlist
@@ -47,8 +47,8 @@ export interface Estimate {
   telephone?: string;
   customerId?: string;
   cutlist: Cutlist[];
-  createdAt: firebase.firestore.Timestamp;
-  updatedAt: firebase.firestore.Timestamp;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
 }
 
 export interface Order {
@@ -68,15 +68,15 @@ export interface Order {
   paymentType: string;
   seller: string;
   orderStatus: string;
-  deliveryDate: Date;
+  deliveryDate: Timestamp; // Corrigido para consistência
   ps?: string;
-  createdAt: firebase.firestore.Timestamp;
-  updatedAt: firebase.firestore.Timestamp;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
 }
 
 export interface MaterialRequest {
   material: string;
   requestStore: string;
   isSeparated: boolean;
-  createdAt: firebase.firestore.Timestamp;
+  createdAt: Timestamp;
 }
