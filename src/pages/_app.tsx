@@ -1,18 +1,12 @@
-import 'firebase/firestore';
-import '../styles/reactPrintStyles.css';
-
 import { ChakraProvider } from '@chakra-ui/react';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import type { AppProps } from 'next/app';
 import React from 'react';
-import { QueryClientProvider } from 'react-query';
-import { ReactQueryDevtools } from 'react-query/devtools';
-
-import { AuthProvider } from '../hooks';
-import initAuth from '../services/initAuth';
+import { AuthProvider } from '../hooks/AuthContext';
 import { queryClient } from '../services/queryClient';
 import { theme } from '../styles/theme';
-
-initAuth();
+import '../styles/reactPrintStyles.css';
 
 function MyApp({ Component, pageProps }: AppProps) {
   return (
@@ -20,9 +14,8 @@ function MyApp({ Component, pageProps }: AppProps) {
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <Component {...pageProps} />
-
-          <ReactQueryDevtools />
         </AuthProvider>
+        <ReactQueryDevtools />
       </QueryClientProvider>
     </ChakraProvider>
   );

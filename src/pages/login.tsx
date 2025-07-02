@@ -1,15 +1,14 @@
-import { Box, Button, Flex, Image, Stack, useToast } from '@chakra-ui/react';
-import { yupResolver } from '@hookform/resolvers/yup';
-import firebase from 'firebase/app';
+import { Toaster, toaster } from "@/components/ui/toaster"
+import { Box, Button, Flex, Image, Stack, chakra, VStack } from '@chakra-ui/react';import { yupResolver } from '@hookform/resolvers/yup';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
-import { AuthAction, withAuthUser } from 'next-firebase-auth';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { FormInput } from '../components/Form/Input';
 import { Loader } from '../components/Loader';
 import { loginSchema } from '../utils/yup/pages/login';
+import { useAuth } from '../hooks/authContext'; // Importando o novo hook
 
 interface LoginProps {
   email: string;
@@ -17,8 +16,9 @@ interface LoginProps {
 }
 
 const Login = () => {
-  const toast = useToast();
+  const toast = toaster;
   const router = useRouter();
+  const { signIn, user } = useAuth(); // Usando o novo hook
 
   const {
     register,
@@ -30,17 +30,29 @@ const Login = () => {
 
   const onSubmit = async ({ email, password }: LoginProps) => {
     try {
-      await firebase.auth().signInWithEmailAndPassword(email, password);
-
+      // Chama a função signIn do nosso AuthContext
+      await signIn(email, password);
       router.push('/');
     } catch (err) {
-      toast({
-        status: 'error',
+      toaster.create({
+        type: 'error',
         title: 'Erro de autenticação',
-        description: 'Email ou senha incorretos',
+        description: 'Email ou senha incorretos.',
       });
     }
   };
+
+  // Redireciona se o usuário já estiver logado
+  useEffect(() => {
+    if (user) {
+      router.push('/');
+    }
+  }, [user, router]);
+
+  // Exibe um loader enquanto a sessão é verificada
+  if (user === undefined || user) {
+    return <Loader />;
+  }
 
   return (
     <>
@@ -62,7 +74,7 @@ const Login = () => {
           w="100%"
           mx={['auto', 'auto', 'auto', 'auto', '']}
         >
-          <Flex
+          <chakra.form
             as="form"
             direction="column"
             w={['300px', '350px']}
@@ -71,7 +83,7 @@ const Login = () => {
           >
             <Image src="images/logo.svg" alt="Logotipo" mb={[8, 16]} />
 
-            <Stack spacing={2}>
+            <VStack h="2">
               <FormInput
                 {...register('email')}
                 name="email"
@@ -87,26 +99,19 @@ const Login = () => {
                 error={errors.password}
               />
               <Button
-                isLoading={isSubmitting}
-                isFullWidth
+                loading={isSubmitting}
                 type="submit"
                 bgColor="orange.500"
                 _hover={{ bgColor: 'orange.400' }}
               >
                 Entrar
               </Button>
-            </Stack>
-          </Flex>
+            </VStack>
+          </chakra.form>
         </Flex>
       </Flex>
     </>
   );
 };
 
-export default withAuthUser({
-  whenAuthed: AuthAction.REDIRECT_TO_APP,
-  whenUnauthedBeforeInit: AuthAction.SHOW_LOADER,
-  whenUnauthedAfterInit: AuthAction.RENDER,
-  appPageURL: '/',
-  LoaderComponent: Loader,
-})(Login);
+export default Login;

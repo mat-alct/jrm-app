@@ -1,7 +1,7 @@
 import { useToast } from '@chakra-ui/react';
 import firebase from 'firebase/app';
 import React, { createContext, useContext } from 'react';
-import { useMutation } from 'react-query';
+import { useMutation } from '@tanstack/react-query';
 import { v4 } from 'uuid';
 
 import { queryClient } from '../services/queryClient';

@@ -16,7 +16,6 @@
     "@emotion/styled": "^11.14.1",
     "@hookform/resolvers": "^5.1.1",
     "@tanstack/react-query": "^5.81.5",
-    "@types/firebase": "^3.2.3",
     "axios": "^1.10.0",
     "date-fns": "^4.1.0",
     "firebase": "^11.10.0",
