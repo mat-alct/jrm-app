@@ -1,39 +1,59 @@
 import { useToast } from '@chakra-ui/react';
-import firebase from 'firebase/app';
-import React, { createContext, useContext } from 'react';
 import { useMutation } from '@tanstack/react-query';
+import React, {
+  createContext,
+  useContext,
+  ReactNode,
+} from 'react';
 import { v4 } from 'uuid';
 
+// 1. Importar as funções modulares do Firestore e a instância 'db'
+import {
+  collection,
+  deleteDoc,
+  doc,
+  DocumentData,
+  getDocs,
+  limit,
+  orderBy,
+  query,
+  setDoc,
+  startAt,
+} from 'firebase/firestore';
+
+import { db } from '../services/firebase'; // Importa a instância do Firestore
 import { queryClient } from '../services/queryClient';
 import { Customer } from '../types';
 import { removeUndefinedAndEmptyFields } from '../utils/removeUndefinedAndEmpty';
 
-interface CustomerContext {
+interface CustomerContextData {
   createCustomer: (newCustomerData: Customer) => Promise<void>;
   getCustomers: (
-    searchFilter: string | undefined,
-  ) => Promise<(firebase.firestore.DocumentData & { id: string })[]>;
+    searchFilter: string | undefined
+  ) => Promise<(DocumentData & { id: string })[]>;
   removeCustomer: (id: string) => Promise<void>;
 }
 
-const CustomerContext = createContext<CustomerContext>({} as CustomerContext);
+const CustomerContext = createContext<CustomerContextData>({} as CustomerContextData);
 
-export const CustomerProvider: React.FC = ({ children }) => {
+interface CustomerProviderProps {
+  children: ReactNode;
+}
+
+export const CustomerProvider = ({ children }: CustomerProviderProps) => {
   const toast = useToast();
 
-  // MUTATIONS
+  // --- MUTATIONS ---
 
   const createCustomerMutation = useMutation(
     async (customerData: Customer) => {
-      await firebase
-        .firestore()
-        .collection('customers')
-        .doc(v4())
-        .set(customerData);
+      // 2. Novo padrão para criar/definir um documento
+      const newCustomerRef = doc(db, 'customers', v4()); // Cria a referência do documento
+      await setDoc(newCustomerRef, customerData); // Define os dados no documento
     },
     {
       onSuccess: () => {
-        queryClient.invalidateQueries('customers');
+        queryClient.invalidateQueries({ queryKey: ['customers'] });
       },
       onError: () => {
         toast({
@@ -41,20 +61,22 @@ export const CustomerProvider: React.FC = ({ children }) => {
           title: 'Erro ao criar cliente',
           isClosable: true,
           description:
-            'Um erro ocorreu durante a criação do cliente pelo React Query',
+            'Um erro ocorreu durante a criação do cliente.',
           position: 'top-right',
         });
       },
-    },
+    }
   );
 
   const removeCustomerMutation = useMutation(
     async (id: string) => {
-      await firebase.firestore().collection('customers').doc(id).delete();
+      // 3. Novo padrão para deletar um documento
+      const customerDocRef = doc(db, 'customers', id); // Cria a referência
+      await deleteDoc(customerDocRef); // Deleta o documento
     },
     {
       onSuccess: () => {
-        queryClient.invalidateQueries('customers');
+        queryClient.invalidateQueries({ queryKey: ['customers'] });
       },
       onError: () => {
         toast({
@@ -62,20 +84,18 @@ export const CustomerProvider: React.FC = ({ children }) => {
           title: 'Erro ao remover cliente',
           isClosable: true,
           description:
-            'Um erro ocorreu durante a remoção do cliente pelo React Query',
+            'Um erro ocorreu durante a remoção do cliente.',
         });
       },
-    },
+    }
   );
 
-  // METHODS
+  // --- METHODS ---
 
   const createCustomer = async (newCustomerData: Customer) => {
     try {
       removeUndefinedAndEmptyFields(newCustomerData);
-
       await createCustomerMutation.mutateAsync(newCustomerData);
-
       toast({
         status: 'success',
         title: 'Cliente criado com sucesso',
@@ -91,33 +111,34 @@ export const CustomerProvider: React.FC = ({ children }) => {
   };
 
   const getCustomers = async (searchFilter: string | undefined) => {
+    // A lógica interna desta função não muda
     const capitalizeAndStrip = (input: string) => {
       if (input) {
-        const updatedInput = input
-          .replace(/\S+/g, txt => {
-            // uppercase first letter and add rest unchanged
-            return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
-          })
+        return input
+          .replace(/\S+/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase())
           .trim();
-
-        return updatedInput;
       }
-
       return input;
     };
 
     if (searchFilter) {
-      const response = await firebase
-        .firestore()
-        .collection('customers')
-        .orderBy('name')
-        .startAt(capitalizeAndStrip(searchFilter))
-        .limit(5)
-        .get();
+      const capitalizedFilter = capitalizeAndStrip(searchFilter);
 
-      const allCustomers = response.docs.map(doc =>
-        Object.assign(doc.data() as Customer, { id: doc.id }),
+      // 4. Novo padrão para realizar uma consulta (query)
+      const customersCollectionRef = collection(db, 'customers'); // Referência da coleção
+      const q = query( // Composição da query
+        customersCollectionRef,
+        orderBy('name'),
+        startAt(capitalizedFilter),
+        limit(5)
       );
+
+      const querySnapshot = await getDocs(q); // Execução da query
+
+      const allCustomers = querySnapshot.docs.map((document) => ({
+        ...(document.data() as Customer),
+        id: document.id,
+      }));
 
       return allCustomers;
     }
@@ -128,7 +149,6 @@ export const CustomerProvider: React.FC = ({ children }) => {
   const removeCustomer = async (id: string) => {
     try {
       await removeCustomerMutation.mutateAsync(id);
-
       toast({
         status: 'success',
         title: 'Cliente removido com sucesso',
@@ -154,11 +174,11 @@ export const CustomerProvider: React.FC = ({ children }) => {
   );
 };
 
-export function useCustomer(): CustomerContext {
+export function useCustomer(): CustomerContextData {
   const context = useContext(CustomerContext);
 
   if (!context) {
-    throw new Error('useCustomer must be used within an AuthProvider');
+    throw new Error('useCustomer deve ser usado dentro de um CustomerProvider');
   }
 
   return context;
