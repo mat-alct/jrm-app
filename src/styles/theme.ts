@@ -21,21 +21,20 @@ export const theme = createSystem(defaultConfig, {
         heading: {value: 'Roboto'} ,
         body: {value: 'Roboto'} ,
       },
-      styles: {
-        global: {
-          body: {
-            color: {value: 'gray.800'} ,
-          },
-        },
-      },
-      components: {
-        Button: {
-          baseStyle: {
-            cursor: 'pointer',
-          },
-        },
+      // styles: {
+      //   global: {
+      //     body: {
+      //       color: {value: 'gray.800'} ,
+      //     },
+      //   },
+      // },
+      // components: {
+      //   Button: {
+      //     baseStyle: {
+      //       cursor: 'pointer',
+      //     },
+      //   },
       },
     }
   }
-
-});
+);
