@@ -3,14 +3,14 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import type { AppProps } from 'next/app';
 import React from 'react';
-import { AuthProvider } from '../hooks/AuthContext';
+import { AuthProvider } from '../hooks/authContext';
 import { queryClient } from '../services/queryClient';
 import { theme } from '../styles/theme';
 import '../styles/reactPrintStyles.css';
 
 function MyApp({ Component, pageProps }: AppProps) {
   return (
-    <ChakraProvider theme={theme}>
+    <ChakraProvider value={theme}>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <Component {...pageProps} />
