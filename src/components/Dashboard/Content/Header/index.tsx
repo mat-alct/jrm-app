@@ -16,6 +16,7 @@ import { useSidebarDrawer } from '../../../../hooks/sidebar';
 interface HeaderProps {
   pageTitle: string;
   isLoading?: boolean;
+  children: React.ReactNode;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -44,12 +45,14 @@ export const Header: React.FC<HeaderProps> = ({
         {!isWideVersion && (
           <IconButton
             aria-label="Open navigation"
-            icon={<Icon as={RiMenuLine} />}
             fontSize="24"
-            variant="unstyled"
+            variant="subtle"
             onClick={onOpen}
             mr="2"
-          />
+
+          >
+            <RiMenuLine />
+          </IconButton>
         )}
 
         <Heading color="gray.700">
@@ -61,7 +64,7 @@ export const Header: React.FC<HeaderProps> = ({
         {!isWideVersion && <Box />}
       </Flex>
 
-      <HStack spacing={4}>{children}</HStack>
+      <HStack gap={4}>{children}</HStack>
     </Flex>
   );
 };
