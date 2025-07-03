@@ -1,8 +1,7 @@
 import {
-  FormControl,
-  FormErrorMessage,
-  FormLabel,
+  Fieldset,
   Input,
+  Field,
   InputProps as ChakraInputProps,
   useBreakpointValue,
 } from '@chakra-ui/react';
@@ -23,31 +22,31 @@ const InputBase: ForwardRefRenderFunction<HTMLInputElement, InputProps> = (
   const inputSize = useBreakpointValue(['sm', 'sm', 'md', 'md', 'lg', 'lg']);
 
   return (
-    <FormControl
-      isInvalid={!!error}
+    <Fieldset.Root
+      invalid={!!error}
       display={isHorizontal ? 'flex' : ''}
       alignItems={isHorizontal ? 'center' : ''}
     >
       {label && (
-        <FormLabel htmlFor={name} mb={isHorizontal ? 0 : 2}>
+        <Field.Label htmlFor={name} mb={isHorizontal ? 0 : 2}>
           {label}
-        </FormLabel>
+        </Field.Label>
       )}
       <Input
         ref={ref}
         id={name}
         name={name}
-        focusBorderColor="orange.500"
-        size={inputSize}
+        // focusBorderColor="orange.500"
+        // size={inputSize}
         {...rest}
       />
       {!!error && (
         // Role is necessary for validation tests
-        <FormErrorMessage role="alert" ml={isHorizontal ? 4 : 0}>
+        <Field.ErrorText role="alert" ml={isHorizontal ? 4 : 0}>
           {error.message}
-        </FormErrorMessage>
+        </Field.ErrorText>
       )}
-    </FormControl>
+    </Fieldset.Root>
   );
 };
 
