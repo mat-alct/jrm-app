@@ -83,7 +83,7 @@ const Login = () => {
           >
             <Image src="images/logo.svg" alt="Logotipo" mb={[8, 16]} />
 
-            <VStack h="2">
+            <VStack>
               <FormInput
                 {...register('email')}
                 name="email"
@@ -103,6 +103,7 @@ const Login = () => {
                 type="submit"
                 bgColor="orange.500"
                 _hover={{ bgColor: 'orange.400' }}
+                width={"100%"}
               >
                 Entrar
               </Button>

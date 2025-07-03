@@ -15,11 +15,16 @@ type InputProps = ChakraInputProps & {
   isHorizontal?: boolean;
 };
 
+type InputSize = NonNullable<ChakraInputProps['size']>;
+
 const InputBase: ForwardRefRenderFunction<HTMLInputElement, InputProps> = (
   { name, label, error, isHorizontal, ...rest },
   ref,
 ) => {
-  const inputSize = useBreakpointValue(['sm', 'sm', 'md', 'md', 'lg', 'lg']);
+  const possibleSize = useBreakpointValue(['sm', 'sm', 'md', 'md', 'lg', 'lg']);
+  const inputSize: InputSize = (possibleSize || 'md') as InputSize;
+
+  console.log(inputSize);
 
   return (
     <Fieldset.Root
@@ -36,8 +41,8 @@ const InputBase: ForwardRefRenderFunction<HTMLInputElement, InputProps> = (
         ref={ref}
         id={name}
         name={name}
-        // focusBorderColor="orange.500"
-        // size={inputSize}
+        borderColor="orange.500"
+        size={inputSize}
         {...rest}
       />
       {!!error && (
