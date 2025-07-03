@@ -24,13 +24,15 @@ const InputBase: ForwardRefRenderFunction<HTMLInputElement, InputProps> = (
   const possibleSize = useBreakpointValue(['sm', 'sm', 'md', 'md', 'lg', 'lg']);
   const inputSize: InputSize = (possibleSize || 'md') as InputSize;
 
+  console.log(error);
+
   return (
     <Fieldset.Root
       invalid={!!error}
       display={isHorizontal ? 'flex' : ''}
       alignItems={isHorizontal ? 'center' : ''}
     >
-      <Field.Root>
+      <Field.Root invalid>
       {label && (
         <Field.Label htmlFor={name} mb={isHorizontal ? 0 : 2}>
           {label}
