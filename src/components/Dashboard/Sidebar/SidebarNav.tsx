@@ -14,7 +14,11 @@ import {
 import { NavLink } from './NavLink';
 import { NavSection } from './NavSection';
 
+import { useAuth } from '../../../hooks/authContext'; // Importando o novo hook
+
 export const SidebarNav: React.FC = () => {
+  const {signOut} = useAuth();
+
   return (
     <Flex
       direction="column"
@@ -34,7 +38,7 @@ export const SidebarNav: React.FC = () => {
         mb={8}
         mt={4}
       />
-      <VStack spacing={8} ml={[4, 4, 4, 8]} align="flex-start">
+      <VStack gap={8} ml={[4, 4, 4, 8]} align="flex-start">
         <NavSection title=" Geral">
           <NavLink icon={FaHome} href="/">
             Início
@@ -66,7 +70,7 @@ export const SidebarNav: React.FC = () => {
           <NavLink
             icon={FaSignOutAlt}
             href="/login"
-            onClick={() => firebase.auth().signOut()}
+            onClick={() => signOut()}
           >
             Sair
           </NavLink>
