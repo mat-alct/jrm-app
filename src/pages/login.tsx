@@ -29,6 +29,7 @@ const Login = () => {
   });
 
   const onSubmit = async ({ email, password }: LoginProps) => {
+    console.log('1. onSubmit foi chamado com:', { email, password }); // <-- ADICIONE AQUI
     try {
       // Chama a função signIn do nosso AuthContext
       await signIn(email, password);
