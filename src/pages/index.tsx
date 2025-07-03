@@ -1,6 +1,7 @@
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import React, { useEffect } from 'react';
+import { Button, Flex } from '@chakra-ui/react'; // 1. Importe Button e Flex
 
 import { Dashboard } from '../components/Dashboard';
 import { Header } from '../components/Dashboard/Content/Header';
@@ -8,7 +9,7 @@ import { Loader } from '../components/Loader';
 import { useAuth } from '../hooks/authContext'; // Importando o novo hook
 
 const Home = () => {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const router = useRouter();
 
   // Efeito para proteger a rota
@@ -33,6 +34,11 @@ const Home = () => {
       {/* <Dashboard>
         <Header pageTitle="Início" />
       </Dashboard> */}
+      <Flex p="8" justify="flex-end">
+        <Button colorScheme="red" onClick={signOut}>
+          Sair
+        </Button>
+      </Flex>
     </>
   );
 };
