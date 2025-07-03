@@ -31,14 +31,9 @@ const Home = () => {
       <Head>
         <title>Início | JRM Compensados</title>
       </Head>
-      {/* <Dashboard>
+      <Dashboard>
         <Header pageTitle="Início" />
-      </Dashboard> */}
-      <Flex p="8" justify="flex-end">
-        <Button colorScheme="red" onClick={signOut}>
-          Sair
-        </Button>
-      </Flex>
+      </Dashboard>
     </>
   );
 };

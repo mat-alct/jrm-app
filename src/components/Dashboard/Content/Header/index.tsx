@@ -16,7 +16,7 @@ import { useSidebarDrawer } from '../../../../hooks/sidebar';
 interface HeaderProps {
   pageTitle: string;
   isLoading?: boolean;
-  children: React.ReactNode;
+  children?: React.ReactNode;
 }
 
 export const Header: React.FC<HeaderProps> = ({

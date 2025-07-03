@@ -20,7 +20,7 @@ export const Sidebar = () => {
 
   if (isDrawerSidebar) {
     return (
-      <Drawer isOpen={isOpen} placement="left" onClose={onClose}>
+      <Drawer.Root isOpen={isOpen} placement="start" onClose={onClose}>
         <DrawerOverlay>
           <DrawerContent p="4">
             <DrawerCloseButton mt="6" />
@@ -30,7 +30,7 @@ export const Sidebar = () => {
             </DrawerBody>
           </DrawerContent>
         </DrawerOverlay>
-      </Drawer>
+      </Drawer.Root>
     );
   }
 

@@ -3,14 +3,20 @@ import { MaterialProvider } from './material';
 import { OrderProvider } from './order';
 import { SidebarDrawerProvider } from './sidebar';
 
-export const AuthProvider: React.FC = ({ children }) => {
+type AuthProviderProps = {
+  children: React.ReactNode;
+};
+
+export const AuthProvider = ({ children }: AuthProviderProps) => {
   return (
     <SidebarDrawerProvider>
-      <OrderProvider>
-        <MaterialProvider>
-          <CustomerProvider>{children} </CustomerProvider>
-        </MaterialProvider>
-      </OrderProvider>
+      {/* <OrderProvider> */}
+        {/* <MaterialProvider> */}
+          {/* <CustomerProvider> */}
+              {children}
+          {/* </CustomerProvider> */}
+        {/* </MaterialProvider> */}
+      {/* </OrderProvider> */}
     </SidebarDrawerProvider>
   );
 };
