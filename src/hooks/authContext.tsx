@@ -37,9 +37,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Função de login que será usada na página de login
   const signIn = async (email: string, password: string) => {
-    // Usa a função modular do Firebase v9+
-    await signInWithEmailAndPassword(auth, email, password);
-  };
+    // 1. Primeiro, autentica no lado do cliente como você já faz
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+
+    // 2. PEÇA-CHAVE FALTANTE: Pega o ID Token do usuário
+    const token = await userCredential.user.getIdToken();
+
+    // 3. Envia o token para a sua API route para criar o cookie de sessão
+    await fetch('/api/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ token }),
+  });
+};
 
   // Função de logout
   const signOut = async () => {

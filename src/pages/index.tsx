@@ -30,9 +30,9 @@ const Home = () => {
       <Head>
         <title>Início | JRM Compensados</title>
       </Head>
-      <Dashboard>
+      {/* <Dashboard>
         <Header pageTitle="Início" />
-      </Dashboard>
+      </Dashboard> */}
     </>
   );
 };
