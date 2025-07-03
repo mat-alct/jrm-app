@@ -53,10 +53,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
   });
 };
 
-  // Função de logout
   const signOut = async () => {
+    // 1. PEÇA-CHAVE FALTANTE: Informa o backend para remover o cookie de sessão
+    await fetch('/api/logout', {
+      method: 'POST',
+    });
+
+    // 2. Desloga o usuário no lado do cliente
     await firebaseSignOut(auth);
-    router.push('/login'); // Redireciona após o logout
+
+    // 3. Redireciona (opcional, pode ser mantido aqui ou movido para o componente que chama signOut)
+    // router.push('/login'); // O redirecionamento já é feito no componente de login, então pode não ser necessário aqui.
   };
 
   // Efeito que monitora o estado de autenticação em tempo real
