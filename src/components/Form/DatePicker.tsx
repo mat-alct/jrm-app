@@ -3,9 +3,7 @@ import 'react-datepicker/dist/react-datepicker.css';
 
 import {
   Box,
-  FormControl,
-  FormErrorMessage,
-  FormLabel,
+  Fieldset
 } from '@chakra-ui/react';
 import { addDays, getDay, isWeekend } from 'date-fns';
 import ptBR from 'date-fns/locale/pt-BR';
@@ -40,15 +38,15 @@ export const FormDatePicker: React.FC<DatePickerProps> = ({
     return day !== 0 && day !== 6;
   };
 
-  registerLocale('ptBR', ptBR);
+  // registerLocale('ptBR', ptBR);
 
   return (
-    <FormControl display="flex" flexDirection="row" isInvalid={!!errors[name]}>
-      <FormLabel mb={0}>Data de Entrega:</FormLabel>
+    <Fieldset.Root display="flex" flexDirection="row" invalid={!!errors[name]}>
+      <Fieldset.Legend mb={0}>Data de Entrega:</Fieldset.Legend>
       <Box>
         <DatePicker
           selected={field.value}
-          onChange={(date: Date) => field.onChange(date)}
+          // onChange={(date: Date) => field.onChange(date)}
           locale="ptBR"
           dateFormat="P"
           filterDate={isWeekday}
@@ -56,9 +54,9 @@ export const FormDatePicker: React.FC<DatePickerProps> = ({
           name={name}
         />
       </Box>
-      {!!errors[name] && (
-        <FormErrorMessage role="alert">{errors[name].message}</FormErrorMessage>
-      )}
-    </FormControl>
+      {/* {!!errors[name] && (
+        <Fieldset.ErrorText role="alert">{errors[name].message}</Fieldset.ErrorText>
+      )} */}
+    </Fieldset.Root>
   );
 };
