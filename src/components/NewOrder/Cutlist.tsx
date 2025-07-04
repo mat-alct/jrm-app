@@ -5,6 +5,8 @@ import 'react-datepicker/dist/react-datepicker.css';
 import {
   Box,
   Button,
+  Field,
+  Fieldset,
   Flex,
   Heading,
   HStack,
@@ -173,11 +175,11 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
     <Flex as="article" direction="column" mb={4}>
       <HStack gap={4}>
         <Heading color="gray.600" size="lg" whiteSpace="nowrap">Plano de Corte</Heading>
-        <Divider />
+        <Box divideX="2px" />
       </HStack>
       <Flex align="center" justify={['center', 'space-between']} direction={['column', 'row']}>
-        <FormControl mt={4} mb={8}>
-          <FormLabel mb={0}>Base de cálculo</FormLabel>
+        <Fieldset.Root mt={4} mb={8}>
+          <Fieldset.Legend mb={0}>Base de cálculo</Fieldset.Legend>
           {/* 3. A estrutura do RadioGroup foi atualizada para o novo padrão */}
           <RadioGroup.Root
             colorScheme="orange"
@@ -189,7 +191,7 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
             }}
             size={radioSize}
           >
-            <HStack spacing={[2, 2, 4]}>
+            <HStack gap={[2, 2, 4]}>
               <RadioGroup.Item value="75">
                 <RadioGroup.ItemHiddenInput />
                 <RadioGroup.ItemIndicator />
@@ -207,7 +209,7 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
               </RadioGroup.Item>
             </HStack>
           </RadioGroup.Root>
-        </FormControl>
+        </Fieldset.Root>
         <Text whiteSpace="nowrap" fontSize={['md', 'md', 'xl', '2xl', '3xl']} color="green.500" mb={[8, 0]}>
           {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
             cutlist.reduce((prev, curr) => prev + curr.price, 0),
@@ -217,8 +219,8 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
       <Stack as="form" align="flex" onSubmit={createCutlistHandleSubmit(handleCreateCutlist)} direction={['column', 'column', 'column', 'column', 'row']}>
         <Box minW="33%"><FormSelect name="materialId" control={createCutlistControl} isClearable placeholder="Material" options={materialOptions} /></Box>
         <Box w="100%" maxW={[null, null, null, null, '60px']}><FormInput {...createCutlistRegister('amount')} name="amount" placeholder="Qtd" error={createCutlistErrors.amount} size="md" /></Box>
-        <InputGroup w="100%"><Box mr={2} w="100%"><FormInput {...createCutlistRegister('sideA')} name="sideA" placeholder="Lado A" error={createCutlistErrors.sideA} size="md" /></Box><Box w="100%" maxW="90px"><FormSelect control={createCutlistControl} name="borderA" options={borderOptions} defaultValue={0} /></Box></InputGroup>
-        <InputGroup w="100%"><Box w="100%" mr={2}><FormInput {...createCutlistRegister('sideB')} name="sideB" placeholder="Lado B" error={createCutlistErrors.sideB} size="md" /></Box><Box w="100%" maxW="90px"><FormSelect name="borderB" control={createCutlistControl} options={borderOptions} defaultValue={0} /></Box></InputGroup>
+        <Field.Root w="100%"><Box mr={2} w="100%"><FormInput {...createCutlistRegister('sideA')} name="sideA" placeholder="Lado A" error={createCutlistErrors.sideA} size="md" /></Box><Box w="100%" maxW="90px"><FormSelect control={createCutlistControl} name="borderA" options={borderOptions} defaultValue={0} /></Box></Field.Root>
+        <Field.Root w="100%"><Box w="100%" mr={2}><FormInput {...createCutlistRegister('sideB')} name="sideB" placeholder="Lado B" error={createCutlistErrors.sideB} size="md" /></Box><Box w="100%" maxW="90px"><FormSelect name="borderB" control={createCutlistControl} options={borderOptions} defaultValue={0} /></Box></Field.Root>
         <Button colorScheme="orange" size="md" w="100%" type="submit">Adicionar</Button>
       </Stack>
       <Box overflowX="auto">
