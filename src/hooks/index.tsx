@@ -7,7 +7,7 @@ type AuthProviderProps = {
   children: React.ReactNode;
 };
 
-export const AuthProvider = ({ children }: AuthProviderProps) => {
+export const Providers = ({ children }: AuthProviderProps) => {
   return (
     <SidebarDrawerProvider>
       {/* <OrderProvider> */}

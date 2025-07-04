@@ -20,7 +20,7 @@ export const Sidebar = () => {
 
   if (isDrawerSidebar) {
     return (
-      <Drawer.Root open={isOpen} placement="start" onOpenChange={e => {if (!e.open) {onClose()}}}>
+      <Drawer.Root open={isOpen} placement="end" onOpenChange={e => {if (!e.open) {onClose()}}}>
         <Portal>
           <Drawer.Backdrop />
           <Drawer.Positioner>
@@ -37,6 +37,7 @@ export const Sidebar = () => {
               top="3"
               right="4"
               >
+                <CloseButton />
             </Drawer.CloseTrigger>
             </Drawer.Content>
           </Drawer.Positioner>

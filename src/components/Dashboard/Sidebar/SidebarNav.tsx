@@ -33,10 +33,10 @@ export const SidebarNav: React.FC = () => {
       <Image
         src="/images/logo.svg"
         alt="Logotipo"
-        boxSize="160px"
+        boxSize="200px"
         mx="auto"
-        mb={8}
-        mt={4}
+        mb={12}
+        mt={10}
       />
       <VStack gap={8} ml={[4, 4, 4, 8]} align="flex-start">
         <NavSection title=" Geral">
@@ -50,9 +50,6 @@ export const SidebarNav: React.FC = () => {
           </NavLink>
           <NavLink icon={FaClipboardList} href="/cortes/listadecortes">
             Listar serviços
-          </NavLink>
-          <NavLink icon={FaUser} href="/cortes/clientes">
-            Clientes
           </NavLink>
           <NavLink icon={FaRegSquare} href="/cortes/materiais">
             Materiais
