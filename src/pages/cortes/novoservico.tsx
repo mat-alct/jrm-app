@@ -1,7 +1,6 @@
-import { HStack, Radio, RadioGroup } from '@chakra-ui/react';
+import { HStack, RadioGroup } from '@chakra-ui/react';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
-import { AuthAction, withAuthUser } from 'next-firebase-auth';
 import React, { useCallback, useEffect, useState } from 'react';
 
 import { Dashboard } from '../../components/Dashboard';
@@ -10,12 +9,23 @@ import { Loader } from '../../components/Loader';
 import { Cutlist } from '../../components/NewOrder/Cutlist';
 import { OrderData } from '../../components/NewOrder/OrderData';
 import { Cutlist as CutlistType } from '../../types';
+import {useAuth}from '../../hooks/authContext'
 
 const NovoServiço = () => {
+  const { user } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (user === null) {
+      router.push('/login');
+    }
+  }, [user, router]);
+
+
   // * Cutlist Data
   const [cutlist, setCutlist] = useState<CutlistType[]>([]);
 
-  const { query } = useRouter();
+  const { query } = router;
 
   const updateCutlist = useCallback(
     (cutlistData: CutlistType[], maintainOldValues = true) => {
@@ -70,6 +80,11 @@ const NovoServiço = () => {
     return undefined;
   });
 
+  // Exibe um loader enquantoa autenticação é verificada
+  if (!user) {
+    return <Loader />;
+  }
+
   return (
     <>
       <Head>
@@ -81,20 +96,24 @@ const NovoServiço = () => {
             orderType === 'Orçamento' ? 'Orçamento' : 'Serviço'
           }`}
         >
-          <RadioGroup
+          <RadioGroup.Root
             colorScheme="orange"
             value={orderType}
-            onChange={setOrderType}
+            onValueChange={(e) => {if (e.value) {setOrderType(e.value)}}}
           >
-            <HStack spacing={[4, 4, 8]}>
-              <Radio isChecked id="isOrder" name="isOrder" value="Serviço">
-                Pedido
-              </Radio>
-              <Radio id="isEstimate" name="isEstimate" value="Orçamento">
-                Orçamento
-              </Radio>
+            <HStack gap={[4, 4, 8]}>
+              <RadioGroup.Item value="Serviço">
+                <RadioGroup.ItemHiddenInput />
+                <RadioGroup.ItemIndicator />
+                <RadioGroup.ItemText>Pedido</RadioGroup.ItemText>
+              </RadioGroup.Item>
+              <RadioGroup.Item value="Orçamento">
+                <RadioGroup.ItemHiddenInput />
+                <RadioGroup.ItemIndicator />
+                <RadioGroup.ItemText>Orçamento</RadioGroup.ItemText>
+              </RadioGroup.Item>
             </HStack>
-          </RadioGroup>
+          </RadioGroup.Root>
         </Header>
 
         {/* Plano de Corte */}
@@ -110,10 +129,4 @@ const NovoServiço = () => {
   );
 };
 
-export default withAuthUser({
-  whenAuthed: AuthAction.RENDER,
-  whenUnauthedAfterInit: AuthAction.REDIRECT_TO_LOGIN,
-  whenUnauthedBeforeInit: AuthAction.SHOW_LOADER,
-  authPageURL: '/login',
-  LoaderComponent: Loader,
-})(NovoServiço);
+export default NovoServiço;
