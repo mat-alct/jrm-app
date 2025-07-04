@@ -81,8 +81,8 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
     reValidateMode: 'onSubmit',
   });
 
-  const radioSize = useBreakpointValue(['sm', 'sm', 'md']);
-  const tableSize = useBreakpointValue(['sm', 'sm', 'md']);
+  const radioSize = useBreakpointValue(['sm', 'sm', 'md'], {fallback: 'sm'});
+  const tableSize = useBreakpointValue(['sm', 'sm', 'md'], {fallback: 'sm'});
 
   const { getAllMaterials, materialOptions } = useMaterial();
 
