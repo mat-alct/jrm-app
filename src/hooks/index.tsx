@@ -10,13 +10,13 @@ type AuthProviderProps = {
 export const Providers = ({ children }: AuthProviderProps) => {
   return (
     <SidebarDrawerProvider>
-      {/* <OrderProvider> */}
+      <OrderProvider>
         {/* <MaterialProvider> */}
           {/* <CustomerProvider> */}
               {children}
           {/* </CustomerProvider> */}
         {/* </MaterialProvider> */}
-      {/* </OrderProvider> */}
+      </OrderProvider>
     </SidebarDrawerProvider>
   );
 };
