@@ -1,9 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
-  FormControl,
-  FormErrorMessage,
-  FormLabel,
-  Radio,
+  Fieldset,
   RadioGroup,
   Stack,
   useBreakpointValue,
@@ -41,36 +38,36 @@ export const FormRadio: React.FC<FormRadioProps> = ({
   const radioSize = useBreakpointValue(['sm', 'sm', 'md', 'md', 'lg', 'lg']);
 
   return (
-    <FormControl
-      isInvalid={!!errors[name]}
+    <Fieldset.Root
+      invalid={!!errors[name]}
       display={isLabelHorizontal ? 'flex' : ''}
     >
       {label && (
-        <FormLabel mb={isLabelHorizontal ? '0' : ''}>{label}</FormLabel>
+        <Fieldset.Legend mb={isLabelHorizontal ? '0' : ''}>{label}</Fieldset.Legend>
       )}
-      <RadioGroup
+      <RadioGroup.Root
         value={field.value}
         onChange={field.onChange}
         colorScheme="orange"
-        size={radioSize}
+        // size={radioSize}
       >
-        <Stack spacing={4} direction={isHorizontal ? 'row' : 'column'}>
+        <Stack gap={4} direction={isHorizontal ? 'row' : 'column'}>
           {options.map(option => (
-            <Radio
-              size={radioSize}
-              name={option}
+            <RadioGroup.Item
+              // size={radioSize}
+              // name={option}
               id={option}
               value={option}
               key={option}
             >
               {option}
-            </Radio>
+            </RadioGroup.Item>
           ))}
         </Stack>
-      </RadioGroup>
-      {!!errors[name] && (
-        <FormErrorMessage role="alert">{errors[name].message}</FormErrorMessage>
-      )}
-    </FormControl>
+      </RadioGroup.Root>
+      {/* {!!errors[name] && (
+        <Fieldset.ErrorText role="alert">{errors[name].message}</Fieldset.ErrorText>
+      )} */}
+    </Fieldset.Root>
   );
 };

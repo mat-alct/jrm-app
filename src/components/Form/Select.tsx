@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { FormControl, FormErrorMessage, FormLabel } from '@chakra-ui/react';
+import { Fieldset } from '@chakra-ui/react';
 import React from 'react';
 import { Control, useController } from 'react-hook-form';
 import Select from 'react-select';
@@ -40,11 +40,11 @@ export const FormSelect: React.FC<FormSelectProps> = ({
   });
 
   return (
-    <FormControl isInvalid={!!errors[name]}>
+    <Fieldset.Root invalid={!!errors[name]}>
       {label && (
-        <FormLabel color="gray.700" htmlFor={name}>
+        <Fieldset.Legend color="gray.700">
           {label}
-        </FormLabel>
+        </Fieldset.Legend>
       )}
       <Select
         id={name}
@@ -53,12 +53,12 @@ export const FormSelect: React.FC<FormSelectProps> = ({
         isClearable={isClearable}
         placeholder={placeholder}
         isDisabled={isDisabled}
-        value={options.find(c => c.value === field.value)}
+        // value={options.find(c => c.value === field.value)}
         onChange={val => field.onChange(val?.value)}
       />
-      {!!errors[name] && (
-        <FormErrorMessage role="alert">{errors[name].message}</FormErrorMessage>
-      )}
-    </FormControl>
+      {/* {!!errors[name] && (
+        <Fieldset.ErrorText role="alert">{errors[name].message}</Fieldset.ErrorText>
+      )} */}
+    </Fieldset.Root>
   );
 };
