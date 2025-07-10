@@ -124,6 +124,7 @@ const Materiais = () => {
       isSubmitting: createMaterialIsSubmitting,
     },
   } = useForm<Material>({
+    // @ts-ignore
     resolver: yupResolver(createMaterialSchema),
   });
 
@@ -142,11 +143,11 @@ const Materiais = () => {
   // --- Bloco de Funções de Manipulação (Handlers) ---
 
   // Função chamada ao submeter o formulário de criação de material.
-  const handleCreateMaterial = async (newMaterialData: Material) => {
+  const handleCreateMaterial = async (formData: CreateMaterialFormData) => {
     onClose(); // Fecha o modal.
     // Chama a função do contexto para criar o material, adicionando timestamps.
     await createMaterial({
-      ...newMaterialData,
+      ...formData,
       createdAt: Timestamp.fromDate(new Date()),
       updatedAt: Timestamp.fromDate(new Date()),
     });
@@ -217,12 +218,13 @@ const Materiais = () => {
 
         {/* Modal para criar novo material. Controlado pelo useDisclosure. */}
         <FormModal
-          isOpen={isOpen}
+          isOpen={open}
           title="Novo Material"
           onClose={onClose}
+          // @ts-ignore
           onSubmit={createMaterialHandleSubmit(handleCreateMaterial)}
         >
-          <VStack as="form" gap={4} mx="auto" noValidate>
+          <Box as="form" gap={4} mx="auto">
             {/* Inputs do formulário de criação. */}
             <FormInput
               {...createMaterialRegister('name')}
@@ -258,7 +260,7 @@ const Materiais = () => {
               isHorizontal
               options={['MDF', 'Compensado']}
             />
-          </VStack>
+          </Box>
         </FormModal>
 
         {/* Modal para atualizar preço. */}
@@ -268,14 +270,14 @@ const Materiais = () => {
           onClose={onClosePrice}
           onSubmit={updatePriceHandleSubmit(handleUpdatePrice)}
         >
-          <VStack as="form" gap={4} mx="auto" noValidate>
+          <Box as="form" gap={4} mx="auto">
             <FormInput
               {...updatePriceRegister('newPrice')}
               error={updatePriceErrors.newPrice}
               name="newPrice"
               label="Novo preço"
             />
-          </VStack>
+          </Box>
         </FormModal>
 
         {/* Filtro para alternar entre MDF e Compensado. */}
