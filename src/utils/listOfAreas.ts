@@ -93,4 +93,5 @@ export const areas = [
   'Provetá',
   'Goxuma',
   'Matariz',
+  'Vila Residencial',
 ];
