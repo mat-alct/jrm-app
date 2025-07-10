@@ -1,5 +1,14 @@
-import { Toaster, toaster } from "@/components/ui/toaster"
-import { Box, Button, Flex, Image, Stack, chakra, VStack } from '@chakra-ui/react';import { yupResolver } from '@hookform/resolvers/yup';
+import { Toaster, toaster } from '@/components/ui/toaster';
+import {
+  Box,
+  Button,
+  Flex,
+  Image,
+  Stack,
+  chakra,
+  VStack,
+} from '@chakra-ui/react';
+import { yupResolver } from '@hookform/resolvers/yup';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import React, { useEffect } from 'react';
@@ -104,7 +113,7 @@ const Login = () => {
                 type="submit"
                 bgColor="orange.500"
                 _hover={{ bgColor: 'orange.400' }}
-                width={"100%"}
+                width={'100%'}
               >
                 Entrar
               </Button>

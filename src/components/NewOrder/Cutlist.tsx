@@ -81,6 +81,7 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
     reValidateMode: 'onSubmit',
   });
 
+  // @ts-ignore
   const radioSize = useBreakpointValue(['sm', 'sm', 'md'], {fallback: 'sm'});
   const tableSize = useBreakpointValue(['sm', 'sm', 'md'], {fallback: 'sm'});
 
@@ -189,6 +190,7 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
                 updatePricePercent(e.value);
               }
             }}
+            // @ts-ignore
             size={radioSize}
           >
             <HStack gap={[2, 2, 4]}>
@@ -225,6 +227,7 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
       </Stack>
       <Box overflowX="auto">
         {cutlist.length > 0 && (
+        // @ts-ignore
           <Table.Root colorScheme="orange" mt={8} size={tableSize} whiteSpace="nowrap">
             <TableCaption>Lista de peças</TableCaption>
             <Table.Header><Table.Row><Table.ColumnHeader>Fita de Borda</Table.ColumnHeader><Table.ColumnHeader>Material</Table.ColumnHeader><Table.ColumnHeader>Qtd</Table.ColumnHeader><Table.ColumnHeader>Lado A</Table.ColumnHeader><Table.ColumnHeader>Lado B</Table.ColumnHeader><Table.ColumnHeader>Preço</Table.ColumnHeader><Table.ColumnHeader /></Table.Row></Table.Header>
