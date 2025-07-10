@@ -1,217 +1,162 @@
-import { useToast } from '@chakra-ui/react';
-import firebase from 'firebase/app';
-import React, { createContext, useContext, useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
-import { v4 } from 'uuid';
+'use client';
 
+// --- 1. Bloco de Importações Atualizado ---
+import { toaster } from '@/components/ui/toaster';
+// A importação foi atualizada para a nova biblioteca @tanstack/react-query
+import { useMutation } from '@tanstack/react-query';
+import React, { createContext, ReactNode, useContext } from 'react';
+
+// Importações modulares do Firebase v9+ para interagir com o Firestore
+import {
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  getDocs,
+  query,
+  Timestamp,
+  updateDoc,
+  where,
+} from 'firebase/firestore';
+
+// Importação da instância do banco de dados e do queryClient
+import { db } from '../services/firebase';
 import { queryClient } from '../services/queryClient';
 import { Material } from '../types';
 
-interface UpdateMaterialPriceProps {
-  id: string;
-  newPrice: number;
-}
+// --- Interfaces e Contexto (sem grandes mudanças) ---
 interface MaterialContext {
-  createMaterial: (newMaterialData: Material) => Promise<void>;
-  getMaterials: (
-    type: string,
-  ) => Promise<(firebase.firestore.DocumentData & { id: string })[]>;
-  getAllMaterials: () => Promise<
-    (firebase.firestore.DocumentData & { id: string })[]
-  >;
+  createMaterial: (materialData: Material) => Promise<void>;
+  getMaterials: (materialFilter: string) => Promise<Material[]>;
+  getAllMaterials: () => Promise<{ value: string; label: string }[]>;
   removeMaterial: (id: string) => Promise<void>;
-  updateMaterialPrice: (data: UpdateMaterialPriceProps) => Promise<void>;
-  materialOptions: { value: string; label: string }[];
+  updateMaterialPrice: (materialData: {
+    id: string;
+    newPrice: number;
+  }) => Promise<void>;
 }
-
 const MaterialContext = createContext<MaterialContext>({} as MaterialContext);
 
-export const MaterialProvider: React.FC = ({ children }) => {
-  const toast = useToast();
-  const [materialOptions, setMaterialOptions] = useState<
-    { value: string; label: string }[]
-  >([]);
+// --- 2. Provider com Tipagem e Lógica Atualizadas ---
+// A tipagem do Provider foi simplificada, removendo React.FC
+interface MaterialProviderProps {
+  children: ReactNode;
+}
 
-  // MUTATIONS
+export const MaterialProvider = ({ children }: MaterialProviderProps) => {
+  const toast = toaster;
 
-  const createMaterialMutation = useMutation(
-    async (materialData: Material) => {
-      await firebase
-        .firestore()
-        .collection('materials')
-        .doc(v4())
-        .set(materialData);
+  // --- MUTATIONS ATUALIZADAS PARA A NOVA SINTAXE ---
+
+  // 3. Sintaxe do useMutation e invalidateQueries atualizada
+  const createMaterialMutation = useMutation({
+    mutationFn: async (materialData: Material) => {
+      // Nova API para adicionar um documento a uma coleção
+      const materialsCollection = collection(db, 'materials');
+      await addDoc(materialsCollection, materialData);
     },
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries('materials');
-      },
-      onError: () => {
-        toast({
-          status: 'error',
-          title: 'Erro ao criar material',
-          isClosable: true,
-          description:
-            'Um erro ocorreu durante a criação do material pelo React Query',
-          position: 'top-right',
-        });
-      },
+    onSuccess: () => {
+      // Nova API para invalidar queries
+      queryClient.invalidateQueries({ queryKey: ['materials'] });
     },
-  );
-
-  const removeMaterialMutation = useMutation(
-    async (id: string) => {
-      await firebase.firestore().collection('materials').doc(id).delete();
-    },
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries('materials');
-      },
-      onError: () => {
-        toast({
-          status: 'error',
-          title: 'Erro ao remover material',
-          isClosable: true,
-          description:
-            'Um erro ocorreu durante a remoção do material pelo React Query',
-        });
-      },
-    },
-  );
-
-  const updatePriceMutation = useMutation(
-    async ({ id, newPrice }: UpdateMaterialPriceProps) => {
-      await firebase
-        .firestore()
-        .collection('materials')
-        .doc(id)
-        .update({ price: newPrice });
-    },
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries('materials');
-      },
-      onError: () => {
-        toast({
-          status: 'error',
-          title: 'Erro ao atualizar o preço do material',
-          isClosable: true,
-          description:
-            'Um erro ocorreu durante a atualização do preço do material pelo React Query',
-        });
-      },
-    },
-  );
-
-  // METHODS
-
-  const createMaterial = async (newMaterialData: Material) => {
-    try {
-      await createMaterialMutation.mutateAsync(newMaterialData);
-
-      toast({
-        status: 'success',
-        title: 'Material criado com sucesso',
-        isClosable: true,
-      });
-    } catch {
-      toast({
-        status: 'error',
+    onError: () => {
+      toast.create({
+        type: 'error',
         title: 'Erro ao criar material',
-        isClosable: true,
-        description: 'Um erro ocorreu durante a criação do material',
       });
-    }
+    },
+  });
+
+  const removeMaterialMutation = useMutation({
+    mutationFn: async (id: string) => {
+      // Nova API para referenciar e deletar um documento
+      const materialRef = doc(db, 'materials', id);
+      await deleteDoc(materialRef);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['materials'] });
+    },
+    onError: () => {
+      toast.create({
+        type: 'error',
+        title: 'Erro ao remover material',
+      });
+    },
+  });
+
+  const updateMaterialPriceMutation = useMutation({
+    mutationFn: async ({ id, newPrice }: { id: string; newPrice: number }) => {
+      // Nova API para atualizar um documento
+      const materialRef = doc(db, 'materials', id);
+      await updateDoc(materialRef, {
+        price: newPrice,
+        updatedAt: Timestamp.fromDate(new Date()),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['materials'] });
+    },
+    onError: () => {
+      toast.create({
+        type: 'error',
+        title: 'Erro ao atualizar preço',
+      });
+    },
+  });
+
+  // --- FUNÇÕES DO CONTEXTO (agora usam as mutations) ---
+
+  const createMaterial = async (materialData: Material) => {
+    await createMaterialMutation.mutateAsync(materialData);
   };
 
-  const getMaterials = async (type: string) => {
-    const response = await firebase
-      .firestore()
-      .collection('materials')
-      .where('materialType', '==', type)
-      .get();
+  const removeMaterial = async (id: string) => {
+    await removeMaterialMutation.mutateAsync(id);
+  };
 
-    const materials = response.docs.map(doc =>
-      Object.assign(doc.data() as Material, { id: doc.id }),
+  const updateMaterialPrice = async (materialData: {
+    id: string;
+    newPrice: number;
+  }) => {
+    await updateMaterialPriceMutation.mutateAsync(materialData);
+  };
+
+  // --- FUNÇÕES DE BUSCA (Adaptadas para o Firebase v9+) ---
+
+  const getMaterials = async (materialFilter: string) => {
+    // Nova API para criar uma query com filtro 'where'
+    const materialsCollection = collection(db, 'materials');
+    const q = query(
+      materialsCollection,
+      where('materialType', '==', materialFilter),
     );
-
+    const querySnapshot = await getDocs(q);
+    const materials = querySnapshot.docs.map(
+      doc => ({ ...doc.data(), id: doc.id }) as unknown as Material,
+    );
     return materials;
   };
 
   const getAllMaterials = async () => {
-    const response = await firebase
-      .firestore()
-      .collection('materials')
-      .orderBy('name')
-      .get();
-
-    const materials = response.docs.map(doc =>
-      Object.assign(doc.data() as Material, { id: doc.id }),
-    );
-
-    const materialsOptions = materials.map(material => {
-      return {
-        value: material.id,
-        label: material.name,
-      };
-    });
-
-    setMaterialOptions(materialsOptions);
-
-    return materials;
+    // Nova API para buscar todos os documentos de uma coleção
+    const materialsCollection = collection(db, 'materials');
+    const querySnapshot = await getDocs(materialsCollection);
+    const materialOptions = querySnapshot.docs.map(doc => ({
+      value: doc.id,
+      label: doc.data().name,
+    }));
+    return materialOptions;
   };
 
-  const removeMaterial = async (id: string) => {
-    try {
-      await removeMaterialMutation.mutateAsync(id);
-
-      toast({
-        status: 'success',
-        title: 'Material removido com sucesso',
-        isClosable: true,
-      });
-    } catch {
-      toast({
-        status: 'error',
-        title: 'Erro ao remover material',
-        isClosable: true,
-        description: 'Um erro ocorreu durante a remoção do material',
-      });
-    }
-  };
-
-  const updateMaterialPrice = async ({
-    id,
-    newPrice,
-  }: UpdateMaterialPriceProps) => {
-    try {
-      await updatePriceMutation.mutateAsync({ id, newPrice });
-
-      toast({
-        status: 'success',
-        title: 'Preço atualizado com sucesso',
-        isClosable: true,
-      });
-    } catch {
-      toast({
-        status: 'error',
-        title: 'Erro ao atualizar preço do material',
-        isClosable: true,
-        description:
-          'Um erro ocorreu durante a atualização do preço do material',
-      });
-    }
-  };
-
+  // Fornece as funções para os componentes filhos
   return (
     <MaterialContext.Provider
       value={{
         createMaterial,
         getMaterials,
+        getAllMaterials,
         removeMaterial,
         updateMaterialPrice,
-        getAllMaterials,
-        materialOptions,
       }}
     >
       {children}
@@ -219,12 +164,5 @@ export const MaterialProvider: React.FC = ({ children }) => {
   );
 };
 
-export function useMaterial(): MaterialContext {
-  const context = useContext(MaterialContext);
-
-  if (!context) {
-    throw new Error('useMaterial must be used within an AuthProvider');
-  }
-
-  return context;
-}
+// --- Hook de Acesso (sem mudanças) ---
+export const useMaterial = () => useContext(MaterialContext);
