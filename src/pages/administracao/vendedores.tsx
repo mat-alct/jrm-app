@@ -112,9 +112,12 @@ const Vendedores = () => {
   // Função chamada ao submeter o formulário de criação de vendedor
   const handleCreateSeller = async (sellerData: CreateSellerData) => {
     // A senha do vendedor será usada como o ID do documento
-    const sellerRef = doc(db, 'sellers', sellerData.password);
+    const sellerRef = doc(db, 'sellers');
     // Salva o documento no Firestore com o nome do vendedor
-    await setDoc(sellerRef, { name: sellerData.name });
+    await setDoc(sellerRef, {
+      name: sellerData.name,
+      password: sellerData.password,
+    });
     // Fecha o modal após a submissão
     onClose();
   };
@@ -181,14 +184,12 @@ const Vendedores = () => {
             <Table.Header>
               <Table.Row>
                 <Table.ColumnHeader>Nome</Table.ColumnHeader>
-                <Table.ColumnHeader>Senha (ID)</Table.ColumnHeader>
               </Table.Row>
             </Table.Header>
             <Table.Body>
               {data?.map(seller => (
                 <Table.Row key={seller.id}>
                   <Table.Cell>{seller.name}</Table.Cell>
-                  <Table.Cell>{seller.id}</Table.Cell>
                 </Table.Row>
               ))}
             </Table.Body>
