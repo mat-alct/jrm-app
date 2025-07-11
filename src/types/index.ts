@@ -1,6 +1,7 @@
 import { Timestamp } from 'firebase/firestore';
 
 export interface Material {
+  id: string;
   name: string;
   width: number;
   height: number;
