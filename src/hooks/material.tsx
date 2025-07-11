@@ -33,7 +33,7 @@ import { Material } from '../types';
 interface MaterialContext {
   createMaterial: (materialData: Material) => Promise<void>;
   getMaterials: (materialFilter: string) => Promise<Material[]>;
-  getAllMaterials: () => Promise<{ value: string; label: string }[]>;
+  getAllMaterials: () => Promise<Material[]>;
   removeMaterial: (id: string) => Promise<void>;
   updateMaterialPrice: (materialData: {
     id: string;
@@ -157,17 +157,26 @@ export const MaterialProvider = ({ children }: MaterialProviderProps) => {
   };
 
   // Função para buscar TODOS os materiais e formatá-los para um componente de Select.
-  const getAllMaterials = async () => {
+  const getAllMaterials = async (): Promise<Material[]> => {
+    // Pega a referência da coleção 'materials' no Firestore.
     const materialsCollection = collection(db, 'materials');
+    // Busca todos os documentos da coleção.
     const querySnapshot = await getDocs(materialsCollection);
-    const materialOptions = querySnapshot.docs.map(d => ({
-      value: d.id, // O valor será o ID do documento.
-      label: d.data().name, // O rótulo será o nome do material.
-    }));
 
-    return materialOptions;
+    // Mapeia os documentos retornados para o formato da sua interface 'Material'.
+    const materialsList = querySnapshot.docs.map(
+      doc =>
+        ({
+          // Pega todos os dados do documento (name, width, height, price, etc.).
+          ...doc.data(),
+          // Adiciona o ID do documento, que é uma propriedade separada.
+          id: doc.id,
+          // Faz uma asserção de tipo para garantir que o objeto final corresponda à interface Material.
+        }) as Material,
+    );
+
+    return materialsList;
   };
-
   // --- Renderização do Provedor ---
   // O componente Provider efetivamente disponibiliza as funções para seus filhos através da prop 'value'.
   return (

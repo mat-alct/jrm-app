@@ -132,11 +132,15 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
 
     // Calcula o preço da peça com base nos dados e no percentual de acréscimo.
     const price = calculateCutlistPrice(
-      // A API de 'calculateCutlistPrice' espera um objeto com certas propriedades, que estamos construindo aqui.
-      // É necessário buscar os dados completos do material para isso.
-      // Esta parte pode precisar de ajuste dependendo do que 'materialData' retorna.
-      { width: 0, height: 0, price: 0 }, // Placeholder, precisa dos dados reais do material.
-      cutlistFormData,
+      {
+        // @ts-ignore
+        width: materialUsed.width,
+        // @ts-ignore
+        height: materialUsed.height,
+        // @ts-ignore
+        price: materialUsed.price,
+      },
+      cutlistFormData, // Passa os dados do formulário diretamente.
       pricePercent,
     );
 
@@ -163,12 +167,10 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
   const updatePricePercent = (percentValue: string) => {
     const newPercent = Number(percentValue);
     setPricePercent(newPercent);
-    // Mapeia a lista de peças atual e recalcula o preço de cada uma com o novo percentual.
     const cutlistWithUpdatedPrice = cutlist.map(cut => {
       const priceUpdated = calculateCutlistPrice(cut.material, cut, newPercent);
       return { ...cut, price: priceUpdated };
     });
-    // Atualiza o estado no componente pai com a nova lista de preços.
     updateCutlist([...cutlistWithUpdatedPrice], false);
   };
 
