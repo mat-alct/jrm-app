@@ -89,8 +89,15 @@ const Materiais = () => {
   const [materialFilter, setMaterialFilter] = useState('MDF');
 
   // Hook customizado para obter as funções de manipulação de materiais (criar, buscar, remover, etc.).
-  const { createMaterial, getMaterials, removeMaterial, updateMaterialPrice } =
-    useMaterial();
+  const {
+    createMaterial,
+    getMaterials,
+    getAllMaterials,
+    removeMaterial,
+    updateMaterialPrice,
+  } = useMaterial();
+
+  getAllMaterials;
 
   // Hooks 'useDisclosure' do Chakra para controlar a abertura/fechamento dos modais.
   // Um para o modal de atualizar preço.
@@ -212,6 +219,16 @@ const Materiais = () => {
             size={buttonSize}
           >
             Novo Material
+          </Button>
+          <Button
+            colorScheme="orange"
+            onClick={getAllMaterials}
+            disabled={createMaterialIsSubmitting || isFetching}
+            leftIcon={<Icon as={RiAddLine} fontSize="20" />}
+            // @ts-ignore
+            size={buttonSize}
+          >
+            GetMaterials
           </Button>
         </Header>
 

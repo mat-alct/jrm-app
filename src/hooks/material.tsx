@@ -152,6 +152,7 @@ export const MaterialProvider = ({ children }: MaterialProviderProps) => {
     const materials = querySnapshot.docs.map(
       d => ({ ...d.data(), id: d.id }) as unknown as Material,
     );
+
     return materials;
   };
 
@@ -163,6 +164,8 @@ export const MaterialProvider = ({ children }: MaterialProviderProps) => {
       value: d.id, // O valor será o ID do documento.
       label: d.data().name, // O rótulo será o nome do material.
     }));
+
+    console.log(materialOptions);
     return materialOptions;
   };
 
