@@ -24,8 +24,6 @@ const InputBase: ForwardRefRenderFunction<HTMLInputElement, InputProps> = (
   const possibleSize = useBreakpointValue(['sm', 'sm', 'md', 'md', 'lg', 'lg']);
   const inputSize: InputSize = (possibleSize || 'md') as InputSize;
 
-  console.log(error);
-
   return (
     <Fieldset.Root
       invalid={!!error}
@@ -33,27 +31,26 @@ const InputBase: ForwardRefRenderFunction<HTMLInputElement, InputProps> = (
       alignItems={isHorizontal ? 'center' : ''}
     >
       <Field.Root invalid>
-      {label && (
-        <Field.Label htmlFor={name} mb={isHorizontal ? 0 : 2}>
-          {label}
-        </Field.Label>
-      )}
-      <Input
-        ref={ref}
-        id={name}
-        name={name}
-        borderColor="orange.500"
-        size={inputSize}
-        {...rest}
-      />
-      {!!error && (
-        // Role is necessary for validation tests
-        <Field.ErrorText role="alert" ml={isHorizontal ? 4 : 0}>
-          {error.message}
-        </Field.ErrorText>
-      )}
+        {label && (
+          <Field.Label htmlFor={name} mb={isHorizontal ? 0 : 2}>
+            {label}
+          </Field.Label>
+        )}
+        <Input
+          ref={ref}
+          id={name}
+          name={name}
+          borderColor="orange.500"
+          size={inputSize}
+          {...rest}
+        />
+        {!!error && (
+          // Role is necessary for validation tests
+          <Field.ErrorText role="alert" ml={isHorizontal ? 4 : 0}>
+            {error.message}
+          </Field.ErrorText>
+        )}
       </Field.Root>
-
     </Fieldset.Root>
   );
 };

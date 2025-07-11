@@ -122,6 +122,7 @@ export const MaterialProvider = ({ children }: MaterialProviderProps) => {
   // Estas são as funções que os componentes da sua aplicação irão chamar.
   // Elas atuam como uma camada de abstração que "dispara" a mutação correspondente.
   const createMaterial = async (materialData: Material) => {
+    console.log(materialData);
     await createMaterialMutation.mutateAsync(materialData);
   };
 
@@ -149,7 +150,7 @@ export const MaterialProvider = ({ children }: MaterialProviderProps) => {
     const querySnapshot = await getDocs(q);
     // Mapeia os resultados, adicionando o ID do documento a cada objeto de material.
     const materials = querySnapshot.docs.map(
-      d => ({ ...d.data(), id: d.id }) as Material,
+      d => ({ ...d.data(), id: d.id }) as unknown as Material,
     );
     return materials;
   };

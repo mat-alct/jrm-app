@@ -123,9 +123,8 @@ const Materiais = () => {
       errors: createMaterialErrors,
       isSubmitting: createMaterialIsSubmitting,
     },
-  } = useForm<Material>({
-    //@ts-ignore
-    resolver: yupResolver(createMaterialSchema),
+  } = useForm<CreateMaterialFormData>({
+    resolver: yupResolver(createMaterialSchema as any),
   });
 
   // Configuração do react-hook-form para o formulário de ATUALIZAÇÃO de preço.
@@ -143,7 +142,7 @@ const Materiais = () => {
   // --- Bloco de Funções de Manipulação (Handlers) ---
 
   // Função chamada ao submeter o formulário de criação de material.
-  const handleCreateMaterial = async (formData: Material) => {
+  const handleCreateMaterial = async (formData: CreateMaterialFormData) => {
     onClose(); // Fecha o modal.
     // Chama a função do contexto para criar o material, adicionando timestamps.
     await createMaterial({
@@ -221,8 +220,7 @@ const Materiais = () => {
           isOpen={open}
           title="Novo Material"
           onClose={onClose}
-          // @ts-ignore
-          onSubmit={createMaterialHandleSubmit(handleCreateMaterial)}
+          onSubmit={createMaterialHandleSubmit(handleCreateMaterial as any)}
         >
           <Box as="form" gap={4} mx="auto">
             {/* Inputs do formulário de criação. */}
@@ -335,7 +333,11 @@ const Materiais = () => {
                           colorScheme="orange"
                           size="sm"
                           aria-label="Editar"
-                          onClick={() => handleClickOnUpdatePrice(material.id)}
+                          onClick={() => {
+                            if (material.id) {
+                              handleClickOnUpdatePrice(material.id);
+                            }
+                          }}
                           disabled={updatePriceIsSubmitting}
                         >
                           <FaEdit />
@@ -344,7 +346,11 @@ const Materiais = () => {
                           colorScheme="orange"
                           size="sm"
                           aria-label="Remover"
-                          onClick={() => handleRemoveMaterial(material.id)}
+                          onClick={() => {
+                            if (material.id) {
+                              handleRemoveMaterial(material.id);
+                            }
+                          }}
                           disabled={updatePriceIsSubmitting}
                         >
                           <FaTrash />
