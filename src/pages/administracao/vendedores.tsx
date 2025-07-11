@@ -1,106 +1,130 @@
-import { Button, Flex, Stack, useToast } from '@chakra-ui/react';
+'use client';
+
+// --- Bloco de Importações ---
+// Componentes de UI da biblioteca Chakra UI
+import {
+  Box,
+  Button,
+  HStack,
+  Icon,
+  Table,
+  TableCaption,
+  useDisclosure,
+  VStack,
+} from '@chakra-ui/react';
+// Resolvedor do Yup para integração com react-hook-form
 import { yupResolver } from '@hookform/resolvers/yup';
-import firebase from 'firebase/app';
+// Funções e tipos do Firebase v9+ para interagir com o banco de dados
+import { collection, doc, getDocs, setDoc } from 'firebase/firestore';
+// Hooks e tipos do Next.js e React
 import Head from 'next/head';
 import { useRouter } from 'next/router';
-import { AuthAction, withAuthUser } from 'next-firebase-auth';
 import React from 'react';
 import { useForm } from 'react-hook-form';
-import * as Yup from 'yup';
+// Ícones
+import { FaUserPlus } from 'react-icons/fa';
+// Hook useQuery do TanStack React Query para data fetching
+import { useQuery } from '@tanstack/react-query';
 
+// --- Bloco de Importações Internas do Projeto ---
+// Hooks e componentes customizados do seu projeto
+import { useAuth } from '../../hooks/authContext';
 import { Dashboard } from '../../components/Dashboard';
 import { Header } from '../../components/Dashboard/Content/Header';
 import { FormInput } from '../../components/Form/Input';
+import { FormModal } from '../../components/Form/Modal';
 import { Loader } from '../../components/Loader';
-import { capitalizeAndStrip } from '../../utils/capitalizeAndStripString';
+// Instância do banco de dados Firestore
+import { db } from '../../services/firebase';
+// Esquema de validação do Yup
+import { createSellerSchema } from '../../utils/yup/vendedoresValidations';
 
-interface SellersProps {
-  firstName: string;
-  lastName: string;
+// --- Interfaces e Tipos ---
+// Define a estrutura de dados para os campos do formulário de criação de vendedor
+interface CreateSellerData {
+  name: string;
   password: string;
-  confirmPassword: string;
 }
 
-const Vendedores: React.FC = () => {
-  const toast = useToast();
+// Define a estrutura de um vendedor, incluindo o ID que vem do Firestore
+interface Seller {
+  id: string;
+  name: string;
+}
 
-  const { push } = useRouter();
+// --- Componente Principal: Vendedores ---
+const Vendedores = () => {
+  // --- Bloco de Hooks e Estados Iniciais ---
 
-  const createSellerSchema = Yup.object().shape({
-    firstName: Yup.string().required('Nome obrigatório'),
-    lastName: Yup.string().required('Sobrenome obrigatório'),
-    password: Yup.string().required('Senha obrigatória'),
-    confirmPassword: Yup.string().required('Confirmação de senha obrigatório'),
+  // Lógica de proteção de rota: obtém o usuário do nosso contexto de autenticação
+  const { user } = useAuth();
+  const router = useRouter();
+
+  // Efeito que executa quando o 'user' muda. Se não houver usuário, redireciona para o login.
+  React.useEffect(() => {
+    if (user === null) {
+      router.push('/login');
+    }
+  }, [user, router]);
+
+  // Hook do Chakra para controlar a abertura/fechamento do modal de criação
+  const { onOpen, open, onClose } = useDisclosure();
+
+  // --- Bloco de Busca de Dados (React Query) ---
+
+  // Função assíncrona que busca os vendedores no Firestore usando a API v9+
+  const getSellers = async () => {
+    const sellersCollection = collection(db, 'sellers');
+    const sellersSnapshot = await getDocs(sellersCollection);
+    const sellersList = sellersSnapshot.docs.map(
+      document =>
+        ({
+          id: document.id,
+          name: document.data().name,
+        }) as Seller,
+    );
+    return sellersList;
+  };
+
+  // Hook que busca os dados usando a função acima e gerencia o cache.
+  // A sintaxe foi atualizada para o novo padrão de objeto do React Query.
+  const { data, isFetching, isLoading } = useQuery({
+    queryKey: ['sellers'],
+    queryFn: getSellers,
   });
 
+  // --- Bloco de Gerenciamento de Formulário ---
+
+  // Configuração do react-hook-form para o formulário de criação de vendedor
   const {
     register: createSellerRegister,
     handleSubmit: createSellerHandleSubmit,
-    setError: createSellerSetError,
-    setValue: createSellerSetValue,
-    formState: { errors: createCutlistErrors },
-  } = useForm<SellersProps>({
+    formState: {
+      errors: createSellerErrors,
+      isSubmitting: createSellerIsSubmitting,
+    },
+  } = useForm<CreateSellerData>({
     resolver: yupResolver(createSellerSchema),
-    reValidateMode: 'onSubmit',
   });
 
-  const handleSubmitSeller = async (sellerData: SellersProps) => {
-    // Check if password is the same as confirmPassword
-    if (sellerData.password !== sellerData.confirmPassword) {
-      createSellerSetError('confirmPassword', {
-        type: 'value',
-        message: 'Digite o mesmo password na confirmação',
-      });
+  // --- Bloco de Funções de Manipulação (Handlers) ---
 
-      return;
-    }
-
-    // Check if password already exist in database.
-    // If it exists, cancel submit and throw an error
-    const doesPasswordExist = await firebase
-      .firestore()
-      .collection('sellers')
-      .doc(sellerData.password)
-      .get();
-
-    if (doesPasswordExist.exists) {
-      createSellerSetError('password', {
-        type: 'value',
-        message: 'Não é possível utilizar essa senha',
-      });
-
-      createSellerSetValue('password', '');
-      createSellerSetValue('confirmPassword', '');
-
-      return;
-    }
-
-    const name = `${capitalizeAndStrip(
-      sellerData.firstName,
-    )} ${capitalizeAndStrip(sellerData.lastName)}`;
-
-    try {
-      await firebase
-        .firestore()
-        .collection('sellers')
-        .doc(sellerData.password)
-        .set({
-          name,
-        });
-
-      toast({
-        status: 'success',
-        description: 'Vendedor criado com sucesso',
-      });
-
-      push({ pathname: '/' });
-    } catch {
-      toast({
-        status: 'error',
-        description: 'Erro ao criar um novo vendedor',
-      });
-    }
+  // Função chamada ao submeter o formulário de criação de vendedor
+  const handleCreateSeller = async (sellerData: CreateSellerData) => {
+    // A senha do vendedor será usada como o ID do documento
+    const sellerRef = doc(db, 'sellers', sellerData.password);
+    // Salva o documento no Firestore com o nome do vendedor
+    await setDoc(sellerRef, { name: sellerData.name });
+    // Fecha o modal após a submissão
+    onClose();
   };
+
+  // --- Bloco de Renderização ---
+
+  // Exibe um loader enquanto a autenticação do usuário está sendo verificada
+  if (!user) {
+    return <Loader />;
+  }
 
   return (
     <>
@@ -108,71 +132,72 @@ const Vendedores: React.FC = () => {
         <title>Vendedores | JRM Compensados</title>
       </Head>
       <Dashboard>
-        <Header pageTitle="Novo vendedor" />
-        <Flex
-          as="form"
-          direction="column"
-          onSubmit={createSellerHandleSubmit(handleSubmitSeller)}
-          maxW={['350px', '350px', '600px', '600px']}
-          w="100%"
-          mx="auto"
+        <Header
+          pageTitle="Vendedores"
+          isLoading={isFetching && !isLoading} // Mostra o spinner do header apenas no refetch em background
         >
-          <Stack
-            direction="column"
-            spacing={[4, 4, 4, 8]}
-            mt={4}
-            alignItems="flex-end"
+          <Button
+            colorScheme="orange"
+            onClick={onOpen}
+            disabled={createSellerIsSubmitting}
+            // leftIcon={<Icon as={FaUserPlus} fontSize="20" />}
           >
+            Novo Vendedor
+          </Button>
+        </Header>
+
+        {/* Modal para criar novo vendedor */}
+        <FormModal
+          isOpen={open}
+          title="Novo Vendedor"
+          onClose={onClose}
+          onSubmit={createSellerHandleSubmit(handleCreateSeller)}
+        >
+          <Box as="form" gap={4} mx="auto">
             <FormInput
-              {...createSellerRegister('firstName')}
-              label="Nome"
-              name="firstName"
-              error={createCutlistErrors.firstName}
-              size="lg"
-            />
-            <FormInput
-              {...createSellerRegister('lastName')}
-              label="Sobrenome"
-              name="lastName"
-              size="lg"
-              error={createCutlistErrors.lastName}
+              {...createSellerRegister('name')}
+              error={createSellerErrors.name}
+              name="name"
+              label="Nome do Vendedor"
             />
             <FormInput
               {...createSellerRegister('password')}
-              label="Senha"
+              error={createSellerErrors.password}
               name="password"
-              error={createCutlistErrors.password}
-              type="password"
-              size="lg"
+              label="Senha (ID)"
             />
-            <FormInput
-              {...createSellerRegister('confirmPassword')}
-              label="Confirmação de senha"
-              name="confirmPassword"
-              error={createCutlistErrors.confirmPassword}
-              type="password"
-              size="lg"
-            />
-            <Button
-              isFullWidth
-              size="lg"
-              type="submit"
-              colorScheme="orange"
-              minW="150px"
-            >
-              Criar
-            </Button>
-          </Stack>
-        </Flex>
+          </Box>
+        </FormModal>
+
+        {/* Tabela de dados que exibe os vendedores */}
+        {/* Componente Table atualizado para o novo padrão aninhado */}
+        <Box overflowX="auto">
+          <Table.Root
+            variant="outline"
+            colorScheme="orange"
+            whiteSpace="nowrap"
+          >
+            <TableCaption>Lista de Vendedores</TableCaption>
+            <Table.Header>
+              <Table.Row>
+                <Table.ColumnHeader>Nome</Table.ColumnHeader>
+                <Table.ColumnHeader>Senha (ID)</Table.ColumnHeader>
+              </Table.Row>
+            </Table.Header>
+            <Table.Body>
+              {data?.map(seller => (
+                <Table.Row key={seller.id}>
+                  <Table.Cell>{seller.name}</Table.Cell>
+                  <Table.Cell>{seller.id}</Table.Cell>
+                </Table.Row>
+              ))}
+            </Table.Body>
+          </Table.Root>
+        </Box>
       </Dashboard>
     </>
   );
 };
 
-export default withAuthUser({
-  whenAuthed: AuthAction.RENDER,
-  whenUnauthedAfterInit: AuthAction.REDIRECT_TO_LOGIN,
-  whenUnauthedBeforeInit: AuthAction.SHOW_LOADER,
-  authPageURL: '/login',
-  LoaderComponent: Loader,
-})(Vendedores);
+// Exportação direta do componente, sem o HOC 'withAuthUser'
+export default Vendedores;
