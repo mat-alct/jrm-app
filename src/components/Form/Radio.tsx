@@ -20,14 +20,14 @@ import {
 // correspondam ao tipo do formulário, evitando erros de digitação.
 interface FormRadioProps<TFieldValues extends FieldValues> {
   // 'name' é o nome do campo no formulário. 'Path<TFieldValues>' garante que seja um nome válido.
-  name: Path<TFieldValues>;
+  name: string;
   // 'control' é o objeto do react-hook-form que gerencia o estado do formulário.
-  control: Control<TFieldValues>;
+  control: Control<any, any, TFieldValues>;
   // 'options' é um array de strings que serão usadas para criar os botões de rádio.
   options: string[];
   // Props opcionais para customização.
   label?: string;
-  defaultValue?: PathValue<TFieldValues, Path<TFieldValues>>;
+  defaultValue?: string;
   isHorizontal?: boolean;
 }
 

@@ -124,7 +124,7 @@ const Materiais = () => {
       isSubmitting: createMaterialIsSubmitting,
     },
   } = useForm<Material>({
-    // @ts-ignore
+    //@ts-ignore
     resolver: yupResolver(createMaterialSchema),
   });
 
@@ -143,7 +143,7 @@ const Materiais = () => {
   // --- Bloco de Funções de Manipulação (Handlers) ---
 
   // Função chamada ao submeter o formulário de criação de material.
-  const handleCreateMaterial = async (formData: CreateMaterialFormData) => {
+  const handleCreateMaterial = async (formData: Material) => {
     onClose(); // Fecha o modal.
     // Chama a função do contexto para criar o material, adicionando timestamps.
     await createMaterial({
