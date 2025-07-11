@@ -15,7 +15,7 @@ import {
 // Resolvedor do Yup para integração com react-hook-form
 import { yupResolver } from '@hookform/resolvers/yup';
 // Funções e tipos do Firebase v9+ para interagir com o banco de dados
-import { collection, doc, getDocs, setDoc } from 'firebase/firestore';
+import { addDoc, collection, doc, getDocs, setDoc } from 'firebase/firestore';
 // Hooks e tipos do Next.js e React
 import Head from 'next/head';
 import { useRouter } from 'next/router';
@@ -111,14 +111,18 @@ const Vendedores = () => {
 
   // Função chamada ao submeter o formulário de criação de vendedor
   const handleCreateSeller = async (sellerData: CreateSellerData) => {
-    // A senha do vendedor será usada como o ID do documento
-    const sellerRef = doc(db, 'sellers');
-    // Salva o documento no Firestore com o nome do vendedor
-    await setDoc(sellerRef, {
+    // Pega a referência da coleção 'sellers'
+    const sellersCollection = collection(db, 'sellers');
+
+    // Adiciona um novo documento à coleção.
+    // O Firestore irá gerar um ID automático.
+    await addDoc(sellersCollection, {
       name: sellerData.name,
       password: sellerData.password,
+      // Nota de segurança: A senha não é salva no documento.
+      // Ela deve ser usada apenas para autenticação, não armazenada aqui.
     });
-    // Fecha o modal após a submissão
+
     onClose();
   };
 
