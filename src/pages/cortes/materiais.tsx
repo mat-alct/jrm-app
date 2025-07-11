@@ -97,8 +97,6 @@ const Materiais = () => {
     updateMaterialPrice,
   } = useMaterial();
 
-  getAllMaterials;
-
   // Hooks 'useDisclosure' do Chakra para controlar a abertura/fechamento dos modais.
   // Um para o modal de atualizar preço.
   const {
@@ -220,16 +218,6 @@ const Materiais = () => {
           >
             Novo Material
           </Button>
-          <Button
-            colorScheme="orange"
-            onClick={getAllMaterials}
-            disabled={createMaterialIsSubmitting || isFetching}
-            leftIcon={<Icon as={RiAddLine} fontSize="20" />}
-            // @ts-ignore
-            size={buttonSize}
-          >
-            GetMaterials
-          </Button>
         </Header>
 
         {/* Modal para criar novo material. Controlado pelo useDisclosure. */}
@@ -237,7 +225,7 @@ const Materiais = () => {
           isOpen={open}
           title="Novo Material"
           onClose={onClose}
-          onSubmit={createMaterialHandleSubmit(handleCreateMaterial as any)}
+          onSubmit={createMaterialHandleSubmit(handleCreateMaterial)}
         >
           <Box as="form" gap={4} mx="auto">
             {/* Inputs do formulário de criação. */}

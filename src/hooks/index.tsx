@@ -12,7 +12,9 @@ export const Providers = ({ children }: AuthProviderProps) => {
     <SidebarDrawerProvider>
       <OrderProvider>
         <MaterialProvider>
-          <CustomerProvider>{children}</CustomerProvider>
+          {/* <CustomerProvider> */}
+          {children}
+          {/* </CustomerProvider> */}
         </MaterialProvider>
       </OrderProvider>
     </SidebarDrawerProvider>
