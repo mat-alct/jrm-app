@@ -227,7 +227,7 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
                 updatePricePercent(e.value);
               }
             }}
-            // @ts-ignore - Usado para contornar um bug de tipagem do ambiente.
+            // @ts-ignore
             size={radioSize}
           >
             <HStack gap={[2, 2, 4]}>
@@ -277,7 +277,7 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
             control={createCutlistControl}
             isClearable
             placeholder="Material"
-            options={materialData}
+            options={materialData || []}
           />
         </Box>
         <Box w="100%" maxW={[null, null, null, null, '60px']}>
@@ -339,6 +339,7 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
           <Table.Root
             colorScheme="orange"
             mt={8}
+            // @ts-ignore
             size={tableSize}
             whiteSpace="nowrap"
           >
