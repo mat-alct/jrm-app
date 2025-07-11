@@ -48,14 +48,14 @@ import {
   updatePriceSchema,
 } from '../../utils/yup/materiaisValidations';
 
-//    Versão simplificada de Material.
-interface CreateMaterialFormData {
-  name: string;
-  width: number;
-  height: number;
-  price: number;
-  materialType: 'MDF' | 'Compensado';
-}
+// //    Versão simplificada de Material.
+// interface CreateMaterialFormData {
+//   name: string;
+//   width: number;
+//   height: number;
+//   price: number;
+//   materialType: 'MDF' | 'Compensado';
+// }
 
 // --- Definição de Tipos e Interfaces ---
 // Define a estrutura de dados para a atualização de preço.
@@ -128,7 +128,7 @@ const Materiais = () => {
       errors: createMaterialErrors,
       isSubmitting: createMaterialIsSubmitting,
     },
-  } = useForm<CreateMaterialFormData>({
+  } = useForm<Material>({
     resolver: yupResolver(createMaterialSchema as any),
   });
 
@@ -147,7 +147,8 @@ const Materiais = () => {
   // --- Bloco de Funções de Manipulação (Handlers) ---
 
   // Função chamada ao submeter o formulário de criação de material.
-  const handleCreateMaterial = async (formData: CreateMaterialFormData) => {
+  const handleCreateMaterial = async (formData: Material) => {
+    console.log('ok');
     onClose(); // Fecha o modal.
     // Chama a função do contexto para criar o material, adicionando timestamps.
     await createMaterial({
@@ -235,7 +236,7 @@ const Materiais = () => {
               name="name"
               label="Material"
             />
-            <HStack gap={8}>
+            <Box gap={8}>
               <FormInput
                 {...createMaterialRegister('width')}
                 error={createMaterialErrors.width}
@@ -254,15 +255,15 @@ const Materiais = () => {
                 name="price"
                 label="Preço"
               />
-            </HStack>
-            <FormRadio
-              control={createMaterialControl}
-              name="materialType"
-              label="Categoria"
-              defaultValue="MDF"
-              isHorizontal
-              options={['MDF', 'Compensado']}
-            />
+              <FormRadio
+                control={createMaterialControl}
+                name="materialType"
+                label="Categoria"
+                defaultValue="MDF"
+                isHorizontal
+                options={['MDF', 'Compensado']}
+              />
+            </Box>
           </Box>
         </FormModal>
 

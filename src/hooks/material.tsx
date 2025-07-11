@@ -165,7 +165,6 @@ export const MaterialProvider = ({ children }: MaterialProviderProps) => {
       label: d.data().name, // O rótulo será o nome do material.
     }));
 
-    console.log(materialOptions);
     return materialOptions;
   };
 

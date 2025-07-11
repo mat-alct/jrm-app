@@ -30,7 +30,6 @@ interface FormRadioProps<TFieldValues extends FieldValues> {
   defaultValue?: string;
   isHorizontal?: boolean;
 }
-
 // --- 3. Definição do Componente ---
 // O componente é genérico para se adaptar a qualquer formulário.
 // A definição foi simplificada (sem React.FC) para seguir os padrões modernos do React.

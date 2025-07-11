@@ -1,7 +1,7 @@
 import * as Yup from 'yup';
 
 export const createMaterialSchema = Yup.object().shape({
-  id: Yup.string().required('Material obrigatório'),
+  id: Yup.string(),
   name: Yup.string().required('Material obrigatório'),
   width: Yup.number()
     .max(2750)
