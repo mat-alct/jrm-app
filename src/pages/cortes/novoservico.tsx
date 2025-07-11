@@ -1,105 +1,146 @@
+// --- Bloco de Importações ---
+// Importa componentes de UI da biblioteca Chakra UI para criar a interface.
 import { HStack, RadioGroup } from '@chakra-ui/react';
+// Importa o componente Head do Next.js para modificar o <head> do HTML (ex: título da página).
 import Head from 'next/head';
+// Importa o hook useRouter do Next.js para acessar informações da rota e navegar entre páginas.
 import { useRouter } from 'next/router';
+// Importa hooks essenciais do React para gerenciar estado e efeitos colaterais.
 import React, { useCallback, useEffect, useState } from 'react';
 
+// --- Bloco de Importações Internas do Projeto ---
+// Importa componentes de layout customizados do seu projeto.
 import { Dashboard } from '../../components/Dashboard';
 import { Header } from '../../components/Dashboard/Content/Header';
 import { Loader } from '../../components/Loader';
+// Importa os componentes que formam a página de novo serviço.
 import { Cutlist } from '../../components/NewOrder/Cutlist';
 import { OrderData } from '../../components/NewOrder/OrderData';
+// Importa o tipo 'CutlistType' para garantir a segurança de tipos dos dados.
 import { Cutlist as CutlistType } from '../../types';
-import {useAuth}from '../../hooks/authContext'
+// Importa o hook de autenticação customizado para verificar o status do usuário.
+import { useAuth } from '../../hooks/authContext';
 
+// --- Componente Principal: NovoServiço ---
+// Esta é a página principal para a criação de um novo serviço ou orçamento.
 const NovoServiço = () => {
+  // --- Bloco de Hooks e Estados Iniciais ---
+
+  // Lógica de autenticação: obtém o objeto 'user' do nosso contexto.
   const { user } = useAuth();
+  // Obtém a instância do router para navegação e acesso a parâmetros da URL.
   const router = useRouter();
 
+  // Efeito para proteger a rota. Ele roda sempre que o estado 'user' ou 'router' muda.
   useEffect(() => {
+    // Se a verificação de autenticação terminou e o resultado é 'null', significa que o usuário não está logado.
     if (user === null) {
+      // Redireciona o usuário para a página de login.
       router.push('/login');
     }
-  }, [user, router]);
+  }, [user, router]); // A lista de dependências garante que o efeito só rode quando necessário.
 
-
-  // * Cutlist Data
+  // Estado para armazenar a lista de peças do plano de corte.
   const [cutlist, setCutlist] = useState<CutlistType[]>([]);
 
+  // Extrai o objeto 'query' do router, que contém os parâmetros da URL (ex: ?id=123).
   const { query } = router;
 
+  // Função para atualizar a lista de peças (cutlist).
+  // 'useCallback' é usado para otimizar a performance, garantindo que a função não seja recriada a cada renderização.
   const updateCutlist = useCallback(
     (cutlistData: CutlistType[], maintainOldValues = true) => {
+      // Se for para manter os valores antigos, adiciona os novos dados à lista existente.
       if (maintainOldValues) {
         setCutlist(prevValue => {
+          const newList = [...prevValue, ...cutlistData];
+          // Salva a nova lista no localStorage do navegador para persistir os dados.
           localStorage.setItem(
             'app@jrmcompensados:cutlist',
-            JSON.stringify([...prevValue, ...cutlistData]),
+            JSON.stringify(newList),
           );
-
-          return [...prevValue, ...cutlistData];
+          return newList;
         });
       } else {
+        // Se não for para manter, substitui a lista inteira pelos novos dados.
         setCutlist([...cutlistData]);
-
         localStorage.setItem(
           'app@jrmcompensados:cutlist',
           JSON.stringify([...cutlistData]),
         );
       }
     },
-    [],
+    [], // O array vazio indica que esta função não depende de nenhuma prop ou estado externo.
   );
 
+  // Efeito para carregar os dados iniciais do plano de corte.
+  // Roda sempre que o parâmetro 'cutlist' na URL muda.
   useEffect(() => {
-    // If exists a estimate query, use the cutlist in the query, set local storage and end useEffect function
+    // Verifica se a URL contém um parâmetro 'cutlist' (ex: ao editar um orçamento).
     if (query.cutlist && typeof query.cutlist === 'string') {
-      setCutlist(JSON.parse(query.cutlist));
-
+      // Se sim, usa os dados da URL para popular o estado e o localStorage.
+      const cutlistFromQuery = JSON.parse(query.cutlist);
+      setCutlist(cutlistFromQuery);
       localStorage.setItem('app@jrmcompensados:cutlist', query.cutlist);
-
+      // 'return' encerra a execução do efeito aqui.
       return;
     }
 
+    // Se não houver dados na URL, tenta carregar do localStorage.
     const cutlistFromStorage = localStorage.getItem(
       'app@jrmcompensados:cutlist',
     );
 
+    // Se encontrar dados no localStorage, usa-os para popular o estado.
     if (cutlistFromStorage) {
       setCutlist(JSON.parse(cutlistFromStorage));
     }
-  }, [query.cutlist]);
+  }, [query.cutlist]); // Depende do parâmetro 'cutlist' da URL.
 
-  // Change between "Serviço" e "Orçamento"
+  // Estado para controlar se a tela está no modo "Serviço" ou "Orçamento".
   const [orderType, setOrderType] = useState<string>('Serviço');
 
+  // Estado para armazenar o ID de um orçamento que está sendo convertido em pedido.
+  // A função inicializadora só roda uma vez, na primeira renderização.
   const [estimateId] = useState<string | undefined>(() => {
     if (query.estimateId && typeof query.estimateId === 'string') {
       return query.estimateId;
     }
-
     return undefined;
   });
 
-  // Exibe um loader enquantoa autenticação é verificada
+  // --- Bloco de Renderização ---
+
+  // Se o estado 'user' for indefinido, significa que a verificação de autenticação ainda está em andamento.
+  // Exibe um componente de 'Loader' para o usuário.
   if (!user) {
     return <Loader />;
   }
 
+  // Se o usuário estiver autenticado, renderiza o conteúdo da página.
   return (
     <>
+      {/* Define o título da aba do navegador. */}
       <Head>
         <title>Novo Serviço | JRM Compensados</title>
       </Head>
+      {/* Componente de layout principal que inclui a sidebar. */}
       <Dashboard>
+        {/* Cabeçalho da página, com título dinâmico e botões de ação. */}
         <Header
           pageTitle={`Novo ${
             orderType === 'Orçamento' ? 'Orçamento' : 'Serviço'
           }`}
         >
+          {/* Componente para selecionar entre "Pedido" e "Orçamento". */}
           <RadioGroup.Root
             colorScheme="orange"
             value={orderType}
-            onValueChange={(e) => {if (e.value) {setOrderType(e.value)}}}
+            onValueChange={e => {
+              if (e.value) {
+                setOrderType(e.value);
+              }
+            }}
           >
             <HStack gap={[4, 4, 8]}>
               <RadioGroup.Item value="Serviço">
@@ -116,9 +157,10 @@ const NovoServiço = () => {
           </RadioGroup.Root>
         </Header>
 
-        {/* Plano de Corte */}
+        {/* Componente para gerenciar o plano de corte (adicionar/remover peças). */}
         <Cutlist cutlist={cutlist} updateCutlist={updateCutlist} />
 
+        {/* Componente para preencher os dados do cliente e do pedido. */}
         <OrderData
           orderType={orderType}
           cutlist={cutlist}
@@ -129,4 +171,5 @@ const NovoServiço = () => {
   );
 };
 
+// Exporta o componente para ser usado como uma página pelo Next.js.
 export default NovoServiço;
