@@ -17,8 +17,8 @@ import {
 } from '@chakra-ui/react';
 import { yupResolver } from '@hookform/resolvers/yup';
 import React, { useState } from 'react';
-import { useForm, SubmitHandler } from 'react-hook-form'; // Importei SubmitHandler
-import { FaEdit, FaTrash } from 'react-icons/fa';
+import { useForm, SubmitHandler } from 'react-hook-form';
+import { FaEdit, FaTrash, FaPlus } from 'react-icons/fa';
 import { useQuery } from '@tanstack/react-query';
 import { v4 } from 'uuid';
 
@@ -73,7 +73,6 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
     setFocus: createCutlistSetFocus,
     formState: { errors: createCutlistErrors },
   } = useForm<CreateCutlistProps>({
-    // CORREÇÃO: 'as any' resolve o conflito de tipagem estrita
     resolver: yupResolver(createCutlistSchema as any),
     reValidateMode: 'onSubmit',
   });
@@ -82,15 +81,12 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
   const tableSize = useBreakpointValue(['sm', 'sm', 'md'], { fallback: 'sm' });
 
   const { getAllMaterials } = useMaterial();
-
   const { data: materialData } = useQuery({
     queryKey: ['materials'],
     queryFn: getAllMaterials,
   });
-
   const [pricePercent, setPricePercent] = useState<number>(75);
 
-  // CORREÇÃO: Tipagem explícita do handler
   const handleCreateCutlist: SubmitHandler<
     CreateCutlistProps
   > = cutlistFormData => {
@@ -100,7 +96,7 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
     createCutlistSetValue('materialId', cutlistFormData.materialId);
 
     const materialUsed = materialData?.find(
-      material => material.id === cutlistFormData.materialId,
+      m => m.id === cutlistFormData.materialId,
     );
     if (!materialUsed) throw new Error('Material não encontrado');
 
@@ -142,13 +138,12 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
   };
 
   const removeCut = (cutId: string) => {
-    const cutlistFiltered = cutlist.filter(cut => cut.id !== cutId);
-    updateCutlist([...cutlistFiltered], false);
+    updateCutlist([...cutlist.filter(cut => cut.id !== cutId)], false);
   };
 
   const updateCut = (cutId: string) => {
     const cutToUpdate = cutlist.find(cut => cut.id === cutId);
-    if (!cutToUpdate) throw new Error('Corte não encontrado para atualizar');
+    if (!cutToUpdate) return;
     const { amount, sideA, sideB, borderA, borderB, material } = cutToUpdate;
     createCutlistSetValue('amount', amount);
     createCutlistSetValue('sideA', sideA);
@@ -167,169 +162,193 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
 
   return (
     <Stack gap={6} mb={8}>
+      {/* CARD UNIFICADO: Cabeçalho + Formulário */}
       <Box
         bg="white"
-        p={6}
-        borderRadius="lg"
+        borderRadius="xl"
         shadow="sm"
         borderWidth="1px"
-        borderColor="gray.100"
+        borderColor="gray.200"
+        overflow="hidden"
       >
-        <Flex
-          align="center"
-          justify={['center', 'space-between']}
-          direction={['column', 'row']}
-          gap={4}
-        >
-          <Box>
-            <Heading color="gray.700" size="lg" mb={1}>
-              Plano de Corte
-            </Heading>
-            <Text color="gray.500" fontSize="sm">
-              Adicione as peças e defina o preço
-            </Text>
-          </Box>
-
-          <Flex direction="column" align={['center', 'flex-end']} gap={2}>
-            <RadioGroup.Root
-              colorScheme="orange"
-              value={String(pricePercent)}
-              onValueChange={e => {
-                if (e.value) updatePricePercent(e.value);
-              }}
-              // @ts-ignore
-              size={radioSize}
-            >
-              <HStack gap={[2, 4]} p={2} bg="gray.50" borderRadius="md">
-                <RadioGroup.Item value="75">
-                  <RadioGroup.ItemHiddenInput />
-                  <RadioGroup.ItemIndicator />
-                  <RadioGroup.ItemText>Balcão</RadioGroup.ItemText>
-                </RadioGroup.Item>
-                <RadioGroup.Item value="50">
-                  <RadioGroup.ItemHiddenInput />
-                  <RadioGroup.ItemIndicator />
-                  <RadioGroup.ItemText>Marceneiro</RadioGroup.ItemText>
-                </RadioGroup.Item>
-                <RadioGroup.Item value="1">
-                  <RadioGroup.ItemHiddenInput />
-                  <RadioGroup.ItemIndicator />
-                  <RadioGroup.ItemText>Sem Acréscimo</RadioGroup.ItemText>
-                </RadioGroup.Item>
-              </HStack>
-            </RadioGroup.Root>
-
-            <Text
-              whiteSpace="nowrap"
-              fontSize={['2xl', '3xl']}
-              fontWeight="bold"
-              color="green.600"
-            >
-              {new Intl.NumberFormat('pt-BR', {
-                style: 'currency',
-                currency: 'BRL',
-              }).format(cutlist.reduce((prev, curr) => prev + curr.price, 0))}
-            </Text>
+        {/* TOPO: Título e Preço */}
+        <Box p={6} bg="gray.50" borderBottomWidth="1px" borderColor="gray.200">
+          <Flex
+            align="center"
+            justify={['center', 'space-between']}
+            direction={['column', 'row']}
+            gap={4}
+          >
+            <Box>
+              <Heading color="gray.700" size="lg">
+                Plano de Corte
+              </Heading>
+              <Text color="gray.500" fontSize="sm">
+                Adicione peças para calcular o valor
+              </Text>
+            </Box>
+            <Flex direction="column" align={['center', 'flex-end']} gap={2}>
+              <RadioGroup.Root
+                colorScheme="orange"
+                value={String(pricePercent)}
+                onValueChange={e => {
+                  if (e.value) updatePricePercent(e.value);
+                }}
+                // @ts-ignore
+                size={radioSize}
+              >
+                <HStack
+                  gap={[2, 4]}
+                  p={1}
+                  bg="white"
+                  borderRadius="md"
+                  borderWidth="1px"
+                  borderColor="gray.200"
+                >
+                  <RadioGroup.Item value="75">
+                    <RadioGroup.ItemHiddenInput />
+                    <RadioGroup.ItemIndicator />
+                    <RadioGroup.ItemText px={2}>Balcão</RadioGroup.ItemText>
+                  </RadioGroup.Item>
+                  <RadioGroup.Item value="50">
+                    <RadioGroup.ItemHiddenInput />
+                    <RadioGroup.ItemIndicator />
+                    <RadioGroup.ItemText px={2}>Marceneiro</RadioGroup.ItemText>
+                  </RadioGroup.Item>
+                  <RadioGroup.Item value="1">
+                    <RadioGroup.ItemHiddenInput />
+                    <RadioGroup.ItemIndicator />
+                    <RadioGroup.ItemText px={2}>
+                      S/ Acréscimo
+                    </RadioGroup.ItemText>
+                  </RadioGroup.Item>
+                </HStack>
+              </RadioGroup.Root>
+              <Text
+                fontSize={['2xl', '3xl']}
+                fontWeight="800"
+                color="green.600"
+              >
+                {new Intl.NumberFormat('pt-BR', {
+                  style: 'currency',
+                  currency: 'BRL',
+                }).format(cutlist.reduce((prev, curr) => prev + curr.price, 0))}
+              </Text>
+            </Flex>
           </Flex>
-        </Flex>
-      </Box>
+        </Box>
 
-      <Box
-        as="form"
-        onSubmit={createCutlistHandleSubmit(handleCreateCutlist)}
-        bg="white"
-        p={6}
-        borderRadius="lg"
-        shadow="sm"
-        borderWidth="1px"
-        borderColor="gray.100"
-      >
-        {/* CORREÇÃO: 'spacing' alterado para 'gap' */}
-        <SimpleGrid columns={[1, 1, 2, 6]} gap={4} alignItems="flex-end">
-          <Box gridColumn={['span 1', 'span 1', 'span 2']}>
-            <FormSelect
-              name="materialId"
-              control={createCutlistControl}
-              isClearable
-              placeholder="Selecione o Material"
-              options={
-                materialData?.map(material => ({
-                  label: material.name,
-                  value: material.id || '',
-                })) || []
-              }
-            />
-          </Box>
+        {/* FORMULÁRIO */}
+        <Box
+          p={6}
+          as="form"
+          onSubmit={createCutlistHandleSubmit(handleCreateCutlist)}
+        >
+          <SimpleGrid columns={[1, 1, 2, 12]} gap={4} alignItems="flex-end">
+            {/* Material (4 colunas) */}
+            <Box gridColumn={['span 1', 'span 1', 'span 2', 'span 4']}>
+              <FormSelect
+                name="materialId"
+                control={createCutlistControl}
+                isClearable
+                placeholder="Selecione o Material"
+                options={
+                  materialData?.map(m => ({
+                    label: m.name,
+                    value: m.id || '',
+                  })) || []
+                }
+              />
+            </Box>
 
-          <Box>
-            <FormInput
-              {...createCutlistRegister('amount')}
-              name="amount"
-              placeholder="Qtd"
-              error={createCutlistErrors.amount}
-              size="md"
-              type="number"
-            />
-          </Box>
+            {/* Qtd (2 colunas) */}
+            <Box gridColumn={['span 1', 'span 1', 'span 1', 'span 2']}>
+              <FormInput
+                {...createCutlistRegister('amount')}
+                name="amount"
+                placeholder="Qtd"
+                label="Qtd"
+                error={createCutlistErrors.amount}
+                size="md"
+                type="number"
+              />
+            </Box>
 
-          <Box gridColumn={['span 1', 'span 1', 'span 1', 'span 1.5']}>
-            <Flex gap={2}>
-              <Box w="100%">
+            {/* Lado A (2 colunas) */}
+            <Box gridColumn={['span 1', 'span 1', 'span 1', 'span 2']}>
+              <Text fontSize="sm" fontWeight="medium" mb={2} color="gray.700">
+                Lado A / Fita
+              </Text>
+              <Flex gap={1}>
                 <FormInput
                   {...createCutlistRegister('sideA')}
                   name="sideA"
-                  placeholder="Lado A (mm)"
+                  placeholder="mm"
                   error={createCutlistErrors.sideA}
                   size="md"
                 />
-              </Box>
-              <Box w="70px">
-                <FormSelect
-                  control={createCutlistControl}
-                  name="borderA"
-                  options={borderOptions}
-                  defaultValue={0}
-                />
-              </Box>
-            </Flex>
-          </Box>
+                <Box w="65px">
+                  <FormSelect
+                    control={createCutlistControl}
+                    name="borderA"
+                    options={borderOptions}
+                    defaultValue={0}
+                    placeholder=""
+                  />
+                </Box>
+              </Flex>
+            </Box>
 
-          <Box gridColumn={['span 1', 'span 1', 'span 1', 'span 1.5']}>
-            <Flex gap={2}>
-              <Box w="100%">
+            {/* Lado B (2 colunas) */}
+            <Box gridColumn={['span 1', 'span 1', 'span 1', 'span 2']}>
+              <Text fontSize="sm" fontWeight="medium" mb={2} color="gray.700">
+                Lado B / Fita
+              </Text>
+              <Flex gap={1}>
                 <FormInput
                   {...createCutlistRegister('sideB')}
                   name="sideB"
-                  placeholder="Lado B (mm)"
+                  placeholder="mm"
                   error={createCutlistErrors.sideB}
                   size="md"
                 />
-              </Box>
-              <Box w="70px">
-                <FormSelect
-                  control={createCutlistControl}
-                  name="borderB"
-                  options={borderOptions}
-                  defaultValue={0}
-                />
-              </Box>
-            </Flex>
-          </Box>
+                <Box w="65px">
+                  <FormSelect
+                    control={createCutlistControl}
+                    name="borderB"
+                    options={borderOptions}
+                    defaultValue={0}
+                    placeholder=""
+                  />
+                </Box>
+              </Flex>
+            </Box>
 
-          <Button colorScheme="orange" size="md" w="100%" type="submit">
-            Adicionar
-          </Button>
-        </SimpleGrid>
+            {/* Botão (2 colunas) */}
+            <Box gridColumn={['span 1', 'span 1', 'span 2', 'span 2']}>
+              <Button
+                colorScheme="orange"
+                size="md"
+                w="100%"
+                type="submit"
+                mb="2px"
+              >
+                <FaPlus style={{ marginRight: '8px' }} /> Adicionar
+              </Button>
+            </Box>
+          </SimpleGrid>
+        </Box>
       </Box>
 
+      {/* TABELA */}
       {cutlist.length > 0 && (
         <Box
           overflowX="auto"
           bg="white"
-          borderRadius="lg"
+          borderRadius="xl"
           shadow="sm"
           borderWidth="1px"
-          borderColor="gray.100"
+          borderColor="gray.200"
         >
           <Table.Root
             variant="line"
@@ -338,47 +357,54 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
             size={tableSize}
             whiteSpace="nowrap"
           >
-            <TableCaption>Peças adicionadas</TableCaption>
+            <TableCaption
+              py={4}
+              fontSize="md"
+              fontWeight="bold"
+              color="orange.600"
+            >
+              Peças adicionadas ao pedido
+            </TableCaption>
             <Table.Header bg="gray.50">
               <Table.Row>
                 <Table.ColumnHeader>Tag</Table.ColumnHeader>
                 <Table.ColumnHeader>Material</Table.ColumnHeader>
                 <Table.ColumnHeader>Qtd</Table.ColumnHeader>
-                <Table.ColumnHeader>Dimensões (A x B)</Table.ColumnHeader>
-                <Table.ColumnHeader>Fitas (A | B)</Table.ColumnHeader>
+                <Table.ColumnHeader>Dimensões</Table.ColumnHeader>
+                <Table.ColumnHeader>Fitas</Table.ColumnHeader>
                 <Table.ColumnHeader>Preço</Table.ColumnHeader>
                 <Table.ColumnHeader width="1%">Ações</Table.ColumnHeader>
               </Table.Row>
             </Table.Header>
             <Table.Body>
-              {cutlist.map(cutlistMapped => {
+              {cutlist.map(c => {
                 const { avatar, gside, pside } = sortCutlistData({
-                  sideA: cutlistMapped.sideA,
-                  sideB: cutlistMapped.sideB,
-                  borderA: cutlistMapped.borderA,
-                  borderB: cutlistMapped.borderB,
+                  sideA: c.sideA,
+                  sideB: c.sideB,
+                  borderA: c.borderA,
+                  borderB: c.borderB,
                 });
                 return (
-                  <Table.Row key={cutlistMapped.id}>
+                  <Table.Row key={c.id}>
                     <Table.Cell>
                       <img
                         src={avatar.src}
-                        alt="Etiqueta"
+                        alt="Tag"
                         width="35px"
                         height="35px"
                       />
                     </Table.Cell>
                     <Table.Cell fontWeight="medium">
-                      {cutlistMapped.material.name}
+                      {c.material.name}
                     </Table.Cell>
-                    <Table.Cell>{cutlistMapped.amount}</Table.Cell>
+                    <Table.Cell>{c.amount}</Table.Cell>
                     <Table.Cell>
                       {gside} x {pside}
                     </Table.Cell>
                     <Table.Cell>
-                      {cutlistMapped.borderA} | {cutlistMapped.borderB}
+                      {c.borderA} | {c.borderB}
                     </Table.Cell>
-                    <Table.Cell fontWeight="bold">{`R$ ${cutlistMapped.price},00`}</Table.Cell>
+                    <Table.Cell fontWeight="bold">{`R$ ${c.price},00`}</Table.Cell>
                     <Table.Cell>
                       <HStack gap={2}>
                         <IconButton
@@ -386,7 +412,7 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
                           colorScheme="blue"
                           size="sm"
                           aria-label="Editar"
-                          onClick={() => updateCut(cutlistMapped.id)}
+                          onClick={() => updateCut(c.id)}
                         >
                           <FaEdit />
                         </IconButton>
@@ -395,7 +421,7 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
                           colorScheme="red"
                           size="sm"
                           aria-label="Remover"
-                          onClick={() => removeCut(cutlistMapped.id)}
+                          onClick={() => removeCut(c.id)}
                         >
                           <FaTrash />
                         </IconButton>
