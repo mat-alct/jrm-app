@@ -10,6 +10,7 @@ import {
   Text,
   Textarea,
   SimpleGrid,
+  Grid, // Importado Grid
   Switch,
   Icon,
 } from '@chakra-ui/react';
@@ -91,14 +92,13 @@ export const OrderData = ({
   const [tel, setTel] = React.useState('');
   const { createEstimate, createOrder } = useOrder();
 
-  // Watchers para lógica condicional
   const isUrgent = watch('isUrgent');
   const paymentType = watch('paymentType');
 
   const handleSubmitOrder: SubmitHandler<
     CreateOrderProps
   > = async orderData => {
-    // --- LÓGICA DE SENHA DO VENDEDOR ---
+    // --- LÓGICA DE SENHA ---
     const sellersRef = collection(db, 'sellers');
     const q = query(
       sellersRef,
@@ -115,7 +115,6 @@ export const OrderData = ({
     }
     const seller = querySnapshot.docs[0].data().name;
 
-    // Validações Manuais
     if (orderType === 'Serviço' && orderData.deliveryType === 'Entrega') {
       if (!orderData.telephone)
         return createOrderSetError('telephone', {
@@ -203,14 +202,7 @@ export const OrderData = ({
         borderWidth="1px"
         borderColor="gray.200"
       >
-        <Heading
-          size="md"
-          mb={6}
-          color="gray.700"
-          display="flex"
-          alignItems="center"
-          gap={2}
-        >
+        <Heading size="md" mb={6} color="gray.700">
           1. Dados do Cliente
         </Heading>
         <SimpleGrid columns={[1, 1, 3]} gap={4}>
@@ -268,7 +260,6 @@ export const OrderData = ({
               2. Detalhes do Serviço
             </Heading>
 
-            {/* TOGGLE URGENTE */}
             <Controller
               control={createOrderControl}
               name="isUrgent"
@@ -285,7 +276,6 @@ export const OrderData = ({
                   display="flex"
                   alignItems="center"
                   gap={3}
-                  transition="all 0.2s"
                   _hover={{ borderColor: value ? 'red.300' : 'gray.300' }}
                 >
                   <Switch.Root
@@ -312,8 +302,8 @@ export const OrderData = ({
           </Flex>
 
           <Stack gap={6}>
-            {/* Endereço */}
-            <SimpleGrid columns={[1, 1, 2]} gap={4}>
+            {/* CORREÇÃO: Grid com proporção 2/3 e 1/3 */}
+            <Grid templateColumns={['1fr', '1fr', '2fr 1fr']} gap={4}>
               <FormInput
                 {...createOrderRegister('address')}
                 error={createOrderErrors.address}
@@ -326,15 +316,14 @@ export const OrderData = ({
                 name="area"
                 control={createOrderControl}
                 label="Bairro"
-                placeholder="Selecione o bairro..."
+                placeholder="Selecione..."
                 isClearable
               />
-            </SimpleGrid>
+            </Grid>
 
             <Box borderTopWidth="1px" borderColor="gray.100" my={2} />
 
             <SimpleGrid columns={[1, 1, 3]} gap={6}>
-              {/* Opções de Logística */}
               <Stack gap={4}>
                 <FormRadio
                   options={['Japuíba', 'Frade']}
@@ -349,10 +338,7 @@ export const OrderData = ({
                   control={createOrderControl}
                 />
               </Stack>
-
-              {/* Data e Pagamento */}
               <Stack gap={4}>
-                {/* CORREÇÃO: Label manual para o DatePicker */}
                 <Box>
                   <Text
                     mb={2}
@@ -374,8 +360,6 @@ export const OrderData = ({
                   control={createOrderControl}
                 />
               </Stack>
-
-              {/* Valor Condicional */}
               <Stack gap={4} justify="flex-end">
                 {paymentType === 'Receber na Entrega' && (
                   <Box
@@ -384,7 +368,6 @@ export const OrderData = ({
                     borderRadius="md"
                     borderWidth="1px"
                     borderColor="orange.200"
-                    animation="fadeIn 0.3s"
                   >
                     <FormInput
                       {...createOrderRegister('amountDue')}
@@ -402,15 +385,14 @@ export const OrderData = ({
               </Stack>
             </SimpleGrid>
 
-            {/* Observações */}
             <Box>
-              <Text mb="8px" color="gray.700" fontWeight="medium">
-                Observações / Instruções Especiais
+              <Text mb="2px" color="gray.700" fontWeight="medium">
+                Observações
               </Text>
               <Textarea
                 {...createOrderRegister('ps')}
                 rows={4}
-                placeholder="Digite aqui detalhes do corte, fita ou entrega..."
+                placeholder="Instruções..."
               />
             </Box>
           </Stack>
@@ -426,10 +408,17 @@ export const OrderData = ({
         mt={4}
         color="white"
       >
-        <Flex direction={['column', 'column', 'row']} align="center" gap={6}>
-          <Box flex="1" w="100%">
+        {/* CORREÇÃO: Justify space-between para alinhar extremos */}
+        <Flex
+          direction={['column', 'column', 'row']}
+          align="center"
+          justify="space-between"
+          gap={6}
+        >
+          {/* Lado Esquerdo: Autenticação (Limitado a 300px) */}
+          <Box w="100%" maxW="300px">
             <Text mb={2} fontWeight="bold" color="gray.300">
-              Autenticação do Vendedor
+              Autenticação
             </Text>
             <Flex align="center" gap={3}>
               <Icon as={FaLock} color="orange.400" boxSize={5} />
@@ -438,7 +427,7 @@ export const OrderData = ({
                 error={createOrderErrors.sellerPassword}
                 name="sellerPassword"
                 type="password"
-                placeholder="Senha de liberação"
+                placeholder="Senha"
                 size="lg"
                 bg="gray.700"
                 border="none"
@@ -448,6 +437,7 @@ export const OrderData = ({
             </Flex>
           </Box>
 
+          {/* Lado Direito: Botão (Alinhado com a senha) */}
           <Box w={['100%', '100%', 'auto']}>
             <Button
               colorScheme="orange"
@@ -458,14 +448,14 @@ export const OrderData = ({
               width="100%"
               type="submit"
               disabled={cutlist.length < 1}
-              // CORREÇÃO: Removido rightIcon, usado Icon como filho com gap
               display="flex"
               gap={3}
               _hover={{ bg: 'orange.400', transform: 'scale(1.02)' }}
               transition="all 0.2s"
+              mt={[4, 4, 8]} // Margem superior para alinhar visualmente com a base do input
             >
               {orderType === 'Orçamento'
-                ? 'Salvar Orçamento'
+                ? 'SALVAR ORÇAMENTO'
                 : 'CONFIRMAR PEDIDO'}
               <Icon as={FaCheckCircle} />
             </Button>

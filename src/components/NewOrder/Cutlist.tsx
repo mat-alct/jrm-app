@@ -162,7 +162,7 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
 
   return (
     <Stack gap={6} mb={8}>
-      {/* CARD UNIFICADO: Cabeçalho + Formulário */}
+      {/* CARD UNIFICADO */}
       <Box
         bg="white"
         borderRadius="xl"
@@ -171,7 +171,7 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
         borderColor="gray.200"
         overflow="hidden"
       >
-        {/* TOPO: Título e Preço */}
+        {/* TOPO: Título e Opções de Preço */}
         <Box p={6} bg="gray.50" borderBottomWidth="1px" borderColor="gray.200">
           <Flex
             align="center"
@@ -187,6 +187,7 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
                 Adicione peças para calcular o valor
               </Text>
             </Box>
+
             <Flex direction="column" align={['center', 'flex-end']} gap={2}>
               <RadioGroup.Root
                 colorScheme="orange"
@@ -197,9 +198,11 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
                 // @ts-ignore
                 size={radioSize}
               >
+                {/* CORREÇÃO: Aumentei o gap para 6 e adicionei padding horizontal */}
                 <HStack
-                  gap={[2, 4]}
-                  p={1}
+                  gap={6}
+                  px={4}
+                  py={2}
                   bg="white"
                   borderRadius="md"
                   borderWidth="1px"
@@ -208,22 +211,27 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
                   <RadioGroup.Item value="75">
                     <RadioGroup.ItemHiddenInput />
                     <RadioGroup.ItemIndicator />
-                    <RadioGroup.ItemText px={2}>Balcão</RadioGroup.ItemText>
+                    <RadioGroup.ItemText fontWeight="medium">
+                      Balcão
+                    </RadioGroup.ItemText>
                   </RadioGroup.Item>
                   <RadioGroup.Item value="50">
                     <RadioGroup.ItemHiddenInput />
                     <RadioGroup.ItemIndicator />
-                    <RadioGroup.ItemText px={2}>Marceneiro</RadioGroup.ItemText>
+                    <RadioGroup.ItemText fontWeight="medium">
+                      Marceneiro
+                    </RadioGroup.ItemText>
                   </RadioGroup.Item>
                   <RadioGroup.Item value="1">
                     <RadioGroup.ItemHiddenInput />
                     <RadioGroup.ItemIndicator />
-                    <RadioGroup.ItemText px={2}>
+                    <RadioGroup.ItemText fontWeight="medium">
                       S/ Acréscimo
                     </RadioGroup.ItemText>
                   </RadioGroup.Item>
                 </HStack>
               </RadioGroup.Root>
+
               <Text
                 fontSize={['2xl', '3xl']}
                 fontWeight="800"
@@ -244,6 +252,7 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
           as="form"
           onSubmit={createCutlistHandleSubmit(handleCreateCutlist)}
         >
+          {/* Usei alignItems="flex-end" para alinhar botão e inputs na base */}
           <SimpleGrid columns={[1, 1, 2, 12]} gap={4} alignItems="flex-end">
             {/* Material (4 colunas) */}
             <Box gridColumn={['span 1', 'span 1', 'span 2', 'span 4']}>
@@ -266,8 +275,8 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
               <FormInput
                 {...createCutlistRegister('amount')}
                 name="amount"
-                placeholder="Qtd"
-                label="Qtd"
+                label="Qtd" // Label explícito
+                placeholder="0"
                 error={createCutlistErrors.amount}
                 size="md"
                 type="number"
@@ -279,15 +288,18 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
               <Text fontSize="sm" fontWeight="medium" mb={2} color="gray.700">
                 Lado A / Fita
               </Text>
-              <Flex gap={1}>
-                <FormInput
-                  {...createCutlistRegister('sideA')}
-                  name="sideA"
-                  placeholder="mm"
-                  error={createCutlistErrors.sideA}
-                  size="md"
-                />
-                <Box w="65px">
+              {/* CORREÇÃO DE ALINHAMENTO: InputGroup ou Flex ajustado */}
+              <Flex gap={2}>
+                <Box flex="1">
+                  <FormInput
+                    {...createCutlistRegister('sideA')}
+                    name="sideA"
+                    placeholder="mm"
+                    error={createCutlistErrors.sideA}
+                    size="md"
+                  />
+                </Box>
+                <Box w="70px">
                   <FormSelect
                     control={createCutlistControl}
                     name="borderA"
@@ -304,15 +316,17 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
               <Text fontSize="sm" fontWeight="medium" mb={2} color="gray.700">
                 Lado B / Fita
               </Text>
-              <Flex gap={1}>
-                <FormInput
-                  {...createCutlistRegister('sideB')}
-                  name="sideB"
-                  placeholder="mm"
-                  error={createCutlistErrors.sideB}
-                  size="md"
-                />
-                <Box w="65px">
+              <Flex gap={2}>
+                <Box flex="1">
+                  <FormInput
+                    {...createCutlistRegister('sideB')}
+                    name="sideB"
+                    placeholder="mm"
+                    error={createCutlistErrors.sideB}
+                    size="md"
+                  />
+                </Box>
+                <Box w="70px">
                   <FormSelect
                     control={createCutlistControl}
                     name="borderB"
@@ -326,6 +340,7 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
 
             {/* Botão (2 colunas) */}
             <Box gridColumn={['span 1', 'span 1', 'span 2', 'span 2']}>
+              {/* Margem inferior ajustada para alinhar visualmente com inputs */}
               <Button
                 colorScheme="orange"
                 size="md"
@@ -340,7 +355,7 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
         </Box>
       </Box>
 
-      {/* TABELA */}
+      {/* TABELA DE PEÇAS (Sem alterações funcionais, apenas mantendo o código) */}
       {cutlist.length > 0 && (
         <Box
           overflowX="auto"
