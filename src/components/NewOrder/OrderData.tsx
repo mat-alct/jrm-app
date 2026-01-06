@@ -10,7 +10,7 @@ import {
   HStack,
   List,
   Stack,
-  Switch, // Importando os componentes do Switch
+  Switch,
   Text,
   Textarea,
   useBreakpointValue,
@@ -23,7 +23,17 @@ import { useForm, SubmitHandler } from 'react-hook-form';
 import { useQuery } from '@tanstack/react-query';
 
 // --- Importações do Firebase ---
-import { deleteDoc, doc, getDoc, Timestamp } from 'firebase/firestore';
+// Adicionamos collection, query, where, getDocs para a busca de senha
+import {
+  deleteDoc,
+  doc,
+  getDoc,
+  Timestamp,
+  collection,
+  query,
+  where,
+  getDocs,
+} from 'firebase/firestore';
 import { db } from '../../services/firebase';
 
 // --- Importações Internas ---
@@ -39,7 +49,6 @@ import { FormInput } from '../Form/Input';
 import { FormRadio } from '../Form/Radio';
 import { FormSelect } from '../Form/Select';
 import { SearchBar } from '../SearchBar';
-// CORREÇÃO: Caminho relativo para evitar erro de alias
 import { useBoolean } from '../../hooks/useBoolean';
 
 // --- Interfaces ---
@@ -81,12 +90,10 @@ export const OrderData = ({
   });
 
   const router = useRouter();
-  // Define se o label do radio fica na horizontal (apenas em telas grandes 'lg')
   const isLabelHorizontal = useBreakpointValue({ base: false, lg: true });
 
   const [customerId, setCustomerId] = useState('');
   const [tel, setTel] = useState('');
-  // useBoolean retorna [estado, { toggle, on, off }]
   const [customerRegistered, setCustomerRegistered] = useBoolean(false);
   const [searchFilter, setSearchFilter] = useState<string | undefined>(
     undefined,
@@ -112,7 +119,6 @@ export const OrderData = ({
     );
     if (!customerSelected) throw new Error('Cliente não encontrado');
 
-    // Preenche o formulário com os dados do cliente selecionado
     createOrderSetValue('firstName', customerSelected.name.split(' ')[0]);
     createOrderSetValue('lastName', customerSelected.name.split(' ')[1] || '');
     setTel(normalizeTelephoneInput(customerSelected.telephone, ''));
@@ -128,21 +134,29 @@ export const OrderData = ({
   const handleSubmitOrder: SubmitHandler<CreateOrderProps> = async (
     orderData: CreateOrderProps,
   ) => {
-    // Busca o vendedor pelo "password" (ID)
-    const sellerRef = doc(db, 'sellers', orderData.sellerPassword);
-    const sellerSnap = await getDoc(sellerRef);
-    const sellerDoc = sellerSnap.data() as { name: string } | undefined;
+    // --- LÓGICA DE SENHA SIMPLIFICADA ---
+    // Busca um vendedor que tenha o campo 'password' igual ao digitado
+    const sellersRef = collection(db, 'sellers');
+    const q = query(
+      sellersRef,
+      where('password', '==', orderData.sellerPassword),
+    );
+    const querySnapshot = await getDocs(q);
 
-    if (!sellerDoc) {
+    if (querySnapshot.empty) {
       createOrderSetError('sellerPassword', {
         type: 'value',
         message: 'Senha inválida',
       });
       return;
     }
-    const seller = sellerDoc.name;
 
-    // Validações manuais para Entrega
+    // Pega o nome do primeiro vendedor encontrado
+    const sellerDoc = querySnapshot.docs[0].data() as { name: string };
+    const seller = sellerDoc.name;
+    // ------------------------------------
+
+    // Validações de Entrega
     if (orderData.deliveryType === 'Entrega') {
       if (!orderData.telephone) {
         createOrderSetError('telephone', {
@@ -244,7 +258,6 @@ export const OrderData = ({
           Utilizar cliente com cadastro?
         </Fieldset.Legend>
 
-        {/* CORREÇÃO: Switch com estrutura correta para Chakra UI v3 */}
         <Switch.Root
           colorScheme="orange"
           checked={customerRegistered}
@@ -265,7 +278,6 @@ export const OrderData = ({
       )}
 
       {customerRegistered && searchedCustomers && (
-        // CORREÇÃO: Uso correto de List.Root e List.Item
         <List.Root mt={8} gap={4} variant="plain">
           <Stack
             direction={['column', 'column', 'row']}
