@@ -17,7 +17,7 @@ import { NavSection } from './NavSection';
 import { useAuth } from '../../../hooks/authContext'; // Importando o novo hook
 
 export const SidebarNav: React.FC = () => {
-  const {signOut} = useAuth();
+  const { signOut } = useAuth();
 
   return (
     <Flex
@@ -59,16 +59,12 @@ export const SidebarNav: React.FC = () => {
           <NavLink icon={FaUserAstronaut} href="/administracao/vendedores">
             Novo vendedor
           </NavLink>
-          <NavLink icon={BsArrowLeftRight} href="/administracao/transferencias">
+          <NavLink icon={BsArrowLeftRight} href="/">
             Transferencias
           </NavLink>
         </NavSection>
         <NavSection title="Conta">
-          <NavLink
-            icon={FaSignOutAlt}
-            href="/login"
-            onClick={() => signOut()}
-          >
+          <NavLink icon={FaSignOutAlt} href="/login" onClick={() => signOut()}>
             Sair
           </NavLink>
         </NavSection>
