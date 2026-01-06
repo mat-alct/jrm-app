@@ -115,15 +115,17 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
       pricePercent,
     );
 
+    // CORREÇÃO DE LÓGICA: Salva os dados REAIS do material (height, width, price)
+    // ao invés de salvar 0. Isso previne o erro de NaN ao recalcular o preço.
     updateCutlist([
       {
         id: v4(),
         material: {
           materialId: cutlistFormData.materialId,
-          height: 0,
-          width: 0,
+          height: materialUsed.height,
+          width: materialUsed.width,
           name: materialUsed.name,
-          price: 0,
+          price: materialUsed.price,
         },
         ...cutlistFormData,
         price,
@@ -136,6 +138,8 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
     const newPercent = Number(percentValue);
     setPricePercent(newPercent);
     const cutlistWithUpdatedPrice = cutlist.map(cut => {
+      // Como agora temos os dados reais do material salvos em 'cut.material',
+      // o recálculo funcionará perfeitamente.
       const priceUpdated = calculateCutlistPrice(cut.material, cut, newPercent);
       return { ...cut, price: priceUpdated };
     });
@@ -227,8 +231,10 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
       {/* --- FORMULÁRIO DE ADIÇÃO DE PEÇAS --- */}
       <Stack
         as="form"
-        alignItems="flex-end" // CORREÇÃO: Alinhamento correto para que os inputs e o botão fiquem alinhados na base
-        gap={4} // Adiciona um espaçamento consistente entre os itens
+        // CORREÇÃO VISUAL: No mobile ('stretch') os campos ocupam 100% da largura.
+        // No desktop ('flex-end') eles alinham na base, ao lado do botão.
+        alignItems={['stretch', 'stretch', 'stretch', 'stretch', 'flex-end']}
+        gap={4}
         onSubmit={createCutlistHandleSubmit(handleCreateCutlist)}
         direction={['column', 'column', 'column', 'column', 'row']}
       >
@@ -238,7 +244,7 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
             control={createCutlistControl}
             isClearable
             placeholder="Material"
-            // CORREÇÃO: Mapeia os dados do material para o formato {label, value}
+            // CORREÇÃO: Mapeia os dados do material para o formato correto do select
             options={
               materialData?.map(material => ({
                 label: material.name,
@@ -260,7 +266,7 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
 
         {/* LADO A */}
         <Field.Root w="100%">
-          {/* CORREÇÃO: Adicionado Flex para garantir que o Input e o Select fiquem lado a lado */}
+          {/* CORREÇÃO VISUAL: Flex garante que Input e Select fiquem lado a lado */}
           <Flex width="100%">
             <Box mr={2} w="100%">
               <FormInput
@@ -284,6 +290,7 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
 
         {/* LADO B */}
         <Field.Root w="100%">
+          {/* CORREÇÃO VISUAL: Flex garante que Input e Select fiquem lado a lado */}
           <Flex width="100%">
             <Box w="100%" mr={2}>
               <FormInput
