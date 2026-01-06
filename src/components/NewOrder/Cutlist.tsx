@@ -3,8 +3,6 @@
 import {
   Box,
   Button,
-  Field,
-  Fieldset,
   Flex,
   Heading,
   HStack,
@@ -15,11 +13,11 @@ import {
   TableCaption,
   Text,
   useBreakpointValue,
-  SimpleGrid, // Novo componente para layout
+  SimpleGrid,
 } from '@chakra-ui/react';
 import { yupResolver } from '@hookform/resolvers/yup';
 import React, { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, SubmitHandler } from 'react-hook-form'; // Importei SubmitHandler
 import { FaEdit, FaTrash } from 'react-icons/fa';
 import { useQuery } from '@tanstack/react-query';
 import { v4 } from 'uuid';
@@ -75,7 +73,8 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
     setFocus: createCutlistSetFocus,
     formState: { errors: createCutlistErrors },
   } = useForm<CreateCutlistProps>({
-    resolver: yupResolver(createCutlistSchema),
+    // CORREÇÃO: 'as any' resolve o conflito de tipagem estrita
+    resolver: yupResolver(createCutlistSchema as any),
     reValidateMode: 'onSubmit',
   });
 
@@ -91,7 +90,10 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
 
   const [pricePercent, setPricePercent] = useState<number>(75);
 
-  const handleCreateCutlist = (cutlistFormData: CreateCutlistProps) => {
+  // CORREÇÃO: Tipagem explícita do handler
+  const handleCreateCutlist: SubmitHandler<
+    CreateCutlistProps
+  > = cutlistFormData => {
     createCutlistReset({ sideA: 0, sideB: 0, amount: 0 });
     createCutlistSetValue('borderA', 0);
     createCutlistSetValue('borderB', 0);
@@ -165,7 +167,6 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
 
   return (
     <Stack gap={6} mb={8}>
-      {/* CARD: Cabeçalho e Base de Cálculo */}
       <Box
         bg="white"
         p={6}
@@ -233,7 +234,6 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
         </Flex>
       </Box>
 
-      {/* CARD: Formulário de Adição */}
       <Box
         as="form"
         onSubmit={createCutlistHandleSubmit(handleCreateCutlist)}
@@ -244,8 +244,8 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
         borderWidth="1px"
         borderColor="gray.100"
       >
-        <SimpleGrid columns={[1, 1, 2, 6]} spacing={4} alignItems="flex-end">
-          {/* MATERIAL (Ocupa 2 colunas no desktop) */}
+        {/* CORREÇÃO: 'spacing' alterado para 'gap' */}
+        <SimpleGrid columns={[1, 1, 2, 6]} gap={4} alignItems="flex-end">
           <Box gridColumn={['span 1', 'span 1', 'span 2']}>
             <FormSelect
               name="materialId"
@@ -261,7 +261,6 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
             />
           </Box>
 
-          {/* QTD */}
           <Box>
             <FormInput
               {...createCutlistRegister('amount')}
@@ -273,7 +272,6 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
             />
           </Box>
 
-          {/* LADO A */}
           <Box gridColumn={['span 1', 'span 1', 'span 1', 'span 1.5']}>
             <Flex gap={2}>
               <Box w="100%">
@@ -296,7 +294,6 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
             </Flex>
           </Box>
 
-          {/* LADO B */}
           <Box gridColumn={['span 1', 'span 1', 'span 1', 'span 1.5']}>
             <Flex gap={2}>
               <Box w="100%">
@@ -319,14 +316,12 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
             </Flex>
           </Box>
 
-          {/* BOTÃO */}
           <Button colorScheme="orange" size="md" w="100%" type="submit">
             Adicionar
           </Button>
         </SimpleGrid>
       </Box>
 
-      {/* TABELA DE PEÇAS */}
       {cutlist.length > 0 && (
         <Box
           overflowX="auto"

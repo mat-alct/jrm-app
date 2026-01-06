@@ -11,13 +11,13 @@ import {
   Textarea,
   useBreakpointValue,
   SimpleGrid,
-  Switch, // Novo
+  Switch,
   Badge,
 } from '@chakra-ui/react';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useRouter } from 'next/router';
 import React, { useState } from 'react';
-import { useForm, SubmitHandler, Controller } from 'react-hook-form'; // Adicionado Controller
+import { useForm, SubmitHandler, Controller } from 'react-hook-form';
 
 import {
   deleteDoc,
@@ -63,8 +63,8 @@ interface CreateOrderProps {
   deliveryDate: Date;
   ps: string;
   sellerPassword: string;
-  isUrgent: boolean; // Novo
-  amountDue: string; // Novo
+  isUrgent: boolean;
+  amountDue: string;
 }
 
 export const OrderData = ({
@@ -81,7 +81,7 @@ export const OrderData = ({
     control: createOrderControl,
     setValue: createOrderSetValue,
     setError: createOrderSetError,
-    watch, // Novo: para observar se é urgente
+    watch,
     formState: { errors: createOrderErrors },
   } = useForm<CreateOrderProps>({
     resolver: yupResolver(validationSchema as any),
@@ -95,7 +95,6 @@ export const OrderData = ({
   const [tel, setTel] = React.useState('');
   const { createEstimate, createOrder } = useOrder();
 
-  // Observa o valor de 'isUrgent' para mudar a cor do card
   const isUrgent = watch('isUrgent');
 
   const handleSubmitOrder: SubmitHandler<
@@ -158,7 +157,7 @@ export const OrderData = ({
         : '',
       address: orderData.address,
       area: orderData.area,
-      city: '', // Removido do form, enviando vazio
+      city: '',
       state: 'Rio de Janeiro',
       customerId,
     };
@@ -189,8 +188,8 @@ export const OrderData = ({
         orderStore: orderData.orderStore,
         paymentType: orderData.paymentType,
         deliveryType: orderData.deliveryType,
-        amountDue: orderData.amountDue || 'Total', // Se vazio, assume Total
-        isUrgent: orderData.isUrgent, // Novo
+        amountDue: orderData.amountDue || 'Total',
+        isUrgent: orderData.isUrgent,
         seller,
         ps: orderData.ps,
         deliveryDate: Timestamp.fromDate(orderData.deliveryDate),
@@ -235,7 +234,8 @@ export const OrderData = ({
         <Heading size="md" mb={4} color="gray.700">
           1. Informações do Cliente
         </Heading>
-        <SimpleGrid columns={[1, 1, 2]} spacing={4}>
+        {/* CORREÇÃO: 'spacing' -> 'gap' */}
+        <SimpleGrid columns={[1, 1, 2]} gap={4}>
           <FormInput
             {...createOrderRegister('firstName')}
             name="firstName"
@@ -262,7 +262,8 @@ export const OrderData = ({
         </SimpleGrid>
 
         {orderType === 'Serviço' && (
-          <SimpleGrid columns={[1, 1, 2]} spacing={4} mt={4}>
+          // CORREÇÃO: 'spacing' -> 'gap'
+          <SimpleGrid columns={[1, 1, 2]} gap={4} mt={4}>
             <FormInput
               {...createOrderRegister('address')}
               error={createOrderErrors.address}
@@ -304,7 +305,8 @@ export const OrderData = ({
             )}
           </Flex>
 
-          <SimpleGrid columns={[1, 1, 2]} spacing={8}>
+          {/* CORREÇÃO: 'spacing' -> 'gap' */}
+          <SimpleGrid columns={[1, 1, 2]} gap={8}>
             <Stack gap={4}>
               <FormRadio
                 options={['Japuíba', 'Frade']}
@@ -391,11 +393,11 @@ export const OrderData = ({
             : '2. Finalização'}
         </Heading>
 
-        <SimpleGrid columns={[1, 1, 2]} spacing={8} alignItems="flex-start">
+        {/* CORREÇÃO: 'spacing' -> 'gap' */}
+        <SimpleGrid columns={[1, 1, 2]} gap={8} alignItems="flex-start">
           {orderType === 'Serviço' && (
             <Stack gap={4}>
               <FormRadio
-                // Opções atualizadas conforme pedido
                 options={['Pago', 'Receber na Entrega']}
                 label="Situação do Pagamento:"
                 name="paymentType"
@@ -403,7 +405,7 @@ export const OrderData = ({
                 isHorizontal
               />
 
-              {/* CAMPO NOVO: VALOR A RECEBER */}
+              {/* VALOR A RECEBER (HelperText implementado manualmente) */}
               <Box>
                 <FormInput
                   {...createOrderRegister('amountDue')}
@@ -411,8 +413,12 @@ export const OrderData = ({
                   label="Valor a Receber (R$)"
                   placeholder="Vazio = Receber Total | Ex: 500,00"
                   size="md"
-                  helperText="Deixe em branco se for receber o valor total."
+                  // Removido helperText do componente
                 />
+                {/* HelperText manual */}
+                <Text fontSize="xs" color="gray.500" mt={1}>
+                  Deixe em branco se for receber o valor total.
+                </Text>
               </Box>
             </Stack>
           )}
