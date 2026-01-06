@@ -1,7 +1,5 @@
 'use client';
 
-// --- Bloco de Importações de Bibliotecas Externas ---
-import 'react-datepicker/dist/react-datepicker.css';
 import {
   Box,
   Button,
@@ -17,6 +15,7 @@ import {
   TableCaption,
   Text,
   useBreakpointValue,
+  SimpleGrid, // Novo componente para layout
 } from '@chakra-ui/react';
 import { yupResolver } from '@hookform/resolvers/yup';
 import React, { useState } from 'react';
@@ -25,7 +24,6 @@ import { FaEdit, FaTrash } from 'react-icons/fa';
 import { useQuery } from '@tanstack/react-query';
 import { v4 } from 'uuid';
 
-// --- Bloco de Importações Internas do Projeto ---
 import { useMaterial } from '../../hooks/material';
 import { calculateCutlistPrice } from '../../utils/cutlist/calculatePrice';
 import { sortCutlistData } from '../../utils/cutlist/sortAndReturnTag';
@@ -33,7 +31,6 @@ import { createCutlistSchema } from '../../utils/yup/novoservicoValidations';
 import { FormInput } from '../Form/Input';
 import { FormSelect } from '../Form/Select';
 
-// --- Definição de Tipos e Interfaces ---
 interface CutlistMaterial {
   materialId: string;
   name: string;
@@ -60,6 +57,7 @@ interface CreateCutlistProps {
   sideB: number;
   borderA: number;
   borderB: number;
+  price: number;
 }
 
 interface CutlistPageProps {
@@ -67,7 +65,6 @@ interface CutlistPageProps {
   updateCutlist: (cutlistData: Cutlist[], maintainOldValues?: boolean) => void;
 }
 
-// --- Componente Principal: Cutlist ---
 export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
   const {
     register: createCutlistRegister,
@@ -115,8 +112,6 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
       pricePercent,
     );
 
-    // CORREÇÃO DE LÓGICA: Salva os dados REAIS do material (height, width, price)
-    // ao invés de salvar 0. Isso previne o erro de NaN ao recalcular o preço.
     updateCutlist([
       {
         id: v4(),
@@ -138,8 +133,6 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
     const newPercent = Number(percentValue);
     setPricePercent(newPercent);
     const cutlistWithUpdatedPrice = cutlist.map(cut => {
-      // Como agora temos os dados reais do material salvos em 'cut.material',
-      // o recálculo funcionará perfeitamente.
       const priceUpdated = calculateCutlistPrice(cut.material, cut, newPercent);
       return { ...cut, price: priceUpdated };
     });
@@ -171,177 +164,195 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
   ];
 
   return (
-    <Flex as="article" direction="column" mb={4}>
-      <HStack gap={4}>
-        <Heading color="gray.600" size="lg" whiteSpace="nowrap">
-          Plano de Corte
-        </Heading>
-        <Box borderTop="2px" borderColor="gray.300" w="100%" />
-      </HStack>
-      <Flex
-        align="center"
-        justify={['center', 'space-between']}
-        direction={['column', 'row']}
+    <Stack gap={6} mb={8}>
+      {/* CARD: Cabeçalho e Base de Cálculo */}
+      <Box
+        bg="white"
+        p={6}
+        borderRadius="lg"
+        shadow="sm"
+        borderWidth="1px"
+        borderColor="gray.100"
       >
-        <Fieldset.Root mt={4} mb={8}>
-          <Fieldset.Legend mb={0}>Base de cálculo</Fieldset.Legend>
-          <RadioGroup.Root
-            colorScheme="orange"
-            value={String(pricePercent)}
-            onValueChange={e => {
-              if (e.value) {
-                updatePricePercent(e.value);
-              }
-            }}
-            // @ts-ignore
-            size={radioSize}
-          >
-            <HStack gap={[2, 2, 4]}>
-              <RadioGroup.Item value="75">
-                <RadioGroup.ItemHiddenInput />
-                <RadioGroup.ItemIndicator />
-                <RadioGroup.ItemText>Balcão</RadioGroup.ItemText>
-              </RadioGroup.Item>
-              <RadioGroup.Item value="50">
-                <RadioGroup.ItemHiddenInput />
-                <RadioGroup.ItemIndicator />
-                <RadioGroup.ItemText>Marceneiro</RadioGroup.ItemText>
-              </RadioGroup.Item>
-              <RadioGroup.Item value="1">
-                <RadioGroup.ItemHiddenInput />
-                <RadioGroup.ItemIndicator />
-                <RadioGroup.ItemText>Sem Acréscimo</RadioGroup.ItemText>
-              </RadioGroup.Item>
-            </HStack>
-          </RadioGroup.Root>
-        </Fieldset.Root>
-        <Text
-          whiteSpace="nowrap"
-          fontSize={['md', 'md', 'xl', '2xl', '3xl']}
-          color="green.500"
-          mb={[8, 0]}
+        <Flex
+          align="center"
+          justify={['center', 'space-between']}
+          direction={['column', 'row']}
+          gap={4}
         >
-          {new Intl.NumberFormat('pt-BR', {
-            style: 'currency',
-            currency: 'BRL',
-          }).format(cutlist.reduce((prev, curr) => prev + curr.price, 0))}
-        </Text>
-      </Flex>
+          <Box>
+            <Heading color="gray.700" size="lg" mb={1}>
+              Plano de Corte
+            </Heading>
+            <Text color="gray.500" fontSize="sm">
+              Adicione as peças e defina o preço
+            </Text>
+          </Box>
 
-      {/* --- FORMULÁRIO DE ADIÇÃO DE PEÇAS --- */}
-      <Stack
+          <Flex direction="column" align={['center', 'flex-end']} gap={2}>
+            <RadioGroup.Root
+              colorScheme="orange"
+              value={String(pricePercent)}
+              onValueChange={e => {
+                if (e.value) updatePricePercent(e.value);
+              }}
+              // @ts-ignore
+              size={radioSize}
+            >
+              <HStack gap={[2, 4]} p={2} bg="gray.50" borderRadius="md">
+                <RadioGroup.Item value="75">
+                  <RadioGroup.ItemHiddenInput />
+                  <RadioGroup.ItemIndicator />
+                  <RadioGroup.ItemText>Balcão</RadioGroup.ItemText>
+                </RadioGroup.Item>
+                <RadioGroup.Item value="50">
+                  <RadioGroup.ItemHiddenInput />
+                  <RadioGroup.ItemIndicator />
+                  <RadioGroup.ItemText>Marceneiro</RadioGroup.ItemText>
+                </RadioGroup.Item>
+                <RadioGroup.Item value="1">
+                  <RadioGroup.ItemHiddenInput />
+                  <RadioGroup.ItemIndicator />
+                  <RadioGroup.ItemText>Sem Acréscimo</RadioGroup.ItemText>
+                </RadioGroup.Item>
+              </HStack>
+            </RadioGroup.Root>
+
+            <Text
+              whiteSpace="nowrap"
+              fontSize={['2xl', '3xl']}
+              fontWeight="bold"
+              color="green.600"
+            >
+              {new Intl.NumberFormat('pt-BR', {
+                style: 'currency',
+                currency: 'BRL',
+              }).format(cutlist.reduce((prev, curr) => prev + curr.price, 0))}
+            </Text>
+          </Flex>
+        </Flex>
+      </Box>
+
+      {/* CARD: Formulário de Adição */}
+      <Box
         as="form"
-        // CORREÇÃO VISUAL: No mobile ('stretch') os campos ocupam 100% da largura.
-        // No desktop ('flex-end') eles alinham na base, ao lado do botão.
-        alignItems={['stretch', 'stretch', 'stretch', 'stretch', 'flex-end']}
-        gap={4}
         onSubmit={createCutlistHandleSubmit(handleCreateCutlist)}
-        direction={['column', 'column', 'column', 'column', 'row']}
+        bg="white"
+        p={6}
+        borderRadius="lg"
+        shadow="sm"
+        borderWidth="1px"
+        borderColor="gray.100"
       >
-        <Box minW="33%" w={['100%', '100%', '100%', '100%', '33%']}>
-          <FormSelect
-            name="materialId"
-            control={createCutlistControl}
-            isClearable
-            placeholder="Material"
-            // CORREÇÃO: Mapeia os dados do material para o formato correto do select
-            options={
-              materialData?.map(material => ({
-                label: material.name,
-                value: material.id || '',
-              })) || []
-            }
-          />
-        </Box>
+        <SimpleGrid columns={[1, 1, 2, 6]} spacing={4} alignItems="flex-end">
+          {/* MATERIAL (Ocupa 2 colunas no desktop) */}
+          <Box gridColumn={['span 1', 'span 1', 'span 2']}>
+            <FormSelect
+              name="materialId"
+              control={createCutlistControl}
+              isClearable
+              placeholder="Selecione o Material"
+              options={
+                materialData?.map(material => ({
+                  label: material.name,
+                  value: material.id || '',
+                })) || []
+              }
+            />
+          </Box>
 
-        <Box w={['100%', '100%', '100%', '100%', '80px']}>
-          <FormInput
-            {...createCutlistRegister('amount')}
-            name="amount"
-            placeholder="Qtd"
-            error={createCutlistErrors.amount}
-            size="md"
-          />
-        </Box>
+          {/* QTD */}
+          <Box>
+            <FormInput
+              {...createCutlistRegister('amount')}
+              name="amount"
+              placeholder="Qtd"
+              error={createCutlistErrors.amount}
+              size="md"
+              type="number"
+            />
+          </Box>
 
-        {/* LADO A */}
-        <Field.Root w="100%">
-          {/* CORREÇÃO VISUAL: Flex garante que Input e Select fiquem lado a lado */}
-          <Flex width="100%">
-            <Box mr={2} w="100%">
-              <FormInput
-                {...createCutlistRegister('sideA')}
-                name="sideA"
-                placeholder="Lado A"
-                error={createCutlistErrors.sideA}
-                size="md"
-              />
-            </Box>
-            <Box w="100%" maxW="90px">
-              <FormSelect
-                control={createCutlistControl}
-                name="borderA"
-                options={borderOptions}
-                defaultValue={0}
-              />
-            </Box>
-          </Flex>
-        </Field.Root>
+          {/* LADO A */}
+          <Box gridColumn={['span 1', 'span 1', 'span 1', 'span 1.5']}>
+            <Flex gap={2}>
+              <Box w="100%">
+                <FormInput
+                  {...createCutlistRegister('sideA')}
+                  name="sideA"
+                  placeholder="Lado A (mm)"
+                  error={createCutlistErrors.sideA}
+                  size="md"
+                />
+              </Box>
+              <Box w="70px">
+                <FormSelect
+                  control={createCutlistControl}
+                  name="borderA"
+                  options={borderOptions}
+                  defaultValue={0}
+                />
+              </Box>
+            </Flex>
+          </Box>
 
-        {/* LADO B */}
-        <Field.Root w="100%">
-          {/* CORREÇÃO VISUAL: Flex garante que Input e Select fiquem lado a lado */}
-          <Flex width="100%">
-            <Box w="100%" mr={2}>
-              <FormInput
-                {...createCutlistRegister('sideB')}
-                name="sideB"
-                placeholder="Lado B"
-                error={createCutlistErrors.sideB}
-                size="md"
-              />
-            </Box>
-            <Box w="100%" maxW="90px">
-              <FormSelect
-                control={createCutlistControl}
-                name="borderB"
-                options={borderOptions}
-                defaultValue={0}
-              />
-            </Box>
-          </Flex>
-        </Field.Root>
+          {/* LADO B */}
+          <Box gridColumn={['span 1', 'span 1', 'span 1', 'span 1.5']}>
+            <Flex gap={2}>
+              <Box w="100%">
+                <FormInput
+                  {...createCutlistRegister('sideB')}
+                  name="sideB"
+                  placeholder="Lado B (mm)"
+                  error={createCutlistErrors.sideB}
+                  size="md"
+                />
+              </Box>
+              <Box w="70px">
+                <FormSelect
+                  control={createCutlistControl}
+                  name="borderB"
+                  options={borderOptions}
+                  defaultValue={0}
+                />
+              </Box>
+            </Flex>
+          </Box>
 
-        <Button
-          colorScheme="orange"
-          size="md"
-          w={['100%', 'auto']}
-          px={8}
-          type="submit"
+          {/* BOTÃO */}
+          <Button colorScheme="orange" size="md" w="100%" type="submit">
+            Adicionar
+          </Button>
+        </SimpleGrid>
+      </Box>
+
+      {/* TABELA DE PEÇAS */}
+      {cutlist.length > 0 && (
+        <Box
+          overflowX="auto"
+          bg="white"
+          borderRadius="lg"
+          shadow="sm"
+          borderWidth="1px"
+          borderColor="gray.100"
         >
-          Adicionar
-        </Button>
-      </Stack>
-
-      <Box overflowX="auto">
-        {cutlist.length > 0 && (
           <Table.Root
+            variant="line"
             colorScheme="orange"
-            mt={8}
             // @ts-ignore
             size={tableSize}
             whiteSpace="nowrap"
           >
-            <TableCaption>Lista de peças</TableCaption>
-            <Table.Header>
+            <TableCaption>Peças adicionadas</TableCaption>
+            <Table.Header bg="gray.50">
               <Table.Row>
-                <Table.ColumnHeader>Fita de Borda</Table.ColumnHeader>
+                <Table.ColumnHeader>Tag</Table.ColumnHeader>
                 <Table.ColumnHeader>Material</Table.ColumnHeader>
                 <Table.ColumnHeader>Qtd</Table.ColumnHeader>
-                <Table.ColumnHeader>Lado A</Table.ColumnHeader>
-                <Table.ColumnHeader>Lado B</Table.ColumnHeader>
+                <Table.ColumnHeader>Dimensões (A x B)</Table.ColumnHeader>
+                <Table.ColumnHeader>Fitas (A | B)</Table.ColumnHeader>
                 <Table.ColumnHeader>Preço</Table.ColumnHeader>
-                <Table.ColumnHeader />
+                <Table.ColumnHeader width="1%">Ações</Table.ColumnHeader>
               </Table.Row>
             </Table.Header>
             <Table.Body>
@@ -358,21 +369,26 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
                       <img
                         src={avatar.src}
                         alt="Etiqueta"
-                        width="45px"
-                        height="45px"
+                        width="35px"
+                        height="35px"
                       />
                     </Table.Cell>
-                    <Table.Cell whiteSpace="nowrap">
+                    <Table.Cell fontWeight="medium">
                       {cutlistMapped.material.name}
                     </Table.Cell>
                     <Table.Cell>{cutlistMapped.amount}</Table.Cell>
-                    <Table.Cell>{gside}</Table.Cell>
-                    <Table.Cell>{pside}</Table.Cell>
-                    <Table.Cell>{cutlistMapped.price}</Table.Cell>
                     <Table.Cell>
-                      <HStack gap={4}>
+                      {gside} x {pside}
+                    </Table.Cell>
+                    <Table.Cell>
+                      {cutlistMapped.borderA} | {cutlistMapped.borderB}
+                    </Table.Cell>
+                    <Table.Cell fontWeight="bold">{`R$ ${cutlistMapped.price},00`}</Table.Cell>
+                    <Table.Cell>
+                      <HStack gap={2}>
                         <IconButton
-                          colorScheme="orange"
+                          variant="ghost"
+                          colorScheme="blue"
                           size="sm"
                           aria-label="Editar"
                           onClick={() => updateCut(cutlistMapped.id)}
@@ -380,7 +396,8 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
                           <FaEdit />
                         </IconButton>
                         <IconButton
-                          colorScheme="orange"
+                          variant="ghost"
+                          colorScheme="red"
                           size="sm"
                           aria-label="Remover"
                           onClick={() => removeCut(cutlistMapped.id)}
@@ -394,8 +411,8 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
               })}
             </Table.Body>
           </Table.Root>
-        )}
-      </Box>
-    </Flex>
+        </Box>
+      )}
+    </Stack>
   );
 };

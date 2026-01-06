@@ -1,5 +1,3 @@
-// This file has an array with all areas to use in customer creation
-
 export const areas = [
   'Paraty',
   'São João de Meriti',
@@ -94,4 +92,7 @@ export const areas = [
   'Goxuma',
   'Matariz',
   'Vila Residencial',
+  'Conceição de Jacareí', // Novo
+  'Mangaratiba',
+  'Vila Residencial de Mambucaba', // Novo
 ];

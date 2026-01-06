@@ -1,33 +1,27 @@
 'use client';
 
-// --- Importações de Bibliotecas Externas ---
 import {
   Box,
   Button,
-  Fieldset,
   Flex,
   Heading,
   HStack,
-  List,
   Stack,
-  Switch,
   Text,
   Textarea,
   useBreakpointValue,
-  VStack,
+  SimpleGrid,
+  Switch, // Novo
+  Badge,
 } from '@chakra-ui/react';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useRouter } from 'next/router';
 import React, { useState } from 'react';
-import { useForm, SubmitHandler } from 'react-hook-form';
-import { useQuery } from '@tanstack/react-query';
+import { useForm, SubmitHandler, Controller } from 'react-hook-form'; // Adicionado Controller
 
-// --- Importações do Firebase ---
-// Adicionamos collection, query, where, getDocs para a busca de senha
 import {
   deleteDoc,
   doc,
-  getDoc,
   Timestamp,
   collection,
   query,
@@ -36,22 +30,20 @@ import {
 } from 'firebase/firestore';
 import { db } from '../../services/firebase';
 
-// --- Importações Internas ---
-import { useCustomer } from '../../hooks/customer';
 import { useOrder } from '../../hooks/order';
 import { Cutlist } from '../../types';
 import { capitalizeAndStrip } from '../../utils/capitalizeAndStripString';
 import { areas } from '../../utils/listOfAreas';
 import { normalizeTelephoneInput } from '../../utils/normalizeTelephone';
-import { createOrderSchema } from '../../utils/yup/novoservicoValidations';
+import {
+  createOrderSchema,
+  createEstimateSchema,
+} from '../../utils/yup/novoservicoValidations';
 import { FormDatePicker } from '../Form/DatePicker';
 import { FormInput } from '../Form/Input';
 import { FormRadio } from '../Form/Radio';
 import { FormSelect } from '../Form/Select';
-import { SearchBar } from '../SearchBar';
-import { useBoolean } from '../../hooks/useBoolean';
 
-// --- Interfaces ---
 interface OrderDataProps {
   orderType: string;
   cutlist: Cutlist[];
@@ -64,13 +56,15 @@ interface CreateOrderProps {
   telephone: string;
   address: string;
   area: string;
-  city: string;
+  // city removido
   orderStore: string;
   deliveryType: string;
   paymentType: string;
   deliveryDate: Date;
   ps: string;
   sellerPassword: string;
+  isUrgent: boolean; // Novo
+  amountDue: string; // Novo
 }
 
 export const OrderData = ({
@@ -78,64 +72,36 @@ export const OrderData = ({
   cutlist,
   estimateId,
 }: OrderDataProps) => {
+  const validationSchema =
+    orderType === 'Orçamento' ? createEstimateSchema : createOrderSchema;
+
   const {
     register: createOrderRegister,
     handleSubmit: createOrderHandleSubmit,
     control: createOrderControl,
     setValue: createOrderSetValue,
     setError: createOrderSetError,
+    watch, // Novo: para observar se é urgente
     formState: { errors: createOrderErrors },
   } = useForm<CreateOrderProps>({
-    resolver: yupResolver(createOrderSchema),
+    resolver: yupResolver(validationSchema as any),
+    defaultValues: {
+      isUrgent: false,
+    },
   });
 
   const router = useRouter();
   const isLabelHorizontal = useBreakpointValue({ base: false, lg: true });
-
-  const [customerId, setCustomerId] = useState('');
-  const [tel, setTel] = useState('');
-  const [customerRegistered, setCustomerRegistered] = useBoolean(false);
-  const [searchFilter, setSearchFilter] = useState<string | undefined>(
-    undefined,
-  );
-  const { getCustomers } = useCustomer();
-
-  const { data: searchedCustomers } = useQuery({
-    queryKey: ['customers', searchFilter],
-    queryFn: () => getCustomers(searchFilter),
-  });
-
-  const handleSearch = (search: string) => {
-    setSearchFilter(search);
-  };
-
-  const handleSetCustomerId = (id: string) => {
-    if (customerId === id) {
-      setCustomerId('');
-      return;
-    }
-    const customerSelected = searchedCustomers?.find(
-      customer => customer.id === id,
-    );
-    if (!customerSelected) throw new Error('Cliente não encontrado');
-
-    createOrderSetValue('firstName', customerSelected.name.split(' ')[0]);
-    createOrderSetValue('lastName', customerSelected.name.split(' ')[1] || '');
-    setTel(normalizeTelephoneInput(customerSelected.telephone, ''));
-    createOrderSetValue('telephone', customerSelected.telephone);
-    createOrderSetValue('address', customerSelected.address);
-    createOrderSetValue('area', customerSelected.area);
-    createOrderSetValue('city', customerSelected.city);
-    setCustomerId(id);
-  };
-
+  const [tel, setTel] = React.useState('');
   const { createEstimate, createOrder } = useOrder();
 
-  const handleSubmitOrder: SubmitHandler<CreateOrderProps> = async (
-    orderData: CreateOrderProps,
-  ) => {
-    // --- LÓGICA DE SENHA SIMPLIFICADA ---
-    // Busca um vendedor que tenha o campo 'password' igual ao digitado
+  // Observa o valor de 'isUrgent' para mudar a cor do card
+  const isUrgent = watch('isUrgent');
+
+  const handleSubmitOrder: SubmitHandler<
+    CreateOrderProps
+  > = async orderData => {
+    // --- LÓGICA DE SENHA DO VENDEDOR ---
     const sellersRef = collection(db, 'sellers');
     const q = query(
       sellersRef,
@@ -151,13 +117,11 @@ export const OrderData = ({
       return;
     }
 
-    // Pega o nome do primeiro vendedor encontrado
     const sellerDoc = querySnapshot.docs[0].data() as { name: string };
     const seller = sellerDoc.name;
     // ------------------------------------
 
-    // Validações de Entrega
-    if (orderData.deliveryType === 'Entrega') {
+    if (orderType === 'Serviço' && orderData.deliveryType === 'Entrega') {
       if (!orderData.telephone) {
         createOrderSetError('telephone', {
           type: 'required',
@@ -179,25 +143,22 @@ export const OrderData = ({
         });
         return;
       }
-      if (!orderData.city) {
-        createOrderSetError('city', {
-          type: 'required',
-          message: 'Cidade obrigatória para entrega.',
-        });
-        return;
-      }
     }
 
     const name = `${capitalizeAndStrip(orderData.firstName)} ${capitalizeAndStrip(orderData.lastName)}`;
     const createdAt = Timestamp.fromDate(new Date());
     const updatedAt = Timestamp.fromDate(new Date());
 
+    const customerId = '';
+
     const customer = {
       name,
-      telephone: orderData.telephone.replace(/[^A-Z0-9]/gi, ''),
+      telephone: orderData.telephone
+        ? orderData.telephone.replace(/[^A-Z0-9]/gi, '')
+        : '',
       address: orderData.address,
       area: orderData.area,
-      city: orderData.city,
+      city: '', // Removido do form, enviando vazio
       state: 'Rio de Janeiro',
       customerId,
     };
@@ -208,7 +169,9 @@ export const OrderData = ({
           cutlist,
           name,
           customerId,
-          telephone: orderData.telephone.replace(/[^A-Z0-9]/gi, ''),
+          telephone: orderData.telephone
+            ? orderData.telephone.replace(/[^A-Z0-9]/gi, '')
+            : '',
           createdAt,
           updatedAt,
         });
@@ -226,6 +189,8 @@ export const OrderData = ({
         orderStore: orderData.orderStore,
         paymentType: orderData.paymentType,
         deliveryType: orderData.deliveryType,
+        amountDue: orderData.amountDue || 'Total', // Se vazio, assume Total
+        isUrgent: orderData.isUrgent, // Novo
         seller,
         ps: orderData.ps,
         deliveryDate: Timestamp.fromDate(orderData.deliveryDate),
@@ -245,96 +210,37 @@ export const OrderData = ({
   };
 
   return (
-    <>
-      <HStack gap={4} mt={8} mb={4}>
+    <Stack
+      gap={6}
+      mt={8}
+      as="form"
+      onSubmit={createOrderHandleSubmit(handleSubmitOrder)}
+    >
+      <HStack gap={4} mb={2}>
         <Heading color="gray.600" size="lg" whiteSpace="nowrap">
-          Dados do Pedido
+          Dados do {orderType}
         </Heading>
-        <Box borderTop="2px" borderColor="gray.300" w="100%" />
+        <Box borderTop="2px" borderColor="gray.200" w="100%" />
       </HStack>
 
-      <Fieldset.Root display="flex" alignItems="center" mt={4}>
-        <Fieldset.Legend mb="0" mr={4} color="gray.700">
-          Utilizar cliente com cadastro?
-        </Fieldset.Legend>
-
-        <Switch.Root
-          colorScheme="orange"
-          checked={customerRegistered}
-          onCheckedChange={e => {
-            setCustomerId('');
-            setCustomerRegistered.toggle();
-          }}
-        >
-          <Switch.HiddenInput />
-          <Switch.Control>
-            <Switch.Thumb />
-          </Switch.Control>
-        </Switch.Root>
-      </Fieldset.Root>
-
-      {customerRegistered && (
-        <SearchBar mt={4} handleUpdateSearch={handleSearch} minW="300px" />
-      )}
-
-      {customerRegistered && searchedCustomers && (
-        <List.Root mt={8} gap={4} variant="plain">
-          <Stack
-            direction={['column', 'column', 'row']}
-            gap={[4, 4, 4, 8]}
-            wrap="wrap"
-          >
-            {searchedCustomers?.map(customer => (
-              <List.Item key={customer.id}>
-                <Flex
-                  align="center"
-                  borderWidth="1px"
-                  p={4}
-                  borderRadius="md"
-                  bg="white"
-                >
-                  <Flex direction="column" w="100%">
-                    <Text fontWeight="700">{`${customer.name}`}</Text>
-                    <Text fontSize="sm">{`${customer.address}, ${customer.area}`}</Text>
-                    <Text fontSize="sm">{`Tel: ${customer.telephone}`}</Text>
-                    <Button
-                      mt={2}
-                      size="sm"
-                      colorScheme={
-                        customer.id === customerId ? 'green' : 'gray'
-                      }
-                      onClick={() => handleSetCustomerId(customer.id)}
-                    >
-                      {customer.id === customerId
-                        ? 'Selecionado'
-                        : 'Selecionar'}
-                    </Button>
-                  </Flex>
-                </Flex>
-              </List.Item>
-            ))}
-          </Stack>
-        </List.Root>
-      )}
-
-      <Flex
-        as="form"
-        direction="column"
-        align="left"
-        mt={8}
-        onSubmit={createOrderHandleSubmit(handleSubmitOrder)}
+      {/* CARD 1: DADOS DO CLIENTE */}
+      <Box
+        bg="white"
+        p={6}
+        borderRadius="lg"
+        shadow="sm"
+        borderWidth="1px"
+        borderColor="gray.100"
       >
-        <Stack
-          direction={['column', 'column', 'column', 'row']}
-          gap={[4, 4, 4, 8]}
-          align="flex-start"
-        >
+        <Heading size="md" mb={4} color="gray.700">
+          1. Informações do Cliente
+        </Heading>
+        <SimpleGrid columns={[1, 1, 2]} spacing={4}>
           <FormInput
             {...createOrderRegister('firstName')}
             name="firstName"
             label="Nome"
             error={createOrderErrors.firstName}
-            readOnly={Boolean(customerId)}
             size="md"
           />
           <FormInput
@@ -342,7 +248,6 @@ export const OrderData = ({
             name="lastName"
             label="Sobrenome"
             error={createOrderErrors.lastName}
-            readOnly={Boolean(customerId)}
             size="md"
           />
           <FormInput
@@ -352,58 +257,61 @@ export const OrderData = ({
             label="Telefone"
             value={tel}
             onChange={e => setTel(normalizeTelephoneInput(e.target.value, tel))}
-            readOnly={Boolean(customerId)}
             size="md"
           />
-        </Stack>
+        </SimpleGrid>
 
         {orderType === 'Serviço' && (
-          <>
-            <Stack
-              direction={['column', 'column', 'column', 'row']}
-              gap={[4, 4, 4, 8]}
-              mt={[4, 4, 4, 8]}
-              align="flex-start"
-            >
-              <FormInput
-                {...createOrderRegister('address')}
-                error={createOrderErrors.address}
-                name="address"
-                label="Endereço"
-                readOnly={Boolean(customerId)}
-                size="md"
-              />
-              <FormSelect
-                options={areas.map(area => ({ value: area, label: area }))}
-                name="area"
-                control={createOrderControl}
-                label="Bairro"
-                isDisabled={Boolean(customerId)}
-                placeholder="Selecione o bairro..."
-                isClearable
-              />
-              <FormSelect
-                options={[
-                  { value: 'Angra dos Reis', label: 'Angra dos Reis' },
-                  { value: 'Paraty', label: 'Paraty' },
-                ]}
-                name="city"
-                control={createOrderControl}
-                label="Cidade"
-                isDisabled={Boolean(customerId)}
-                placeholder="Selecione a cidade..."
-                isClearable
-              />
-            </Stack>
+          <SimpleGrid columns={[1, 1, 2]} spacing={4} mt={4}>
+            <FormInput
+              {...createOrderRegister('address')}
+              error={createOrderErrors.address}
+              name="address"
+              label="Endereço"
+              size="md"
+            />
+            <FormSelect
+              options={areas.map(area => ({ value: area, label: area }))}
+              name="area"
+              control={createOrderControl}
+              label="Bairro"
+              placeholder="Selecione o bairro..."
+              isClearable
+            />
+          </SimpleGrid>
+        )}
+      </Box>
 
-            <VStack align="left" mt={8} gap={[4, 4, 4, 8]}>
+      {/* CARD 2: DETALHES DA ENTREGA E LOJA (Apenas Serviço) */}
+      {orderType === 'Serviço' && (
+        <Box
+          bg={isUrgent ? 'red.50' : 'white'}
+          p={6}
+          borderRadius="lg"
+          shadow="sm"
+          borderWidth={isUrgent ? '2px' : '1px'}
+          borderColor={isUrgent ? 'red.200' : 'gray.100'}
+          transition="all 0.3s"
+        >
+          <Flex justify="space-between" align="center" mb={4}>
+            <Heading size="md" color="gray.700">
+              2. Entrega e Prazos
+            </Heading>
+            {isUrgent && (
+              <Badge colorScheme="red" fontSize="0.9em">
+                URGENTE
+              </Badge>
+            )}
+          </Flex>
+
+          <SimpleGrid columns={[1, 1, 2]} spacing={8}>
+            <Stack gap={4}>
               <FormRadio
                 options={['Japuíba', 'Frade']}
-                label="Loja do pedido:"
+                label="Loja do Pedido:"
                 name="orderStore"
                 control={createOrderControl}
                 isHorizontal
-                isLabelHorizontal={isLabelHorizontal}
               />
               <FormRadio
                 options={['Retirar na Loja', 'Entrega']}
@@ -411,20 +319,46 @@ export const OrderData = ({
                 name="deliveryType"
                 control={createOrderControl}
                 isHorizontal
-                isLabelHorizontal={isLabelHorizontal}
               />
-              <FormRadio
-                options={['Pago', 'Parcialmente Pago', 'Receber na Entrega']}
-                label="Pagamento:"
-                name="paymentType"
-                control={createOrderControl}
-                isHorizontal
-                isLabelHorizontal={isLabelHorizontal}
-              />
-              <FormDatePicker
-                name="deliveryDate"
-                control={createOrderControl}
-              />
+            </Stack>
+
+            <Stack gap={4}>
+              {/* DATA DE ENTREGA + URGENTE */}
+              <Box>
+                <Flex align="flex-end" gap={4}>
+                  <Box flex="1">
+                    <FormDatePicker
+                      name="deliveryDate"
+                      control={createOrderControl}
+                    />
+                  </Box>
+                  <Box pb={2}>
+                    <Controller
+                      control={createOrderControl}
+                      name="isUrgent"
+                      render={({ field: { onChange, value } }) => (
+                        <Flex align="center" gap={2}>
+                          <Switch.Root
+                            colorScheme="red"
+                            checked={value}
+                            onCheckedChange={e => onChange(e.checked)}
+                            size="lg"
+                          >
+                            <Switch.HiddenInput />
+                            <Switch.Control>
+                              <Switch.Thumb />
+                            </Switch.Control>
+                            <Switch.Label fontWeight="bold" color="red.500">
+                              Urgente?
+                            </Switch.Label>
+                          </Switch.Root>
+                        </Flex>
+                      )}
+                    />
+                  </Box>
+                </Flex>
+              </Box>
+
               <Flex direction="column">
                 <Text mb="8px" color="gray.700" fontWeight="bold">
                   Observações:
@@ -433,35 +367,84 @@ export const OrderData = ({
                   {...createOrderRegister('ps')}
                   size="sm"
                   resize="vertical"
+                  placeholder="Instruções especiais..."
+                  bg="white"
                 />
               </Flex>
-            </VStack>
-          </>
-        )}
-
-        <Box mt={[8, 8, 8, 16]} mx="auto" w="100%" maxW="300px">
-          <FormInput
-            {...createOrderRegister('sellerPassword')}
-            error={createOrderErrors.sellerPassword}
-            name="sellerPassword"
-            label="Senha:"
-            type="password"
-            variant="flushed"
-            isHorizontal
-          />
+            </Stack>
+          </SimpleGrid>
         </Box>
+      )}
 
-        <Button
-          colorScheme="orange"
-          size="lg"
-          width="100%"
-          my={8}
-          type="submit"
-          disabled={cutlist.length < 1}
-        >
-          Confirmar Pedido
-        </Button>
-      </Flex>
-    </>
+      {/* CARD 3: PAGAMENTO E VENDEDOR (Apenas Serviço, exceto Senha) */}
+      <Box
+        bg="white"
+        p={6}
+        borderRadius="lg"
+        shadow="sm"
+        borderWidth="1px"
+        borderColor="gray.100"
+      >
+        <Heading size="md" mb={4} color="gray.700">
+          {orderType === 'Serviço'
+            ? '3. Pagamento e Finalização'
+            : '2. Finalização'}
+        </Heading>
+
+        <SimpleGrid columns={[1, 1, 2]} spacing={8} alignItems="flex-start">
+          {orderType === 'Serviço' && (
+            <Stack gap={4}>
+              <FormRadio
+                // Opções atualizadas conforme pedido
+                options={['Pago', 'Receber na Entrega']}
+                label="Situação do Pagamento:"
+                name="paymentType"
+                control={createOrderControl}
+                isHorizontal
+              />
+
+              {/* CAMPO NOVO: VALOR A RECEBER */}
+              <Box>
+                <FormInput
+                  {...createOrderRegister('amountDue')}
+                  name="amountDue"
+                  label="Valor a Receber (R$)"
+                  placeholder="Vazio = Receber Total | Ex: 500,00"
+                  size="md"
+                  helperText="Deixe em branco se for receber o valor total."
+                />
+              </Box>
+            </Stack>
+          )}
+
+          <Box>
+            <FormInput
+              {...createOrderRegister('sellerPassword')}
+              error={createOrderErrors.sellerPassword}
+              name="sellerPassword"
+              label="Senha do Vendedor:"
+              type="password"
+              placeholder="Digite sua senha..."
+              size="md"
+            />
+
+            <Button
+              colorScheme="orange"
+              size="lg"
+              width="100%"
+              mt={6}
+              type="submit"
+              disabled={cutlist.length < 1}
+              boxShadow="md"
+              _hover={{ transform: 'translateY(-2px)', boxShadow: 'lg' }}
+            >
+              {orderType === 'Orçamento'
+                ? 'Salvar Orçamento'
+                : 'Confirmar Pedido'}
+            </Button>
+          </Box>
+        </SimpleGrid>
+      </Box>
+    </Stack>
   );
 };

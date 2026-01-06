@@ -6,7 +6,7 @@ export interface Material {
   width: number;
   height: number;
   price: number;
-  materialType: 'MDF' | 'Compensado'; // Tipo corrigido para união
+  materialType: 'MDF' | 'Compensado';
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
@@ -21,8 +21,6 @@ export interface Customer {
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
-
-// Cutlist
 
 export interface CutlistMaterial {
   materialId: string;
@@ -60,16 +58,18 @@ export interface Order {
     email?: string;
     address?: string;
     area?: string;
-    city?: string;
+    city?: string; // Mantido mas opcional
     state?: string;
     customerId?: string;
   };
   orderStore: string;
   deliveryType: string;
   paymentType: string;
+  amountDue?: string; // Novo
+  isUrgent?: boolean; // Novo
   seller: string;
   orderStatus: string;
-  deliveryDate: Timestamp; // Corrigido para consistência
+  deliveryDate: Timestamp;
   ps?: string;
   createdAt: Timestamp;
   updatedAt: Timestamp;

@@ -6,18 +6,17 @@ import {
   Flex,
   Heading,
   IconButton,
-  List,
-  ListItem,
+  List, // Importamos apenas List (que contém Root e Item)
   Text,
 } from '@chakra-ui/react';
 import { format } from 'date-fns';
-import firebase from 'firebase/app';
+import { DocumentData } from 'firebase/firestore'; // Correção do import do Firebase
 import React, { useRef } from 'react';
 import { FaRegFileAlt, FaWhatsapp } from 'react-icons/fa';
 import { useReactToPrint } from 'react-to-print';
 
 interface OrderResumeProps {
-  order: firebase.firestore.DocumentData & {
+  order: DocumentData & {
     id: string;
   };
 }
@@ -32,10 +31,7 @@ export const OrderResume: React.FC<OrderResumeProps> = ({ order }) => {
   return (
     <>
       <div style={{ display: 'none' }}>
-        <Flex
-          ref={componentRef}
-          // style={{ height: listData.length > 17 ? '200vh' : '100vh' }}
-        >
+        <Flex ref={componentRef}>
           <Flex direction="column" px={16} py={8} fontSize="12px" w="100%">
             {/* Header */}
             <Flex align="center" justify="space-between">
@@ -91,10 +87,12 @@ export const OrderResume: React.FC<OrderResumeProps> = ({ order }) => {
                   </Heading>
                   <Divider mb="4px" />
                   <Text fontSize="14px">
-                    {format(
-                      new Date(order.createdAt.seconds * 1000),
-                      'dd/MM/yyyy',
-                    )}
+                    {order.createdAt?.seconds
+                      ? format(
+                          new Date(order.createdAt.seconds * 1000),
+                          'dd/MM/yyyy',
+                        )
+                      : format(new Date(), 'dd/MM/yyyy')}
                   </Text>
                 </Box>
               </Flex>
@@ -114,10 +112,12 @@ export const OrderResume: React.FC<OrderResumeProps> = ({ order }) => {
                   <Text maxW="350px">{`Observações: ${order.ps}`}</Text>
                 )}
                 <Text style={{ fontWeight: 'bold' }}>
-                  {`Prazo: Até ${format(
-                    new Date(order.deliveryDate.seconds * 1000),
-                    'dd/MM/yyyy',
-                  )}`}
+                  {order.deliveryDate?.seconds
+                    ? `Prazo: Até ${format(
+                        new Date(order.deliveryDate.seconds * 1000),
+                        'dd/MM/yyyy',
+                      )}`
+                    : 'Prazo: A combinar'}
                 </Text>
               </div>
               <div>
@@ -133,26 +133,20 @@ export const OrderResume: React.FC<OrderResumeProps> = ({ order }) => {
                 )}
 
                 {order.customer.telephone && (
-                  <Text>
-                    {`Telefone: (${order.customer.telephone.substring(
-                      0,
-                      2,
-                    )}) ${order.customer.telephone.substring(
-                      2,
-                      7,
-                    )} - ${order.customer.telephone.substring(7, 11)}`}
-                  </Text>
+                  <Text>{`Telefone: ${order.customer.telephone}`}</Text>
                 )}
               </div>
             </Flex>
-            {/* Cutlist */}
-            <List mt={8}>
+
+            {/* Cutlist - CORREÇÃO: List.Root e List.Item */}
+            <List.Root mt={8} variant="plain">
               {order.cutlist.map((cut: any) => (
-                <ListItem key={cut.id}>
+                <List.Item key={cut.id}>
                   {`${cut.amount} - ${cut.material.name} - ${cut.sideA} [ ${cut.borderA} ] x ${cut.sideB} [ ${cut.borderB} ] | R$ ${cut.price},00`}
-                </ListItem>
+                </List.Item>
               ))}
-            </List>
+            </List.Root>
+
             <Divider my={2} />
             <Heading
               ml="auto"
