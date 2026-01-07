@@ -26,7 +26,7 @@ import {
 } from 'firebase/firestore';
 import Head from 'next/head';
 import Router from 'next/router';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   FaCheck,
   FaEdit,
@@ -44,7 +44,7 @@ import { Dashboard } from '../../components/Dashboard';
 import { Header } from '../../components/Dashboard/Content/Header';
 import { Loader } from '../../components/Loader';
 import { SearchBar } from '../../components/SearchBar';
-import { Tags } from '../../components/Printables/Tags'; // <--- IMPORTADO
+import { Tags } from '../../components/Printables/Tags';
 import { toaster } from '@/components/ui/toaster';
 import { useAuth } from '../../hooks/authContext';
 import { useOrder } from '../../hooks/order';
@@ -98,7 +98,6 @@ const Cortes: React.FC = () => {
 
   // --- Ações ---
   const handlePrintLabels = (orderData: any) => {
-    // Ao definir este estado, o componente <Tags /> será montado e disparará a impressão automaticamente
     setPrintingOrder(orderData);
   };
 
@@ -211,30 +210,6 @@ const Cortes: React.FC = () => {
     (ordersFilter === 'Concluído' || ordersFilter === 'Orçamento') &&
     totalPages > 1;
 
-  const renderPaginationButtons = () => {
-    const buttons = [];
-    const maxButtons = 5;
-    let startPage = Math.max(1, currentPage - 2);
-    let endPage = Math.min(totalPages, startPage + maxButtons - 1);
-    if (endPage - startPage < maxButtons - 1)
-      startPage = Math.max(1, endPage - maxButtons + 1);
-
-    for (let i = startPage; i <= endPage; i++) {
-      buttons.push(
-        <Button
-          key={i}
-          size="sm"
-          variant={i === currentPage ? 'solid' : 'outline'}
-          colorScheme="orange"
-          onClick={() => setCurrentPage(i)}
-        >
-          {i}
-        </Button>,
-      );
-    }
-    return buttons;
-  };
-
   const goToPage = (page: number) => {
     if (page >= 1 && page <= totalPages) setCurrentPage(page);
   };
@@ -249,7 +224,7 @@ const Cortes: React.FC = () => {
         <Stack gap={6}>
           <Header pageTitle="Lista de Cortes" />
 
-          {/* COMPONENTE INVISÍVEL DE IMPRESSÃO - SÓ RENDERIZA QUANDO NECESSÁRIO */}
+          {/* COMPONENTE INVISÍVEL DE IMPRESSÃO */}
           {printingOrder && (
             <Tags
               order={printingOrder}
@@ -379,7 +354,6 @@ const Cortes: React.FC = () => {
                   </Table.Header>
                   <Table.Body>
                     {dataToShow.map((item: any) => {
-                      // ... (Lógica de Orçamento permanece igual)
                       if (isEstimateList) {
                         return (
                           <Table.Row key={item.id} _hover={{ bg: 'gray.50' }}>
@@ -441,7 +415,6 @@ const Cortes: React.FC = () => {
                           </Table.Row>
                         );
                       }
-                      // ... (Pedidos)
                       return (
                         <Table.Row key={item.id} _hover={{ bg: 'gray.50' }}>
                           <Table.Cell fontWeight="bold">
@@ -509,8 +482,6 @@ const Cortes: React.FC = () => {
                               >
                                 <FaRegFileAlt />
                               </IconButton>
-
-                              {/* BOTÃO DE IMPRESSÃO ATIVADO */}
                               <IconButton
                                 aria-label="Etiquetas"
                                 variant="ghost"
@@ -520,7 +491,6 @@ const Cortes: React.FC = () => {
                               >
                                 <FaTags />
                               </IconButton>
-
                               <IconButton
                                 colorScheme="red"
                                 variant="ghost"
@@ -560,6 +530,7 @@ const Cortes: React.FC = () => {
                   </Table.Body>
                 </Table.Root>
 
+                {/* PAGINAÇÃO REVERTIDA PARA O MODELO "ANTERIOR / PRÓXIMO" */}
                 {showPagination && (
                   <Flex
                     p={4}
@@ -573,19 +544,18 @@ const Cortes: React.FC = () => {
                       Página {currentPage} de {totalPages}
                     </Text>
                     <HStack gap={2}>
-                      <IconButton
-                        aria-label="Anterior"
+                      <Button
                         size="sm"
                         variant="outline"
                         colorScheme="orange"
                         onClick={() => goToPage(currentPage - 1)}
                         disabled={currentPage === 1}
                       >
-                        <FaChevronLeft />
-                      </IconButton>
-                      {renderPaginationButtons()}
-                      <IconButton
-                        aria-label="Próximo"
+                        <FaChevronLeft style={{ marginRight: '6px' }} />{' '}
+                        Anterior
+                      </Button>
+
+                      <Button
                         size="sm"
                         variant="outline"
                         colorScheme="orange"
@@ -595,8 +565,8 @@ const Cortes: React.FC = () => {
                           !pageCursors[currentPage]
                         }
                       >
-                        <FaChevronRight />
-                      </IconButton>
+                        Próximo <FaChevronRight style={{ marginLeft: '6px' }} />
+                      </Button>
                     </HStack>
                   </Flex>
                 )}
