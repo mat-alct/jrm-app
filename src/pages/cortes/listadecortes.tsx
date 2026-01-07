@@ -1,6 +1,7 @@
 // src/pages/cortes/listadecortes.tsx
 import {
   Box,
+  Button,
   Flex,
   HStack,
   IconButton,
@@ -10,9 +11,19 @@ import {
   TableCaption,
   Text,
   useBreakpointValue,
+  Center,
+  Spinner,
 } from '@chakra-ui/react';
 import { format } from 'date-fns';
-import { deleteDoc, doc, getDoc, updateDoc } from 'firebase/firestore';
+// CORREÇÃO: Adicionar QueryDocumentSnapshot e DocumentData aos imports
+import {
+  deleteDoc,
+  doc,
+  getDoc,
+  updateDoc,
+  QueryDocumentSnapshot,
+  DocumentData,
+} from 'firebase/firestore';
 import Head from 'next/head';
 import Router from 'next/router';
 import React, { useState } from 'react';
@@ -24,7 +35,7 @@ import {
   FaTags,
   FaTrash,
 } from 'react-icons/fa';
-import { useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 
 import { Dashboard } from '../../components/Dashboard';
 import { Header } from '../../components/Dashboard/Content/Header';
@@ -32,41 +43,50 @@ import { Loader } from '../../components/Loader';
 import { SearchBar } from '../../components/SearchBar';
 import { toaster } from '@/components/ui/toaster';
 import { useAuth } from '../../hooks/authContext';
-import { useOrder } from '../../hooks/order';
+// CORREÇÃO: Importar PagedResult
+import { useOrder, PagedResult } from '../../hooks/order';
 import { db } from '../../services/firebase';
 import { Estimate, Order } from '../../types';
 
 const Cortes: React.FC = () => {
   const { user } = useAuth();
 
-  // O filtro principal controla tanto a visualização quanto o contexto da busca
   const [ordersFilter, setOrdersFilter] = useState('Em Produção');
 
   const toast = toaster;
   const { getOrders, getOrdersBySearch } = useOrder();
   const router = Router;
 
-  // Busca Principal (Lista padrão)
-  const { data: ordersData, refetch } = useQuery({
+  // --- QUERY INFINITA (PAGINAÇÃO) ---
+  const {
+    data: ordersData,
+    refetch,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading: isInitialLoading,
+  } = useInfiniteQuery({
     queryKey: ['orders', ordersFilter],
-    queryFn: () => getOrders(ordersFilter),
+    // CORREÇÃO: Tipagem explícita do pageParam e retorno da função
+    queryFn: ({ pageParam }) => getOrders(ordersFilter, pageParam),
+    // CORREÇÃO: Definir initialPageParam como null com tipagem explícita para satisfazer o TS
+    initialPageParam: null as QueryDocumentSnapshot<DocumentData> | null,
+    getNextPageParam: lastPage => lastPage.lastDoc || null,
   });
 
   const radioSize = useBreakpointValue(['sm', 'sm', 'md'], { fallback: 'sm' });
   const tableSize = useBreakpointValue(['sm', 'md'], { fallback: 'sm' });
 
-  // --- Funções de Ação ---
+  // ... (Funções approveEstimate, updateCutlistStatus, handleRemove mantêm-se iguais) ...
   const approveEstimate = async (id: string) => {
     try {
       const estimateRef = doc(db, 'estimates', id);
       const estimateSnap = await getDoc(estimateRef);
-
       if (estimateSnap.exists()) {
         const estimateData = {
           ...estimateSnap.data(),
           id: estimateSnap.id,
         } as Estimate & { id: string };
-
         router.push({
           pathname: '/cortes/novoservico',
           query: {
@@ -79,20 +99,17 @@ const Cortes: React.FC = () => {
     } catch (error) {
       toast.create({
         type: 'error',
-        description: 'Erro ao carregar orçamento para aprovação.',
+        description: 'Erro ao carregar orçamento.',
       });
     }
   };
 
   const updateCutlistStatus = async (id: string) => {
     let nextState;
-
     try {
       const orderRef = doc(db, 'orders', id);
       const orderSnap = await getDoc(orderRef);
-
       if (!orderSnap.exists()) return;
-
       const order = { ...orderSnap.data(), id: orderSnap.id } as Order & {
         id: string;
       };
@@ -110,9 +127,7 @@ const Cortes: React.FC = () => {
       }
 
       if (nextState) {
-        await updateDoc(orderRef, {
-          orderStatus: nextState,
-        });
+        await updateDoc(orderRef, { orderStatus: nextState });
         refetch();
         toast.create({
           type: 'success',
@@ -120,10 +135,7 @@ const Cortes: React.FC = () => {
         });
       }
     } catch {
-      toast.create({
-        type: 'error',
-        description: 'Erro ao concluir etapa do pedido',
-      });
+      toast.create({ type: 'error', description: 'Erro ao concluir etapa' });
     }
   };
 
@@ -143,8 +155,6 @@ const Cortes: React.FC = () => {
 
   // --- Busca ---
   const [searchCode, setSearchCode] = useState<number | undefined>(undefined);
-
-  // Determina automaticamente o tipo de busca baseado na aba atual
   const currentSearchType =
     ordersFilter === 'Orçamento' ? 'estimates' : 'orders';
 
@@ -152,10 +162,10 @@ const Cortes: React.FC = () => {
     setSearchCode(search ? Number(search) : undefined);
   };
 
-  const { data: searchData } = useQuery({
+  const { data: searchData, isLoading: isSearchLoading } = useQuery({
     queryKey: ['orders_search', searchCode, currentSearchType],
     queryFn: () => getOrdersBySearch(searchCode, currentSearchType),
-    enabled: !!searchCode, // Só busca se houver algo digitado
+    enabled: !!searchCode,
   });
 
   React.useEffect(() => {
@@ -164,9 +174,14 @@ const Cortes: React.FC = () => {
 
   if (!user) return <Loader />;
 
-  // Se houver busca ativa, mostra o resultado da busca. Senão, mostra a lista filtrada por status.
-  const dataToShow = searchCode && searchData ? searchData : ordersData;
-  const isEstimateList = ordersFilter === 'Orçamento'; // Flag para saber se estamos exibindo orçamentos
+  // CORREÇÃO: Tipagem explicita no flatMap usando PagedResult
+  const dataToShow =
+    searchCode && searchData
+      ? searchData
+      : ordersData?.pages.flatMap((page: PagedResult) => page.data) || [];
+
+  const isEstimateList = ordersFilter === 'Orçamento';
+  const isLoading = searchCode ? isSearchLoading : isInitialLoading;
 
   return (
     <>
@@ -178,9 +193,9 @@ const Cortes: React.FC = () => {
         <Stack gap={6}>
           <Header pageTitle="Lista de Cortes" />
 
-          {/* TOOLBAR: Busca + Filtros Inline */}
+          {/* TOOLBAR */}
           <Flex
-            direction={['column', 'column', 'column', 'row']} // Em PC (row), fica tudo na mesma linha
+            direction={['column', 'column', 'column', 'row']}
             align={['stretch', 'stretch', 'stretch', 'center']}
             justify="space-between"
             gap={4}
@@ -190,7 +205,6 @@ const Cortes: React.FC = () => {
             shadow="sm"
             borderWidth="1px"
           >
-            {/* Barra de Busca (Esquerda) */}
             <Box w={['100%', '100%', '100%', '300px']}>
               <SearchBar
                 handleUpdateSearch={handleSearchOrder}
@@ -201,7 +215,6 @@ const Cortes: React.FC = () => {
               />
             </Box>
 
-            {/* Filtros de Status (Direita - Inline) */}
             <Box overflowX="auto" pb={[2, 2, 0]}>
               <RadioGroup.Root
                 colorScheme="orange"
@@ -211,7 +224,7 @@ const Cortes: React.FC = () => {
                 onValueChange={e => {
                   if (e.value) {
                     setOrdersFilter(e.value);
-                    setSearchCode(undefined); // Limpa a busca ao trocar de aba
+                    setSearchCode(undefined);
                   }
                 }}
               >
@@ -251,60 +264,127 @@ const Cortes: React.FC = () => {
             bg="white"
             shadow="sm"
           >
-            <Table.Root
-              variant="line"
-              colorScheme="orange"
-              // @ts-ignore
-              size={tableSize}
-              whiteSpace="nowrap"
-            >
-              <TableCaption mb={4} textAlign="left" px={4}>
-                {dataToShow?.length
-                  ? `${dataToShow.length} registro(s) encontrado(s)`
-                  : 'Nenhum registro encontrado'}
-              </TableCaption>
-              <Table.Header bg="gray.50">
-                <Table.Row>
-                  <Table.ColumnHeader>Código</Table.ColumnHeader>
-                  <Table.ColumnHeader>Cliente</Table.ColumnHeader>
-                  {!isEstimateList && (
-                    <Table.ColumnHeader>Loja</Table.ColumnHeader>
-                  )}
-                  <Table.ColumnHeader>Status</Table.ColumnHeader>
-                  {!isEstimateList && (
+            {isLoading ? (
+              <Center p={10}>
+                <Spinner color="orange.500" />
+              </Center>
+            ) : (
+              <Table.Root
+                variant="line"
+                colorScheme="orange"
+                // @ts-ignore
+                size={tableSize}
+                whiteSpace="nowrap"
+              >
+                <TableCaption mb={4} textAlign="left" px={4}>
+                  {dataToShow?.length
+                    ? `${dataToShow.length} registro(s) exibido(s)`
+                    : 'Nenhum registro encontrado'}
+                </TableCaption>
+                <Table.Header bg="gray.50">
+                  <Table.Row>
+                    <Table.ColumnHeader>Código</Table.ColumnHeader>
+                    <Table.ColumnHeader>Cliente</Table.ColumnHeader>
+                    {!isEstimateList && (
+                      <Table.ColumnHeader>Loja</Table.ColumnHeader>
+                    )}
+                    <Table.ColumnHeader>Status</Table.ColumnHeader>
+                    {!isEstimateList && (
+                      <Table.ColumnHeader textAlign="right">
+                        Entrega
+                      </Table.ColumnHeader>
+                    )}
                     <Table.ColumnHeader textAlign="right">
-                      Entrega
+                      Preço
                     </Table.ColumnHeader>
-                  )}
-                  <Table.ColumnHeader textAlign="right">
-                    Preço
-                  </Table.ColumnHeader>
-                  <Table.ColumnHeader width="1%">Ações</Table.ColumnHeader>
-                </Table.Row>
-              </Table.Header>
-              <Table.Body>
-                {/* LISTAGEM DE PEDIDOS */}
-                {!isEstimateList &&
-                  dataToShow
-                    ?.sort((a: any, b: any) => b.orderCode - a.orderCode)
-                    .map((order: any) => (
-                      <Table.Row key={order.id} _hover={{ bg: 'gray.50' }}>
+                    <Table.ColumnHeader width="1%">Ações</Table.ColumnHeader>
+                  </Table.Row>
+                </Table.Header>
+                <Table.Body>
+                  {/* Lógica de renderização unificada para evitar duplicação visual */}
+                  {dataToShow.map((item: any) => {
+                    // Se for Orçamento
+                    if (isEstimateList) {
+                      return (
+                        <Table.Row key={item.id} _hover={{ bg: 'gray.50' }}>
+                          <Table.Cell fontWeight="bold">
+                            {item.estimateCode}
+                          </Table.Cell>
+                          <Table.Cell>{item.name}</Table.Cell>
+                          <Table.Cell>Orçamento</Table.Cell>
+                          <Table.Cell>
+                            <Box
+                              as="span"
+                              px={2}
+                              py={1}
+                              borderRadius="md"
+                              fontSize="xs"
+                              fontWeight="bold"
+                              bg="gray.100"
+                              color="gray.800"
+                            >
+                              Pendente
+                            </Box>
+                          </Table.Cell>
+                          <Table.Cell
+                            textAlign="right"
+                            fontWeight="bold"
+                          >{`R$ ${item.estimatePrice},00`}</Table.Cell>
+                          <Table.Cell>
+                            <HStack gap={2} justify="flex-end">
+                              <IconButton
+                                aria-label="Resumo"
+                                variant="ghost"
+                                colorScheme="gray"
+                                size="sm"
+                                disabled
+                              >
+                                <FaRegFileAlt />
+                              </IconButton>
+                              <IconButton
+                                colorScheme="red"
+                                variant="ghost"
+                                size="sm"
+                                aria-label="Remover"
+                                onClick={() =>
+                                  handleRemove(item.id, 'estimates')
+                                }
+                              >
+                                <FaTrash />
+                              </IconButton>
+                              <IconButton
+                                colorScheme="green"
+                                size="sm"
+                                aria-label="Aprovar"
+                                onClick={() => approveEstimate(item.id)}
+                              >
+                                <FaHandshake />
+                              </IconButton>
+                            </HStack>
+                          </Table.Cell>
+                        </Table.Row>
+                      );
+                    }
+
+                    // Se for Pedido
+                    return (
+                      <Table.Row key={item.id} _hover={{ bg: 'gray.50' }}>
                         <Table.Cell fontWeight="bold">
-                          {order.orderCode}
+                          {item.orderCode}
                         </Table.Cell>
                         <Table.Cell>
                           <Flex direction="column">
                             <Text fontWeight="medium">
-                              {order.customer?.name || 'Cliente Removido'}
+                              {item.customer?.name || 'Cliente Removido'}
                             </Text>
-                            {order.customer?.telephone && (
+                            {item.customer?.telephone && (
                               <Text fontSize="xs" color="gray.500">
-                                {order.customer.telephone}
+                                {item.customer.telephone}
                               </Text>
                             )}
                           </Flex>
                         </Table.Cell>
-                        <Table.Cell>{order.orderStore}</Table.Cell>
+                        <Table.Cell>{item.orderStore}</Table.Cell>
                         <Table.Cell>
                           <Box
                             as="span"
@@ -314,34 +394,35 @@ const Cortes: React.FC = () => {
                             fontSize="xs"
                             fontWeight="bold"
                             bg={
-                              order.orderStatus === 'Concluído'
+                              item.orderStatus === 'Concluído'
                                 ? 'green.100'
-                                : order.orderStatus === 'Em Produção'
+                                : item.orderStatus === 'Em Produção'
                                   ? 'orange.100'
                                   : 'blue.100'
                             }
                             color={
-                              order.orderStatus === 'Concluído'
+                              item.orderStatus === 'Concluído'
                                 ? 'green.800'
-                                : order.orderStatus === 'Em Produção'
+                                : item.orderStatus === 'Em Produção'
                                   ? 'orange.800'
                                   : 'blue.800'
                             }
                           >
-                            {order.orderStatus}
+                            {item.orderStatus}
                           </Box>
                         </Table.Cell>
                         <Table.Cell textAlign="right">
-                          {order.deliveryDate?.seconds
+                          {item.deliveryDate?.seconds
                             ? format(
-                                new Date(order.deliveryDate.seconds * 1000),
+                                new Date(item.deliveryDate.seconds * 1000),
                                 'dd/MM/yyyy',
                               )
                             : '-'}
                         </Table.Cell>
-                        <Table.Cell textAlign="right" fontWeight="bold">
-                          {`R$ ${order.orderPrice},00`}
-                        </Table.Cell>
+                        <Table.Cell
+                          textAlign="right"
+                          fontWeight="bold"
+                        >{`R$ ${item.orderPrice},00`}</Table.Cell>
                         <Table.Cell>
                           <HStack gap={2} justify="flex-end">
                             <IconButton
@@ -366,13 +447,13 @@ const Cortes: React.FC = () => {
                               colorScheme="red"
                               variant="ghost"
                               size="sm"
-                              onClick={() => handleRemove(order.id, 'orders')}
+                              onClick={() => handleRemove(item.id, 'orders')}
                               aria-label="Remover"
-                              disabled={order.orderStatus !== 'Concluído'}
+                              disabled={item.orderStatus !== 'Concluído'}
                             >
                               <FaTrash />
                             </IconButton>
-                            {order.orderStatus !== 'Concluído' && (
+                            {item.orderStatus !== 'Concluído' && (
                               <>
                                 <IconButton
                                   colorScheme="blue"
@@ -386,8 +467,8 @@ const Cortes: React.FC = () => {
                                 <IconButton
                                   colorScheme="green"
                                   size="sm"
-                                  aria-label="Concluir Etapa"
-                                  onClick={() => updateCutlistStatus(order.id)}
+                                  aria-label="Concluir"
+                                  onClick={() => updateCutlistStatus(item.id)}
                                 >
                                   <FaCheck />
                                 </IconButton>
@@ -396,72 +477,27 @@ const Cortes: React.FC = () => {
                           </HStack>
                         </Table.Cell>
                       </Table.Row>
-                    ))}
+                    );
+                  })}
+                </Table.Body>
+              </Table.Root>
+            )}
 
-                {/* LISTAGEM DE ORÇAMENTOS */}
-                {isEstimateList &&
-                  dataToShow
-                    ?.sort((a: any, b: any) => b.estimateCode - a.estimateCode)
-                    .map((estimate: any) => (
-                      <Table.Row key={estimate.id} _hover={{ bg: 'gray.50' }}>
-                        <Table.Cell fontWeight="bold">
-                          {estimate.estimateCode}
-                        </Table.Cell>
-                        <Table.Cell>{estimate.name}</Table.Cell>
-                        <Table.Cell>Orçamento</Table.Cell>
-                        <Table.Cell>
-                          <Box
-                            as="span"
-                            px={2}
-                            py={1}
-                            borderRadius="md"
-                            fontSize="xs"
-                            fontWeight="bold"
-                            bg="gray.100"
-                            color="gray.800"
-                          >
-                            Pendente
-                          </Box>
-                        </Table.Cell>
-                        <Table.Cell textAlign="right" fontWeight="bold">
-                          {`R$ ${estimate.estimatePrice},00`}
-                        </Table.Cell>
-                        <Table.Cell>
-                          <HStack gap={2} justify="flex-end">
-                            <IconButton
-                              aria-label="Resumo"
-                              variant="ghost"
-                              colorScheme="gray"
-                              size="sm"
-                              disabled
-                            >
-                              <FaRegFileAlt />
-                            </IconButton>
-                            <IconButton
-                              colorScheme="red"
-                              variant="ghost"
-                              size="sm"
-                              aria-label="Remover"
-                              onClick={() =>
-                                handleRemove(estimate.id, 'estimates')
-                              }
-                            >
-                              <FaTrash />
-                            </IconButton>
-                            <IconButton
-                              colorScheme="green"
-                              size="sm"
-                              aria-label="Aprovar"
-                              onClick={() => approveEstimate(estimate.id)}
-                            >
-                              <FaHandshake />
-                            </IconButton>
-                          </HStack>
-                        </Table.Cell>
-                      </Table.Row>
-                    ))}
-              </Table.Body>
-            </Table.Root>
+            {/* BOTÃO CARREGAR MAIS */}
+            {!searchCode && hasNextPage && (
+              <Center p={4} borderTopWidth="1px" borderColor="gray.100">
+                <Button
+                  onClick={() => fetchNextPage()}
+                  loading={isFetchingNextPage}
+                  disabled={isFetchingNextPage}
+                  variant="outline"
+                  colorScheme="orange"
+                  size="sm"
+                >
+                  Carregar Mais
+                </Button>
+              </Center>
+            )}
           </Box>
         </Stack>
       </Dashboard>

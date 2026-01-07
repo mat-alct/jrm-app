@@ -16,7 +16,9 @@ import {
   setDoc,
   updateDoc,
   where,
+  startAfter, // Importante para paginação
   DocumentData,
+  QueryDocumentSnapshot,
 } from 'firebase/firestore';
 
 import { db } from '../services/firebase';
@@ -24,12 +26,20 @@ import { queryClient } from '../services/queryClient';
 import { Estimate, Order } from '../types';
 import { removeUndefinedAndEmptyFields } from '../utils/removeUndefinedAndEmpty';
 
+// CORREÇÃO: Exportamos a interface para usar no useInfiniteQuery
+export interface PagedResult {
+  data: (DocumentData & { id: string })[];
+  lastDoc: QueryDocumentSnapshot<DocumentData> | null;
+}
+
 interface OrderContext {
   createEstimate: (estimateData: Estimate) => Promise<void>;
   createOrder: (orderData: Order) => Promise<void>;
+  // CORREÇÃO: Assinatura compatível com React Query v5 (aceita undefined e null)
   getOrders: (
     orderFilter: string,
-  ) => Promise<(DocumentData & { id: string })[]>;
+    pageParam?: QueryDocumentSnapshot<DocumentData> | null,
+  ) => Promise<PagedResult>;
   getOrdersBySearch: (
     searchFilter: number | undefined,
     type: string,
@@ -65,7 +75,6 @@ export const OrderProvider = ({ children }: OrderProviderProps) => {
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       queryClient.invalidateQueries({ queryKey: ['estimates'] });
     },
-    // O onError aqui é apenas um fallback, trataremos no try/catch principal
   });
 
   const createOrderMutation = useMutation({
@@ -84,11 +93,9 @@ export const OrderProvider = ({ children }: OrderProviderProps) => {
     try {
       removeUndefinedAndEmptyFields(estimateData);
 
-      // Busca o contador de orçamentos
       const counterRef = doc(db, 'counters', 'estimates');
       const counterSnap = await getDoc(counterRef);
 
-      // Se não existir, começa do 1
       const estimateCode = counterSnap.exists() ? counterSnap.data()?.code : 1;
 
       const estimatePrice = estimateData.cutlist.reduce(
@@ -96,14 +103,12 @@ export const OrderProvider = ({ children }: OrderProviderProps) => {
         0,
       );
 
-      // Cria o documento
       await createEstimateMutation.mutateAsync({
         ...estimateData,
         estimateCode,
         estimatePrice,
       });
 
-      // Atualiza o contador
       if (counterSnap.exists()) {
         await updateDoc(counterRef, { code: increment(1) });
       } else {
@@ -120,17 +125,15 @@ export const OrderProvider = ({ children }: OrderProviderProps) => {
         type: 'error',
         description: 'Erro ao criar orçamento. Verifique o console.',
       });
-      throw err; // CORREÇÃO IMPRESCINDÍVEL: Repassa o erro para parar o fluxo na tela
+      throw err;
     }
   };
 
   const createOrder = async (orderData: Order) => {
     try {
-      // Limpeza de campos undefined
       removeUndefinedAndEmptyFields(orderData);
       if (orderData.customer) removeUndefinedAndEmptyFields(orderData.customer);
 
-      // Busca o contador de pedidos
       const counterRef = doc(db, 'counters', 'orders');
       const counterSnap = await getDoc(counterRef);
 
@@ -141,14 +144,12 @@ export const OrderProvider = ({ children }: OrderProviderProps) => {
         0,
       );
 
-      // Cria o documento
       await createOrderMutation.mutateAsync({
         ...orderData,
         orderCode,
         orderPrice,
       });
 
-      // Atualiza o contador
       if (counterSnap.exists()) {
         await updateDoc(counterRef, { code: increment(1) });
       } else {
@@ -161,26 +162,72 @@ export const OrderProvider = ({ children }: OrderProviderProps) => {
       });
     } catch (err) {
       console.error('Erro ao criar pedido:', err);
-      // Aqui você pode inspecionar o 'err' no console do navegador para ver se é permissão, conexão, etc.
       toast.create({
         type: 'error',
         description: 'Erro ao criar pedido. Tente novamente.',
       });
-      throw err; // CORREÇÃO IMPRESCINDÍVEL: Repassa o erro para parar o fluxo na tela
+      throw err;
     }
   };
 
-  const getOrders = async (orderFilter: string) => {
+  // --- BUSCA COM PAGINAÇÃO ---
+  const getOrders = async (
+    orderFilter: string,
+    pageParam?: QueryDocumentSnapshot<DocumentData> | null,
+  ): Promise<PagedResult> => {
+    // Regra: Paginação apenas para 'Concluído' e 'Orçamento'
+    const isPaginationRequired =
+      orderFilter === 'Concluído' || orderFilter === 'Orçamento';
+    const limitSize = 20;
+
+    let q;
+
     if (orderFilter === 'Orçamento') {
       const estimatesCol = collection(db, 'estimates');
-      const estimatesSnapshot = await getDocs(estimatesCol);
-      return estimatesSnapshot.docs.map(d => ({ ...d.data(), id: d.id }));
+      // Inicia com a ordenação padrão
+      let constraints: any[] = [orderBy('estimateCode', 'desc')];
+
+      if (isPaginationRequired) {
+        constraints.push(limit(limitSize));
+        // Se houver cursor (pageParam), começa após ele
+        if (pageParam) constraints.push(startAfter(pageParam));
+      }
+
+      q = query(estimatesCol, ...constraints);
+    } else {
+      // Busca Pedidos (Orders)
+      const ordersCol = collection(db, 'orders');
+
+      // Inicia com filtro de status e ordenação
+      let constraints: any[] = [
+        where('orderStatus', '==', orderFilter),
+        orderBy('orderCode', 'desc'),
+      ];
+
+      if (isPaginationRequired) {
+        constraints.push(limit(limitSize));
+        // Se houver cursor (pageParam), começa após ele
+        if (pageParam) constraints.push(startAfter(pageParam));
+      }
+
+      // Se NÃO for paginação (Produção/Transporte), não adiciona limit() nem startAfter()
+      // e o Firestore trará todos os documentos que correspondem ao filtro.
+
+      q = query(ordersCol, ...constraints);
     }
 
-    const ordersCol = collection(db, 'orders');
-    const q = query(ordersCol, where('orderStatus', '==', orderFilter));
-    const ordersSnapshot = await getDocs(q);
-    return ordersSnapshot.docs.map(d => ({ ...d.data(), id: d.id }));
+    const snapshot = await getDocs(q);
+
+    const data = snapshot.docs.map(d => ({ ...d.data(), id: d.id }));
+
+    // Define o último documento para ser usado como cursor na próxima página
+    // Se a paginação não for requerida, lastDoc pode ser null ou ignorado pelo front
+    const lastDoc =
+      isPaginationRequired && snapshot.docs.length > 0
+        ? snapshot.docs[snapshot.docs.length - 1]
+        : null;
+
+    return { data, lastDoc };
   };
 
   const getOrdersBySearch = async (
@@ -189,7 +236,6 @@ export const OrderProvider = ({ children }: OrderProviderProps) => {
   ) => {
     if (searchFilter) {
       const colRef = collection(db, type);
-      // Seleciona o campo correto baseado no tipo de busca
       const fieldCode = type === 'estimates' ? 'estimateCode' : 'orderCode';
 
       const q = query(colRef, where(fieldCode, '==', searchFilter), limit(1));
