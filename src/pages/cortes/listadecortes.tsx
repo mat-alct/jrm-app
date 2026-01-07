@@ -26,7 +26,7 @@ import {
 } from 'firebase/firestore';
 import Head from 'next/head';
 import Router from 'next/router';
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   FaCheck,
   FaEdit,
@@ -44,6 +44,7 @@ import { Dashboard } from '../../components/Dashboard';
 import { Header } from '../../components/Dashboard/Content/Header';
 import { Loader } from '../../components/Loader';
 import { SearchBar } from '../../components/SearchBar';
+import { Tags } from '../../components/Printables/Tags'; // <--- IMPORTADO
 import { toaster } from '@/components/ui/toaster';
 import { useAuth } from '../../hooks/authContext';
 import { useOrder } from '../../hooks/order';
@@ -53,18 +54,19 @@ import { Estimate, Order } from '../../types';
 const Cortes: React.FC = () => {
   const { user } = useAuth();
 
-  // Estados de Filtro e Paginação
   const [ordersFilter, setOrdersFilter] = useState('Em Produção');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageCursors, setPageCursors] = useState<
     (QueryDocumentSnapshot<DocumentData> | null)[]
   >([null]);
 
+  // ESTADO PARA CONTROLAR A IMPRESSÃO
+  const [printingOrder, setPrintingOrder] = useState<Order | null>(null);
+
   const toast = toaster;
   const { getOrders, getOrdersBySearch } = useOrder();
   const router = Router;
 
-  // --- QUERY DE PAGINAÇÃO ---
   const {
     data: pagedResult,
     isLoading: isInitialLoading,
@@ -80,8 +82,8 @@ const Cortes: React.FC = () => {
     placeholderData: previousData => previousData,
   });
 
-  // Atualiza os cursores quando novos dados chegam
-  useEffect(() => {
+  // Atualiza os cursores
+  React.useEffect(() => {
     if (pagedResult?.lastDoc) {
       setPageCursors(prev => {
         const newCursors = [...prev];
@@ -94,7 +96,12 @@ const Cortes: React.FC = () => {
   const radioSize = useBreakpointValue(['sm', 'sm', 'md'], { fallback: 'sm' });
   const tableSize = useBreakpointValue(['sm', 'md'], { fallback: 'sm' });
 
-  // --- Funções de Ação ---
+  // --- Ações ---
+  const handlePrintLabels = (orderData: any) => {
+    // Ao definir este estado, o componente <Tags /> será montado e disparará a impressão automaticamente
+    setPrintingOrder(orderData);
+  };
+
   const approveEstimate = async (id: string) => {
     try {
       const estimateRef = doc(db, 'estimates', id);
@@ -170,22 +177,19 @@ const Cortes: React.FC = () => {
     }
   };
 
-  // --- BUSCA (CORRIGIDA PARA STRING) ---
-  // Antes era searchCode (number), agora é searchQuery (string)
+  // --- Busca ---
   const [searchQuery, setSearchQuery] = useState<string | undefined>(undefined);
-
   const currentSearchType =
     ordersFilter === 'Orçamento' ? 'estimates' : 'orders';
 
   const handleSearchOrder = async (search: string) => {
-    // Não convertemos mais para Number, passamos a string direto ou undefined se vazio
     setSearchQuery(search || undefined);
   };
 
   const { data: searchData, isLoading: isSearchLoading } = useQuery({
     queryKey: ['orders_search', searchQuery, currentSearchType],
     queryFn: () => getOrdersBySearch(searchQuery, currentSearchType),
-    enabled: !!searchQuery, // Só busca se tiver texto digitado
+    enabled: !!searchQuery,
   });
 
   React.useEffect(() => {
@@ -194,38 +198,26 @@ const Cortes: React.FC = () => {
 
   if (!user) return <Loader />;
 
-  // Se tem busca, usa searchData. Se não, usa pagedResult.
   const dataToShow =
     searchQuery && searchData ? searchData : pagedResult?.data || [];
   const isEstimateList = ordersFilter === 'Orçamento';
   const isLoading = searchQuery ? isSearchLoading : isInitialLoading;
 
-  // Lógica de Paginação Visual
   const totalCount = pagedResult?.totalCount || 0;
   const itemsPerPage = 20;
   const totalPages = Math.ceil(totalCount / itemsPerPage);
-
-  // Só mostra paginação se NÃO estiver buscando e tiver mais de 1 página
   const showPagination =
     !searchQuery &&
     (ordersFilter === 'Concluído' || ordersFilter === 'Orçamento') &&
     totalPages > 1;
-
-  const goToPage = (page: number) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
-    }
-  };
 
   const renderPaginationButtons = () => {
     const buttons = [];
     const maxButtons = 5;
     let startPage = Math.max(1, currentPage - 2);
     let endPage = Math.min(totalPages, startPage + maxButtons - 1);
-
-    if (endPage - startPage < maxButtons - 1) {
+    if (endPage - startPage < maxButtons - 1)
       startPage = Math.max(1, endPage - maxButtons + 1);
-    }
 
     for (let i = startPage; i <= endPage; i++) {
       buttons.push(
@@ -234,13 +226,17 @@ const Cortes: React.FC = () => {
           size="sm"
           variant={i === currentPage ? 'solid' : 'outline'}
           colorScheme="orange"
-          onClick={() => goToPage(i)}
+          onClick={() => setCurrentPage(i)}
         >
           {i}
         </Button>,
       );
     }
     return buttons;
+  };
+
+  const goToPage = (page: number) => {
+    if (page >= 1 && page <= totalPages) setCurrentPage(page);
   };
 
   return (
@@ -253,7 +249,14 @@ const Cortes: React.FC = () => {
         <Stack gap={6}>
           <Header pageTitle="Lista de Cortes" />
 
-          {/* TOOLBAR */}
+          {/* COMPONENTE INVISÍVEL DE IMPRESSÃO - SÓ RENDERIZA QUANDO NECESSÁRIO */}
+          {printingOrder && (
+            <Tags
+              order={printingOrder}
+              onAfterPrint={() => setPrintingOrder(null)}
+            />
+          )}
+
           <Flex
             direction={['column', 'column', 'column', 'row']}
             align={['stretch', 'stretch', 'stretch', 'center']}
@@ -284,7 +287,7 @@ const Cortes: React.FC = () => {
                 onValueChange={e => {
                   if (e.value) {
                     setOrdersFilter(e.value);
-                    setSearchQuery(undefined); // Limpa a busca ao trocar de aba
+                    setSearchQuery(undefined);
                     setCurrentPage(1);
                     setPageCursors([null]);
                   }
@@ -376,6 +379,7 @@ const Cortes: React.FC = () => {
                   </Table.Header>
                   <Table.Body>
                     {dataToShow.map((item: any) => {
+                      // ... (Lógica de Orçamento permanece igual)
                       if (isEstimateList) {
                         return (
                           <Table.Row key={item.id} _hover={{ bg: 'gray.50' }}>
@@ -437,6 +441,7 @@ const Cortes: React.FC = () => {
                           </Table.Row>
                         );
                       }
+                      // ... (Pedidos)
                       return (
                         <Table.Row key={item.id} _hover={{ bg: 'gray.50' }}>
                           <Table.Cell fontWeight="bold">
@@ -504,15 +509,18 @@ const Cortes: React.FC = () => {
                               >
                                 <FaRegFileAlt />
                               </IconButton>
+
+                              {/* BOTÃO DE IMPRESSÃO ATIVADO */}
                               <IconButton
                                 aria-label="Etiquetas"
                                 variant="ghost"
                                 colorScheme="gray"
                                 size="sm"
-                                disabled
+                                onClick={() => handlePrintLabels(item)}
                               >
                                 <FaTags />
                               </IconButton>
+
                               <IconButton
                                 colorScheme="red"
                                 variant="ghost"
@@ -552,7 +560,6 @@ const Cortes: React.FC = () => {
                   </Table.Body>
                 </Table.Root>
 
-                {/* BOTÕES DE PAGINAÇÃO */}
                 {showPagination && (
                   <Flex
                     p={4}
@@ -565,7 +572,6 @@ const Cortes: React.FC = () => {
                     <Text fontSize="sm" color="gray.500">
                       Página {currentPage} de {totalPages}
                     </Text>
-
                     <HStack gap={2}>
                       <IconButton
                         aria-label="Anterior"
@@ -577,9 +583,7 @@ const Cortes: React.FC = () => {
                       >
                         <FaChevronLeft />
                       </IconButton>
-
                       {renderPaginationButtons()}
-
                       <IconButton
                         aria-label="Próximo"
                         size="sm"

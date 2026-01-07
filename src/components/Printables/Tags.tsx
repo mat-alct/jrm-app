@@ -1,207 +1,188 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
-import {
-  Box,
-  Divider,
-  Flex,
-  Heading,
-  IconButton,
-  Image,
-  Text,
-} from '@chakra-ui/react';
-import { format } from 'date-fns';
-import firebase from 'firebase/app';
-import React, { useEffect, useRef, useState } from 'react';
-import { FaTag } from 'react-icons/fa';
+// src/components/Printables/Tags.tsx
+import { Box, Flex, Text, SimpleGrid, Icon } from '@chakra-ui/react';
+import React, { useRef, useEffect } from 'react';
+import { FaArrowUp } from 'react-icons/fa';
 import { useReactToPrint } from 'react-to-print';
 import { v4 } from 'uuid';
+import QRCode from 'react-qr-code';
 
 import { sortCutlistData } from '../../utils/cutlist/sortAndReturnTag';
+import { Order } from '../../types';
 
-type CutlistProps = {
-  id: string;
-  gside: number;
-  pside: number;
-  avatar: {
-    src: string;
-    width: number;
-    height: number;
-  };
-  material: string;
-};
-
-interface TagsProps {
-  order: firebase.firestore.DocumentData & {
-    id: string;
-  };
+// CORREÇÃO 1: Estendendo a interface Order para incluir campos que existem no banco mas faltam no type global
+interface OrderWithExtras extends Order {
+  orderCode: number;
+  orderPrice?: number;
 }
 
-export const Tags: React.FC<TagsProps> = ({ order }) => {
-  const componentRef = useRef(null);
+interface TagsProps {
+  order: Order | null;
+  onAfterPrint: () => void;
+}
 
-  const [tagCutlist, setTagCutlist] = useState<CutlistProps[]>();
+export const Tags: React.FC<TagsProps> = ({ order, onAfterPrint }) => {
+  const componentRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const allTags = order.cutlist.flatMap((cut: any) => {
-      const tags = [];
+  // Cast seguro para usar orderCode
+  const orderData = order as OrderWithExtras | null;
 
-      for (let i = 0; i < cut.amount; i += 1) {
-        const { gside, pside, avatar } = sortCutlistData({
-          sideA: cut.sideA,
-          sideB: cut.sideB,
-          borderA: cut.borderA,
-          borderB: cut.borderB,
-        });
-
-        tags.push({
-          id: v4(),
-          gside,
-          pside,
-          avatar,
-          material: cut.material.name,
-        });
-      }
-
-      return tags;
-    });
-
-    setTagCutlist(allTags);
-  }, [order.cutlist]);
-
+  // CORREÇÃO 2: Atualizado para usar 'contentRef' (v3+) ou corrigir a tipagem do hook
   const handlePrint = useReactToPrint({
-    content: () => componentRef.current,
+    contentRef: componentRef, // Usa a ref diretamente
+    documentTitle: orderData ? `Etiquetas-${orderData.orderCode}` : 'Etiquetas',
+    onAfterPrint: onAfterPrint,
   });
 
-  useEffect(() => {}, []);
+  useEffect(() => {
+    if (orderData && componentRef.current) {
+      handlePrint();
+    }
+  }, [orderData, handlePrint]);
+
+  if (!orderData) return null;
+
+  const tagList = orderData.cutlist.flatMap(cut => {
+    const tags = [];
+    for (let i = 0; i < cut.amount; i++) {
+      const { gside, pside } = sortCutlistData({
+        sideA: cut.sideA,
+        sideB: cut.sideB,
+        borderA: cut.borderA,
+        borderB: cut.borderB,
+      });
+
+      tags.push({
+        uniqueId: v4(),
+        originalId: cut.id,
+        gside,
+        pside,
+        material: cut.material.name,
+        sideA: cut.sideA,
+        sideB: cut.sideB,
+        borderA: cut.borderA,
+        borderB: cut.borderB,
+        amountIndex: i + 1,
+        totalAmount: cut.amount,
+      });
+    }
+    return tags;
+  });
 
   return (
-    <Flex>
-      <div style={{ display: 'none' }} className="print-container">
-        <Flex ref={componentRef} direction="column" px={16} py={8}>
-          <Flex
-            direction="column"
-            h={
-              (tagCutlist && tagCutlist.length > 15) ||
-              order.cutlist.length > 12
-                ? '100vh'
-                : ''
-            }
+    <div style={{ display: 'none' }}>
+      <div ref={componentRef}>
+        <style type="text/css" media="print">
+          {`
+            @page { size: auto; margin: 0mm; }
+            .page-break { page-break-after: always; }
+          `}
+        </style>
+
+        {tagList.map((tag, index) => (
+          <Box
+            key={tag.uniqueId}
+            className="page-break"
+            w="100mm"
+            h="50mm"
+            p="2mm"
+            border="1px solid #ccc"
+            fontFamily="Arial, sans-serif"
+            bg="white"
           >
-            <Heading
-              textAlign="center"
-              size="lg"
-            >{`${order.orderCode} - ${order.customer.name}`}</Heading>
-            <Heading textAlign="center" size="md">
-              {order?.orderStore}
-            </Heading>
+            <Flex h="100%" justify="space-between">
+              <Flex direction="column" justify="space-between" w="72%">
+                <Box borderBottom="2px solid black" pb={1}>
+                  <Text fontSize="10pt" fontWeight="bold" lineClamp={1}>
+                    {' '}
+                    {/* CORREÇÃO 3: noOfLines -> lineClamp */}#
+                    {orderData.orderCode} -{' '}
+                    {orderData.customer.name.split(' ')[0]}
+                  </Text>
+                  <Text fontSize="8pt" lineClamp={1}>
+                    {tag.material}
+                  </Text>{' '}
+                  {/* CORREÇÃO 3: noOfLines -> lineClamp */}
+                </Box>
 
-            <Flex mt={4} direction="column" align="flex-start">
-              <Text fontSize="13px">{`Data de Entrega: ${format(
-                new Date(order.deliveryDate.seconds * 1000),
-                'dd/MM/yyyy',
-              )}`}</Text>
-              <Text fontSize="13px">{`Tipo de entrega: ${order.deliveryType}`}</Text>
-              {order.deliveryType === 'Entrega' && (
-                <Text fontSize="13px">
-                  {order.customer.address &&
-                    `Endereço do cliente: ${order.customer.address} - ${
-                      order.customer?.area || 'Bairro não informado'
-                    }, ${order.customer?.city || 'Cidade não informada'}`}
-                </Text>
-              )}
-              <Text fontSize="13px">
-                {order.customer.telephone &&
-                  `Telefone: ${order.customer.telephone}`}
-              </Text>
-              <Text fontSize="13px">{`Vendedor: ${order.seller}`}</Text>
-              <Text fontSize="13px">{`Preço: R$ ${order.orderPrice},00`}</Text>
+                <Flex align="center" justify="center" my={1}>
+                  <Text fontSize="22pt" fontWeight="900" lineHeight="1">
+                    {tag.gside}{' '}
+                    <Text as="span" fontSize="12pt">
+                      x
+                    </Text>{' '}
+                    {tag.pside}
+                  </Text>
+                </Flex>
 
-              {order?.ps && (
-                <Text
-                  fontSize="13px"
-                  maxW="650px"
-                  fontWeight="700"
-                >{`Observações: ${order.ps}`}</Text>
-              )}
-            </Flex>
-            <Flex direction="column" mt={4}>
-              {order?.cutlist.map((cut: any) => {
-                return (
-                  <Flex direction="row" key={cut.id}>
-                    {cut.sideA >= cut.sideB && (
-                      <Text fontSize="13px">
-                        {`${cut.amount} - ${cut.sideA} [ ${cut.borderA} ] x ${cut.sideB} [ ${cut.borderB} ] - ${cut.material.name}`}
-                      </Text>
-                    )}
-                    {cut.sideB > cut.sideA && (
-                      <Text fontSize="13px">
-                        {`${cut.amount} - ${cut.sideB} [ ${cut.borderB} ] x ${cut.sideA} [ ${cut.borderA} ] - ${cut.material.name}`}
-                      </Text>
+                <SimpleGrid columns={2} gap={1} fontSize="7pt">
+                  <Flex align="center" gap={1}>
+                    <Icon as={FaArrowUp} transform="rotate(90deg)" />
+                    <Text fontWeight="bold">A:</Text> {tag.sideA}mm
+                    {tag.borderA > 0 && (
+                      <Box
+                        as="span"
+                        bg="black"
+                        color="white"
+                        px={1}
+                        ml={1}
+                        borderRadius="sm"
+                      >
+                        {tag.borderA}
+                      </Box>
                     )}
                   </Flex>
-                );
-              })}
-              <Text
-                fontSize="13px"
-                mt={4}
-              >{`Numero de peças: ${order.cutlist.reduce(
-                (prev: any, curr: any) => {
-                  return prev + curr.amount;
-                },
-                0,
-              )} peça(s)`}</Text>
+                  <Flex align="center" gap={1}>
+                    <Icon as={FaArrowUp} />
+                    <Text fontWeight="bold">B:</Text> {tag.sideB}mm
+                    {tag.borderB > 0 && (
+                      <Box
+                        as="span"
+                        bg="black"
+                        color="white"
+                        px={1}
+                        ml={1}
+                        borderRadius="sm"
+                      >
+                        {tag.borderB}
+                      </Box>
+                    )}
+                  </Flex>
+                </SimpleGrid>
+
+                <Text fontSize="6pt" mt="auto" color="gray.500">
+                  Peça {index + 1}/{tagList.length} • {tag.uniqueId.slice(0, 6)}
+                </Text>
+              </Flex>
+
+              <Flex
+                direction="column"
+                justify="space-between"
+                align="center"
+                w="25%"
+                borderLeft="1px dashed gray"
+                pl={1}
+              >
+                <Box mt={1}>
+                  <QRCode
+                    value={JSON.stringify({
+                      id: tag.originalId,
+                      o: orderData.orderCode,
+                    })}
+                    size={55}
+                    level="M"
+                  />
+                </Box>
+                <Box textAlign="center" borderTop="2px solid black" w="100%">
+                  <Text fontSize="6pt">Qtd Peça</Text>
+                  <Text fontSize="14pt" fontWeight="bold">
+                    {tag.amountIndex}/{tag.totalAmount}
+                  </Text>
+                </Box>
+              </Flex>
             </Flex>
-            <Divider mt={4} mb={4} />
-          </Flex>
-
-          <Box display="block">
-            {tagCutlist
-              ?.sort((a, b) => b.gside - a.gside)
-              .map((cut, index) => {
-                return (
-                  <div key={cut.id}>
-                    <div className="page-break" />
-                    <Box
-                      float="left"
-                      width="33%"
-                      h="120px"
-                      border="1px solid gray.300"
-                    >
-                      <Image
-                        src={cut.avatar.src}
-                        width="50px"
-                        height="auto"
-                        alt="Etiqueta"
-                        mx="auto"
-                      />
-                      <Text fontWeight="700" fontSize="13px" textAlign="center">
-                        {`${cut.gside} x ${cut.pside}`}
-                      </Text>
-                      <Text fontSize="8px" textAlign="center">
-                        {cut.material}
-                      </Text>
-                      <Text
-                        fontSize="8px"
-                        textAlign="center"
-                      >{`${order.orderCode} - ${order.customer.name}`}</Text>
-                      <Text fontSize="8px" textAlign="center">{`Peça ${
-                        index + 1
-                      }/${tagCutlist.length}`}</Text>
-                    </Box>
-                  </div>
-                );
-              })}
           </Box>
-        </Flex>
+        ))}
       </div>
-
-      <IconButton
-        colorScheme="orange"
-        size="sm"
-        aria-label="Remover"
-        icon={<FaTag />}
-        onClick={handlePrint}
-      />
-    </Flex>
+    </div>
   );
 };
