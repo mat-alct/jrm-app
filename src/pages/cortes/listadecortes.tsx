@@ -16,10 +16,17 @@ import {
   Alert,
 } from '@chakra-ui/react';
 import { format } from 'date-fns';
-import { deleteDoc, doc, getDoc, updateDoc } from 'firebase/firestore';
+import {
+  deleteDoc,
+  doc,
+  getDoc,
+  updateDoc,
+  QueryDocumentSnapshot,
+  DocumentData,
+} from 'firebase/firestore';
 import Head from 'next/head';
 import Router from 'next/router';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   FaCheck,
   FaEdit,
@@ -30,7 +37,6 @@ import {
   FaExclamationTriangle,
   FaChevronLeft,
   FaChevronRight,
-  FaDatabase,
 } from 'react-icons/fa';
 import { useQuery } from '@tanstack/react-query';
 
@@ -43,7 +49,6 @@ import { useAuth } from '../../hooks/authContext';
 import { useOrder } from '../../hooks/order';
 import { db } from '../../services/firebase';
 import { Estimate, Order } from '../../types';
-import { seedDatabase } from '../../utils/seedDatabase'; // Import da função de Seed
 
 const Cortes: React.FC = () => {
   const { user } = useAuth();
@@ -51,13 +56,15 @@ const Cortes: React.FC = () => {
   // Estados de Filtro e Paginação
   const [ordersFilter, setOrdersFilter] = useState('Em Produção');
   const [currentPage, setCurrentPage] = useState(1);
-  const [isSeeding, setIsSeeding] = useState(false); // Estado do botão de Seed
+  const [pageCursors, setPageCursors] = useState<
+    (QueryDocumentSnapshot<DocumentData> | null)[]
+  >([null]);
 
   const toast = toaster;
   const { getOrders, getOrdersBySearch } = useOrder();
   const router = Router;
 
-  // --- QUERY PADRÃO COM PAGINAÇÃO ---
+  // --- QUERY DE PAGINAÇÃO ---
   const {
     data: pagedResult,
     isLoading: isInitialLoading,
@@ -66,37 +73,28 @@ const Cortes: React.FC = () => {
     refetch,
   } = useQuery({
     queryKey: ['orders', ordersFilter, currentPage],
-    queryFn: () => getOrders(ordersFilter, currentPage),
+    queryFn: async () => {
+      const cursor = pageCursors[currentPage - 1];
+      return getOrders(ordersFilter, cursor);
+    },
     placeholderData: previousData => previousData,
   });
+
+  // Atualiza os cursores quando novos dados chegam
+  useEffect(() => {
+    if (pagedResult?.lastDoc) {
+      setPageCursors(prev => {
+        const newCursors = [...prev];
+        newCursors[currentPage] = pagedResult.lastDoc;
+        return newCursors;
+      });
+    }
+  }, [pagedResult, currentPage]);
 
   const radioSize = useBreakpointValue(['sm', 'sm', 'md'], { fallback: 'sm' });
   const tableSize = useBreakpointValue(['sm', 'md'], { fallback: 'sm' });
 
   // --- Funções de Ação ---
-
-  // Função temporária para gerar dados
-  const handleSeed = async () => {
-    if (
-      !window.confirm('Isso vai criar 35 pedidos falsos no banco. Continuar?')
-    )
-      return;
-    setIsSeeding(true);
-    try {
-      await seedDatabase();
-      toast.create({
-        type: 'success',
-        description: '35 Pedidos criados! Atualizando...',
-      });
-      refetch();
-    } catch (error) {
-      console.error(error);
-      toast.create({ type: 'error', description: 'Erro ao criar pedidos.' });
-    } finally {
-      setIsSeeding(false);
-    }
-  };
-
   const approveEstimate = async (id: string) => {
     try {
       const estimateRef = doc(db, 'estimates', id);
@@ -172,19 +170,22 @@ const Cortes: React.FC = () => {
     }
   };
 
-  // --- Busca ---
-  const [searchCode, setSearchCode] = useState<number | undefined>(undefined);
+  // --- BUSCA (CORRIGIDA PARA STRING) ---
+  // Antes era searchCode (number), agora é searchQuery (string)
+  const [searchQuery, setSearchQuery] = useState<string | undefined>(undefined);
+
   const currentSearchType =
     ordersFilter === 'Orçamento' ? 'estimates' : 'orders';
 
   const handleSearchOrder = async (search: string) => {
-    setSearchCode(search ? Number(search) : undefined);
+    // Não convertemos mais para Number, passamos a string direto ou undefined se vazio
+    setSearchQuery(search || undefined);
   };
 
   const { data: searchData, isLoading: isSearchLoading } = useQuery({
-    queryKey: ['orders_search', searchCode, currentSearchType],
-    queryFn: () => getOrdersBySearch(searchCode, currentSearchType),
-    enabled: !!searchCode,
+    queryKey: ['orders_search', searchQuery, currentSearchType],
+    queryFn: () => getOrdersBySearch(searchQuery, currentSearchType),
+    enabled: !!searchQuery, // Só busca se tiver texto digitado
   });
 
   React.useEffect(() => {
@@ -193,20 +194,28 @@ const Cortes: React.FC = () => {
 
   if (!user) return <Loader />;
 
-  // Se tem busca, mostra resultado da busca. Se não, mostra dados paginados do hook.
+  // Se tem busca, usa searchData. Se não, usa pagedResult.
   const dataToShow =
-    searchCode && searchData ? searchData : pagedResult?.data || [];
+    searchQuery && searchData ? searchData : pagedResult?.data || [];
   const isEstimateList = ordersFilter === 'Orçamento';
-  const isLoading = searchCode ? isSearchLoading : isInitialLoading;
+  const isLoading = searchQuery ? isSearchLoading : isInitialLoading;
 
   // Lógica de Paginação Visual
   const totalCount = pagedResult?.totalCount || 0;
   const itemsPerPage = 20;
   const totalPages = Math.ceil(totalCount / itemsPerPage);
+
+  // Só mostra paginação se NÃO estiver buscando e tiver mais de 1 página
   const showPagination =
-    !searchCode &&
+    !searchQuery &&
     (ordersFilter === 'Concluído' || ordersFilter === 'Orçamento') &&
     totalPages > 1;
+
+  const goToPage = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
 
   const renderPaginationButtons = () => {
     const buttons = [];
@@ -225,7 +234,7 @@ const Cortes: React.FC = () => {
           size="sm"
           variant={i === currentPage ? 'solid' : 'outline'}
           colorScheme="orange"
-          onClick={() => setCurrentPage(i)}
+          onClick={() => goToPage(i)}
         >
           {i}
         </Button>,
@@ -266,17 +275,6 @@ const Cortes: React.FC = () => {
               />
             </Box>
 
-            {/* BOTÃO MÁGICO TEMPORÁRIO PARA SEED */}
-            <Button
-              colorScheme="purple"
-              onClick={handleSeed}
-              loading={isSeeding}
-              size="sm"
-              variant="outline"
-            >
-              <FaDatabase style={{ marginRight: '8px' }} /> Gerar Massa de Teste
-            </Button>
-
             <Box overflowX="auto" pb={[2, 2, 0]}>
               <RadioGroup.Root
                 colorScheme="orange"
@@ -286,8 +284,9 @@ const Cortes: React.FC = () => {
                 onValueChange={e => {
                   if (e.value) {
                     setOrdersFilter(e.value);
-                    setSearchCode(undefined);
+                    setSearchQuery(undefined); // Limpa a busca ao trocar de aba
                     setCurrentPage(1);
+                    setPageCursors([null]);
                   }
                 }}
               >
@@ -326,8 +325,7 @@ const Cortes: React.FC = () => {
               </Alert.Indicator>
               <Alert.Title>Erro ao carregar dados.</Alert.Title>
               <Alert.Description>
-                Verifique o Console para links de índice do Firebase.{' '}
-                {(error as any)?.message}
+                Verifique o Console. {(error as any)?.message}
               </Alert.Description>
             </Alert.Root>
           )}
@@ -354,7 +352,7 @@ const Cortes: React.FC = () => {
                 >
                   <TableCaption mb={4} textAlign="left" px={4}>
                     {dataToShow?.length
-                      ? `${dataToShow.length} registro(s) nesta página`
+                      ? `${dataToShow.length} registro(s) ${searchQuery ? 'encontrados' : 'nesta página'}`
                       : 'Nenhum registro encontrado'}
                   </TableCaption>
                   <Table.Header bg="gray.50">
@@ -554,7 +552,7 @@ const Cortes: React.FC = () => {
                   </Table.Body>
                 </Table.Root>
 
-                {/* COMPONENTE DE PAGINAÇÃO */}
+                {/* BOTÕES DE PAGINAÇÃO */}
                 {showPagination && (
                   <Flex
                     p={4}
@@ -562,33 +560,40 @@ const Cortes: React.FC = () => {
                     align="center"
                     borderTopWidth="1px"
                     borderColor="gray.100"
-                    gap={2}
+                    gap={4}
                   >
-                    <Text fontSize="sm" color="gray.500" mr={4}>
+                    <Text fontSize="sm" color="gray.500">
                       Página {currentPage} de {totalPages}
                     </Text>
 
-                    <IconButton
-                      aria-label="Anterior"
-                      size="sm"
-                      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                      disabled={currentPage === 1}
-                    >
-                      <FaChevronLeft />
-                    </IconButton>
+                    <HStack gap={2}>
+                      <IconButton
+                        aria-label="Anterior"
+                        size="sm"
+                        variant="outline"
+                        colorScheme="orange"
+                        onClick={() => goToPage(currentPage - 1)}
+                        disabled={currentPage === 1}
+                      >
+                        <FaChevronLeft />
+                      </IconButton>
 
-                    {renderPaginationButtons()}
+                      {renderPaginationButtons()}
 
-                    <IconButton
-                      aria-label="Próximo"
-                      size="sm"
-                      onClick={() =>
-                        setCurrentPage(p => Math.min(totalPages, p + 1))
-                      }
-                      disabled={currentPage === totalPages}
-                    >
-                      <FaChevronRight />
-                    </IconButton>
+                      <IconButton
+                        aria-label="Próximo"
+                        size="sm"
+                        variant="outline"
+                        colorScheme="orange"
+                        onClick={() => goToPage(currentPage + 1)}
+                        disabled={
+                          currentPage === totalPages ||
+                          !pageCursors[currentPage]
+                        }
+                      >
+                        <FaChevronRight />
+                      </IconButton>
+                    </HStack>
                   </Flex>
                 )}
               </>
