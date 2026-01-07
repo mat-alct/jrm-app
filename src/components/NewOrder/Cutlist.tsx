@@ -13,7 +13,7 @@ import {
   TableCaption,
   Text,
   useBreakpointValue,
-  SimpleGrid,
+  Grid,
 } from '@chakra-ui/react';
 import { yupResolver } from '@hookform/resolvers/yup';
 import React, { useState } from 'react';
@@ -81,10 +81,25 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
   const tableSize = useBreakpointValue(['sm', 'sm', 'md'], { fallback: 'sm' });
 
   const { getAllMaterials } = useMaterial();
-  const { data: materialData } = useQuery({
+
+  // Busca de materiais
+  const { data: materialData, isLoading } = useQuery({
     queryKey: ['materials'],
-    queryFn: getAllMaterials,
+    queryFn: async () => {
+      const data = await getAllMaterials();
+      return data || [];
+    },
   });
+
+  // Prepara as opções para o Select
+  const materialOptions = React.useMemo(() => {
+    if (!materialData) return [];
+    return materialData.map(m => ({
+      label: m.name,
+      value: m.id || '',
+    }));
+  }, [materialData]);
+
   const [pricePercent, setPricePercent] = useState<number>(75);
 
   const handleCreateCutlist: SubmitHandler<
@@ -93,6 +108,7 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
     createCutlistReset({ sideA: 0, sideB: 0, amount: 0 });
     createCutlistSetValue('borderA', 0);
     createCutlistSetValue('borderB', 0);
+    // Mantém o material selecionado para facilitar adição em série
     createCutlistSetValue('materialId', cutlistFormData.materialId);
 
     const materialUsed = materialData?.find(
@@ -163,16 +179,23 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
   return (
     <Stack gap={6} mb={8}>
       {/* CARD UNIFICADO */}
+      {/* CORREÇÃO: Removido overflow="hidden" para permitir que o Select ultrapasse os limites */}
       <Box
         bg="white"
         borderRadius="xl"
         shadow="sm"
         borderWidth="1px"
         borderColor="gray.200"
-        overflow="hidden"
       >
-        {/* TOPO: Título e Opções de Preço */}
-        <Box p={6} bg="gray.50" borderBottomWidth="1px" borderColor="gray.200">
+        {/* TOPO: Estilo Padronizado */}
+        {/* CORREÇÃO: Border Radius aplicado aqui manualmente para compensar a remoção do overflow hidden */}
+        <Box
+          p={6}
+          bg="gray.50"
+          borderBottomWidth="1px"
+          borderColor="gray.200"
+          borderTopRadius="xl"
+        >
           <Flex
             align="center"
             justify={['center', 'space-between']}
@@ -198,7 +221,6 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
                 // @ts-ignore
                 size={radioSize}
               >
-                {/* CORREÇÃO: Aumentei o gap para 6 e adicionei padding horizontal */}
                 <HStack
                   gap={6}
                   px={4}
@@ -252,53 +274,55 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
           as="form"
           onSubmit={createCutlistHandleSubmit(handleCreateCutlist)}
         >
-          {/* Usei alignItems="flex-end" para alinhar botão e inputs na base */}
-          <SimpleGrid columns={[1, 1, 2, 12]} gap={4} alignItems="flex-end">
-            {/* Material (4 colunas) */}
-            <Box gridColumn={['span 1', 'span 1', 'span 2', 'span 4']}>
+          {/* CORREÇÃO: Grid ajustado com largura fixa para Qtd e mais espaço para Lados */}
+          <Grid
+            templateColumns={['1fr', '1fr', '3fr 70px 1.6fr 1.6fr 140px']}
+            gap={4}
+            alignItems="flex-end"
+          >
+            {/* 1. Material (3fr) */}
+            <Box>
               <FormSelect
                 name="materialId"
                 control={createCutlistControl}
                 isClearable
-                placeholder="Selecione o Material"
-                options={
-                  materialData?.map(m => ({
-                    label: m.name,
-                    value: m.id || '',
-                  })) || []
+                placeholder={
+                  isLoading ? 'Carregando...' : 'Selecione o Material'
                 }
+                options={materialOptions}
+                // Adicionando menuPortalTarget se necessário, mas remover overflow hidden resolve a maioria dos casos
               />
             </Box>
 
-            {/* Qtd (2 colunas) */}
-            <Box gridColumn={['span 1', 'span 1', 'span 1', 'span 2']}>
+            {/* 2. Qtd (Fixo 80px - reduzido) */}
+            <Box>
               <FormInput
                 {...createCutlistRegister('amount')}
                 name="amount"
-                label="Qtd" // Label explícito
-                placeholder="0"
+                label="Qtd"
+                placeholder="00"
                 error={createCutlistErrors.amount}
                 size="md"
                 type="number"
               />
             </Box>
 
-            {/* Lado A (2 colunas) */}
-            <Box gridColumn={['span 1', 'span 1', 'span 1', 'span 2']}>
+            {/* 3. Lado A (Aumentado - 1.4fr) */}
+            <Box>
               <Text fontSize="sm" fontWeight="medium" mb={2} color="gray.700">
                 Lado A / Fita
               </Text>
-              {/* CORREÇÃO DE ALINHAMENTO: InputGroup ou Flex ajustado */}
               <Flex gap={2}>
                 <Box flex="1">
                   <FormInput
                     {...createCutlistRegister('sideA')}
                     name="sideA"
-                    placeholder="mm"
+                    placeholder="0000"
                     error={createCutlistErrors.sideA}
                     size="md"
                   />
                 </Box>
+                {/* Select de Fita Aumentado para 90px */}
                 <Box w="70px">
                   <FormSelect
                     control={createCutlistControl}
@@ -311,8 +335,8 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
               </Flex>
             </Box>
 
-            {/* Lado B (2 colunas) */}
-            <Box gridColumn={['span 1', 'span 1', 'span 1', 'span 2']}>
+            {/* 4. Lado B (Aumentado - 1.4fr) */}
+            <Box>
               <Text fontSize="sm" fontWeight="medium" mb={2} color="gray.700">
                 Lado B / Fita
               </Text>
@@ -321,11 +345,12 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
                   <FormInput
                     {...createCutlistRegister('sideB')}
                     name="sideB"
-                    placeholder="mm"
+                    placeholder="0000"
                     error={createCutlistErrors.sideB}
                     size="md"
                   />
                 </Box>
+                {/* Select de Fita Aumentado para 90px */}
                 <Box w="70px">
                   <FormSelect
                     control={createCutlistControl}
@@ -338,9 +363,8 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
               </Flex>
             </Box>
 
-            {/* Botão (2 colunas) */}
-            <Box gridColumn={['span 1', 'span 1', 'span 2', 'span 2']}>
-              {/* Margem inferior ajustada para alinhar visualmente com inputs */}
+            {/* 5. Botão (Fixo 140px) */}
+            <Box>
               <Button
                 colorScheme="orange"
                 size="md"
@@ -351,11 +375,11 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
                 <FaPlus style={{ marginRight: '8px' }} /> Adicionar
               </Button>
             </Box>
-          </SimpleGrid>
+          </Grid>
         </Box>
       </Box>
 
-      {/* TABELA DE PEÇAS (Sem alterações funcionais, apenas mantendo o código) */}
+      {/* TABELA DE PEÇAS */}
       {cutlist.length > 0 && (
         <Box
           overflowX="auto"
@@ -372,11 +396,12 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
             size={tableSize}
             whiteSpace="nowrap"
           >
+            {/* CORREÇÃO: Título da tabela preto e normal */}
             <TableCaption
               py={4}
               fontSize="md"
-              fontWeight="bold"
-              color="orange.600"
+              fontWeight="normal"
+              color="gray.800"
             >
               Peças adicionadas ao pedido
             </TableCaption>

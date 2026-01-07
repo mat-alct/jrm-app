@@ -10,7 +10,7 @@ import {
   Text,
   Textarea,
   SimpleGrid,
-  Grid, // Importado Grid
+  Grid,
   Switch,
   Icon,
 } from '@chakra-ui/react';
@@ -196,206 +196,218 @@ export const OrderData = ({
       {/* 1. DADOS DO CLIENTE */}
       <Box
         bg="white"
-        p={6}
         borderRadius="xl"
         shadow="sm"
         borderWidth="1px"
         borderColor="gray.200"
+        overflow="hidden"
       >
-        <Heading size="md" mb={6} color="gray.700">
-          1. Dados do Cliente
-        </Heading>
-        <SimpleGrid columns={[1, 1, 3]} gap={4}>
-          <FormInput
-            {...createOrderRegister('firstName')}
-            name="firstName"
-            label="Nome"
-            error={createOrderErrors.firstName}
-            size="md"
-          />
-          <FormInput
-            {...createOrderRegister('lastName')}
-            name="lastName"
-            label="Sobrenome"
-            error={createOrderErrors.lastName}
-            size="md"
-          />
-          <FormInput
-            {...createOrderRegister('telephone')}
-            error={createOrderErrors.telephone}
-            name="telephone"
-            label="Telefone"
-            value={tel}
-            onChange={e => setTel(normalizeTelephoneInput(e.target.value, tel))}
-            size="md"
-          />
-        </SimpleGrid>
+        {/* HEADER PADRONIZADO */}
+        <Box p={6} bg="gray.50" borderBottomWidth="1px" borderColor="gray.200">
+          <Heading size="md" color="gray.700">
+            1. Dados do Cliente
+          </Heading>
+        </Box>
+        {/* BODY */}
+        <Box p={6}>
+          <SimpleGrid columns={[1, 1, 3]} gap={4}>
+            <FormInput
+              {...createOrderRegister('firstName')}
+              name="firstName"
+              label="Nome"
+              error={createOrderErrors.firstName}
+              size="md"
+            />
+            <FormInput
+              {...createOrderRegister('lastName')}
+              name="lastName"
+              label="Sobrenome"
+              error={createOrderErrors.lastName}
+              size="md"
+            />
+            <FormInput
+              {...createOrderRegister('telephone')}
+              error={createOrderErrors.telephone}
+              name="telephone"
+              label="Telefone"
+              value={tel}
+              onChange={e =>
+                setTel(normalizeTelephoneInput(e.target.value, tel))
+              }
+              size="md"
+            />
+          </SimpleGrid>
+        </Box>
       </Box>
 
       {/* 2. DADOS DO SERVIÇO */}
       {orderType === 'Serviço' && (
         <Box
           bg="white"
-          p={6}
           borderRadius="xl"
           shadow="sm"
           borderWidth={isUrgent ? '2px' : '1px'}
-          borderColor={isUrgent ? 'red.300' : 'gray.200'}
-          position="relative"
+          borderColor={isUrgent ? 'red.500' : 'gray.200'}
           overflow="hidden"
+          transition="all 0.3s"
         >
-          {isUrgent && (
-            <Box
-              position="absolute"
-              top={0}
-              left={0}
-              right={0}
-              h="6px"
-              bgGradient="linear(to-r, red.400, red.600)"
-            />
-          )}
-
-          <Flex justify="space-between" align="center" mb={6}>
-            <Heading size="md" color="gray.700">
-              2. Detalhes do Serviço
-            </Heading>
-
-            <Controller
-              control={createOrderControl}
-              name="isUrgent"
-              render={({ field: { onChange, value } }) => (
-                <Box
-                  as="label"
-                  cursor="pointer"
-                  bg={value ? 'red.50' : 'gray.50'}
-                  borderWidth="1px"
-                  borderColor={value ? 'red.200' : 'gray.200'}
-                  px={4}
-                  py={2}
-                  borderRadius="full"
-                  display="flex"
-                  alignItems="center"
-                  gap={3}
-                  _hover={{ borderColor: value ? 'red.300' : 'gray.300' }}
-                >
-                  <Switch.Root
-                    colorScheme="red"
-                    checked={value}
-                    onCheckedChange={e => onChange(e.checked)}
-                    size="lg"
-                  >
-                    <Switch.HiddenInput />
-                    <Switch.Control>
-                      <Switch.Thumb />
-                    </Switch.Control>
-                  </Switch.Root>
-                  <Text
-                    fontWeight="bold"
-                    color={value ? 'red.600' : 'gray.500'}
-                  >
-                    {value ? 'URGENTE!' : 'Prioridade Normal'}
-                  </Text>
-                  {value && <Icon as={FaExclamationTriangle} color="red.500" />}
-                </Box>
-              )}
-            />
-          </Flex>
-
-          <Stack gap={6}>
-            {/* CORREÇÃO: Grid com proporção 2/3 e 1/3 */}
-            <Grid templateColumns={['1fr', '1fr', '2fr 1fr']} gap={4}>
-              <FormInput
-                {...createOrderRegister('address')}
-                error={createOrderErrors.address}
-                name="address"
-                label="Endereço de Entrega"
+          {/* HEADER PADRONIZADO COM DESTAQUE DE URGÊNCIA */}
+          <Box
+            p={6}
+            bg={isUrgent ? 'red.500' : 'gray.50'}
+            borderBottomWidth="1px"
+            borderColor={isUrgent ? 'red.600' : 'gray.200'}
+            color={isUrgent ? 'white' : 'inherit'}
+          >
+            <Flex justify="space-between" align="center">
+              <Heading
                 size="md"
-              />
-              <FormSelect
-                options={areas.map(area => ({ value: area, label: area }))}
-                name="area"
+                color={isUrgent ? 'white' : 'gray.700'}
+                display="flex"
+                alignItems="center"
+                gap={2}
+              >
+                2. Detalhes do Serviço
+                {isUrgent && <Icon as={FaExclamationTriangle} color="white" />}
+              </Heading>
+
+              <Controller
                 control={createOrderControl}
-                label="Bairro"
-                placeholder="Selecione..."
-                isClearable
-              />
-            </Grid>
-
-            <Box borderTopWidth="1px" borderColor="gray.100" my={2} />
-
-            <SimpleGrid columns={[1, 1, 3]} gap={6}>
-              <Stack gap={4}>
-                <FormRadio
-                  options={['Japuíba', 'Frade']}
-                  label="Loja Responsável"
-                  name="orderStore"
-                  control={createOrderControl}
-                />
-                <FormRadio
-                  options={['Retirar na Loja', 'Entrega']}
-                  label="Logística"
-                  name="deliveryType"
-                  control={createOrderControl}
-                />
-              </Stack>
-              <Stack gap={4}>
-                <Box>
-                  <Text
-                    mb={2}
-                    fontWeight="medium"
-                    color="gray.700"
-                    fontSize="sm"
-                  >
-                    Previsão de Entrega
-                  </Text>
-                  <FormDatePicker
-                    name="deliveryDate"
-                    control={createOrderControl}
-                  />
-                </Box>
-                <FormRadio
-                  options={['Pago', 'Receber na Entrega']}
-                  label="Status Pagamento"
-                  name="paymentType"
-                  control={createOrderControl}
-                />
-              </Stack>
-              <Stack gap={4} justify="flex-end">
-                {paymentType === 'Receber na Entrega' && (
+                name="isUrgent"
+                render={({ field: { onChange, value } }) => (
                   <Box
-                    bg="orange.50"
-                    p={3}
-                    borderRadius="md"
-                    borderWidth="1px"
-                    borderColor="orange.200"
+                    as="label"
+                    cursor="pointer"
+                    bg={value ? 'white' : 'gray.200'}
+                    px={4}
+                    py={1}
+                    borderRadius="full"
+                    display="flex"
+                    alignItems="center"
+                    gap={3}
                   >
-                    <FormInput
-                      {...createOrderRegister('amountDue')}
-                      name="amountDue"
-                      label="Valor a Receber (R$)"
-                      placeholder="Ex: 500,00"
-                      size="md"
-                      bg="white"
-                    />
-                    <Text fontSize="xs" color="orange.700" mt={1}>
-                      * Se vazio, cobraremos o total.
+                    <Switch.Root
+                      colorScheme="red"
+                      checked={value}
+                      onCheckedChange={e => onChange(e.checked)}
+                      size="lg"
+                    >
+                      <Switch.HiddenInput />
+                      <Switch.Control>
+                        <Switch.Thumb />
+                      </Switch.Control>
+                    </Switch.Root>
+                    <Text
+                      fontWeight="bold"
+                      color={value ? 'red.600' : 'gray.500'}
+                      fontSize="sm"
+                    >
+                      {value ? 'URGENTE' : 'Normal'}
                     </Text>
                   </Box>
                 )}
-              </Stack>
-            </SimpleGrid>
-
-            <Box>
-              <Text mb="2px" color="gray.700" fontWeight="medium">
-                Observações
-              </Text>
-              <Textarea
-                {...createOrderRegister('ps')}
-                rows={4}
-                placeholder="Instruções..."
               />
-            </Box>
-          </Stack>
+            </Flex>
+          </Box>
+
+          {/* BODY */}
+          <Box p={6}>
+            <Stack gap={6}>
+              {/* Grid 2/3 e 1/3 */}
+              <Grid templateColumns={['1fr', '1fr', '2fr 1fr']} gap={4}>
+                <FormInput
+                  {...createOrderRegister('address')}
+                  error={createOrderErrors.address}
+                  name="address"
+                  label="Endereço de Entrega"
+                  size="md"
+                />
+                <FormSelect
+                  options={areas.map(area => ({ value: area, label: area }))}
+                  name="area"
+                  control={createOrderControl}
+                  label="Bairro"
+                  placeholder="Selecione..."
+                  isClearable
+                />
+              </Grid>
+
+              <Box borderTopWidth="1px" borderColor="gray.100" my={2} />
+
+              <SimpleGrid columns={[1, 1, 3]} gap={6}>
+                <Stack gap={4}>
+                  <FormRadio
+                    options={['Japuíba', 'Frade']}
+                    label="Loja Responsável"
+                    name="orderStore"
+                    control={createOrderControl}
+                  />
+                  <FormRadio
+                    options={['Retirar na Loja', 'Entrega']}
+                    label="Logística"
+                    name="deliveryType"
+                    control={createOrderControl}
+                  />
+                </Stack>
+                <Stack gap={4}>
+                  <Box>
+                    <Text
+                      mb={2}
+                      fontWeight="medium"
+                      color="gray.700"
+                      fontSize="sm"
+                    >
+                      Previsão de Entrega
+                    </Text>
+                    <FormDatePicker
+                      name="deliveryDate"
+                      control={createOrderControl}
+                    />
+                  </Box>
+                  <FormRadio
+                    options={['Pago', 'Receber na Entrega']}
+                    label="Status Pagamento"
+                    name="paymentType"
+                    control={createOrderControl}
+                  />
+                </Stack>
+                <Stack gap={4} justify="flex-end">
+                  {paymentType === 'Receber na Entrega' && (
+                    <Box
+                      bg="orange.50"
+                      p={3}
+                      borderRadius="md"
+                      borderWidth="1px"
+                      borderColor="orange.200"
+                    >
+                      <FormInput
+                        {...createOrderRegister('amountDue')}
+                        name="amountDue"
+                        label="Valor a Receber (R$)"
+                        placeholder="Ex: 500,00"
+                        size="md"
+                        bg="white"
+                      />
+                      <Text fontSize="xs" color="orange.700" mt={1}>
+                        * Se vazio, cobraremos o total.
+                      </Text>
+                    </Box>
+                  )}
+                </Stack>
+              </SimpleGrid>
+
+              <Box>
+                <Text mb="2px" color="gray.700" fontWeight="medium">
+                  Observações
+                </Text>
+                <Textarea
+                  {...createOrderRegister('ps')}
+                  rows={4}
+                  placeholder="Instruções..."
+                />
+              </Box>
+            </Stack>
+          </Box>
         </Box>
       )}
 
@@ -408,17 +420,17 @@ export const OrderData = ({
         mt={4}
         color="white"
       >
-        {/* CORREÇÃO: Justify space-between para alinhar extremos */}
         <Flex
           direction={['column', 'column', 'row']}
           align="center"
           justify="space-between"
           gap={6}
         >
-          {/* Lado Esquerdo: Autenticação (Limitado a 300px) */}
+          {/* Lado Esquerdo: Senha (Limitado a 300px) */}
           <Box w="100%" maxW="300px">
+            {/* CORREÇÃO: Label alterado e placeholder removido */}
             <Text mb={2} fontWeight="bold" color="gray.300">
-              Autenticação
+              Senha do Vendedor
             </Text>
             <Flex align="center" gap={3}>
               <Icon as={FaLock} color="orange.400" boxSize={5} />
@@ -427,23 +439,20 @@ export const OrderData = ({
                 error={createOrderErrors.sellerPassword}
                 name="sellerPassword"
                 type="password"
-                placeholder="Senha"
                 size="lg"
                 bg="gray.700"
                 border="none"
-                _placeholder={{ color: 'gray.500' }}
                 color="white"
               />
             </Flex>
           </Box>
 
-          {/* Lado Direito: Botão (Alinhado com a senha) */}
-          <Box w={['100%', '100%', 'auto']}>
+          {/* Lado Direito: Botão (Expande com flex=1) */}
+          <Box flex="1" w="100%">
             <Button
               colorScheme="orange"
               size="xl"
               height="60px"
-              px={12}
               fontSize="xl"
               width="100%"
               type="submit"
@@ -452,7 +461,7 @@ export const OrderData = ({
               gap={3}
               _hover={{ bg: 'orange.400', transform: 'scale(1.02)' }}
               transition="all 0.2s"
-              mt={[4, 4, 8]} // Margem superior para alinhar visualmente com a base do input
+              mt={[4, 4, 8]}
             >
               {orderType === 'Orçamento'
                 ? 'SALVAR ORÇAMENTO'
