@@ -14,11 +14,22 @@ import {
   Text,
   useBreakpointValue,
   Grid,
+  useDisclosure,
+  Badge,
 } from '@chakra-ui/react';
 import { yupResolver } from '@hookform/resolvers/yup';
 import React, { useState } from 'react';
 import { useForm, SubmitHandler } from 'react-hook-form';
-import { FaEdit, FaTrash, FaPlus } from 'react-icons/fa';
+import {
+  FaEdit,
+  FaTrash,
+  FaPlus,
+  FaCog,
+  FaCheckCircle,
+  FaTimesCircle,
+  FaArrowsAltH,
+  FaArrowsAltV,
+} from 'react-icons/fa';
 import { useQuery } from '@tanstack/react-query';
 import { v4 } from 'uuid';
 
@@ -46,6 +57,9 @@ interface Cutlist {
   borderA: number;
   borderB: number;
   price: number;
+  hasHingeHoles?: boolean;
+  hingeHolesSide?: 'Maior' | 'Menor';
+  hingeHolesQuantity?: number;
 }
 
 interface CreateCutlistProps {
@@ -82,7 +96,18 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
 
   const { getAllMaterials } = useMaterial();
 
-  // Busca de materiais
+  // Estados de Furação
+  // onClose será usado para fechar a aba automaticamente
+  const {
+    open: isOptionsOpen,
+    onToggle: onToggleOptions,
+    onClose: onCloseOptions,
+  } = useDisclosure();
+
+  const [hasHinge, setHasHinge] = useState(false);
+  const [hingeSide, setHingeSide] = useState<'Maior' | 'Menor'>('Maior');
+  const [pricePercent, setPricePercent] = useState<number>(75);
+
   const { data: materialData, isLoading } = useQuery({
     queryKey: ['materials'],
     queryFn: async () => {
@@ -91,7 +116,6 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
     },
   });
 
-  // Prepara as opções para o Select
   const materialOptions = React.useMemo(() => {
     if (!materialData) return [];
     return materialData.map(m => ({
@@ -100,7 +124,22 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
     }));
   }, [materialData]);
 
-  const [pricePercent, setPricePercent] = useState<number>(75);
+  // Função para calcular furos automaticamente
+  const calculateHoles = (
+    sideA: number,
+    sideB: number,
+    sideSelected: 'Maior' | 'Menor',
+  ): number => {
+    const length =
+      sideSelected === 'Maior'
+        ? Math.max(sideA, sideB)
+        : Math.min(sideA, sideB);
+    // Regra: 2 furos até 1200mm (0 a 120cm), 3 até 1800mm, etc.
+    // Fórmula: Math.ceil(length / 600) com mínimo de 2.
+    // Ex: 500mm / 600 = 0.8 -> teto 1 -> max(2,1) = 2.
+    // Ex: 1250mm / 600 = 2.08 -> teto 3 -> max(2,3) = 3.
+    return Math.max(2, Math.ceil(length / 600));
+  };
 
   const handleCreateCutlist: SubmitHandler<
     CreateCutlistProps
@@ -108,7 +147,6 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
     createCutlistReset({ sideA: 0, sideB: 0, amount: 0 });
     createCutlistSetValue('borderA', 0);
     createCutlistSetValue('borderB', 0);
-    // Mantém o material selecionado para facilitar adição em série
     createCutlistSetValue('materialId', cutlistFormData.materialId);
 
     const materialUsed = materialData?.find(
@@ -126,6 +164,16 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
       pricePercent,
     );
 
+    // Calcula quantidade de furos se estiver ativado
+    let calculatedQty = undefined;
+    if (hasHinge) {
+      calculatedQty = calculateHoles(
+        cutlistFormData.sideA,
+        cutlistFormData.sideB,
+        hingeSide,
+      );
+    }
+
     updateCutlist([
       {
         id: v4(),
@@ -138,8 +186,16 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
         },
         ...cutlistFormData,
         price,
+        hasHingeHoles: hasHinge,
+        hingeHolesSide: hasHinge ? hingeSide : undefined,
+        hingeHolesQuantity: calculatedQty,
       },
     ]);
+
+    // RESET TOTAL DAS OPÇÕES
+    setHasHinge(false);
+    setHingeSide('Maior');
+    onCloseOptions(); // Fecha a aba de opções
     createCutlistSetFocus('amount');
   };
 
@@ -167,6 +223,18 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
     createCutlistSetValue('borderA', borderA);
     createCutlistSetValue('borderB', borderB);
     createCutlistSetValue('materialId', material.materialId);
+
+    // Recupera estados para edição
+    if (cutToUpdate.hasHingeHoles) {
+      setHasHinge(true);
+      if (cutToUpdate.hingeHolesSide) setHingeSide(cutToUpdate.hingeHolesSide);
+      // Se estiver fechado, abre para mostrar que tem edição
+      if (!isOptionsOpen) onToggleOptions();
+    } else {
+      setHasHinge(false);
+      onCloseOptions();
+    }
+
     removeCut(cutId);
   };
 
@@ -178,23 +246,21 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
 
   return (
     <Stack gap={6} mb={8}>
-      {/* CARD UNIFICADO */}
-      {/* CORREÇÃO: Removido overflow="hidden" para permitir que o Select ultrapasse os limites */}
       <Box
         bg="white"
         borderRadius="xl"
-        shadow="sm"
+        shadow="md"
         borderWidth="1px"
         borderColor="gray.200"
+        overflow="hidden"
       >
-        {/* TOPO: Estilo Padronizado */}
-        {/* CORREÇÃO: Border Radius aplicado aqui manualmente para compensar a remoção do overflow hidden */}
         <Box
           p={6}
-          bg="gray.50"
+          bgGradient="to-r"
+          gradientFrom="gray.50"
+          gradientTo="white"
           borderBottomWidth="1px"
           borderColor="gray.200"
-          borderTopRadius="xl"
         >
           <Flex
             align="center"
@@ -203,11 +269,11 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
             gap={4}
           >
             <Box>
-              <Heading color="gray.700" size="lg">
+              <Heading color="gray.800" size="lg" letterSpacing="tight">
                 Plano de Corte
               </Heading>
               <Text color="gray.500" fontSize="sm">
-                Adicione peças para calcular o valor
+                Adicione as peças para compor o pedido
               </Text>
             </Box>
 
@@ -221,43 +287,37 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
                 // @ts-ignore
                 size={radioSize}
               >
-                <HStack
-                  gap={6}
-                  px={4}
-                  py={2}
-                  bg="white"
-                  borderRadius="md"
-                  borderWidth="1px"
-                  borderColor="gray.200"
-                >
-                  <RadioGroup.Item value="75">
-                    <RadioGroup.ItemHiddenInput />
-                    <RadioGroup.ItemIndicator />
-                    <RadioGroup.ItemText fontWeight="medium">
-                      Balcão
-                    </RadioGroup.ItemText>
-                  </RadioGroup.Item>
-                  <RadioGroup.Item value="50">
-                    <RadioGroup.ItemHiddenInput />
-                    <RadioGroup.ItemIndicator />
-                    <RadioGroup.ItemText fontWeight="medium">
-                      Marceneiro
-                    </RadioGroup.ItemText>
-                  </RadioGroup.Item>
-                  <RadioGroup.Item value="1">
-                    <RadioGroup.ItemHiddenInput />
-                    <RadioGroup.ItemIndicator />
-                    <RadioGroup.ItemText fontWeight="medium">
-                      S/ Acréscimo
-                    </RadioGroup.ItemText>
-                  </RadioGroup.Item>
+                <HStack gap={2} bg="gray.100" p={1} borderRadius="lg">
+                  {['75', '50', '1'].map(val => (
+                    <RadioGroup.Item
+                      key={val}
+                      value={val}
+                      p={2}
+                      borderRadius="md"
+                      _checked={{
+                        bg: 'white',
+                        shadow: 'sm',
+                        color: 'orange.600',
+                      }}
+                    >
+                      <RadioGroup.ItemHiddenInput />
+                      <Text fontSize="xs" fontWeight="bold" px={2}>
+                        {val === '75'
+                          ? 'Balcão'
+                          : val === '50'
+                            ? 'Marceneiro'
+                            : 'Custo'}
+                      </Text>
+                    </RadioGroup.Item>
+                  ))}
                 </HStack>
               </RadioGroup.Root>
 
               <Text
                 fontSize={['2xl', '3xl']}
                 fontWeight="800"
-                color="green.600"
+                color="orange.500"
+                letterSpacing="tight"
               >
                 {new Intl.NumberFormat('pt-BR', {
                   style: 'currency',
@@ -268,19 +328,16 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
           </Flex>
         </Box>
 
-        {/* FORMULÁRIO */}
         <Box
           p={6}
           as="form"
           onSubmit={createCutlistHandleSubmit(handleCreateCutlist)}
         >
-          {/* CORREÇÃO: Grid ajustado com largura fixa para Qtd e mais espaço para Lados */}
           <Grid
-            templateColumns={['1fr', '1fr', '3fr 70px 1.6fr 1.6fr 140px']}
+            templateColumns={['1fr', '1fr', '3fr 70px 1.6fr 1.6fr 160px']}
             gap={4}
             alignItems="flex-end"
           >
-            {/* 1. Material (3fr) */}
             <Box>
               <FormSelect
                 name="materialId"
@@ -290,26 +347,30 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
                   isLoading ? 'Carregando...' : 'Selecione o Material'
                 }
                 options={materialOptions}
-                // Adicionando menuPortalTarget se necessário, mas remover overflow hidden resolve a maioria dos casos
               />
             </Box>
 
-            {/* 2. Qtd (Fixo 80px - reduzido) */}
             <Box>
               <FormInput
                 {...createCutlistRegister('amount')}
                 name="amount"
                 label="Qtd"
-                placeholder="00"
+                placeholder="0"
                 error={createCutlistErrors.amount}
                 size="md"
                 type="number"
+                textAlign="center"
               />
             </Box>
 
-            {/* 3. Lado A (Aumentado - 1.4fr) */}
             <Box>
-              <Text fontSize="sm" fontWeight="medium" mb={2} color="gray.700">
+              <Text
+                fontSize="xs"
+                fontWeight="bold"
+                mb={2}
+                color="gray.500"
+                textTransform="uppercase"
+              >
                 Lado A / Fita
               </Text>
               <Flex gap={2}>
@@ -317,12 +378,11 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
                   <FormInput
                     {...createCutlistRegister('sideA')}
                     name="sideA"
-                    placeholder="0000"
+                    placeholder="mm"
                     error={createCutlistErrors.sideA}
                     size="md"
                   />
                 </Box>
-                {/* Select de Fita Aumentado para 90px */}
                 <Box w="70px">
                   <FormSelect
                     control={createCutlistControl}
@@ -335,9 +395,14 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
               </Flex>
             </Box>
 
-            {/* 4. Lado B (Aumentado - 1.4fr) */}
             <Box>
-              <Text fontSize="sm" fontWeight="medium" mb={2} color="gray.700">
+              <Text
+                fontSize="xs"
+                fontWeight="bold"
+                mb={2}
+                color="gray.500"
+                textTransform="uppercase"
+              >
                 Lado B / Fita
               </Text>
               <Flex gap={2}>
@@ -345,12 +410,11 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
                   <FormInput
                     {...createCutlistRegister('sideB')}
                     name="sideB"
-                    placeholder="0000"
+                    placeholder="mm"
                     error={createCutlistErrors.sideB}
                     size="md"
                   />
                 </Box>
-                {/* Select de Fita Aumentado para 90px */}
                 <Box w="70px">
                   <FormSelect
                     control={createCutlistControl}
@@ -363,19 +427,129 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
               </Flex>
             </Box>
 
-            {/* 5. Botão (Fixo 140px) */}
             <Box>
-              <Button
-                colorScheme="orange"
-                size="md"
-                w="100%"
-                type="submit"
-                mb="2px"
-              >
-                <FaPlus style={{ marginRight: '8px' }} /> Adicionar
-              </Button>
+              <Flex gap={2} align="center" pb="2px">
+                <IconButton
+                  aria-label="Opções de Furação"
+                  colorScheme={hasHinge ? 'green' : 'gray'}
+                  variant={hasHinge ? 'solid' : 'outline'}
+                  onClick={onToggleOptions}
+                  size="md"
+                >
+                  <FaCog />
+                </IconButton>
+
+                <Button
+                  colorScheme="orange"
+                  size="md"
+                  flex="1"
+                  type="submit"
+                  fontWeight="bold"
+                >
+                  <FaPlus style={{ marginRight: '8px' }} /> ADD
+                </Button>
+              </Flex>
             </Box>
           </Grid>
+
+          {/* ÁREA DE FURAÇÃO (LIMPA E SIMPLIFICADA) */}
+          {isOptionsOpen && (
+            <Box
+              mt={5}
+              p={5}
+              bg={hasHinge ? 'green.50' : 'gray.50'}
+              borderRadius="lg"
+              border="1px solid"
+              borderColor={hasHinge ? 'green.200' : 'gray.200'}
+              position="relative"
+            >
+              {hasHinge && (
+                <Badge
+                  position="absolute"
+                  top="-10px"
+                  left="20px"
+                  colorScheme="green"
+                  variant="solid"
+                  px={2}
+                >
+                  FURAÇÃO ATIVADA
+                </Badge>
+              )}
+
+              <Flex align="flex-end" gap={6} wrap="wrap">
+                <Box>
+                  <Text
+                    fontSize="xs"
+                    fontWeight="bold"
+                    mb={2}
+                    color="gray.500"
+                    textTransform="uppercase"
+                  >
+                    Status
+                  </Text>
+                  <Button
+                    onClick={() => setHasHinge(!hasHinge)}
+                    colorScheme={hasHinge ? 'green' : 'gray'}
+                    variant={hasHinge ? 'solid' : 'outline'}
+                    size="sm"
+                    w="100%"
+                  >
+                    {hasHinge ? (
+                      <FaCheckCircle style={{ marginRight: 8 }} />
+                    ) : (
+                      <FaTimesCircle style={{ marginRight: 8 }} />
+                    )}
+                    {hasHinge ? 'Com Furação' : 'Sem Furação'}
+                  </Button>
+                </Box>
+
+                {hasHinge && (
+                  <Box flex="1" minW="200px">
+                    <Text
+                      fontSize="xs"
+                      fontWeight="bold"
+                      mb={2}
+                      color="gray.500"
+                      textTransform="uppercase"
+                    >
+                      Posição dos Furos
+                    </Text>
+                    <HStack
+                      gap={2}
+                      bg="white"
+                      p={1}
+                      borderRadius="md"
+                      borderWidth="1px"
+                      borderColor="green.200"
+                    >
+                      <Button
+                        size="xs"
+                        flex="1"
+                        colorScheme="green"
+                        variant={hingeSide === 'Maior' ? 'solid' : 'ghost'}
+                        onClick={() => setHingeSide('Maior')}
+                      >
+                        <FaArrowsAltH style={{ marginRight: 6 }} /> Lado Maior
+                      </Button>
+                      <Button
+                        size="xs"
+                        flex="1"
+                        colorScheme="green"
+                        variant={hingeSide === 'Menor' ? 'solid' : 'ghost'}
+                        onClick={() => setHingeSide('Menor')}
+                      >
+                        <FaArrowsAltV style={{ marginRight: 6 }} /> Lado Menor
+                      </Button>
+                    </HStack>
+                    <Text fontSize="xs" color="green.600" mt={1}>
+                      * A quantidade de furos será calculada automaticamente
+                      pelo tamanho da peça.
+                    </Text>
+                  </Box>
+                )}
+              </Flex>
+            </Box>
+          )}
         </Box>
       </Box>
 
@@ -396,24 +570,31 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
             size={tableSize}
             whiteSpace="nowrap"
           >
-            {/* CORREÇÃO: Título da tabela preto e normal */}
             <TableCaption
               py={4}
-              fontSize="md"
-              fontWeight="normal"
-              color="gray.800"
+              fontSize="sm"
+              fontWeight="medium"
+              color="gray.500"
             >
-              Peças adicionadas ao pedido
+              {cutlist.length} peças adicionadas
             </TableCaption>
             <Table.Header bg="gray.50">
               <Table.Row>
-                <Table.ColumnHeader>Tag</Table.ColumnHeader>
-                <Table.ColumnHeader>Material</Table.ColumnHeader>
-                <Table.ColumnHeader>Qtd</Table.ColumnHeader>
-                <Table.ColumnHeader>Dimensões</Table.ColumnHeader>
-                <Table.ColumnHeader>Fitas</Table.ColumnHeader>
-                <Table.ColumnHeader>Preço</Table.ColumnHeader>
-                <Table.ColumnHeader width="1%">Ações</Table.ColumnHeader>
+                <Table.ColumnHeader color="gray.600">
+                  Esquema
+                </Table.ColumnHeader>
+                <Table.ColumnHeader color="gray.600">
+                  Material
+                </Table.ColumnHeader>
+                <Table.ColumnHeader color="gray.600">Qtd</Table.ColumnHeader>
+                <Table.ColumnHeader color="gray.600">
+                  Dimensões / Furação
+                </Table.ColumnHeader>
+                <Table.ColumnHeader color="gray.600">
+                  Fitas (A|B)
+                </Table.ColumnHeader>
+                <Table.ColumnHeader color="gray.600">Preço</Table.ColumnHeader>
+                <Table.ColumnHeader width="1%"> </Table.ColumnHeader>
               </Table.Row>
             </Table.Header>
             <Table.Body>
@@ -425,28 +606,61 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
                   borderB: c.borderB,
                 });
                 return (
-                  <Table.Row key={c.id}>
+                  <Table.Row key={c.id} _hover={{ bg: 'orange.50' }}>
                     <Table.Cell>
                       <img
                         src={avatar.src}
                         alt="Tag"
                         width="35px"
                         height="35px"
+                        style={{
+                          borderRadius: '4px',
+                          border: '1px solid #eee',
+                        }}
                       />
                     </Table.Cell>
-                    <Table.Cell fontWeight="medium">
+                    <Table.Cell fontWeight="medium" color="gray.700">
                       {c.material.name}
                     </Table.Cell>
-                    <Table.Cell>{c.amount}</Table.Cell>
+                    <Table.Cell fontWeight="bold">{c.amount}</Table.Cell>
                     <Table.Cell>
-                      {gside} x {pside}
+                      <Flex direction="column" justify="center">
+                        <Text fontWeight="bold">
+                          {gside} x {pside}
+                        </Text>
+                        {c.hasHingeHoles && (
+                          <Flex align="center" gap={1} mt={1}>
+                            <Badge
+                              colorScheme="green"
+                              variant="subtle"
+                              fontSize="0.6em"
+                              borderRadius="full"
+                              px={2}
+                            >
+                              {c.hingeHolesQuantity} Furos
+                            </Badge>
+                            <Text fontSize="xs" color="gray.500">
+                              (Lado {c.hingeHolesSide === 'Maior' ? 'M' : 'm'})
+                            </Text>
+                          </Flex>
+                        )}
+                      </Flex>
                     </Table.Cell>
                     <Table.Cell>
-                      {c.borderA} | {c.borderB}
+                      <Badge variant="outline" colorScheme="gray">
+                        {c.borderA}
+                      </Badge>{' '}
+                      |{' '}
+                      <Badge variant="outline" colorScheme="gray">
+                        {c.borderB}
+                      </Badge>
                     </Table.Cell>
-                    <Table.Cell fontWeight="bold">{`R$ ${c.price},00`}</Table.Cell>
+                    <Table.Cell
+                      fontWeight="bold"
+                      color="green.600"
+                    >{`R$ ${c.price},00`}</Table.Cell>
                     <Table.Cell>
-                      <HStack gap={2}>
+                      <HStack gap={1}>
                         <IconButton
                           variant="ghost"
                           colorScheme="blue"

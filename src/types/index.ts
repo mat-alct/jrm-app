@@ -1,3 +1,4 @@
+// src/types/index.ts
 import { Timestamp } from 'firebase/firestore';
 
 export interface Material {
@@ -39,6 +40,10 @@ export interface Cutlist {
   borderA: number;
   borderB: number;
   price: number;
+  // --- CAMPOS DE DOBRADIÇA ---
+  hasHingeHoles?: boolean;
+  hingeHolesSide?: 'Maior' | 'Menor';
+  hingeHolesQuantity?: number; // Calculado automaticamente
 }
 
 export interface Estimate {
@@ -58,15 +63,15 @@ export interface Order {
     email?: string;
     address?: string;
     area?: string;
-    city?: string; // Mantido mas opcional
+    city?: string;
     state?: string;
     customerId?: string;
   };
   orderStore: string;
   deliveryType: string;
   paymentType: string;
-  amountDue?: string; // Novo
-  isUrgent?: boolean; // Novo
+  amountDue?: string;
+  isUrgent?: boolean;
   seller: string;
   orderStatus: string;
   deliveryDate: Timestamp;
