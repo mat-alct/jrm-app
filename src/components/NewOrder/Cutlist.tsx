@@ -96,8 +96,6 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
 
   const { getAllMaterials } = useMaterial();
 
-  // Estados de Furação
-  // onClose será usado para fechar a aba automaticamente
   const {
     open: isOptionsOpen,
     onToggle: onToggleOptions,
@@ -124,7 +122,7 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
     }));
   }, [materialData]);
 
-  // Função para calcular furos automaticamente
+  // Função para calcular furos automaticamente com a nova regra
   const calculateHoles = (
     sideA: number,
     sideB: number,
@@ -134,11 +132,17 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
       sideSelected === 'Maior'
         ? Math.max(sideA, sideB)
         : Math.min(sideA, sideB);
-    // Regra: 2 furos até 1200mm (0 a 120cm), 3 até 1800mm, etc.
-    // Fórmula: Math.ceil(length / 600) com mínimo de 2.
-    // Ex: 500mm / 600 = 0.8 -> teto 1 -> max(2,1) = 2.
-    // Ex: 1250mm / 600 = 2.08 -> teto 3 -> max(2,3) = 3.
-    return Math.max(2, Math.ceil(length / 600));
+
+    // Se a peça for menor que 80cm, garante o mínimo de 2 furos (nas pontas)
+    if (length < 800) return 2;
+
+    // Regra:
+    // Posição 1: 100mm
+    // Próximas: +600mm
+    // Limite: Length - 100mm
+    // Fórmula: 1 + floor((Length - 200) / 600)
+    const count = 1 + Math.floor((length - 200) / 600);
+    return Math.max(2, count);
   };
 
   const handleCreateCutlist: SubmitHandler<
@@ -164,7 +168,6 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
       pricePercent,
     );
 
-    // Calcula quantidade de furos se estiver ativado
     let calculatedQty = undefined;
     if (hasHinge) {
       calculatedQty = calculateHoles(
@@ -192,10 +195,10 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
       },
     ]);
 
-    // RESET TOTAL DAS OPÇÕES
+    // RESET TOTAL
     setHasHinge(false);
     setHingeSide('Maior');
-    onCloseOptions(); // Fecha a aba de opções
+    onCloseOptions();
     createCutlistSetFocus('amount');
   };
 
@@ -224,11 +227,9 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
     createCutlistSetValue('borderB', borderB);
     createCutlistSetValue('materialId', material.materialId);
 
-    // Recupera estados para edição
     if (cutToUpdate.hasHingeHoles) {
       setHasHinge(true);
       if (cutToUpdate.hingeHolesSide) setHingeSide(cutToUpdate.hingeHolesSide);
-      // Se estiver fechado, abre para mostrar que tem edição
       if (!isOptionsOpen) onToggleOptions();
     } else {
       setHasHinge(false);
@@ -452,7 +453,7 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
             </Box>
           </Grid>
 
-          {/* ÁREA DE FURAÇÃO (LIMPA E SIMPLIFICADA) */}
+          {/* ÁREA DE FURAÇÃO */}
           {isOptionsOpen && (
             <Box
               mt={5}
@@ -477,6 +478,7 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
               )}
 
               <Flex align="flex-end" gap={6} wrap="wrap">
+                {/* Status */}
                 <Box>
                   <Text
                     fontSize="xs"
@@ -492,7 +494,6 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
                     colorScheme={hasHinge ? 'green' : 'gray'}
                     variant={hasHinge ? 'solid' : 'outline'}
                     size="sm"
-                    w="100%"
                   >
                     {hasHinge ? (
                       <FaCheckCircle style={{ marginRight: 8 }} />
@@ -503,8 +504,9 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
                   </Button>
                 </Box>
 
+                {/* Seleção de Lado */}
                 {hasHinge && (
-                  <Box flex="1" minW="200px">
+                  <Box>
                     <Text
                       fontSize="xs"
                       fontWeight="bold"
@@ -514,36 +516,31 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
                     >
                       Posição dos Furos
                     </Text>
-                    <HStack
-                      gap={2}
-                      bg="white"
-                      p={1}
-                      borderRadius="md"
-                      borderWidth="1px"
-                      borderColor="green.200"
-                    >
+                    <HStack gap={2}>
                       <Button
-                        size="xs"
-                        flex="1"
+                        size="sm"
                         colorScheme="green"
-                        variant={hingeSide === 'Maior' ? 'solid' : 'ghost'}
+                        variant={hingeSide === 'Maior' ? 'solid' : 'outline'}
                         onClick={() => setHingeSide('Maior')}
                       >
                         <FaArrowsAltH style={{ marginRight: 6 }} /> Lado Maior
                       </Button>
                       <Button
-                        size="xs"
-                        flex="1"
+                        size="sm"
                         colorScheme="green"
-                        variant={hingeSide === 'Menor' ? 'solid' : 'ghost'}
+                        variant={hingeSide === 'Menor' ? 'solid' : 'outline'}
                         onClick={() => setHingeSide('Menor')}
                       >
                         <FaArrowsAltV style={{ marginRight: 6 }} /> Lado Menor
                       </Button>
                     </HStack>
-                    <Text fontSize="xs" color="green.600" mt={1}>
-                      * A quantidade de furos será calculada automaticamente
-                      pelo tamanho da peça.
+                    <Text
+                      fontSize="xs"
+                      color="green.600"
+                      mt={2}
+                      fontWeight="medium"
+                    >
+                      * Cálculo Automático: Margem 10cm + Passos de 60cm.
                     </Text>
                   </Box>
                 )}

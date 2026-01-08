@@ -1,5 +1,13 @@
-// src/components/Printables/Tags.tsx
-import { Box, Flex, Heading, Image, Text, SimpleGrid } from '@chakra-ui/react';
+import {
+  Box,
+  Flex,
+  Heading,
+  Image,
+  Text,
+  Table,
+  Grid,
+  GridItem,
+} from '@chakra-ui/react';
 import { format } from 'date-fns';
 import React, { useRef, useEffect, useMemo } from 'react';
 import { useReactToPrint } from 'react-to-print';
@@ -36,41 +44,78 @@ export const Tags: React.FC<TagsProps> = ({ order, onAfterPrint }) => {
     }
   }, [orderData, handlePrint]);
 
-  const tagCutlist = useMemo(() => {
+  // --- 1. ORDENAÇÃO DO RESUMO ---
+  const sortedSummary = useMemo(() => {
     if (!orderData) return [];
 
-    return orderData.cutlist.flatMap(cut => {
-      const tags = [];
-      for (let i = 0; i < cut.amount; i++) {
-        const { gside, pside, avatar } = sortCutlistData({
+    return [...orderData.cutlist]
+      .map(cut => {
+        const { gside, pside } = sortCutlistData({
           sideA: cut.sideA,
           sideB: cut.sideB,
           borderA: cut.borderA,
           borderB: cut.borderB,
         });
+        let qty = cut.hingeHolesQuantity;
 
-        // Recalcular qtd furos na hora da impressão caso venha nulo (segurança)
-        let qty = cut.hingeHolesQuantity || 2;
-        const length = cut.hingeHolesSide === 'Maior' ? gside : pside;
-        if (!cut.hingeHolesQuantity) {
-          qty = Math.max(2, Math.ceil(length / 600));
+        if (cut.hasHingeHoles && !qty) {
+          const length = cut.hingeHolesSide === 'Maior' ? gside : pside;
+          if (length < 800) qty = 2;
+          else qty = 1 + Math.floor((length - 200) / 600);
         }
+        return { ...cut, gside, pside, calculatedHolesQty: qty };
+      })
+      .sort((a, b) => {
+        if (a.material.name !== b.material.name)
+          return a.material.name.localeCompare(b.material.name);
+        if (b.gside !== a.gside) return b.gside - a.gside;
+        return b.pside - a.pside;
+      });
+  }, [orderData]);
 
+  // --- 2. GERAÇÃO DAS ETIQUETAS ---
+  const tagCutlist = useMemo(() => {
+    if (!orderData) return [];
+
+    const allTags = orderData.cutlist.flatMap(cut => {
+      const tags = [];
+      const { gside, pside, avatar } = sortCutlistData({
+        sideA: cut.sideA,
+        sideB: cut.sideB,
+        borderA: cut.borderA,
+        borderB: cut.borderB,
+      });
+
+      let qty = cut.hingeHolesQuantity;
+      const length = cut.hingeHolesSide === 'Maior' ? gside : pside;
+      if (cut.hasHingeHoles && !qty) {
+        if (length < 800) qty = 2;
+        else qty = 1 + Math.floor((length - 200) / 600);
+      }
+      if (cut.hasHingeHoles) qty = Math.max(2, qty || 0);
+
+      for (let i = 0; i < cut.amount; i++) {
         tags.push({
           id: v4(),
           gside,
           pside,
           avatar,
           material: cut.material.name,
-          index: i + 1,
-          total: cut.amount,
           hasHinge: cut.hasHingeHoles,
           hingeSide: cut.hingeHolesSide,
           hingeQuantity: qty,
+          lengthForHoles: length,
         });
       }
       return tags;
     });
+
+    const totalPieces = allTags.length;
+    return allTags.map((tag, index) => ({
+      ...tag,
+      globalIndex: index + 1,
+      globalTotal: totalPieces,
+    }));
   }, [orderData]);
 
   if (!orderData) return null;
@@ -80,127 +125,457 @@ export const Tags: React.FC<TagsProps> = ({ order, onAfterPrint }) => {
       <div ref={componentRef} className="print-container">
         <style type="text/css" media="print">
           {`
-            @page { size: A4; margin: 10mm; }
+            @page { size: A4; margin: 5mm; }
             .page-break { page-break-after: always; }
             * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            body { font-family: Arial, sans-serif; color: black; }
           `}
         </style>
 
-        <Flex direction="column" px={8} py={4} fontFamily="Arial, sans-serif">
-          <Flex direction="column" mb={4}>
+        <Flex direction="column" px={2} py={2}>
+          {/* --- CABEÇALHO COMPACTO --- */}
+          <Box mb={2}>
             {orderData.isUrgent && (
               <Box
                 w="100%"
                 bg="black"
                 color="white"
                 textAlign="center"
-                py={2}
-                mb={4}
-                border="2px solid black"
+                py={1}
+                mb={1}
               >
-                <Heading size="xl">PEDIDO URGENTE</Heading>
+                <Heading size="md" textTransform="uppercase">
+                  PEDIDO URGENTE
+                </Heading>
               </Box>
             )}
 
-            <Heading
-              textAlign="center"
-              size="lg"
+            {/* HEADER DA LOJA */}
+            <Flex
+              justify="center"
+              align="center"
+              borderBottom="1px solid black"
+              pb={1}
               mb={1}
-            >{`${orderData.orderCode} - ${orderData.customer.name}`}</Heading>
-            <SimpleGrid columns={2} mt={2} gap={4} fontSize="12px">
-              <Text>
-                <b>Entrega:</b>{' '}
-                {orderData.deliveryDate
-                  ? format(
-                      new Date(orderData.deliveryDate.seconds * 1000),
-                      'dd/MM/yyyy',
-                    )
-                  : 'N/A'}
+            >
+              <Text
+                fontWeight="900"
+                fontSize="14px"
+                textTransform="uppercase"
+                letterSpacing="wide"
+              >
+                JRM - Casa do Marceneiro • (24) 99969-4543
               </Text>
-              <Text>
-                <b>Total:</b> R$ {orderData.orderPrice},00
-              </Text>
-            </SimpleGrid>
-            <Box
-              mt={2}
-              mb={4}
-              borderBottomWidth="1px"
-              borderColor="black"
-              width="100%"
-            />
-          </Flex>
+            </Flex>
 
+            {/* GRID DE DADOS */}
+            <Box
+              border="1px solid"
+              borderColor="black"
+              borderRadius="md"
+              overflow="hidden"
+            >
+              {/* Barra de Título */}
+              <Flex
+                bg="gray.300"
+                px={2}
+                py={1}
+                borderBottom="1px solid"
+                borderColor="black"
+                justify="space-between"
+                align="center"
+              >
+                <Text fontWeight="800" fontSize="13px" color="black">
+                  #{orderData.orderCode} —{' '}
+                  {orderData.customer.name.toUpperCase()}
+                </Text>
+
+                {/* DATA DE ENTREGA */}
+                <Box bg="black" color="white" px={2} py={0.5} borderRadius="sm">
+                  <Text fontSize="12px" fontWeight="bold">
+                    ENTREGA:{' '}
+                    {orderData.deliveryDate
+                      ? format(
+                          new Date(orderData.deliveryDate.seconds * 1000),
+                          'dd/MM/yyyy',
+                        )
+                      : 'N/A'}
+                  </Text>
+                </Box>
+              </Flex>
+
+              <Grid templateColumns="1.3fr 1.4fr 0.9fr" gap={0} fontSize="10px">
+                {/* Coluna 1: Contato */}
+                <GridItem p={1} borderRight="1px solid" borderColor="black">
+                  <Text>
+                    <b>Tel:</b> {orderData.customer.telephone}
+                  </Text>
+                  <Text>
+                    <b>Vendedor:</b> {orderData.seller}
+                  </Text>
+                  <Text>
+                    <b>Loja:</b> {orderData.orderStore}
+                  </Text>
+                </GridItem>
+
+                {/* Coluna 2: Logística */}
+                <GridItem p={1} borderRight="1px solid" borderColor="black">
+                  <Text>
+                    <b>Tipo:</b> {orderData.deliveryType}
+                  </Text>
+                  {orderData.deliveryType === 'Entrega' && (
+                    <Text lineHeight="1.1" mt={0.5}>
+                      <b>End:</b> {orderData.customer.address},{' '}
+                      {orderData.customer.area}
+                    </Text>
+                  )}
+                  {orderData.ps && (
+                    <Text
+                      mt={1}
+                      fontWeight="bold"
+                      bg="gray.100"
+                      p={0.5}
+                      borderRadius="sm"
+                      border="1px dashed black"
+                    >
+                      OBS: {orderData.ps}
+                    </Text>
+                  )}
+                </GridItem>
+
+                {/* Coluna 3: Financeiro / Pagamento */}
+                <GridItem
+                  p={1}
+                  bg="gray.100"
+                  display="flex"
+                  flexDirection="column"
+                  justifyContent="center"
+                  alignItems="center"
+                >
+                  <Text fontSize="9px" fontWeight="bold">
+                    TOTAL: R$ {orderData.orderPrice},00
+                  </Text>
+
+                  {/* STATUS EXPLÍCITO */}
+                  <Text
+                    fontSize="9px"
+                    mt={0.5}
+                    textAlign="center"
+                    lineHeight="1.1"
+                  >
+                    {orderData.paymentType === 'Pago'
+                      ? 'PAGO'
+                      : 'RECEBER NA ENTREGA'}
+                  </Text>
+
+                  {orderData.paymentType === 'Pago' ? (
+                    <Box
+                      bg="black"
+                      color="white"
+                      px={3}
+                      py={0.5}
+                      mt={1}
+                      borderRadius="sm"
+                    >
+                      <Text fontWeight="bold" fontSize="10px">
+                        PAGO
+                      </Text>
+                    </Box>
+                  ) : (
+                    <Box
+                      bg="white"
+                      border="1px solid black"
+                      px={1}
+                      py={0.5}
+                      mt={1}
+                      borderRadius="sm"
+                      textAlign="center"
+                      w="100%"
+                    >
+                      <Text fontSize="8px" fontWeight="bold">
+                        A RECEBER NA ENTREGA:
+                      </Text>
+                      <Text fontWeight="900" fontSize="11px">
+                        R${' '}
+                        {orderData.amountDue && orderData.amountDue !== '0'
+                          ? orderData.amountDue
+                          : orderData.orderPrice + ',00'}
+                      </Text>
+                    </Box>
+                  )}
+                </GridItem>
+              </Grid>
+            </Box>
+
+            {/* --- RESUMO DE PEÇAS (LEGÍVEL E BONITO) --- */}
+            <Flex mt={1} gap={2} align="stretch" height="auto">
+              <Box
+                flex="1"
+                border="1px solid"
+                borderColor="black"
+                borderRadius="md"
+                overflow="hidden"
+              >
+                {/* CABEÇALHO DA TABELA - PRETO PARA ALTO CONTRASTE */}
+                <Table.Root size="sm" variant="outline">
+                  <Table.Header>
+                    <Table.Row h="18px" bg="black">
+                      <Table.ColumnHeader
+                        fontSize="9px"
+                        py={0.5}
+                        px={1}
+                        color="white"
+                        fontWeight="bold"
+                        textAlign="center"
+                        borderRight="1px solid white"
+                      >
+                        QTD
+                      </Table.ColumnHeader>
+                      <Table.ColumnHeader
+                        fontSize="9px"
+                        py={0.5}
+                        px={1}
+                        color="white"
+                        fontWeight="bold"
+                        textAlign="center"
+                        borderRight="1px solid white"
+                      >
+                        MEDIDAS
+                      </Table.ColumnHeader>
+                      <Table.ColumnHeader
+                        fontSize="9px"
+                        py={0.5}
+                        px={1}
+                        color="white"
+                        fontWeight="bold"
+                        textAlign="center"
+                        borderRight="1px solid white"
+                      >
+                        FITAS
+                      </Table.ColumnHeader>
+                      <Table.ColumnHeader
+                        fontSize="9px"
+                        py={0.5}
+                        px={1}
+                        color="white"
+                        fontWeight="bold"
+                        textAlign="left"
+                        borderRight="1px solid white"
+                      >
+                        MATERIAL
+                      </Table.ColumnHeader>
+                      <Table.ColumnHeader
+                        fontSize="9px"
+                        py={0.5}
+                        px={1}
+                        color="white"
+                        fontWeight="bold"
+                        textAlign="center"
+                      >
+                        OBS
+                      </Table.ColumnHeader>
+                    </Table.Row>
+                  </Table.Header>
+                  <Table.Body>
+                    {sortedSummary.map((cut, idx) => {
+                      const prevMat =
+                        idx > 0 ? sortedSummary[idx - 1].material.name : null;
+                      const isNewMaterial =
+                        prevMat && prevMat !== cut.material.name;
+
+                      return (
+                        <Table.Row
+                          key={cut.id}
+                          h="16px"
+                          bg="white"
+                          // Borda superior grossa quando muda o material
+                          borderTop={
+                            isNewMaterial ? '2px solid black' : '1px solid #ccc'
+                          }
+                        >
+                          <Table.Cell
+                            fontSize="9px"
+                            py={0.5}
+                            px={1}
+                            fontWeight="bold"
+                            textAlign="center"
+                            borderRight="1px solid #ccc"
+                            color="black"
+                          >
+                            {cut.amount}
+                          </Table.Cell>
+                          <Table.Cell
+                            fontSize="9px"
+                            py={0.5}
+                            px={1}
+                            textAlign="center"
+                            borderRight="1px solid #ccc"
+                            color="black"
+                          >
+                            {cut.gside} x {cut.pside}
+                          </Table.Cell>
+                          <Table.Cell
+                            fontSize="9px"
+                            py={0.5}
+                            px={1}
+                            textAlign="center"
+                            borderRight="1px solid #ccc"
+                            color="black"
+                          >
+                            {cut.borderA} | {cut.borderB}
+                          </Table.Cell>
+                          {/* Material em negrito se for a primeira linha do grupo */}
+                          <Table.Cell
+                            fontSize="8px"
+                            py={0.5}
+                            px={1}
+                            lineHeight="1"
+                            textAlign="left"
+                            borderRight="1px solid #ccc"
+                            color="black"
+                            fontWeight={
+                              isNewMaterial || idx === 0 ? 'bold' : 'normal'
+                            }
+                          >
+                            {cut.material.name}
+                          </Table.Cell>
+                          <Table.Cell
+                            fontSize="8px"
+                            py={0.5}
+                            px={1}
+                            textAlign="center"
+                            color="black"
+                          >
+                            {cut.hasHingeHoles && (
+                              <Text
+                                as="span"
+                                fontWeight="bold"
+                                fontSize="8px"
+                                bg="black"
+                                color="white"
+                                px={1}
+                                borderRadius="sm"
+                              >
+                                {cut.calculatedHolesQty} FUROS
+                              </Text>
+                            )}
+                          </Table.Cell>
+                        </Table.Row>
+                      );
+                    })}
+                  </Table.Body>
+                </Table.Root>
+              </Box>
+
+              {/* CONTADOR TOTAL */}
+              <Flex
+                direction="column"
+                justify="center"
+                align="center"
+                border="1px solid"
+                borderColor="black"
+                borderRadius="md"
+                minW="60px"
+                bg="white"
+              >
+                <Text
+                  fontSize="8px"
+                  color="black"
+                  fontWeight="bold"
+                  textTransform="uppercase"
+                >
+                  Total
+                </Text>
+                <Text
+                  fontSize="28px"
+                  fontWeight="900"
+                  lineHeight="1"
+                  color="black"
+                >
+                  {tagCutlist.length}
+                </Text>
+                <Text
+                  fontSize="8px"
+                  color="black"
+                  fontWeight="bold"
+                  textTransform="uppercase"
+                >
+                  Peças
+                </Text>
+              </Flex>
+            </Flex>
+
+            <Box borderBottom="2px dashed black" mt={2} mb={2} />
+          </Box>
+
+          {/* --- ETIQUETAS INDIVIDUAIS --- */}
           <Box display="block">
-            {tagCutlist
+            {[...tagCutlist]
               .sort((a, b) => b.gside - a.gside)
               .map(cut => {
                 const renderHoles = () => {
-                  const holes = [];
-                  const qty = cut.hingeQuantity;
+                  const pos1 = '30%';
+                  const pos2 = '70%';
 
                   if (cut.hingeSide === 'Maior') {
-                    // Furos na Horizontal (eixo X), alinhados no Topo (eixo Y)
-                    // Top=2px para ficar "dentro" do SVG
-                    for (let k = 0; k < qty; k++) {
-                      let leftPos = '50%';
-
-                      if (qty === 2) {
-                        leftPos = k === 0 ? '15%' : '85%';
-                      } else {
-                        const step = 70 / (qty - 1);
-                        const perc = 15 + step * k;
-                        leftPos = `${perc}%`;
-                      }
-
-                      holes.push(
+                    return (
+                      <>
                         <Box
-                          key={k}
                           position="absolute"
-                          top="2px"
-                          left={leftPos}
-                          transform="translateX(-50%)"
+                          top="50%"
+                          left={pos1}
+                          transform="translate(-50%, -50%)"
                           w="6px"
                           h="6px"
                           bg="black"
                           borderRadius="full"
                           border="1px solid white"
                           zIndex={2}
-                          shadow="sm"
-                        />,
-                      );
-                    }
+                        />
+                        <Box
+                          position="absolute"
+                          top="50%"
+                          left={pos2}
+                          transform="translate(-50%, -50%)"
+                          w="6px"
+                          h="6px"
+                          bg="black"
+                          borderRadius="full"
+                          border="1px solid white"
+                          zIndex={2}
+                        />
+                      </>
+                    );
                   } else {
-                    // Furos na Vertical (eixo Y), alinhados na Esquerda (eixo X)
-                    // Left=2px para ficar "dentro"
-                    for (let k = 0; k < qty; k++) {
-                      let topPos = '50%';
-                      if (qty === 2) {
-                        topPos = k === 0 ? '15%' : '85%';
-                      } else {
-                        const step = 70 / (qty - 1);
-                        const perc = 15 + step * k;
-                        topPos = `${perc}%`;
-                      }
-
-                      holes.push(
+                    return (
+                      <>
                         <Box
-                          key={k}
                           position="absolute"
-                          left="2px"
-                          top={topPos}
-                          transform="translateY(-50%)"
+                          left="50%"
+                          top={pos1}
+                          transform="translate(-50%, -50%)"
                           w="6px"
                           h="6px"
                           bg="black"
                           borderRadius="full"
                           border="1px solid white"
                           zIndex={2}
-                          shadow="sm"
-                        />,
-                      );
-                    }
+                        />
+                        <Box
+                          position="absolute"
+                          left="50%"
+                          top={pos2}
+                          transform="translate(-50%, -50%)"
+                          w="6px"
+                          h="6px"
+                          bg="black"
+                          borderRadius="full"
+                          border="1px solid white"
+                          zIndex={2}
+                        />
+                      </>
+                    );
                   }
-                  return holes;
                 };
 
                 return (
@@ -209,39 +584,18 @@ export const Tags: React.FC<TagsProps> = ({ order, onAfterPrint }) => {
                     float="left"
                     width="33.33%"
                     height="130px"
-                    border={
-                      orderData.isUrgent ? '2px solid black' : '1px solid #ccc'
-                    }
-                    p={0}
+                    border="1px dashed #666"
+                    p={1}
                     m={0}
                     boxSizing="border-box"
                     pageBreakInside="avoid"
                     position="relative"
                   >
-                    {orderData.isUrgent && (
-                      <Box
-                        bg="black"
-                        color="white"
-                        w="100%"
-                        textAlign="center"
-                        py={0.5}
-                        position="absolute"
-                        top={0}
-                        left={0}
-                        zIndex={2}
-                      >
-                        <Text fontSize="8px" fontWeight="bold">
-                          URGENTE
-                        </Text>
-                      </Box>
-                    )}
-
                     <Flex
                       direction="column"
                       align="center"
                       justify="center"
                       h="100%"
-                      pt={orderData.isUrgent ? 4 : 0}
                     >
                       <Box
                         position="relative"
@@ -249,41 +603,80 @@ export const Tags: React.FC<TagsProps> = ({ order, onAfterPrint }) => {
                         height="auto"
                         mb={1}
                       >
+                        {/* BADGE DE QTD FUROS (Sem o 'F') */}
+                        {cut.hasHinge && (
+                          <Box
+                            position="absolute"
+                            top="-5px"
+                            right="-5px"
+                            bg="black"
+                            color="white"
+                            fontSize="9px"
+                            fontWeight="900"
+                            px={1.5}
+                            py={0.5}
+                            borderRadius="sm"
+                            zIndex={3}
+                          >
+                            {cut.hingeQuantity}
+                          </Box>
+                        )}
+
                         <Image
                           src={cut.avatar.src}
-                          height="40px"
+                          height="45px"
                           width="auto"
                           alt="Esquema"
+                          style={{
+                            display: 'block',
+                            filter: 'grayscale(100%)',
+                          }}
                         />
                         {cut.hasHinge && renderHoles()}
                       </Box>
 
-                      <Text fontWeight="900" fontSize="15px" lineHeight="1">
+                      <Text
+                        fontWeight="900"
+                        fontSize="16px"
+                        lineHeight="1"
+                        color="black"
+                      >
                         {cut.gside} x {cut.pside}
                       </Text>
 
                       <Text
-                        fontSize="9px"
+                        fontSize="10px"
                         textAlign="center"
                         lineClamp={2}
                         lineHeight="1.1"
                         mt={1}
+                        color="black"
                       >
                         {cut.material}
                       </Text>
 
                       <Text
-                        fontSize="8px"
+                        fontSize="9px"
                         textAlign="center"
                         mt={1}
-                        color="gray.600"
+                        fontWeight="bold"
+                        color="black"
+                        bg="gray.200"
+                        px={1}
+                        borderRadius="sm"
                       >
-                        {orderData.orderCode} -{' '}
-                        {orderData.customer.name.split(' ')[0]}
+                        {orderData.orderCode} —{' '}
+                        {orderData.customer.name.split(' ')[0]}{' '}
+                        {orderData.customer.name.split(' ')[1] || ''}
                       </Text>
 
-                      <Text fontSize="9px" fontWeight="bold" mt={0.5}>
-                        {cut.index}/{cut.total}
+                      <Text
+                        fontSize="9px"
+                        color="black"
+                        mt={0.5}
+                        fontWeight="bold"
+                      >
+                        {cut.globalIndex} / {cut.globalTotal}
                       </Text>
                     </Flex>
                   </Box>

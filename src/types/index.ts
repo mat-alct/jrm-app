@@ -40,7 +40,7 @@ export interface Cutlist {
   borderA: number;
   borderB: number;
   price: number;
-  // --- CAMPOS DE DOBRADIÇA ---
+  // --- NOVOS CAMPOS PARA DOBRADIÇA ---
   hasHingeHoles?: boolean;
   hingeHolesSide?: 'Maior' | 'Menor';
   hingeHolesQuantity?: number; // Calculado automaticamente
