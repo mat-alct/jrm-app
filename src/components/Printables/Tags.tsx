@@ -521,7 +521,7 @@ export const Tags: React.FC<TagsProps> = ({ order, onAfterPrint }) => {
                       <>
                         <Box
                           position="absolute"
-                          top="50%"
+                          top="30%"
                           left={pos1}
                           transform="translate(-50%, -50%)"
                           w="6px"
@@ -533,7 +533,7 @@ export const Tags: React.FC<TagsProps> = ({ order, onAfterPrint }) => {
                         />
                         <Box
                           position="absolute"
-                          top="50%"
+                          top="30%"
                           left={pos2}
                           transform="translate(-50%, -50%)"
                           w="6px"
@@ -550,8 +550,8 @@ export const Tags: React.FC<TagsProps> = ({ order, onAfterPrint }) => {
                       <>
                         <Box
                           position="absolute"
-                          left="50%"
-                          top={pos1}
+                          left="20%"
+                          top="35%"
                           transform="translate(-50%, -50%)"
                           w="6px"
                           h="6px"
@@ -562,8 +562,8 @@ export const Tags: React.FC<TagsProps> = ({ order, onAfterPrint }) => {
                         />
                         <Box
                           position="absolute"
-                          left="50%"
-                          top={pos2}
+                          left="20%"
+                          top="65%"
                           transform="translate(-50%, -50%)"
                           w="6px"
                           h="6px"
