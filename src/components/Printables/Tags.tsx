@@ -246,7 +246,6 @@ export const Tags: React.FC<TagsProps> = ({ order, onAfterPrint }) => {
                 {/* Coluna 3: Financeiro / Pagamento */}
                 <GridItem
                   p={1}
-                  bg="gray.100"
                   display="flex"
                   flexDirection="column"
                   justifyContent="center"

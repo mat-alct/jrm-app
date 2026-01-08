@@ -1,149 +1,261 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable react/jsx-wrap-multilines */
+// src/components/Printables/EstimateResume.tsx
 import {
   Box,
-  Divider,
   Flex,
-  Heading,
   IconButton,
-  List,
-  ListItem,
+  Table,
   Text,
+  Grid,
+  VStack,
+  Image,
 } from '@chakra-ui/react';
 import { format } from 'date-fns';
-import firebase from 'firebase/app';
-import React, { useRef } from 'react';
-import { FaRegFileAlt, FaWhatsapp } from 'react-icons/fa';
+import { DocumentData } from 'firebase/firestore';
+import React, { useRef, useEffect } from 'react';
+import { FaRegFileAlt, FaWhatsapp, FaMapMarkerAlt } from 'react-icons/fa';
 import { useReactToPrint } from 'react-to-print';
 
 interface EstimateResumeProps {
-  estimate: firebase.firestore.DocumentData & {
+  estimate: DocumentData & {
     id: string;
   };
+  variant?: 'outline' | 'solid' | 'subtle' | 'surface' | 'ghost' | 'plain';
+  size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '2xs' | 'xs';
+  colorScheme?: string;
+  autoPrint?: boolean;
+  onAfterPrint?: () => void;
 }
 
-export const EstimateResume: React.FC<EstimateResumeProps> = ({ estimate }) => {
-  const componentRef = useRef(null);
+export const EstimateResume: React.FC<EstimateResumeProps> = ({
+  estimate,
+  variant = 'ghost',
+  size = 'sm',
+  colorScheme = 'gray',
+  autoPrint = false,
+  onAfterPrint,
+}) => {
+  const componentRef = useRef<HTMLDivElement>(null);
 
   const handlePrint = useReactToPrint({
-    content: () => componentRef.current,
+    contentRef: componentRef,
+    documentTitle: `Orcamento_${estimate.estimateCode || 'SemCodigo'}`,
+    onAfterPrint: () => {
+      if (onAfterPrint) onAfterPrint();
+    },
   });
+
+  useEffect(() => {
+    if (autoPrint) {
+      handlePrint();
+    }
+  }, [autoPrint]);
+
+  const Separator = () => (
+    <Box w="100%" borderBottomWidth="1px" borderColor="black" my={1} />
+  );
 
   return (
     <>
       <div style={{ display: 'none' }}>
-        <Flex
+        <Box
           ref={componentRef}
-          // style={{ height: listData.length > 17 ? '200vh' : '100vh' }}
+          p={4}
+          bg="white"
+          color="black"
+          fontFamily="sans-serif"
+          className="print-container"
+          fontSize="xs"
         >
-          <Flex direction="column" px={16} py={8} fontSize="12px" w="100%">
-            {/* Header */}
-            <Flex align="center" justify="space-between">
-              <Heading color="gray.900">JRM Compensados</Heading>
-
-              <Heading color="gray.400">PEDIDO DE ORÇAMENTO</Heading>
-            </Flex>
-            <Divider my={4} />
-
-            {/* Upper Container */}
-            <Flex direction="row" justify="space-between">
-              {/* JRM Info */}
-              <Flex direction="column" mt={2}>
-                <Box mt={0}>
-                  <Text>Rua Julieta Conceição Reis 280</Text>
-                  <Text>Frade, Angra dos Reis - RJ</Text>
-                  <Text
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: '8px',
-                    }}
-                  >
-                    <FaWhatsapp />
-                    (24) 99964-4953
-                  </Text>
-                </Box>
-                <Box mt={2}>
-                  <Text>Rua Japoranga, 1000</Text>
-                  <Text>Japuíba, Angra dos Reis - RJ</Text>
-                  <Text display="flex" flexDirection="row" alignItems="center">
-                    <FaWhatsapp />
-                    (24) 99969-4543
-                  </Text>
-                </Box>
-                <Box mt={2}>
-                  <Text>Email: jrmcompensados@hotmail.com</Text>
-                </Box>
-              </Flex>
-              {/* Code and Data info */}
-              <Flex direction="column" mt={2} textAlign="center">
-                <Box>
-                  <Heading mb={0} size="md">
-                    Código
-                  </Heading>
-                  <Divider mb="4px" />
-                  <Text fontSize="14px">{estimate.estimateCode}</Text>
-                </Box>
-                <Box mt={2}>
-                  <Heading mb={0} size="md">
-                    Data do Orçamento
-                  </Heading>
-                  <Divider mb="4px" />
-                  <Text fontSize="14px">
-                    {format(
+          {/* CABEÇALHO COM LOGO (FILTRO P&B) */}
+          <Flex justify="space-between" align="center" mb={2}>
+            <Box>
+              <Image
+                src="/images/logo.svg"
+                alt="JRM Compensados"
+                h="50px"
+                objectFit="contain"
+                filter="grayscale(100%)"
+              />
+            </Box>
+            <VStack align="flex-end" gap={0}>
+              <Text
+                fontSize="xl"
+                fontWeight="bold"
+                lineHeight="1"
+                color="black"
+              >
+                #{estimate.estimateCode}
+              </Text>
+              <Text fontSize="xs" color="gray.600">
+                ORÇAMENTO
+              </Text>
+              <Text fontSize="xs" color="gray.600">
+                {estimate.createdAt?.seconds
+                  ? format(
                       new Date(estimate.createdAt.seconds * 1000),
                       'dd/MM/yyyy',
-                    )}
-                  </Text>
-                </Box>
-              </Flex>
-            </Flex>
-
-            {/* Lower container */}
-            <Flex mt={8} w="100%">
-              <div>
-                <Heading size="lg">Cliente</Heading>
-                <Divider style={{ margin: '0px 0px 8px 0px' }} />
-                <Text>{`Nome: ${estimate.name}`}</Text>
-
-                {estimate.telephone && (
-                  <Text>
-                    {`Telefone: (${estimate.telephone.substring(
-                      0,
-                      2,
-                    )}) ${estimate.telephone.substring(
-                      2,
-                      7,
-                    )} - ${estimate.telephone.substring(7, 11)}`}
-                  </Text>
-                )}
-              </div>
-            </Flex>
-            {/* Cutlist */}
-            <List mt={8}>
-              {estimate.cutlist.map((cut: any) => (
-                <ListItem key={cut.id}>
-                  {`${cut.amount} - ${cut.material.name} - ${cut.sideA} [ ${cut.borderA} ] x ${cut.sideB} [ ${cut.borderB} ] | R$ ${cut.price},00`}
-                </ListItem>
-              ))}
-            </List>
-            <Divider my={2} />
-            <Heading
-              ml="auto"
-              size="md"
-              color="green.700"
-            >{`R$ ${estimate.estimatePrice},00`}</Heading>
+                    )
+                  : format(new Date(), 'dd/MM/yyyy')}
+              </Text>
+            </VStack>
           </Flex>
-        </Flex>
+
+          <Box w="100%" borderBottomWidth="2px" borderColor="black" mb={3} />
+
+          {/* DADOS (PRETO E BRANCO) */}
+          <Grid templateColumns="1fr 1fr" gap={4} mb={3}>
+            {/* Coluna Esquerda: JRM */}
+            <VStack align="flex-start" gap={1} fontSize="xs">
+              <Text fontWeight="bold" color="black" mb={0}>
+                JRM Compensados
+              </Text>
+              <Flex align="center" gap={1}>
+                <FaMapMarkerAlt size={10} color="black" />
+                <Text>Rua Japoranga 1000, Japuíba</Text>
+              </Flex>
+              <Flex align="center" gap={1}>
+                <FaWhatsapp size={10} color="black" />
+                <Text>(24) 99969-4543</Text>
+              </Flex>
+            </VStack>
+
+            {/* Coluna Direita: Cliente (NOME EM DESTAQUE) */}
+            <VStack align="flex-start" gap={0} fontSize="xs">
+              <Text fontWeight="extrabold" fontSize="lg" mb={1} color="black">
+                {estimate.name}
+              </Text>
+              {estimate.telephone && <Text>Tel: {estimate.telephone}</Text>}
+            </VStack>
+          </Grid>
+
+          {/* DETALHES DO ORÇAMENTO (Box Simplificado para Orçamento) */}
+          <Box
+            mb={3}
+            bg="gray.100"
+            p={2}
+            borderRadius="sm"
+            border="1px solid"
+            borderColor="gray.400"
+          >
+            <Text fontSize="xs" fontStyle="italic" color="black">
+              Este documento é um orçamento e não garante reserva de material ou
+              execução do serviço até a confirmação.
+            </Text>
+          </Box>
+
+          {/* TABELA DE PEÇAS */}
+          <Box mb={2}>
+            <Table.Root size="sm" variant="outline">
+              <Table.Header bg="gray.200">
+                <Table.Row>
+                  <Table.ColumnHeader
+                    color="black"
+                    fontSize="2xs"
+                    py={1}
+                    px={1}
+                    width="30px"
+                  >
+                    Qtd
+                  </Table.ColumnHeader>
+                  <Table.ColumnHeader
+                    color="black"
+                    fontSize="2xs"
+                    py={1}
+                    px={1}
+                  >
+                    Material
+                  </Table.ColumnHeader>
+                  <Table.ColumnHeader
+                    color="black"
+                    fontSize="2xs"
+                    py={1}
+                    px={1}
+                  >
+                    Medidas
+                  </Table.ColumnHeader>
+                  <Table.ColumnHeader
+                    color="black"
+                    fontSize="2xs"
+                    py={1}
+                    px={1}
+                    textAlign="center"
+                  >
+                    Fitas
+                  </Table.ColumnHeader>
+                  <Table.ColumnHeader
+                    color="black"
+                    fontSize="2xs"
+                    py={1}
+                    px={1}
+                    textAlign="right"
+                  >
+                    R$
+                  </Table.ColumnHeader>
+                </Table.Row>
+              </Table.Header>
+              <Table.Body>
+                {estimate.cutlist.map((cut: any, idx: number) => (
+                  <Table.Row key={cut.id || idx}>
+                    <Table.Cell fontSize="xs" py={1} px={1} fontWeight="bold">
+                      {cut.amount}
+                    </Table.Cell>
+                    <Table.Cell fontSize="xs" py={1} px={1}>
+                      {cut.material.name}
+                    </Table.Cell>
+                    <Table.Cell fontSize="xs" py={1} px={1}>
+                      {cut.sideA} x {cut.sideB}
+                      {cut.hasHingeHoles && (
+                        <Text
+                          as="span"
+                          fontSize="2xs"
+                          color="black"
+                          ml={1}
+                          fontWeight="bold"
+                        >
+                          (+{cut.hingeHolesQuantity}f)
+                        </Text>
+                      )}
+                    </Table.Cell>
+                    <Table.Cell fontSize="xs" py={1} px={1} textAlign="center">
+                      {cut.borderA} | {cut.borderB}
+                    </Table.Cell>
+                    <Table.Cell fontSize="xs" py={1} px={1} textAlign="right">
+                      {cut.price}
+                    </Table.Cell>
+                  </Table.Row>
+                ))}
+              </Table.Body>
+            </Table.Root>
+          </Box>
+
+          {/* TOTAIS (MONOCROMÁTICO) */}
+          <Flex justify="flex-end">
+            <Box minW="180px">
+              <Flex justify="space-between" align="center" mb={1}>
+                <Text fontSize="sm" fontWeight="bold" color="black">
+                  TOTAL ORÇADO
+                </Text>
+                <Text fontSize="lg" fontWeight="black" color="black">
+                  R$ {estimate.estimatePrice},00
+                </Text>
+              </Flex>
+              <Separator />
+            </Box>
+          </Flex>
+        </Box>
       </div>
-      <IconButton
-        colorScheme="orange"
-        size="sm"
-        aria-label="Comprovante"
-        icon={<FaRegFileAlt />}
-        onClick={handlePrint}
-      />
+
+      {!autoPrint && (
+        <IconButton
+          colorScheme={colorScheme}
+          variant={variant}
+          size={size}
+          aria-label="Imprimir Orçamento"
+          onClick={() => handlePrint()}
+        >
+          <FaRegFileAlt />
+        </IconButton>
+      )}
     </>
   );
 };

@@ -15,14 +15,14 @@
 
 @media print {
   .page-break {
-    /* margin-top: 0.1rem; */
     display: block;
     page-break-before: auto;
     page-break-after: auto;
   }
 }
 
+/* MARGEM REDUZIDA PARA ECONOMIA DE PAPEL */
 @page {
   size: auto;
-  margin: 20mm;
+  margin: 5mm;
 }

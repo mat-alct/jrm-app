@@ -45,11 +45,20 @@ import { Header } from '../../components/Dashboard/Content/Header';
 import { Loader } from '../../components/Loader';
 import { SearchBar } from '../../components/SearchBar';
 import { Tags } from '../../components/Printables/Tags';
+// IMPORTAÇÃO DOS COMPONENTES DE IMPRESSÃO
+import { OrderResume } from '../../components/Printables/OrderResume';
+import { EstimateResume } from '../../components/Printables/EstimateResume';
 import { toaster } from '@/components/ui/toaster';
 import { useAuth } from '../../hooks/authContext';
 import { useOrder } from '../../hooks/order';
 import { db } from '../../services/firebase';
 import { Estimate, Order } from '../../types';
+
+// Definindo tipo para o estado de impressão
+type PrintItemType = {
+  data: any;
+  type: 'order' | 'estimate';
+} | null;
 
 const Cortes: React.FC = () => {
   const { user } = useAuth();
@@ -60,8 +69,11 @@ const Cortes: React.FC = () => {
     (QueryDocumentSnapshot<DocumentData> | null)[]
   >([null]);
 
-  // ESTADO PARA CONTROLAR A IMPRESSÃO
-  const [printingOrder, setPrintingOrder] = useState<Order | null>(null);
+  // ESTADO PARA CONTROLAR A IMPRESSÃO DE ETIQUETAS E RESUMOS
+  const [printingLabelsOrder, setPrintingLabelsOrder] = useState<Order | null>(
+    null,
+  );
+  const [printingResume, setPrintingResume] = useState<PrintItemType>(null);
 
   const toast = toaster;
   const { getOrders, getOrdersBySearch } = useOrder();
@@ -98,7 +110,11 @@ const Cortes: React.FC = () => {
 
   // --- Ações ---
   const handlePrintLabels = (orderData: any) => {
-    setPrintingOrder(orderData);
+    setPrintingLabelsOrder(orderData);
+  };
+
+  const handlePrintResume = (data: any, type: 'order' | 'estimate') => {
+    setPrintingResume({ data, type });
   };
 
   const approveEstimate = async (id: string) => {
@@ -224,11 +240,31 @@ const Cortes: React.FC = () => {
         <Stack gap={6}>
           <Header pageTitle="Lista de Cortes" />
 
-          {/* COMPONENTE INVISÍVEL DE IMPRESSÃO */}
-          {printingOrder && (
+          {/* ÁREA DE COMPONENTES DE IMPRESSÃO (CARREGADOS SOB DEMANDA) */}
+
+          {/* Etiquetas */}
+          {printingLabelsOrder && (
             <Tags
-              order={printingOrder}
-              onAfterPrint={() => setPrintingOrder(null)}
+              order={printingLabelsOrder}
+              onAfterPrint={() => setPrintingLabelsOrder(null)}
+            />
+          )}
+
+          {/* Resumo de Pedido (montado apenas quando necessário) */}
+          {printingResume && printingResume.type === 'order' && (
+            <OrderResume
+              order={printingResume.data}
+              autoPrint={true}
+              onAfterPrint={() => setPrintingResume(null)}
+            />
+          )}
+
+          {/* Resumo de Orçamento (montado apenas quando necessário) */}
+          {printingResume && printingResume.type === 'estimate' && (
+            <EstimateResume
+              estimate={printingResume.data}
+              autoPrint={true}
+              onAfterPrint={() => setPrintingResume(null)}
             />
           )}
 
@@ -353,10 +389,25 @@ const Cortes: React.FC = () => {
                     </Table.Row>
                   </Table.Header>
                   <Table.Body>
-                    {dataToShow.map((item: any) => {
+                    {dataToShow.map((item: any, index: number) => {
+                      // LÓGICA DE FUNDO ZEBRADO + URGENTE
+                      const isEven = index % 2 === 0;
+                      const isUrgent = item?.isUrgent;
+                      let rowBg = isEven ? 'white' : 'gray.50';
+                      let hoverBg = isEven ? 'gray.50' : 'gray.100';
+
+                      if (isUrgent && !isEstimateList) {
+                        rowBg = 'red.50';
+                        hoverBg = 'red.100';
+                      }
+
                       if (isEstimateList) {
                         return (
-                          <Table.Row key={item.id} _hover={{ bg: 'gray.50' }}>
+                          <Table.Row
+                            key={item.id}
+                            bg={rowBg}
+                            _hover={{ bg: hoverBg }}
+                          >
                             <Table.Cell fontWeight="bold">
                               {item.estimateCode}
                             </Table.Cell>
@@ -382,15 +433,19 @@ const Cortes: React.FC = () => {
                             >{`R$ ${item.estimatePrice},00`}</Table.Cell>
                             <Table.Cell>
                               <HStack gap={2} justify="flex-end">
+                                {/* Botão Manual para Orçamento */}
                                 <IconButton
-                                  aria-label="Resumo"
-                                  variant="ghost"
                                   colorScheme="gray"
+                                  variant="ghost"
                                   size="sm"
-                                  disabled
+                                  aria-label="Imprimir Orçamento"
+                                  onClick={() =>
+                                    handlePrintResume(item, 'estimate')
+                                  }
                                 >
                                   <FaRegFileAlt />
                                 </IconButton>
+
                                 <IconButton
                                   colorScheme="red"
                                   variant="ghost"
@@ -415,8 +470,13 @@ const Cortes: React.FC = () => {
                           </Table.Row>
                         );
                       }
+
                       return (
-                        <Table.Row key={item.id} _hover={{ bg: 'gray.50' }}>
+                        <Table.Row
+                          key={item.id}
+                          bg={rowBg}
+                          _hover={{ bg: hoverBg }}
+                        >
                           <Table.Cell fontWeight="bold">
                             {item.orderCode}
                           </Table.Cell>
@@ -441,6 +501,9 @@ const Cortes: React.FC = () => {
                               borderRadius="md"
                               fontSize="xs"
                               fontWeight="bold"
+                              display="inline-flex"
+                              alignItems="center"
+                              gap={1}
                               bg={
                                 item.orderStatus === 'Concluído'
                                   ? 'green.100'
@@ -456,6 +519,7 @@ const Cortes: React.FC = () => {
                                     : 'blue.800'
                               }
                             >
+                              {isUrgent && <FaExclamationTriangle />}
                               {item.orderStatus}
                             </Box>
                           </Table.Cell>
@@ -473,15 +537,17 @@ const Cortes: React.FC = () => {
                           >{`R$ ${item.orderPrice},00`}</Table.Cell>
                           <Table.Cell>
                             <HStack gap={2} justify="flex-end">
+                              {/* Botão Manual para Pedido */}
                               <IconButton
-                                aria-label="Resumo"
-                                variant="ghost"
                                 colorScheme="gray"
+                                variant="ghost"
                                 size="sm"
-                                disabled
+                                aria-label="Imprimir Resumo"
+                                onClick={() => handlePrintResume(item, 'order')}
                               >
                                 <FaRegFileAlt />
                               </IconButton>
+
                               <IconButton
                                 aria-label="Etiquetas"
                                 variant="ghost"
@@ -491,16 +557,7 @@ const Cortes: React.FC = () => {
                               >
                                 <FaTags />
                               </IconButton>
-                              <IconButton
-                                colorScheme="red"
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleRemove(item.id, 'orders')}
-                                aria-label="Remover"
-                                disabled={item.orderStatus !== 'Concluído'}
-                              >
-                                <FaTrash />
-                              </IconButton>
+
                               {item.orderStatus !== 'Concluído' && (
                                 <>
                                   <IconButton
@@ -530,7 +587,7 @@ const Cortes: React.FC = () => {
                   </Table.Body>
                 </Table.Root>
 
-                {/* PAGINAÇÃO REVERTIDA PARA O MODELO "ANTERIOR / PRÓXIMO" */}
+                {/* PAGINAÇÃO */}
                 {showPagination && (
                   <Flex
                     p={4}

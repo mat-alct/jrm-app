@@ -1,168 +1,347 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable react/jsx-wrap-multilines */
+// src/components/Printables/OrderResume.tsx
 import {
   Box,
-  Divider,
   Flex,
-  Heading,
   IconButton,
-  List, // Importamos apenas List (que contém Root e Item)
+  Table,
   Text,
+  Grid,
+  VStack,
+  Image,
 } from '@chakra-ui/react';
 import { format } from 'date-fns';
-import { DocumentData } from 'firebase/firestore'; // Correção do import do Firebase
-import React, { useRef } from 'react';
-import { FaRegFileAlt, FaWhatsapp } from 'react-icons/fa';
+import { DocumentData } from 'firebase/firestore';
+import React, { useRef, useEffect } from 'react';
+import { FaRegFileAlt, FaWhatsapp, FaMapMarkerAlt } from 'react-icons/fa';
 import { useReactToPrint } from 'react-to-print';
 
 interface OrderResumeProps {
   order: DocumentData & {
     id: string;
   };
+  variant?: 'outline' | 'solid' | 'subtle' | 'surface' | 'ghost' | 'plain';
+  size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '2xs' | 'xs';
+  colorScheme?: string;
+  // Novas props para controle externo
+  autoPrint?: boolean;
+  onAfterPrint?: () => void;
 }
 
-export const OrderResume: React.FC<OrderResumeProps> = ({ order }) => {
-  const componentRef = useRef(null);
+export const OrderResume: React.FC<OrderResumeProps> = ({
+  order,
+  variant = 'ghost',
+  size = 'sm',
+  colorScheme = 'gray',
+  autoPrint = false,
+  onAfterPrint,
+}) => {
+  const componentRef = useRef<HTMLDivElement>(null);
 
   const handlePrint = useReactToPrint({
-    content: () => componentRef.current,
+    contentRef: componentRef,
+    documentTitle: `Pedido_${order.orderCode || 'SemCodigo'}`,
+    onAfterPrint: () => {
+      if (onAfterPrint) onAfterPrint();
+    },
   });
+
+  // Gatilho automático para impressão
+  useEffect(() => {
+    if (autoPrint) {
+      handlePrint();
+    }
+  }, [autoPrint]);
+
+  const Separator = () => (
+    <Box w="100%" borderBottomWidth="1px" borderColor="black" my={1} />
+  );
 
   return (
     <>
       <div style={{ display: 'none' }}>
-        <Flex ref={componentRef}>
-          <Flex direction="column" px={16} py={8} fontSize="12px" w="100%">
-            {/* Header */}
-            <Flex align="center" justify="space-between">
-              <Heading color="gray.900">JRM Compensados</Heading>
+        <Box
+          ref={componentRef}
+          p={4}
+          bg="white"
+          color="black"
+          fontFamily="sans-serif"
+          className="print-container"
+          fontSize="xs"
+        >
+          {/* CABEÇALHO COM LOGO (FILTRO P&B) */}
+          <Flex justify="space-between" align="center" mb={2}>
+            <Box>
+              <Image
+                src="/images/logo.svg"
+                alt="JRM Compensados"
+                h="50px"
+                objectFit="contain"
+                filter="grayscale(100%)"
+              />
+            </Box>
+            <VStack align="flex-end" gap={0}>
+              <Text
+                fontSize="xl"
+                fontWeight="bold"
+                lineHeight="1"
+                color="black"
+              >
+                #{order.orderCode}
+              </Text>
+              <Text fontSize="xs" color="gray.600">
+                {order.createdAt?.seconds
+                  ? format(
+                      new Date(order.createdAt.seconds * 1000),
+                      'dd/MM/yyyy',
+                    )
+                  : format(new Date(), 'dd/MM/yyyy')}
+              </Text>
+            </VStack>
+          </Flex>
 
-              <Heading color="gray.400">PEDIDO DE CORTE</Heading>
-            </Flex>
-            <Divider my={4} />
+          <Box w="100%" borderBottomWidth="2px" borderColor="black" mb={3} />
 
-            {/* Upper Container */}
-            <Flex direction="row" justify="space-between">
-              {/* JRM Info */}
-              <Flex direction="column" mt={2}>
-                <Box mt={0}>
-                  <Text>Rua Julieta Conceição Reis 280</Text>
-                  <Text>Frade, Angra dos Reis - RJ</Text>
-                  <Text
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: '8px',
-                    }}
-                  >
-                    <FaWhatsapp />
-                    (24) 99964-4953
-                  </Text>
-                </Box>
-                <Box mt={2}>
-                  <Text>Rua Japoranga, 1000</Text>
-                  <Text>Japuíba, Angra dos Reis - RJ</Text>
-                  <Text display="flex" flexDirection="row" alignItems="center">
-                    <FaWhatsapp />
-                    (24) 99969-4543
-                  </Text>
-                </Box>
-                <Box mt={2}>
-                  <Text>Email: jrmcompensados@hotmail.com</Text>
-                </Box>
+          {/* DADOS (PRETO E BRANCO) */}
+          <Grid templateColumns="1fr 1fr" gap={4} mb={3}>
+            {/* Coluna Esquerda: JRM */}
+            <VStack align="flex-start" gap={1} fontSize="xs">
+              <Text fontWeight="bold" color="black" mb={0}>
+                JRM Compensados
+              </Text>
+              <Flex align="center" gap={1}>
+                <FaMapMarkerAlt size={10} color="black" />
+                <Text>Rua Japoranga 1000, Japuíba</Text>
               </Flex>
-              {/* Code and Data info */}
-              <Flex direction="column" mt={2} textAlign="center">
-                <Box>
-                  <Heading mb={0} size="md">
-                    Código
-                  </Heading>
-                  <Divider mb="4px" />
-                  <Text fontSize="14px">{order.orderCode}</Text>
-                </Box>
-                <Box mt={2}>
-                  <Heading mb={0} size="md">
-                    Data do Pedido
-                  </Heading>
-                  <Divider mb="4px" />
-                  <Text fontSize="14px">
-                    {order.createdAt?.seconds
-                      ? format(
-                          new Date(order.createdAt.seconds * 1000),
-                          'dd/MM/yyyy',
-                        )
-                      : format(new Date(), 'dd/MM/yyyy')}
-                  </Text>
-                </Box>
+              <Flex align="center" gap={1}>
+                <FaWhatsapp size={10} color="black" />
+                <Text>(24) 99969-4543</Text>
               </Flex>
-            </Flex>
+            </VStack>
 
-            {/* Lower container */}
-            <Flex mt={8} w="100%" justify="space-between">
-              <div>
-                <Heading size="lg">Pedido</Heading>
-                <Divider style={{ margin: '0px 0px 8px 0px' }} />
-                <Text>{`Loja do Pedido: ${order.orderStore}`}</Text>
-                <Text>{`Vendedor: ${order.seller}`}</Text>
+            {/* Coluna Direita: Cliente (NOME EM DESTAQUE) */}
+            <VStack align="flex-start" gap={0} fontSize="xs">
+              <Text fontWeight="extrabold" fontSize="lg" mb={1} color="black">
+                {order.customer.name}
+              </Text>
+              {order.customer.address && (
+                <Text>
+                  {order.customer.address}
+                  {order.customer.area ? ` - ${order.customer.area}` : ''}
+                </Text>
+              )}
+              {order.customer.telephone && (
+                <Text>Tel: {order.customer.telephone}</Text>
+              )}
+            </VStack>
+          </Grid>
 
-                <Text>{`Tipo de Entrega: ${order.deliveryType}`}</Text>
-                <Text>{`Status do Pagamento: ${order.paymentType}`}</Text>
-                {order?.ps && (
-                  <Text maxW="350px">{`Observações: ${order.ps}`}</Text>
-                )}
-                <Text style={{ fontWeight: 'bold' }}>
+          {/* DETALHES DO PEDIDO (CINZA CLARO) */}
+          <Box
+            mb={3}
+            bg="gray.100"
+            p={2}
+            borderRadius="sm"
+            border="1px solid"
+            borderColor="gray.400"
+          >
+            <Grid templateColumns="repeat(4, 1fr)" gap={2} fontSize="xs">
+              <Box>
+                <Text
+                  fontWeight="bold"
+                  color="black"
+                  fontSize="2xs"
+                  textTransform="uppercase"
+                >
+                  Vendedor
+                </Text>
+                <Text fontWeight="medium">{order.seller || '-'}</Text>
+              </Box>
+              <Box>
+                <Text
+                  fontWeight="bold"
+                  color="black"
+                  fontSize="2xs"
+                  textTransform="uppercase"
+                >
+                  Loja
+                </Text>
+                <Text fontWeight="medium">{order.orderStore}</Text>
+              </Box>
+              <Box>
+                <Text
+                  fontWeight="bold"
+                  color="black"
+                  fontSize="2xs"
+                  textTransform="uppercase"
+                >
+                  Entrega
+                </Text>
+                <Text fontWeight="medium">{order.deliveryType}</Text>
+              </Box>
+              <Box>
+                <Text
+                  fontWeight="bold"
+                  color="black"
+                  fontSize="2xs"
+                  textTransform="uppercase"
+                >
+                  Prazo
+                </Text>
+                <Text fontWeight="bold" color="black">
                   {order.deliveryDate?.seconds
-                    ? `Prazo: Até ${format(
+                    ? format(
                         new Date(order.deliveryDate.seconds * 1000),
                         'dd/MM/yyyy',
-                      )}`
-                    : 'Prazo: A combinar'}
+                      )
+                    : 'Combinar'}
                 </Text>
-              </div>
-              <div>
-                <Heading size="lg">Cliente</Heading>
-                <Divider style={{ margin: '0px 0px 8px 0px' }} />
-                <Text>{`Nome: ${order.customer.name}`}</Text>
-                {order.customer.address && (
-                  <Text>
-                    {`Endereço: ${order.customer.address}, ${
-                      order.customer?.area || 'Bairro não informado'
-                    }`}
+              </Box>
+            </Grid>
+            {order.ps && (
+              <Box mt={1} pt={1} borderTop="1px dashed" borderColor="gray.400">
+                <Text fontWeight="bold" color="black" fontSize="2xs">
+                  OBS:
+                </Text>
+                <Text fontSize="xs" fontStyle="italic" lineHeight="short">
+                  {order.ps}
+                </Text>
+              </Box>
+            )}
+          </Box>
+
+          {/* TABELA DE PEÇAS */}
+          <Box mb={2}>
+            <Table.Root size="sm" variant="outline">
+              <Table.Header bg="gray.200">
+                <Table.Row>
+                  <Table.ColumnHeader
+                    color="black"
+                    fontSize="2xs"
+                    py={1}
+                    px={1}
+                    width="30px"
+                  >
+                    Qtd
+                  </Table.ColumnHeader>
+                  <Table.ColumnHeader
+                    color="black"
+                    fontSize="2xs"
+                    py={1}
+                    px={1}
+                  >
+                    Material
+                  </Table.ColumnHeader>
+                  <Table.ColumnHeader
+                    color="black"
+                    fontSize="2xs"
+                    py={1}
+                    px={1}
+                  >
+                    Medidas
+                  </Table.ColumnHeader>
+                  <Table.ColumnHeader
+                    color="black"
+                    fontSize="2xs"
+                    py={1}
+                    px={1}
+                    textAlign="center"
+                  >
+                    Fitas
+                  </Table.ColumnHeader>
+                  <Table.ColumnHeader
+                    color="black"
+                    fontSize="2xs"
+                    py={1}
+                    px={1}
+                    textAlign="right"
+                  >
+                    R$
+                  </Table.ColumnHeader>
+                </Table.Row>
+              </Table.Header>
+              <Table.Body>
+                {order.cutlist.map((cut: any, idx: number) => (
+                  <Table.Row key={cut.id || idx}>
+                    <Table.Cell fontSize="xs" py={1} px={1} fontWeight="bold">
+                      {cut.amount}
+                    </Table.Cell>
+                    <Table.Cell fontSize="xs" py={1} px={1}>
+                      {cut.material.name}
+                    </Table.Cell>
+                    <Table.Cell fontSize="xs" py={1} px={1}>
+                      {cut.sideA} x {cut.sideB}
+                      {cut.hasHingeHoles && (
+                        <Text
+                          as="span"
+                          fontSize="2xs"
+                          color="black"
+                          ml={1}
+                          fontWeight="bold"
+                        >
+                          (+{cut.hingeHolesQuantity}f)
+                        </Text>
+                      )}
+                    </Table.Cell>
+                    <Table.Cell fontSize="xs" py={1} px={1} textAlign="center">
+                      {cut.borderA} | {cut.borderB}
+                    </Table.Cell>
+                    <Table.Cell fontSize="xs" py={1} px={1} textAlign="right">
+                      {cut.price}
+                    </Table.Cell>
+                  </Table.Row>
+                ))}
+              </Table.Body>
+            </Table.Root>
+          </Box>
+
+          {/* TOTAIS (MONOCROMÁTICO) */}
+          <Flex justify="flex-end">
+            <Box minW="180px">
+              <Flex justify="space-between" align="center" mb={1}>
+                <Text fontSize="sm" fontWeight="bold" color="black">
+                  TOTAL
+                </Text>
+                <Text fontSize="lg" fontWeight="black" color="black">
+                  R$ {order.orderPrice},00
+                </Text>
+              </Flex>
+              <Separator />
+              <Flex justify="space-between" align="center" fontSize="xs" mt={1}>
+                <Text color="gray.600">Pagamento: </Text>
+                <Text fontWeight="bold" color="black">
+                  {order.paymentType}
+                </Text>
+              </Flex>
+              {order.amountDue && order.paymentType !== 'Pago' && (
+                <Flex
+                  justify="space-between"
+                  align="center"
+                  fontSize="xs"
+                  mt={1}
+                >
+                  <Text color="gray.600">A Receber: </Text>
+                  <Text fontWeight="bold" color="black">
+                    R$ {order.amountDue}
                   </Text>
-                )}
-
-                {order.customer.telephone && (
-                  <Text>{`Telefone: ${order.customer.telephone}`}</Text>
-                )}
-              </div>
-            </Flex>
-
-            {/* Cutlist - CORREÇÃO: List.Root e List.Item */}
-            <List.Root mt={8} variant="plain">
-              {order.cutlist.map((cut: any) => (
-                <List.Item key={cut.id}>
-                  {`${cut.amount} - ${cut.material.name} - ${cut.sideA} [ ${cut.borderA} ] x ${cut.sideB} [ ${cut.borderB} ] | R$ ${cut.price},00`}
-                </List.Item>
-              ))}
-            </List.Root>
-
-            <Divider my={2} />
-            <Heading
-              ml="auto"
-              size="md"
-              color="green.700"
-            >{`R$ ${order.orderPrice},00`}</Heading>
+                </Flex>
+              )}
+            </Box>
           </Flex>
-        </Flex>
+        </Box>
       </div>
-      <IconButton
-        colorScheme="orange"
-        size="sm"
-        aria-label="Comprovante"
-        icon={<FaRegFileAlt />}
-        onClick={handlePrint}
-      />
+
+      {/* Só exibe o botão se NÃO for impressão automática */}
+      {!autoPrint && (
+        <IconButton
+          colorScheme={colorScheme}
+          variant={variant}
+          size={size}
+          aria-label="Imprimir Resumo"
+          onClick={() => handlePrint()}
+        >
+          <FaRegFileAlt />
+        </IconButton>
+      )}
     </>
   );
 };
