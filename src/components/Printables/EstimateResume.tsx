@@ -212,7 +212,7 @@ export const EstimateResume: React.FC<EstimateResumeProps> = ({
                           ml={1}
                           fontWeight="bold"
                         >
-                          (+{cut.hingeHolesQuantity}f)
+                          (+{cut.hingeHolesQuantity} furos)
                         </Text>
                       )}
                     </Table.Cell>
@@ -230,9 +230,9 @@ export const EstimateResume: React.FC<EstimateResumeProps> = ({
 
           {/* TOTAIS (MONOCROMÁTICO) */}
           <Flex justify="flex-end">
-            <Box minW="180px">
+            <Box minW="200px">
               <Flex justify="space-between" align="center" mb={1}>
-                <Text fontSize="sm" fontWeight="bold" color="black">
+                <Text fontSize="sm" fontWeight="normal" color="black">
                   TOTAL ORÇADO
                 </Text>
                 <Text fontSize="lg" fontWeight="black" color="black">

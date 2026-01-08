@@ -24,11 +24,11 @@ import {
   FaEdit,
   FaTrash,
   FaPlus,
-  FaCog,
   FaCheckCircle,
   FaTimesCircle,
   FaArrowsAltH,
   FaArrowsAltV,
+  FaChevronDown,
 } from 'react-icons/fa';
 import { useQuery } from '@tanstack/react-query';
 import { v4 } from 'uuid';
@@ -158,17 +158,7 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
     );
     if (!materialUsed) throw new Error('Material não encontrado');
 
-    const price = calculateCutlistPrice(
-      {
-        width: materialUsed.width,
-        height: materialUsed.height,
-        price: materialUsed.price,
-      },
-      cutlistFormData,
-      pricePercent,
-    );
-
-    let calculatedQty = undefined;
+    let calculatedQty = 0;
     if (hasHinge) {
       calculatedQty = calculateHoles(
         cutlistFormData.sideA,
@@ -176,6 +166,16 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
         hingeSide,
       );
     }
+
+    const price = calculateCutlistPrice(
+      {
+        width: materialUsed.width,
+        height: materialUsed.height,
+        price: materialUsed.price,
+      },
+      { ...cutlistFormData, hingeHolesQuantity: calculatedQty },
+      pricePercent,
+    );
 
     updateCutlist([
       {
@@ -253,7 +253,6 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
         shadow="md"
         borderWidth="1px"
         borderColor="gray.200"
-        overflow="hidden"
       >
         <Box
           p={6}
@@ -437,7 +436,7 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
                   onClick={onToggleOptions}
                   size="md"
                 >
-                  <FaCog />
+                  <FaChevronDown />
                 </IconButton>
 
                 <Button
@@ -534,14 +533,6 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
                         <FaArrowsAltV style={{ marginRight: 6 }} /> Lado Menor
                       </Button>
                     </HStack>
-                    <Text
-                      fontSize="xs"
-                      color="green.600"
-                      mt={2}
-                      fontWeight="medium"
-                    >
-                      * Cálculo Automático: Margem 10cm + Passos de 60cm.
-                    </Text>
                   </Box>
                 )}
               </Flex>
@@ -637,7 +628,9 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
                               {c.hingeHolesQuantity} Furos
                             </Badge>
                             <Text fontSize="xs" color="gray.500">
-                              (Lado {c.hingeHolesSide === 'Maior' ? 'M' : 'm'})
+                              (Lado{' '}
+                              {c.hingeHolesSide === 'Maior' ? 'maior' : 'menor'}
+                              )
                             </Text>
                           </Flex>
                         )}

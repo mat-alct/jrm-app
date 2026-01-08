@@ -10,6 +10,7 @@ interface CutlistProps {
   sideB: number;
   borderA: number;
   borderB: number;
+  hingeHolesQuantity?: number;
 }
 
 export const calculateCutlistPrice = (
@@ -35,7 +36,9 @@ export const calculateCutlistPrice = (
 
   const calculatedBorder = (3 * (LFp + AFp)) / 1000;
 
-  const calculatedPrice = calculatedMaterial + calculatedBorder;
+  const holesCost = (cutlistData.hingeHolesQuantity || 0) * 5;
+
+  const calculatedPrice = calculatedMaterial + calculatedBorder + holesCost;
 
   return qtd * Math.ceil(calculatedPrice);
 };
