@@ -8,11 +8,18 @@ import {
   Grid,
   VStack,
   Image,
+  HStack,
 } from '@chakra-ui/react';
 import { format } from 'date-fns';
 import { DocumentData } from 'firebase/firestore';
 import React, { useRef, useEffect } from 'react';
-import { FaRegFileAlt, FaWhatsapp, FaMapMarkerAlt } from 'react-icons/fa';
+import {
+  FaRegFileAlt,
+  FaWhatsapp,
+  FaMapMarkerAlt,
+  FaPhoneAlt,
+  FaGlobe,
+} from 'react-icons/fa';
 import { useReactToPrint } from 'react-to-print';
 
 interface OrderResumeProps {
@@ -22,7 +29,6 @@ interface OrderResumeProps {
   variant?: 'outline' | 'solid' | 'subtle' | 'surface' | 'ghost' | 'plain';
   size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '2xs' | 'xs';
   colorScheme?: string;
-  // Novas props para controle externo
   autoPrint?: boolean;
   onAfterPrint?: () => void;
 }
@@ -45,7 +51,6 @@ export const OrderResume: React.FC<OrderResumeProps> = ({
     },
   });
 
-  // Gatilho automático para impressão
   useEffect(() => {
     if (autoPrint) {
       handlePrint();
@@ -53,7 +58,7 @@ export const OrderResume: React.FC<OrderResumeProps> = ({
   }, [autoPrint]);
 
   const Separator = () => (
-    <Box w="100%" borderBottomWidth="1px" borderColor="black" my={1} />
+    <Box w="100%" borderBottomWidth="2px" borderColor="black" my={1} />
   );
 
   return (
@@ -61,15 +66,20 @@ export const OrderResume: React.FC<OrderResumeProps> = ({
       <div style={{ display: 'none' }}>
         <Box
           ref={componentRef}
-          p={4}
+          p={5}
           bg="white"
           color="black"
           fontFamily="sans-serif"
           className="print-container"
           fontSize="xs"
+          // --- MUDANÇAS PARA FIXAR RODAPÉ NO FINAL ---
+          display="flex"
+          flexDirection="column"
+          minH="280mm" // Força a altura de uma página A4 (297mm - margens)
+          boxSizing="border-box"
         >
-          {/* CABEÇALHO COM LOGO (FILTRO P&B) */}
-          <Flex justify="space-between" align="center" mb={2}>
+          {/* --- CABEÇALHO --- */}
+          <Flex justify="space-between" align="center" mb={3}>
             <Box>
               <Image
                 src="/images/logo.svg"
@@ -81,14 +91,18 @@ export const OrderResume: React.FC<OrderResumeProps> = ({
             </Box>
             <VStack align="flex-end" gap={0}>
               <Text
-                fontSize="xl"
-                fontWeight="bold"
+                fontSize="2xl"
+                fontWeight="black"
                 lineHeight="1"
                 color="black"
               >
                 #{order.orderCode}
               </Text>
+              <Text fontSize="sm" fontWeight="bold" color="gray.600">
+                PEDIDO DE CORTE
+              </Text>
               <Text fontSize="xs" color="gray.600">
+                Emitido em:{' '}
                 {order.createdAt?.seconds
                   ? format(
                       new Date(order.createdAt.seconds * 1000),
@@ -99,193 +113,248 @@ export const OrderResume: React.FC<OrderResumeProps> = ({
             </VStack>
           </Flex>
 
-          <Box w="100%" borderBottomWidth="2px" borderColor="black" mb={3} />
+          <Box w="100%" borderBottomWidth="3px" borderColor="black" mb={4} />
 
-          {/* DADOS (PRETO E BRANCO) */}
-          <Grid templateColumns="1fr 1fr" gap={4} mb={3}>
-            {/* Coluna Esquerda: JRM */}
-            <VStack align="flex-start" gap={1} fontSize="xs">
-              <Text fontWeight="bold" color="black" mb={0}>
-                JRM Compensados
-              </Text>
-              <Flex align="center" gap={1}>
-                <FaMapMarkerAlt size={10} color="black" />
-                <Text>Rua Japoranga 1000, Japuíba</Text>
-              </Flex>
-              <Flex align="center" gap={1}>
-                <FaWhatsapp size={10} color="black" />
-                <Text>(24) 99969-4543</Text>
-              </Flex>
-            </VStack>
-
-            {/* Coluna Direita: Cliente (NOME EM DESTAQUE) */}
-            <VStack align="flex-start" gap={0} fontSize="xs">
-              <Text fontWeight="extrabold" fontSize="lg" mb={1} color="black">
-                {order.customer.name}
-              </Text>
-              {order.customer.address && (
-                <Text>
-                  {order.customer.address}
-                  {order.customer.area ? ` - ${order.customer.area}` : ''}
-                </Text>
-              )}
+          {/* --- DADOS DO CLIENTE --- */}
+          <Box mb={4}>
+            <Text
+              fontSize="2xs"
+              fontWeight="bold"
+              textTransform="uppercase"
+              color="gray.500"
+              mb={0}
+            >
+              Cliente
+            </Text>
+            <Text
+              fontSize="xl"
+              fontWeight="extrabold"
+              lineHeight="1.2"
+              color="black"
+            >
+              {order.customer.name}
+            </Text>
+            <HStack gap={4} mt={1} color="gray.800" fontSize="xs">
               {order.customer.telephone && (
-                <Text>Tel: {order.customer.telephone}</Text>
+                <Flex align="center" gap={1}>
+                  <FaPhoneAlt size={10} />
+                  <Text fontWeight="medium">{order.customer.telephone}</Text>
+                </Flex>
               )}
-            </VStack>
-          </Grid>
-
-          {/* DETALHES DO PEDIDO (CINZA CLARO) */}
-          <Box
-            mb={3}
-            bg="gray.100"
-            p={2}
-            borderRadius="sm"
-            border="1px solid"
-            borderColor="gray.400"
-          >
-            <Grid templateColumns="repeat(4, 1fr)" gap={2} fontSize="xs">
-              <Box>
-                <Text
-                  fontWeight="bold"
-                  color="black"
-                  fontSize="2xs"
-                  textTransform="uppercase"
-                >
-                  Vendedor
-                </Text>
-                <Text fontWeight="medium">{order.seller || '-'}</Text>
-              </Box>
-              <Box>
-                <Text
-                  fontWeight="bold"
-                  color="black"
-                  fontSize="2xs"
-                  textTransform="uppercase"
-                >
-                  Loja
-                </Text>
-                <Text fontWeight="medium">{order.orderStore}</Text>
-              </Box>
-              <Box>
-                <Text
-                  fontWeight="bold"
-                  color="black"
-                  fontSize="2xs"
-                  textTransform="uppercase"
-                >
-                  Entrega
-                </Text>
-                <Text fontWeight="medium">{order.deliveryType}</Text>
-              </Box>
-              <Box>
-                <Text
-                  fontWeight="bold"
-                  color="black"
-                  fontSize="2xs"
-                  textTransform="uppercase"
-                >
-                  Prazo
-                </Text>
-                <Text fontWeight="bold" color="black">
-                  {order.deliveryDate?.seconds
-                    ? format(
-                        new Date(order.deliveryDate.seconds * 1000),
-                        'dd/MM/yyyy',
-                      )
-                    : 'Combinar'}
-                </Text>
-              </Box>
-            </Grid>
-            {order.ps && (
-              <Box mt={1} pt={1} borderTop="1px dashed" borderColor="gray.400">
-                <Text fontWeight="bold" color="black" fontSize="2xs">
-                  OBS:
-                </Text>
-                <Text fontSize="xs" fontStyle="italic" lineHeight="short">
-                  {order.ps}
-                </Text>
-              </Box>
-            )}
+              {order.customer.address && (
+                <Flex align="center" gap={1}>
+                  <FaMapMarkerAlt size={10} />
+                  <Text>
+                    {order.customer.address}
+                    {order.customer.area ? ` - ${order.customer.area}` : ''}
+                  </Text>
+                </Flex>
+              )}
+            </HStack>
           </Box>
 
-          {/* TABELA DE PEÇAS */}
+          {/* --- CARTÕES DE INFO --- */}
+          <Grid templateColumns="1fr 1fr" gap={4} mb={4}>
+            {/* Cartão 1: Venda */}
+            <Box
+              border="1px solid"
+              borderColor="gray.300"
+              p={2}
+              borderRadius="md"
+              bg="gray.50"
+            >
+              <Text
+                fontWeight="bold"
+                textTransform="uppercase"
+                fontSize="2xs"
+                color="gray.500"
+                mb={1}
+                borderBottom="1px solid"
+                borderColor="gray.300"
+                pb={0.5}
+              >
+                Informações de Venda
+              </Text>
+              <Grid templateColumns="1fr 1fr" gap={2}>
+                <Box>
+                  <Text fontSize="2xs" color="gray.600">
+                    Vendedor
+                  </Text>
+                  <Text fontWeight="bold" fontSize="xs">
+                    {order.seller || '-'}
+                  </Text>
+                </Box>
+                <Box>
+                  <Text fontSize="2xs" color="gray.600">
+                    Loja
+                  </Text>
+                  <Text fontWeight="bold" fontSize="xs">
+                    {order.orderStore}
+                  </Text>
+                </Box>
+              </Grid>
+            </Box>
+
+            {/* Cartão 2: Entrega */}
+            <Box
+              border="1px solid"
+              borderColor="gray.300"
+              p={2}
+              borderRadius="md"
+              bg="gray.50"
+            >
+              <Text
+                fontWeight="bold"
+                textTransform="uppercase"
+                fontSize="2xs"
+                color="gray.500"
+                mb={1}
+                borderBottom="1px solid"
+                borderColor="gray.300"
+                pb={0.5}
+              >
+                Previsão e Entrega
+              </Text>
+              <Grid templateColumns="1fr 1fr" gap={2}>
+                <Box>
+                  <Text fontSize="2xs" color="gray.600">
+                    Modalidade
+                  </Text>
+                  <Text fontWeight="bold" fontSize="xs">
+                    {order.deliveryType}
+                  </Text>
+                </Box>
+                <Box>
+                  <Text fontSize="2xs" color="gray.600">
+                    Prazo
+                  </Text>
+                  <Text fontWeight="black" fontSize="xs">
+                    {order.deliveryDate?.seconds
+                      ? format(
+                          new Date(order.deliveryDate.seconds * 1000),
+                          'dd/MM/yyyy',
+                        )
+                      : 'A combinar'}
+                  </Text>
+                </Box>
+              </Grid>
+            </Box>
+          </Grid>
+
+          {/* OBSERVAÇÕES */}
+          {order.ps && (
+            <Box
+              mb={4}
+              p={2}
+              borderLeft="3px solid"
+              borderColor="black"
+              bg="gray.100"
+            >
+              <Text fontWeight="bold" fontSize="2xs" mb={0.5}>
+                OBSERVAÇÕES:
+              </Text>
+              <Text fontStyle="italic" fontSize="xs" lineHeight="short">
+                {order.ps}
+              </Text>
+            </Box>
+          )}
+
+          {/* --- TABELA DE PEÇAS --- */}
           <Box mb={2}>
-            <Table.Root size="sm" variant="outline">
-              <Table.Header bg="gray.200">
-                <Table.Row>
+            <Text
+              fontSize="sm"
+              fontWeight="bold"
+              mb={1}
+              borderBottom="2px solid black"
+              display="inline-block"
+            >
+              Itens do Pedido
+            </Text>
+            <Table.Root size="sm" variant="line">
+              <Table.Header>
+                <Table.Row borderBottom="1px solid black">
                   <Table.ColumnHeader
                     color="black"
+                    fontWeight="black"
                     fontSize="2xs"
                     py={1}
-                    px={1}
-                    width="30px"
                   >
-                    Qtd
+                    QTD
                   </Table.ColumnHeader>
                   <Table.ColumnHeader
                     color="black"
+                    fontWeight="black"
                     fontSize="2xs"
                     py={1}
-                    px={1}
                   >
-                    Material
+                    MATERIAL
                   </Table.ColumnHeader>
                   <Table.ColumnHeader
                     color="black"
+                    fontWeight="black"
                     fontSize="2xs"
                     py={1}
-                    px={1}
                   >
-                    Medidas
+                    MEDIDAS (mm)
                   </Table.ColumnHeader>
                   <Table.ColumnHeader
                     color="black"
+                    fontWeight="black"
                     fontSize="2xs"
-                    py={1}
-                    px={1}
                     textAlign="center"
+                    py={1}
                   >
-                    Fitas
+                    FITAS
                   </Table.ColumnHeader>
                   <Table.ColumnHeader
                     color="black"
+                    fontWeight="black"
                     fontSize="2xs"
-                    py={1}
-                    px={1}
                     textAlign="right"
+                    py={1}
                   >
-                    R$
+                    VALOR
                   </Table.ColumnHeader>
                 </Table.Row>
               </Table.Header>
               <Table.Body>
                 {order.cutlist.map((cut: any, idx: number) => (
-                  <Table.Row key={cut.id || idx}>
-                    <Table.Cell fontSize="xs" py={1} px={1} fontWeight="bold">
+                  <Table.Row
+                    key={cut.id || idx}
+                    borderBottom="1px solid #e2e8f0"
+                  >
+                    <Table.Cell py={1} fontWeight="bold" fontSize="xs">
                       {cut.amount}
                     </Table.Cell>
-                    <Table.Cell fontSize="xs" py={1} px={1}>
+                    <Table.Cell py={1} fontSize="xs">
                       {cut.material.name}
                     </Table.Cell>
-                    <Table.Cell fontSize="xs" py={1} px={1}>
+                    <Table.Cell py={1} fontSize="xs">
                       {cut.sideA} x {cut.sideB}
                       {cut.hasHingeHoles && (
                         <Text
                           as="span"
                           fontSize="2xs"
-                          color="black"
-                          ml={1}
                           fontWeight="bold"
+                          ml={1}
+                          bg="black"
+                          color="white"
+                          px={1}
+                          borderRadius="full"
                         >
-                          (+{cut.hingeHolesQuantity}f)
+                          +{cut.hingeHolesQuantity}f
                         </Text>
                       )}
                     </Table.Cell>
-                    <Table.Cell fontSize="xs" py={1} px={1} textAlign="center">
+                    <Table.Cell py={1} textAlign="center" fontSize="xs">
                       {cut.borderA} | {cut.borderB}
                     </Table.Cell>
-                    <Table.Cell fontSize="xs" py={1} px={1} textAlign="right">
+                    <Table.Cell
+                      py={1}
+                      textAlign="right"
+                      fontWeight="medium"
+                      fontSize="xs"
+                    >
                       {cut.price}
                     </Table.Cell>
                   </Table.Row>
@@ -294,43 +363,128 @@ export const OrderResume: React.FC<OrderResumeProps> = ({
             </Table.Root>
           </Box>
 
-          {/* TOTAIS (MONOCROMÁTICO) */}
-          <Flex justify="flex-end">
-            <Box minW="180px">
+          {/* --- TOTAIS --- */}
+          <Flex justify="flex-end" mb={4}>
+            <Box w="220px">
               <Flex justify="space-between" align="center" mb={1}>
-                <Text fontSize="sm" fontWeight="bold" color="black">
+                <Text fontSize="sm" fontWeight="bold">
                   TOTAL
                 </Text>
-                <Text fontSize="lg" fontWeight="black" color="black">
+                <Text fontSize="xl" fontWeight="black">
                   R$ {order.orderPrice},00
                 </Text>
               </Flex>
               <Separator />
-              <Flex justify="space-between" align="center" fontSize="xs" mt={1}>
-                <Text color="gray.600">Pagamento: </Text>
-                <Text fontWeight="bold" color="black">
-                  {order.paymentType}
+              <Flex justify="space-between" align="center" mt={1} fontSize="xs">
+                <Text color="gray.600">Status:</Text>
+                <Text
+                  fontWeight="bold"
+                  bg="black"
+                  color="white"
+                  px={1.5}
+                  fontSize="2xs"
+                >
+                  {order.paymentType.toUpperCase()}
                 </Text>
               </Flex>
               {order.amountDue && order.paymentType !== 'Pago' && (
                 <Flex
                   justify="space-between"
                   align="center"
-                  fontSize="xs"
                   mt={1}
+                  fontSize="xs"
                 >
-                  <Text color="gray.600">A Receber: </Text>
-                  <Text fontWeight="bold" color="black">
+                  <Text color="gray.600">A Pagar:</Text>
+                  <Text fontWeight="bold" fontSize="sm">
                     R$ {order.amountDue}
                   </Text>
                 </Flex>
               )}
             </Box>
           </Flex>
+
+          {/* --- ESPAÇADOR DE GAP --- */}
+          {/* Este Box empurra tudo o que vem depois para o final do container minH="280mm" */}
+          <Box mt="auto" />
+
+          {/* --- TERMOS E CONDIÇÕES --- */}
+          <Box
+            mb={4}
+            p={2}
+            border="1px solid"
+            borderColor="gray.300"
+            borderRadius="md"
+          >
+            <Text
+              fontSize="2xs"
+              fontWeight="bold"
+              color="gray.500"
+              mb={1}
+              textTransform="uppercase"
+            >
+              Termos e Condições
+            </Text>
+            <Text
+              fontSize="2xs"
+              color="gray.600"
+              textAlign="justify"
+              lineHeight="1.1"
+            >
+              Declaro ter conferido todas as medidas e materiais. A empresa não
+              se responsabiliza por erros de projeto ou medidas fornecidas pelo
+              cliente. Prazo de retirada inicia-se após confirmação do
+              pagamento. Pedidos não retirados em 30 dias sujeitos a descarte.
+            </Text>
+            <Flex mt={4} gap={4}>
+              <Box
+                borderTop="1px solid black"
+                w="50%"
+                pt={1}
+                textAlign="center"
+              >
+                <Text fontSize="2xs">Assinatura do Cliente</Text>
+              </Box>
+              <Box
+                borderTop="1px solid black"
+                w="50%"
+                pt={1}
+                textAlign="center"
+              >
+                <Text fontSize="2xs">Visto da Empresa</Text>
+              </Box>
+            </Flex>
+          </Box>
+
+          {/* --- RODAPÉ INSTITUCIONAL FIXO --- */}
+          <Box
+            borderTop="2px solid black"
+            pt={2}
+            textAlign="center"
+            fontSize="2xs"
+            color="gray.600"
+          >
+            <Text fontWeight="bold" fontSize="xs" color="black" mb={0.5}>
+              JRM COMPENSADOS & MARCENARIA LTDA
+            </Text>
+            <Text lineHeight="1.1">
+              CNPJ: 45.123.001/0001-99 • R. Japoranga, 1000 - Japuíba - Angra
+              dos Reis/RJ
+            </Text>
+            <HStack justify="center" gap={3} mt={1}>
+              <Flex align="center" gap={1}>
+                <FaGlobe size={10} /> jrmcompensados.com.br
+              </Flex>
+              <Flex align="center" gap={1}>
+                <FaWhatsapp size={10} /> (24) 99969-4543
+              </Flex>
+            </HStack>
+            <Text mt={1} fontStyle="italic" fontWeight="bold">
+              Obrigado pela preferência!
+            </Text>
+          </Box>
         </Box>
       </div>
 
-      {/* Só exibe o botão se NÃO for impressão automática */}
       {!autoPrint && (
         <IconButton
           colorScheme={colorScheme}
