@@ -122,7 +122,6 @@ export const MaterialProvider = ({ children }: MaterialProviderProps) => {
   // Estas são as funções que os componentes da sua aplicação irão chamar.
   // Elas atuam como uma camada de abstração que "dispara" a mutação correspondente.
   const createMaterial = async (materialData: Material) => {
-    console.log(materialData);
     await createMaterialMutation.mutateAsync(materialData);
   };
 

@@ -102,7 +102,7 @@ export { queryClient };
 
 ## Fase 2 — Limpar código morto
 
-### [ ] Passo 2.1 — Remover arquivos não usados
+### [x] Passo 2.1 — Remover arquivos não usados
 
 1. Confirmar não-uso:
    ```
@@ -131,7 +131,7 @@ export { queryClient };
    ```
 4. `npm run build` para validar.
 
-### [ ] Passo 2.2 — Remover `console.log`
+### [x] Passo 2.2 — Remover `console.log`
 
 - `src/hooks/order.tsx` — remover `console.log('🔎 Buscando código exato...')` e `console.log('🔎 Buscando nome...')`.
 - `src/hooks/material.tsx` — remover `console.log(materialData)` no `createMaterial`.
@@ -139,7 +139,7 @@ export { queryClient };
 
 (Opcional: pode pular se for fazer Passo 4.1 com `compiler.removeConsole`.)
 
-### [ ] Passo 2.3 — `.gitignore`
+### [x] Passo 2.3 — `.gitignore` _(já feito na Fase 0)_
 
 Adicionar:
 ```

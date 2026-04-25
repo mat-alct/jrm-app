@@ -1,4 +1,3 @@
-import { CustomerProvider } from './customer';
 import { MaterialProvider } from './material';
 import { OrderProvider } from './order';
 import { SidebarDrawerProvider } from './sidebar';
@@ -11,11 +10,7 @@ export const Providers = ({ children }: AuthProviderProps) => {
   return (
     <SidebarDrawerProvider>
       <OrderProvider>
-        <MaterialProvider>
-          {/* <CustomerProvider> */}
-          {children}
-          {/* </CustomerProvider> */}
-        </MaterialProvider>
+        <MaterialProvider>{children}</MaterialProvider>
       </OrderProvider>
     </SidebarDrawerProvider>
   );

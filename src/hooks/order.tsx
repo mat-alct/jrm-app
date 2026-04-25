@@ -239,8 +239,6 @@ export const OrderProvider = ({ children }: OrderProviderProps) => {
       const fieldCode = type === 'estimates' ? 'estimateCode' : 'orderCode';
       const codeNumber = Number(term);
 
-      console.log(`🔎 Buscando código exato: ${codeNumber}`);
-
       q = query(colRef, where(fieldCode, '==', codeNumber), limit(5));
     } else {
       // CASO 2: Busca por NOME (Começa com...)
@@ -249,10 +247,6 @@ export const OrderProvider = ({ children }: OrderProviderProps) => {
       const capitalizedEnd = capitalizedStart + '\uf8ff'; // \uf8ff é o caractere mágico "fim" do Unicode
 
       const fieldName = type === 'estimates' ? 'name' : 'customer.name';
-
-      console.log(
-        `🔎 Buscando nome: "${capitalizedStart}" até "${capitalizedEnd}"`,
-      );
 
       q = query(
         colRef,
