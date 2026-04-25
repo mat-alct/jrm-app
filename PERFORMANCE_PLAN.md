@@ -87,7 +87,6 @@ const queryClient = new QueryClient({
       staleTime: 1000 * 60 * 2,
       gcTime: 1000 * 60 * 10,
       refetchOnWindowFocus: false,
-      refetchOnMount: false,
       retry: 1,
     },
   },
@@ -96,7 +95,12 @@ const queryClient = new QueryClient({
 export { queryClient };
 ```
 
-**Validar:** abrir `/cortes/listadecortes`, navegar, voltar — não deve mostrar spinner.
+> **Atenção:** NÃO adicionar `refetchOnMount: false`. Isso impede que queries
+> invalidadas refaçam fetch ao remontar (ex: criar pedido em outra tela e
+> voltar pra lista — dados ficam velhos até F5). O `staleTime: 2 min` sozinho
+> já garante que navegar e voltar dentro desse intervalo não refaz query.
+
+**Validar:** abrir `/cortes/listadecortes`, navegar, voltar — não deve mostrar spinner. Criar/editar pedido em outra tela e voltar — lista deve atualizar.
 
 ---
 
