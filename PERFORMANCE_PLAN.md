@@ -194,7 +194,7 @@ Tipos com `import type { ... } from 'react-datepicker'` se necessário.
 
 ## Fase 4 — `next.config.js` otimizado
 
-### [ ] Passo 4.1 — Configuração de produção
+### [x] Passo 4.1 — Configuração de produção
 
 ```js
 const withBundleAnalyzer = require('@next/bundle-analyzer')({
