@@ -2,7 +2,7 @@
 
 import { NextApiRequest, NextApiResponse } from 'next';
 import { serialize } from 'cookie';
-import { admin } from '../../services/firebaseAdmin';
+import { adminAuth } from '../../services/firebaseAdmin';
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   if (req.method !== 'POST') {
@@ -20,7 +20,9 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     const expiresIn = 60 * 60 * 24 * 5 * 1000;
 
     // Cria o cookie de sessão com o token do cliente
-    const sessionCookie = await admin.auth().createSessionCookie(token, { expiresIn });
+    const sessionCookie = await adminAuth.createSessionCookie(token, {
+      expiresIn,
+    });
 
     const cookieOptions = {
       maxAge: expiresIn,

@@ -2,9 +2,12 @@
 import {
   Box,
   Button,
+  CloseButton,
+  Dialog,
   Flex,
   HStack,
   IconButton,
+  Portal,
   RadioGroup,
   Stack,
   Table,
@@ -14,6 +17,7 @@ import {
   Center,
   Spinner,
   Alert,
+  VStack,
 } from '@chakra-ui/react';
 import { format } from 'date-fns';
 import {
@@ -31,6 +35,7 @@ import {
   FaCheck,
   FaEdit,
   FaHandshake,
+  FaHistory,
   FaRegFileAlt,
   FaTags,
   FaTrash,
@@ -74,6 +79,43 @@ const Cortes: React.FC = () => {
     null,
   );
   const [printingResume, setPrintingResume] = useState<PrintItemType>(null);
+
+  // Pedido cujo histórico de edições está aberto no diálogo
+  const [historyOrder, setHistoryOrder] = useState<any | null>(null);
+
+  // Pedido com confirmação de avanço de status pendente
+  const [confirmingStatusOrder, setConfirmingStatusOrder] = useState<
+    any | null
+  >(null);
+  const [advancingStatus, setAdvancingStatus] = useState(false);
+
+  const nextStatusLabel = (status?: string) => {
+    if (status === 'Em Produção') return 'Liberar para Transporte';
+    if (status === 'Liberado para Transporte') return 'Concluir pedido';
+    return null;
+  };
+
+  // Reconstrói o snapshot do pedido em uma versão específica do histórico.
+  // versionIndex = 0 → versão original (antes de qualquer edição)
+  // versionIndex = N → após aplicar a edição (N-1)
+  const buildVersionSnapshot = (order: any, versionIndex: number) => {
+    const edits: any[] = order.edits ?? [];
+    if (versionIndex === 0) {
+      return {
+        ...order,
+        cutlist: edits[0]?.previousCutlist ?? order.cutlist,
+        orderPrice: edits[0]?.previousOrderPrice ?? order.orderPrice,
+        edits: [],
+      };
+    }
+    const nextEdit = edits[versionIndex];
+    return {
+      ...order,
+      cutlist: nextEdit?.previousCutlist ?? order.cutlist,
+      orderPrice: nextEdit?.previousOrderPrice ?? order.orderPrice,
+      edits: edits.slice(0, versionIndex),
+    };
+  };
 
   const toast = toaster;
   const { getOrders, getOrdersBySearch } = useOrder();
@@ -145,6 +187,7 @@ const Cortes: React.FC = () => {
 
   const updateCutlistStatus = async (id: string) => {
     let nextState;
+    setAdvancingStatus(true);
     try {
       const orderRef = doc(db, 'orders', id);
       const orderSnap = await getDoc(orderRef);
@@ -175,6 +218,9 @@ const Cortes: React.FC = () => {
       }
     } catch {
       toast.create({ type: 'error', description: 'Erro ao concluir etapa' });
+    } finally {
+      setAdvancingStatus(false);
+      setConfirmingStatusOrder(null);
     }
   };
 
@@ -268,6 +314,225 @@ const Cortes: React.FC = () => {
             />
           )}
 
+          {/* Diálogo: histórico de edições do pedido */}
+          <Dialog.Root
+            open={!!historyOrder}
+            onOpenChange={e => {
+              if (!e.open) setHistoryOrder(null);
+            }}
+            size="md"
+          >
+            <Portal>
+              <Dialog.Backdrop />
+              <Dialog.Positioner>
+                <Dialog.Content>
+                  <Dialog.Header>
+                    <Dialog.Title>
+                      Histórico do Pedido #{historyOrder?.orderCode}
+                    </Dialog.Title>
+                  </Dialog.Header>
+                  <Dialog.Body pb={6}>
+                    {historyOrder && (
+                      <VStack gap={2} align="stretch">
+                        {(() => {
+                          const edits: any[] = historyOrder.edits ?? [];
+                          const versionCount = edits.length + 1;
+                          const items: React.ReactNode[] = [];
+                          for (let v = 0; v < versionCount; v++) {
+                            const isOriginal = v === 0;
+                            const editAtIndex = isOriginal ? null : edits[v - 1];
+                            const when = editAtIndex?.editedAt?.seconds
+                              ? format(
+                                  new Date(
+                                    editAtIndex.editedAt.seconds * 1000,
+                                  ),
+                                  "dd/MM/yyyy 'às' HH:mm",
+                                )
+                              : null;
+                            const diff = editAtIndex?.priceDifference ?? 0;
+                            const shouldCharge =
+                              !!editAtIndex?.shouldCharge && diff !== 0;
+                            items.push(
+                              <Button
+                                key={v}
+                                onClick={() => {
+                                  const snap = buildVersionSnapshot(
+                                    historyOrder,
+                                    v,
+                                  );
+                                  setHistoryOrder(null);
+                                  handlePrintResume(snap, 'order');
+                                }}
+                                variant="outline"
+                                colorScheme="orange"
+                                justifyContent="flex-start"
+                                height="auto"
+                                py={3}
+                                px={4}
+                                whiteSpace="normal"
+                                textAlign="left"
+                              >
+                                <Flex
+                                  direction="column"
+                                  align="flex-start"
+                                  w="100%"
+                                  gap={0.5}
+                                >
+                                  <Text fontWeight="bold">
+                                    {isOriginal
+                                      ? 'Versão Original'
+                                      : `Edição ${v}`}
+                                  </Text>
+                                  {isOriginal ? (
+                                    <Text fontSize="xs" color="gray.600">
+                                      Pedido como foi criado inicialmente
+                                    </Text>
+                                  ) : (
+                                    <>
+                                      <Text fontSize="xs" color="gray.700">
+                                        {when ?? 'Data indisponível'}
+                                        {editAtIndex?.editedBy
+                                          ? ` · por ${editAtIndex.editedBy}`
+                                          : ''}
+                                      </Text>
+                                      {diff !== 0 && (
+                                        <Text
+                                          fontSize="xs"
+                                          color={
+                                            diff > 0 ? 'red.600' : 'green.600'
+                                          }
+                                          fontWeight="medium"
+                                        >
+                                          Diferença: {diff > 0 ? '+' : '−'}R${' '}
+                                          {Math.abs(diff)},00
+                                          {shouldCharge && ' · acertar'}
+                                        </Text>
+                                      )}
+                                    </>
+                                  )}
+                                </Flex>
+                              </Button>,
+                            );
+                          }
+                          return items;
+                        })()}
+                        <Text fontSize="xs" color="gray.500" mt={2}>
+                          Clique em uma versão para imprimir o resumo
+                          correspondente.
+                        </Text>
+                      </VStack>
+                    )}
+                  </Dialog.Body>
+                  <Dialog.CloseTrigger asChild>
+                    <CloseButton />
+                  </Dialog.CloseTrigger>
+                </Dialog.Content>
+              </Dialog.Positioner>
+            </Portal>
+          </Dialog.Root>
+
+          {/* Diálogo: confirmação de avanço de status */}
+          <Dialog.Root
+            open={!!confirmingStatusOrder}
+            onOpenChange={e => {
+              if (!e.open && !advancingStatus) setConfirmingStatusOrder(null);
+            }}
+            placement="center"
+            motionPreset="slide-in-bottom"
+          >
+            <Portal>
+              <Dialog.Backdrop />
+              <Dialog.Positioner padding={[2, 4]}>
+                <Dialog.Content
+                  mx="auto"
+                  w={['100%', '100%', 'auto']}
+                  maxW={['100%', '100%', '420px']}
+                >
+                  <Dialog.Header>
+                    <Dialog.Title>Confirmar alteração de status</Dialog.Title>
+                  </Dialog.Header>
+                  <Dialog.Body pb={4}>
+                    {confirmingStatusOrder &&
+                      (() => {
+                        const next = nextStatusLabel(
+                          confirmingStatusOrder.orderStatus,
+                        );
+                        return (
+                          <Stack gap={3}>
+                            <Text color="gray.700">
+                              Tem certeza que deseja{' '}
+                              <Text as="span" fontWeight="bold">
+                                {next?.toLowerCase()}
+                              </Text>
+                              ?
+                            </Text>
+                            <Box
+                              bg="gray.50"
+                              borderWidth="1px"
+                              borderColor="gray.200"
+                              borderRadius="md"
+                              p={3}
+                            >
+                              <Text fontSize="sm" color="gray.500">
+                                Pedido #{confirmingStatusOrder.orderCode}
+                              </Text>
+                              <Text fontWeight="bold" color="gray.800">
+                                {confirmingStatusOrder.customer?.name ||
+                                  'Cliente Removido'}
+                              </Text>
+                              <Text fontSize="sm" color="gray.600" mt={1}>
+                                Status atual:{' '}
+                                <strong>
+                                  {confirmingStatusOrder.orderStatus}
+                                </strong>
+                              </Text>
+                            </Box>
+                            <Text fontSize="xs" color="gray.500">
+                              Esta ação não pode ser desfeita pela tela de
+                              listagem.
+                            </Text>
+                          </Stack>
+                        );
+                      })()}
+                  </Dialog.Body>
+                  <Dialog.Footer>
+                    <Stack
+                      direction={['column-reverse', 'column-reverse', 'row']}
+                      w="100%"
+                      gap={2}
+                      justify="flex-end"
+                    >
+                      <Button
+                        variant="outline"
+                        colorScheme="gray"
+                        size={['lg', 'lg', 'md']}
+                        onClick={() => setConfirmingStatusOrder(null)}
+                        disabled={advancingStatus}
+                        w={['100%', '100%', 'auto']}
+                      >
+                        Cancelar
+                      </Button>
+                      <Button
+                        colorScheme="green"
+                        size={['lg', 'lg', 'md']}
+                        loading={advancingStatus}
+                        onClick={() =>
+                          updateCutlistStatus(confirmingStatusOrder.id)
+                        }
+                        w={['100%', '100%', 'auto']}
+                      >
+                        <FaCheck /> Confirmar
+                      </Button>
+                    </Stack>
+                  </Dialog.Footer>
+                  <Dialog.CloseTrigger asChild>
+                    <CloseButton disabled={advancingStatus} />
+                  </Dialog.CloseTrigger>
+                </Dialog.Content>
+              </Dialog.Positioner>
+            </Portal>
+          </Dialog.Root>
+
           <Flex
             direction={['column', 'column', 'column', 'row']}
             align={['stretch', 'stretch', 'stretch', 'center']}
@@ -344,7 +609,260 @@ const Cortes: React.FC = () => {
             </Alert.Root>
           )}
 
+          {/* MOBILE: lista em cards (base / sm) */}
+          <Box display={['block', 'block', 'none']}>
+            {isLoading ? (
+              <Center p={10}>
+                <Spinner color="orange.500" />
+              </Center>
+            ) : !dataToShow?.length ? (
+              <Box
+                bg="white"
+                borderWidth="1px"
+                borderRadius="lg"
+                shadow="sm"
+                p={6}
+                textAlign="center"
+                color="gray.600"
+              >
+                Nenhum registro encontrado
+              </Box>
+            ) : (
+              <Stack gap={3}>
+                <Text fontSize="xs" color="gray.500" px={1}>
+                  {`${dataToShow.length} registro(s) ${searchQuery ? 'encontrados' : 'nesta página'}`}
+                </Text>
+                {dataToShow.map((item: any) => {
+                  const isUrgent = item?.isUrgent;
+
+                  if (isEstimateList) {
+                    return (
+                      <Box
+                        key={item.id}
+                        bg="white"
+                        borderWidth="1px"
+                        borderColor="gray.200"
+                        borderRadius="xl"
+                        shadow="sm"
+                        p={4}
+                      >
+                        <Flex justify="space-between" align="center" mb={2}>
+                          <Text fontSize="sm" color="gray.500" fontWeight="bold">
+                            #{item.estimateCode}
+                          </Text>
+                          <Box
+                            as="span"
+                            px={2}
+                            py={1}
+                            borderRadius="md"
+                            fontSize="xs"
+                            fontWeight="bold"
+                            bg="gray.100"
+                            color="gray.800"
+                          >
+                            Pendente
+                          </Box>
+                        </Flex>
+                        <Text fontSize="lg" fontWeight="bold" color="gray.800">
+                          {item.name}
+                        </Text>
+                        <Text
+                          fontSize="lg"
+                          fontWeight="bold"
+                          color="orange.600"
+                          mt={2}
+                        >
+                          R$ {item.estimatePrice},00
+                        </Text>
+                        <Stack
+                          direction="row"
+                          gap={2}
+                          mt={3}
+                          justify="space-between"
+                        >
+                          <Button
+                            flex="1"
+                            size="md"
+                            variant="outline"
+                            colorScheme="gray"
+                            onClick={() => handlePrintResume(item, 'estimate')}
+                          >
+                            <FaRegFileAlt /> Resumo
+                          </Button>
+                          <Button
+                            flex="1"
+                            size="md"
+                            colorScheme="green"
+                            onClick={() => approveEstimate(item.id)}
+                          >
+                            <FaHandshake /> Aprovar
+                          </Button>
+                          <IconButton
+                            colorScheme="red"
+                            variant="outline"
+                            size="md"
+                            aria-label="Remover"
+                            onClick={() => handleRemove(item.id, 'estimates')}
+                          >
+                            <FaTrash />
+                          </IconButton>
+                        </Stack>
+                      </Box>
+                    );
+                  }
+
+                  const statusBg =
+                    item.orderStatus === 'Concluído'
+                      ? 'green.100'
+                      : item.orderStatus === 'Em Produção'
+                        ? 'orange.100'
+                        : 'blue.100';
+                  const statusColor =
+                    item.orderStatus === 'Concluído'
+                      ? 'green.800'
+                      : item.orderStatus === 'Em Produção'
+                        ? 'orange.800'
+                        : 'blue.800';
+                  const nextLabel =
+                    item.orderStatus === 'Em Produção'
+                      ? 'Liberar para Transporte'
+                      : item.orderStatus === 'Liberado para Transporte'
+                        ? 'Concluir pedido'
+                        : null;
+
+                  return (
+                    <Box
+                      key={item.id}
+                      bg={isUrgent ? 'red.50' : 'white'}
+                      borderWidth="1px"
+                      borderColor={isUrgent ? 'red.300' : 'gray.200'}
+                      borderRadius="xl"
+                      shadow="sm"
+                      p={4}
+                    >
+                      <Flex justify="space-between" align="center" mb={2}>
+                        <Text fontSize="sm" color="gray.500" fontWeight="bold">
+                          #{item.orderCode}
+                        </Text>
+                        <Box
+                          as="span"
+                          px={2}
+                          py={1}
+                          borderRadius="md"
+                          fontSize="xs"
+                          fontWeight="bold"
+                          display="inline-flex"
+                          alignItems="center"
+                          gap={1}
+                          bg={statusBg}
+                          color={statusColor}
+                        >
+                          {isUrgent && <FaExclamationTriangle />}
+                          {item.orderStatus}
+                          {item.edits?.length > 0 && <FaHistory />}
+                        </Box>
+                      </Flex>
+
+                      <Text fontSize="lg" fontWeight="bold" color="gray.800">
+                        {item.customer?.name || 'Cliente Removido'}
+                      </Text>
+                      {item.customer?.telephone && (
+                        <Text fontSize="sm" color="gray.600">
+                          {item.customer.telephone}
+                        </Text>
+                      )}
+
+                      <Flex
+                        justify="space-between"
+                        align="center"
+                        mt={2}
+                        gap={3}
+                        wrap="wrap"
+                      >
+                        <Text fontSize="xs" color="gray.500">
+                          {item.deliveryDate?.seconds
+                            ? `Entrega ${format(new Date(item.deliveryDate.seconds * 1000), 'dd/MM/yyyy')}`
+                            : 'Sem data de entrega'}
+                        </Text>
+                        <Text
+                          fontSize="lg"
+                          fontWeight="bold"
+                          color="orange.600"
+                        >
+                          R$ {item.orderPrice},00
+                        </Text>
+                      </Flex>
+
+                      {/* Botões secundários */}
+                      <Flex gap={2} mt={3} wrap="wrap">
+                        <Button
+                          flex="1"
+                          minW="100px"
+                          size="md"
+                          variant="outline"
+                          colorScheme="gray"
+                          onClick={() => handlePrintResume(item, 'order')}
+                        >
+                          <FaRegFileAlt /> Resumo
+                        </Button>
+                        <Button
+                          flex="1"
+                          minW="100px"
+                          size="md"
+                          variant="outline"
+                          colorScheme="gray"
+                          onClick={() => handlePrintLabels(item)}
+                        >
+                          <FaTags /> Etiquetas
+                        </Button>
+                        {item.edits?.length > 0 && (
+                          <IconButton
+                            size="md"
+                            variant="outline"
+                            colorScheme="purple"
+                            aria-label="Histórico de edições"
+                            onClick={() => setHistoryOrder(item)}
+                          >
+                            <FaHistory />
+                          </IconButton>
+                        )}
+                        {item.orderStatus === 'Em Produção' && (
+                          <IconButton
+                            size="md"
+                            variant="outline"
+                            colorScheme="blue"
+                            aria-label="Editar"
+                            onClick={() =>
+                              router.push(`/cortes/editar/${item.id}`)
+                            }
+                          >
+                            <FaEdit />
+                          </IconButton>
+                        )}
+                      </Flex>
+
+                      {/* Botão principal (avançar status) */}
+                      {nextLabel && (
+                        <Button
+                          mt={3}
+                          w="100%"
+                          size="lg"
+                          colorScheme="green"
+                          onClick={() => setConfirmingStatusOrder(item)}
+                        >
+                          <FaCheck /> {nextLabel}
+                        </Button>
+                      )}
+                    </Box>
+                  );
+                })}
+              </Stack>
+            )}
+          </Box>
+
+          {/* DESKTOP / TABLET: tabela (md+) */}
           <Box
+            display={['none', 'none', 'block']}
             overflowX="auto"
             borderWidth="1px"
             borderRadius="lg"
@@ -364,7 +882,7 @@ const Cortes: React.FC = () => {
                   size={tableSize}
                   whiteSpace="nowrap"
                 >
-                  <TableCaption mb={4} textAlign="left" px={4}>
+                  <TableCaption mt={4} mb={4} textAlign="left" px={4}>
                     {dataToShow?.length
                       ? `${dataToShow.length} registro(s) ${searchQuery ? 'encontrados' : 'nesta página'}`
                       : 'Nenhum registro encontrado'}
@@ -373,9 +891,6 @@ const Cortes: React.FC = () => {
                     <Table.Row>
                       <Table.ColumnHeader>Código</Table.ColumnHeader>
                       <Table.ColumnHeader>Cliente</Table.ColumnHeader>
-                      {!isEstimateList && (
-                        <Table.ColumnHeader>Loja</Table.ColumnHeader>
-                      )}
                       <Table.ColumnHeader>Status</Table.ColumnHeader>
                       {!isEstimateList && (
                         <Table.ColumnHeader textAlign="right">
@@ -492,7 +1007,6 @@ const Cortes: React.FC = () => {
                               )}
                             </Flex>
                           </Table.Cell>
-                          <Table.Cell>{item.orderStore}</Table.Cell>
                           <Table.Cell>
                             <Box
                               as="span"
@@ -521,6 +1035,17 @@ const Cortes: React.FC = () => {
                             >
                               {isUrgent && <FaExclamationTriangle />}
                               {item.orderStatus}
+                              {item.edits?.length > 0 && (
+                                <Box
+                                  as="span"
+                                  title={`Editado ${item.edits.length}× — última: ${item.edits[item.edits.length - 1]?.editedBy}`}
+                                  ml={1}
+                                  display="inline-flex"
+                                  alignItems="center"
+                                >
+                                  <FaHistory />
+                                </Box>
+                              )}
                             </Box>
                           </Table.Cell>
                           <Table.Cell textAlign="right">
@@ -558,26 +1083,41 @@ const Cortes: React.FC = () => {
                                 <FaTags />
                               </IconButton>
 
+                              {item.edits?.length > 0 && (
+                                <IconButton
+                                  aria-label="Histórico de edições"
+                                  variant="ghost"
+                                  colorScheme="purple"
+                                  size="sm"
+                                  onClick={() => setHistoryOrder(item)}
+                                  title={`${item.edits.length} edição(ões)`}
+                                >
+                                  <FaHistory />
+                                </IconButton>
+                              )}
+
+                              {item.orderStatus === 'Em Produção' && (
+                                <IconButton
+                                  colorScheme="blue"
+                                  variant="ghost"
+                                  size="sm"
+                                  aria-label="Editar"
+                                  onClick={() =>
+                                    router.push(`/cortes/editar/${item.id}`)
+                                  }
+                                >
+                                  <FaEdit />
+                                </IconButton>
+                              )}
                               {item.orderStatus !== 'Concluído' && (
-                                <>
-                                  <IconButton
-                                    colorScheme="blue"
-                                    variant="ghost"
-                                    size="sm"
-                                    disabled
-                                    aria-label="Editar"
-                                  >
-                                    <FaEdit />
-                                  </IconButton>
-                                  <IconButton
-                                    colorScheme="green"
-                                    size="sm"
-                                    aria-label="Concluir"
-                                    onClick={() => updateCutlistStatus(item.id)}
-                                  >
-                                    <FaCheck />
-                                  </IconButton>
-                                </>
+                                <IconButton
+                                  colorScheme="green"
+                                  size="sm"
+                                  aria-label="Concluir"
+                                  onClick={() => setConfirmingStatusOrder(item)}
+                                >
+                                  <FaCheck />
+                                </IconButton>
                               )}
                             </HStack>
                           </Table.Cell>
@@ -586,50 +1126,52 @@ const Cortes: React.FC = () => {
                     })}
                   </Table.Body>
                 </Table.Root>
-
-                {/* PAGINAÇÃO */}
-                {showPagination && (
-                  <Flex
-                    p={4}
-                    justify="flex-end"
-                    align="center"
-                    borderTopWidth="1px"
-                    borderColor="gray.100"
-                    gap={4}
-                  >
-                    <Text fontSize="sm" color="gray.500">
-                      Página {currentPage} de {totalPages}
-                    </Text>
-                    <HStack gap={2}>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        colorScheme="orange"
-                        onClick={() => goToPage(currentPage - 1)}
-                        disabled={currentPage === 1}
-                      >
-                        <FaChevronLeft style={{ marginRight: '6px' }} />{' '}
-                        Anterior
-                      </Button>
-
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        colorScheme="orange"
-                        onClick={() => goToPage(currentPage + 1)}
-                        disabled={
-                          currentPage === totalPages ||
-                          !pageCursors[currentPage]
-                        }
-                      >
-                        Próximo <FaChevronRight style={{ marginLeft: '6px' }} />
-                      </Button>
-                    </HStack>
-                  </Flex>
-                )}
               </>
             )}
           </Box>
+
+          {/* PAGINAÇÃO (compartilhada entre mobile e desktop) */}
+          {showPagination && !isLoading && (
+            <Flex
+              p={[3, 3, 4]}
+              justify={['center', 'center', 'flex-end']}
+              align="center"
+              gap={4}
+              bg="white"
+              borderWidth="1px"
+              borderColor="gray.200"
+              borderRadius="lg"
+              shadow="sm"
+              wrap="wrap"
+            >
+              <Text fontSize="sm" color="gray.500">
+                Página {currentPage} de {totalPages}
+              </Text>
+              <HStack gap={2}>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  colorScheme="orange"
+                  onClick={() => goToPage(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  <FaChevronLeft style={{ marginRight: '6px' }} /> Anterior
+                </Button>
+
+                <Button
+                  size="sm"
+                  variant="outline"
+                  colorScheme="orange"
+                  onClick={() => goToPage(currentPage + 1)}
+                  disabled={
+                    currentPage === totalPages || !pageCursors[currentPage]
+                  }
+                >
+                  Próximo <FaChevronRight style={{ marginLeft: '6px' }} />
+                </Button>
+              </HStack>
+            </Flex>
+          )}
         </Stack>
       </Dashboard>
     </>

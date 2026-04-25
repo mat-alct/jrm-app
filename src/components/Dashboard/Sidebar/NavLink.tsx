@@ -1,32 +1,36 @@
-import {
-  Icon,
-  Link as ChakraLink,
-  LinkProps as ChakraLinkProps,
-  Text,
-} from '@chakra-ui/react';
-import React, { ElementType } from 'react';
+import { Flex, Icon, Text } from '@chakra-ui/react';
+import NextLink from 'next/link';
+import { useRouter } from 'next/router';
+import React, { ElementType, MouseEventHandler } from 'react';
 
-import { ActiveLink } from './ActiveLink';
-
-interface NavLinkProps extends ChakraLinkProps {
+interface NavLinkProps {
   icon: ElementType;
   href: string;
+  children: React.ReactNode;
+  onClick?: MouseEventHandler<HTMLAnchorElement>;
 }
 
 export const NavLink: React.FC<NavLinkProps> = ({
   icon,
   children,
   href,
-  ...rest
+  onClick,
 }) => {
+  const { asPath } = useRouter();
+  const isActive = asPath === href;
+
   return (
-    <ActiveLink href={href} passHref>
-      <ChakraLink display="flex" alignItems="center" {...rest}>
+    <NextLink
+      href={href}
+      onClick={onClick}
+      style={{ textDecoration: 'none' }}
+    >
+      <Flex align="center" color={isActive ? 'orange.700' : 'gray.600'}>
         <Icon as={icon} fontSize="20" />
         <Text ml="4" fontWeight="medium">
           {children}
         </Text>
-      </ChakraLink>
-    </ActiveLink>
+      </Flex>
+    </NextLink>
   );
 };

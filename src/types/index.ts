@@ -55,6 +55,15 @@ export interface Estimate {
   updatedAt: Timestamp;
 }
 
+export interface OrderEdit {
+  editedAt: Timestamp;
+  editedBy: string;
+  previousCutlist: Cutlist[];
+  previousOrderPrice: number;
+  priceDifference: number;
+  shouldCharge: boolean;
+}
+
 export interface Order {
   cutlist: Cutlist[];
   customer: {
@@ -67,7 +76,6 @@ export interface Order {
     state?: string;
     customerId?: string;
   };
-  orderStore: string;
   deliveryType: string;
   paymentType: string;
   amountDue?: string;
@@ -78,6 +86,7 @@ export interface Order {
   ps?: string;
   createdAt: Timestamp;
   updatedAt: Timestamp;
+  edits?: OrderEdit[];
 }
 
 export interface MaterialRequest {

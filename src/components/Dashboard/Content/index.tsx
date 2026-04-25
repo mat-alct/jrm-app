@@ -9,7 +9,7 @@ interface ContentProps {
 // 2. Use a interface para tipar as props do componente
 export const Content = ({ children }: ContentProps) => {
   return (
-    <Box ml={[0, 0, 0, '17rem']} w="100%">
+    <Box ml={[0, 0, 0, '20rem']} w="100%">
       <Flex
         direction="column"
         as="main"

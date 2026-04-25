@@ -9,10 +9,10 @@ interface NavSectionProps {
 export const NavSection: React.FC<NavSectionProps> = ({ title, children }) => {
   return (
     <Box>
-      <Text fontWeight="bold" color="orange.900">
+      <Text fontWeight="bold" fontSize="sm" color="orange.900">
         {title}
       </Text>
-      <Stack gap="4" mt="4" align="stretch">
+      <Stack gap="3" mt="3" align="stretch">
         {children}
       </Stack>
     </Box>

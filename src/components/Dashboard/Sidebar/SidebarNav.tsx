@@ -1,5 +1,4 @@
 import { Flex, Image, VStack } from '@chakra-ui/react';
-import firebase from 'firebase/app';
 import { BsArrowLeftRight } from 'react-icons/bs';
 import {
   FaClipboardList,
@@ -7,14 +6,13 @@ import {
   FaRegSquare,
   FaSignOutAlt,
   FaSlack,
-  FaUser,
   FaUserAstronaut,
 } from 'react-icons/fa';
 
 import { NavLink } from './NavLink';
 import { NavSection } from './NavSection';
 
-import { useAuth } from '../../../hooks/authContext'; // Importando o novo hook
+import { useAuth } from '../../../hooks/authContext';
 
 export const SidebarNav: React.FC = () => {
   const { signOut } = useAuth();
@@ -22,23 +20,24 @@ export const SidebarNav: React.FC = () => {
   return (
     <Flex
       direction="column"
-      minH="100vh"
-      h="100%"
+      h="100vh"
       align="flex-start"
       borderRight={['', '', '', '1px solid']}
       borderColor={['', '', '', 'gray.200']}
-      w={['', '', '', '17rem']}
+      w={['', '', '', '20rem']}
       position={[null, null, null, 'fixed']}
     >
       <Image
         src="/images/logo.svg"
         alt="Logotipo"
-        boxSize="200px"
+        w="220px"
+        h="auto"
         mx="auto"
-        mb={12}
-        mt={10}
+        mt={5}
+        mb={4}
+        flexShrink={0}
       />
-      <VStack gap={8} ml={[4, 4, 4, 8]} align="flex-start">
+      <VStack gap={6} ml={[4, 4, 4, 8]} align="flex-start">
         <NavSection title=" Geral">
           <NavLink icon={FaHome} href="/">
             Início
@@ -59,7 +58,7 @@ export const SidebarNav: React.FC = () => {
           <NavLink icon={FaUserAstronaut} href="/administracao/vendedores">
             Novo vendedor
           </NavLink>
-          <NavLink icon={BsArrowLeftRight} href="/">
+          <NavLink icon={BsArrowLeftRight} href="/administracao/transferencias">
             Transferencias
           </NavLink>
         </NavSection>

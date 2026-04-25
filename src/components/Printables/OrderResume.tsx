@@ -115,6 +115,61 @@ export const OrderResume: React.FC<OrderResumeProps> = ({
 
           <Box w="100%" borderBottomWidth="3px" borderColor="black" mb={4} />
 
+          {/* --- AVISO DE EDIÇÃO (mostra apenas a última) --- */}
+          {order.edits?.length > 0 &&
+            (() => {
+              const last = order.edits[order.edits.length - 1];
+              const when = last.editedAt?.seconds
+                ? format(
+                    new Date(last.editedAt.seconds * 1000),
+                    "dd/MM/yyyy 'às' HH:mm",
+                  )
+                : '';
+              const diff = last.priceDifference ?? 0;
+              const shouldCharge = !!last.shouldCharge && diff !== 0;
+              const formattedDiff = `R$ ${Math.abs(diff)},00`;
+              return (
+                <Box
+                  bg={shouldCharge ? 'black' : 'gray.100'}
+                  color={shouldCharge ? 'white' : 'black'}
+                  borderLeftWidth="6px"
+                  borderColor="black"
+                  px={3}
+                  py={2}
+                  mb={4}
+                >
+                  <Text
+                    fontSize="sm"
+                    fontWeight="black"
+                    textTransform="uppercase"
+                    letterSpacing="wide"
+                  >
+                    ⚠ Pedido editado
+                  </Text>
+                  <Text fontSize="xs" fontWeight="bold">
+                    Editado por {last.editedBy}
+                    {when ? ` em ${when}` : ''}
+                  </Text>
+                  {diff !== 0 && (
+                    <Text fontSize="xs" mt={0.5}>
+                      Diferença de preço:{' '}
+                      <strong>
+                        {diff > 0 ? '+' : '−'}
+                        {formattedDiff}
+                      </strong>
+                    </Text>
+                  )}
+                  {shouldCharge && (
+                    <Text fontSize="sm" fontWeight="black" mt={1}>
+                      A DIFERENÇA DE {formattedDiff} DEVE SER ACERTADA
+                      {diff > 0 ? ' (RECEBER DO CLIENTE)' : ' (DEVOLVER AO CLIENTE)'}
+                      .
+                    </Text>
+                  )}
+                </Box>
+              );
+            })()}
+
           {/* --- DADOS DO CLIENTE --- */}
           <Box mb={4}>
             <Text
@@ -153,93 +208,59 @@ export const OrderResume: React.FC<OrderResumeProps> = ({
             </HStack>
           </Box>
 
-          {/* --- CARTÕES DE INFO --- */}
-          <Grid templateColumns="1fr 1fr" gap={4} mb={4}>
-            {/* Cartão 1: Venda */}
-            <Box
-              border="1px solid"
+          {/* --- CARTÃO ÚNICO DE INFO (Venda + Entrega) --- */}
+          <Box
+            border="1px solid"
+            borderColor="gray.300"
+            p={2}
+            borderRadius="md"
+            bg="gray.50"
+            mb={4}
+          >
+            <Text
+              fontWeight="bold"
+              textTransform="uppercase"
+              fontSize="2xs"
+              color="gray.500"
+              mb={1}
+              borderBottom="1px solid"
               borderColor="gray.300"
-              p={2}
-              borderRadius="md"
-              bg="gray.50"
+              pb={0.5}
             >
-              <Text
-                fontWeight="bold"
-                textTransform="uppercase"
-                fontSize="2xs"
-                color="gray.500"
-                mb={1}
-                borderBottom="1px solid"
-                borderColor="gray.300"
-                pb={0.5}
-              >
-                Informações de Venda
-              </Text>
-              <Grid templateColumns="1fr 1fr" gap={2}>
-                <Box>
-                  <Text fontSize="2xs" color="gray.600">
-                    Vendedor
-                  </Text>
-                  <Text fontWeight="bold" fontSize="xs">
-                    {order.seller || '-'}
-                  </Text>
-                </Box>
-                <Box>
-                  <Text fontSize="2xs" color="gray.600">
-                    Loja
-                  </Text>
-                  <Text fontWeight="bold" fontSize="xs">
-                    {order.orderStore}
-                  </Text>
-                </Box>
-              </Grid>
-            </Box>
-
-            {/* Cartão 2: Entrega */}
-            <Box
-              border="1px solid"
-              borderColor="gray.300"
-              p={2}
-              borderRadius="md"
-              bg="gray.50"
-            >
-              <Text
-                fontWeight="bold"
-                textTransform="uppercase"
-                fontSize="2xs"
-                color="gray.500"
-                mb={1}
-                borderBottom="1px solid"
-                borderColor="gray.300"
-                pb={0.5}
-              >
-                Previsão e Entrega
-              </Text>
-              <Grid templateColumns="1fr 1fr" gap={2}>
-                <Box>
-                  <Text fontSize="2xs" color="gray.600">
-                    Modalidade
-                  </Text>
-                  <Text fontWeight="bold" fontSize="xs">
-                    {order.deliveryType}
-                  </Text>
-                </Box>
-                <Box>
-                  <Text fontSize="2xs" color="gray.600">
-                    Prazo
-                  </Text>
-                  <Text fontWeight="black" fontSize="xs">
-                    {order.deliveryDate?.seconds
-                      ? format(
-                          new Date(order.deliveryDate.seconds * 1000),
-                          'dd/MM/yyyy',
-                        )
-                      : 'A combinar'}
-                  </Text>
-                </Box>
-              </Grid>
-            </Box>
-          </Grid>
+              Resumo do Pedido
+            </Text>
+            <Grid templateColumns="1fr 1fr 1fr" gap={2}>
+              <Box>
+                <Text fontSize="2xs" color="gray.600">
+                  Vendedor
+                </Text>
+                <Text fontWeight="bold" fontSize="xs">
+                  {order.seller || '-'}
+                </Text>
+              </Box>
+              <Box>
+                <Text fontSize="2xs" color="gray.600">
+                  Modalidade
+                </Text>
+                <Text fontWeight="bold" fontSize="xs">
+                  {order.deliveryType}
+                </Text>
+              </Box>
+              <Box>
+                <Text fontSize="2xs" color="gray.600">
+                  Prazo de Entrega
+                </Text>
+                <Text fontWeight="black" fontSize="xs">
+                  {order.deliveryDate?.seconds
+                    ? format(
+                        new Date(order.deliveryDate.seconds * 1000),
+                        'dd/MM/yyyy',
+                      )
+                    : 'A combinar'}
+                </Text>
+              </Box>
+            </Grid>
+          </Box>
 
           {/* OBSERVAÇÕES */}
           {order.ps && (
