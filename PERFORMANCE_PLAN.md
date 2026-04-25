@@ -283,7 +283,7 @@ Extrair `<Table.Row>` (linhas 588-676) para componente próprio com `React.memo`
 
 ## Fase 8 — Cache offline Firestore
 
-### [ ] Passo 8.1 — `persistentLocalCache`
+### [x] Passo 8.1 — `persistentLocalCache`
 
 **Onde:** `src/services/firebase.ts`.
 

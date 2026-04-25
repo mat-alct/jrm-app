@@ -2,7 +2,12 @@
 
 import { getApp, getApps, initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import {
+  getFirestore,
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
+} from 'firebase/firestore';
 
 // Suas credenciais do Firebase, guardadas em variáveis de ambiente
 const firebaseConfig = {
@@ -18,7 +23,17 @@ const firebaseConfig = {
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
 const auth = getAuth(app);
-const db = getFirestore(app);
+
+// persistentLocalCache usa IndexedDB — só funciona no browser.
+// No server (build/SSR), cai no getFirestore padrão.
+const db =
+  typeof window !== 'undefined'
+    ? initializeFirestore(app, {
+        localCache: persistentLocalCache({
+          tabManager: persistentMultipleTabManager(),
+        }),
+      })
+    : getFirestore(app);
 
 // Exporte os serviços que você precisa
 export { app, auth, db };
