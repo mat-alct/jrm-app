@@ -305,7 +305,7 @@ const db = initializeFirestore(app, {
 });
 ```
 
-**Validar:** offline (DevTools > Network > Offline) → app continua respondendo com dados em cache.
+**Validar:** offline (DevTools > Network > Offline) → **navegar pelo menu** entre rotas já carregadas continua mostrando dados (do cache). NÃO testar com F5 — sem PWA/Service Worker, F5 offline sempre falha (`ERR_INTERNET_DISCONNECTED` é do navegador, não do Firestore).
 
 ---
 
