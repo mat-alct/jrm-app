@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
+    "analyze": "cross-env ANALYZE=true next build",
     "start": "next start",
     "lint": "next lint",
     "test": "jest"
@@ -36,6 +37,7 @@
     "yup": "^1.6.1"
   },
   "devDependencies": {
+    "@next/bundle-analyzer": "^16.2.4",
     "@tanstack/react-query-devtools": "^5.81.5",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",
@@ -47,6 +49,7 @@
     "@typescript-eslint/eslint-plugin": "^8.35.1",
     "@typescript-eslint/parser": "^8.35.1",
     "babel-jest": "^30.0.2",
+    "cross-env": "^10.1.0",
     "eslint": "^9.30.1",
     "eslint-config-next": "15.3.4",
     "eslint-config-prettier": "^10.1.5",
