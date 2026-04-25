@@ -49,10 +49,24 @@ import { Dashboard } from '../../components/Dashboard';
 import { Header } from '../../components/Dashboard/Content/Header';
 import { Loader } from '../../components/Loader';
 import { SearchBar } from '../../components/SearchBar';
-import { Tags } from '../../components/Printables/Tags';
-// IMPORTAÇÃO DOS COMPONENTES DE IMPRESSÃO
-import { OrderResume } from '../../components/Printables/OrderResume';
-import { EstimateResume } from '../../components/Printables/EstimateResume';
+import dynamic from 'next/dynamic';
+// IMPORTAÇÃO DOS COMPONENTES DE IMPRESSÃO (lazy — só baixa quando o usuário imprime)
+const Tags = dynamic(
+  () => import('../../components/Printables/Tags').then((m) => m.Tags),
+  { ssr: false },
+);
+const OrderResume = dynamic(
+  () =>
+    import('../../components/Printables/OrderResume').then((m) => m.OrderResume),
+  { ssr: false },
+);
+const EstimateResume = dynamic(
+  () =>
+    import('../../components/Printables/EstimateResume').then(
+      (m) => m.EstimateResume,
+    ),
+  { ssr: false },
+);
 import { toaster } from '@/components/ui/toaster';
 import { useAuth } from '../../hooks/authContext';
 import { useOrder } from '../../hooks/order';
