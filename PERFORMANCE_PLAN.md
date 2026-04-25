@@ -74,7 +74,7 @@
 
 ## Fase 1 — React Query
 
-### [ ] Passo 1.1 — Configurar `staleTime` e `gcTime`
+### [x] Passo 1.1 — Configurar `staleTime` e `gcTime`
 
 **Onde:** `src/services/queryClient.ts`
 
