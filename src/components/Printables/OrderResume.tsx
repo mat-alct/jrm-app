@@ -115,6 +115,33 @@ export const OrderResume: React.FC<OrderResumeProps> = ({
 
           <Box w="100%" borderBottomWidth="3px" borderColor="black" mb={4} />
 
+          {/* --- AVISO DE EDIÇÃO (mostra apenas a última) --- */}
+          {order.edits?.length > 0 &&
+            (() => {
+              const last = order.edits[order.edits.length - 1];
+              const when = last.editedAt?.seconds
+                ? format(
+                    new Date(last.editedAt.seconds * 1000),
+                    "dd/MM/yyyy 'às' HH:mm",
+                  )
+                : '';
+              return (
+                <Box
+                  bg="gray.100"
+                  borderLeftWidth="4px"
+                  borderColor="black"
+                  px={3}
+                  py={2}
+                  mb={4}
+                >
+                  <Text fontSize="xs" fontWeight="bold" color="black">
+                    Pedido editado por {last.editedBy}
+                    {when ? ` em ${when}` : ''}
+                  </Text>
+                </Box>
+              );
+            })()}
+
           {/* --- DADOS DO CLIENTE --- */}
           <Box mb={4}>
             <Text

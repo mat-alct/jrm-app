@@ -31,6 +31,7 @@ import {
   FaCheck,
   FaEdit,
   FaHandshake,
+  FaHistory,
   FaRegFileAlt,
   FaTags,
   FaTrash,
@@ -521,6 +522,17 @@ const Cortes: React.FC = () => {
                             >
                               {isUrgent && <FaExclamationTriangle />}
                               {item.orderStatus}
+                              {item.edits?.length > 0 && (
+                                <Box
+                                  as="span"
+                                  title={`Editado ${item.edits.length}× — última: ${item.edits[item.edits.length - 1]?.editedBy}`}
+                                  ml={1}
+                                  display="inline-flex"
+                                  alignItems="center"
+                                >
+                                  <FaHistory />
+                                </Box>
+                              )}
                             </Box>
                           </Table.Cell>
                           <Table.Cell textAlign="right">
@@ -558,26 +570,28 @@ const Cortes: React.FC = () => {
                                 <FaTags />
                               </IconButton>
 
+                              {item.orderStatus === 'Em Produção' && (
+                                <IconButton
+                                  colorScheme="blue"
+                                  variant="ghost"
+                                  size="sm"
+                                  aria-label="Editar"
+                                  onClick={() =>
+                                    router.push(`/cortes/editar/${item.id}`)
+                                  }
+                                >
+                                  <FaEdit />
+                                </IconButton>
+                              )}
                               {item.orderStatus !== 'Concluído' && (
-                                <>
-                                  <IconButton
-                                    colorScheme="blue"
-                                    variant="ghost"
-                                    size="sm"
-                                    disabled
-                                    aria-label="Editar"
-                                  >
-                                    <FaEdit />
-                                  </IconButton>
-                                  <IconButton
-                                    colorScheme="green"
-                                    size="sm"
-                                    aria-label="Concluir"
-                                    onClick={() => updateCutlistStatus(item.id)}
-                                  >
-                                    <FaCheck />
-                                  </IconButton>
-                                </>
+                                <IconButton
+                                  colorScheme="green"
+                                  size="sm"
+                                  aria-label="Concluir"
+                                  onClick={() => updateCutlistStatus(item.id)}
+                                >
+                                  <FaCheck />
+                                </IconButton>
                               )}
                             </HStack>
                           </Table.Cell>

@@ -5,6 +5,7 @@ import React, { createContext, ReactNode, useContext } from 'react';
 
 // Importações do Firebase Modular
 import {
+  arrayUnion,
   collection,
   doc,
   getDoc,
@@ -14,6 +15,7 @@ import {
   orderBy,
   query,
   setDoc,
+  Timestamp,
   updateDoc,
   where,
   getCountFromServer,
@@ -24,7 +26,7 @@ import {
 
 import { db } from '../services/firebase';
 import { queryClient } from '../services/queryClient';
-import { Estimate, Order } from '../types';
+import { Cutlist, Estimate, Order, OrderEdit } from '../types';
 import { removeUndefinedAndEmptyFields } from '../utils/removeUndefinedAndEmpty';
 
 export interface PagedResult {
@@ -32,6 +34,10 @@ export interface PagedResult {
   totalCount: number;
   lastDoc: QueryDocumentSnapshot<DocumentData> | null;
 }
+
+export type UpdateOrderCutlistResult =
+  | { success: true; editedBy: string; priceDifference: number }
+  | { success: false; reason: 'invalid-password' | 'order-missing' | 'error' };
 
 interface OrderContext {
   createEstimate: (estimateData: Estimate) => Promise<void>;
@@ -45,6 +51,12 @@ interface OrderContext {
     searchFilter: string | undefined,
     type: string,
   ) => Promise<(DocumentData & { id: string })[]>;
+  updateOrderCutlist: (
+    id: string,
+    newCutlist: Cutlist[],
+    sellerPassword: string,
+    shouldCharge: boolean,
+  ) => Promise<UpdateOrderCutlistResult>;
 }
 
 interface OrderPropsWithOrderCode extends Order {
@@ -271,9 +283,90 @@ export const OrderProvider = ({ children }: OrderProviderProps) => {
     }
   };
 
+  const sumCutlistPrice = (items: Cutlist[]) =>
+    items.reduce((acc, item) => acc + (item.price ?? 0), 0);
+
+  // Remove campos `undefined` recursivamente (Firestore não aceita undefined).
+  const stripUndefined = <T,>(value: T): T => {
+    if (Array.isArray(value)) {
+      return value.map(item => stripUndefined(item)) as unknown as T;
+    }
+    if (value && typeof value === 'object' && !(value instanceof Timestamp)) {
+      const out: Record<string, unknown> = {};
+      Object.entries(value as Record<string, unknown>).forEach(([k, v]) => {
+        if (v === undefined) return;
+        out[k] = stripUndefined(v);
+      });
+      return out as T;
+    }
+    return value;
+  };
+
+  const updateOrderCutlist = async (
+    id: string,
+    newCutlist: Cutlist[],
+    sellerPassword: string,
+    shouldCharge: boolean,
+  ): Promise<UpdateOrderCutlistResult> => {
+    try {
+      const sellersRef = collection(db, 'sellers');
+      const sellerQuery = query(
+        sellersRef,
+        where('password', '==', sellerPassword),
+      );
+      const sellerSnap = await getDocs(sellerQuery);
+      if (sellerSnap.empty) {
+        return { success: false, reason: 'invalid-password' };
+      }
+      const editedBy = sellerSnap.docs[0].data().name as string;
+
+      const orderRef = doc(db, 'orders', id);
+      const orderSnap = await getDoc(orderRef);
+      if (!orderSnap.exists()) {
+        return { success: false, reason: 'order-missing' };
+      }
+      const order = orderSnap.data() as Order & { orderPrice?: number };
+
+      const previousCutlist = order.cutlist ?? [];
+      const previousOrderPrice =
+        order.orderPrice ?? sumCutlistPrice(previousCutlist);
+      const newOrderPrice = sumCutlistPrice(newCutlist);
+      const priceDifference = newOrderPrice - previousOrderPrice;
+
+      const edit: OrderEdit = stripUndefined({
+        editedAt: Timestamp.fromDate(new Date()),
+        editedBy,
+        previousCutlist,
+        previousOrderPrice,
+        priceDifference,
+        shouldCharge: priceDifference === 0 ? false : shouldCharge,
+      });
+
+      await updateDoc(orderRef, {
+        cutlist: stripUndefined(newCutlist),
+        orderPrice: newOrderPrice,
+        updatedAt: Timestamp.fromDate(new Date()),
+        edits: arrayUnion(edit),
+      });
+
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+
+      return { success: true, editedBy, priceDifference };
+    } catch (err) {
+      console.error('Erro ao atualizar pedido:', err);
+      return { success: false, reason: 'error' };
+    }
+  };
+
   return (
     <OrderContext.Provider
-      value={{ createEstimate, createOrder, getOrders, getOrdersBySearch }}
+      value={{
+        createEstimate,
+        createOrder,
+        getOrders,
+        getOrdersBySearch,
+        updateOrderCutlist,
+      }}
     >
       {children}
     </OrderContext.Provider>

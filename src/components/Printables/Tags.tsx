@@ -204,6 +204,32 @@ export const Tags: React.FC<TagsProps> = ({ order, onAfterPrint }) => {
                 </Box>
               </Flex>
 
+              {/* AVISO DE EDIÇÃO (última apenas) */}
+              {orderData.edits && orderData.edits.length > 0 && (
+                <Box
+                  bg="gray.100"
+                  borderBottom="1px solid black"
+                  px={2}
+                  py={0.5}
+                >
+                  <Text fontSize="10px" fontWeight="bold" color="black">
+                    Pedido editado por{' '}
+                    {orderData.edits[orderData.edits.length - 1].editedBy}
+                    {orderData.edits[orderData.edits.length - 1].editedAt
+                      ?.seconds
+                      ? ' em ' +
+                        format(
+                          new Date(
+                            orderData.edits[orderData.edits.length - 1].editedAt
+                              .seconds * 1000,
+                          ),
+                          "dd/MM/yyyy 'às' HH:mm",
+                        )
+                      : ''}
+                  </Text>
+                </Box>
+              )}
+
               <Grid templateColumns="1.3fr 1.4fr 0.9fr" gap={0} fontSize="10px">
                 {/* Coluna 1: Contato */}
                 <GridItem p={1} borderRight="1px solid" borderColor="black">

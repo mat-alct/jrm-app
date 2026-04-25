@@ -7,6 +7,7 @@ import { AuthProvider } from '../hooks/authContext';
 import { Providers } from '../hooks';
 import { queryClient } from '../services/queryClient';
 import { theme } from '../styles/theme';
+import { Toaster } from '@/components/ui/toaster';
 import '../styles/reactPrintStyles.css';
 
 function MyApp({ Component, pageProps }: AppProps) {
@@ -18,6 +19,7 @@ function MyApp({ Component, pageProps }: AppProps) {
             <Component {...pageProps} />
           </AuthProvider>
         </Providers>
+        <Toaster />
         <ReactQueryDevtools />
       </QueryClientProvider>
     </ChakraProvider>
