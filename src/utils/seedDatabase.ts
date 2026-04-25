@@ -53,7 +53,6 @@ const bairros = [
   'Verolme',
   'Bracuí',
 ];
-const lojas = ['Japuíba', 'Frade'];
 
 export const seedDatabase = async () => {
   const batch = writeBatch(db);
@@ -106,7 +105,6 @@ export const seedDatabase = async () => {
           price: randomNumber(50, 500),
         },
       ],
-      orderStore: randomItem(lojas),
       deliveryType: Math.random() > 0.5 ? 'Entrega' : 'Retirar na Loja',
       paymentType: Math.random() > 0.5 ? 'Pago' : 'Receber na Entrega',
       orderStatus: isCompleted

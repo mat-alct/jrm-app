@@ -24,16 +24,17 @@ export const SidebarNav: React.FC = () => {
       align="flex-start"
       borderRight={['', '', '', '1px solid']}
       borderColor={['', '', '', 'gray.200']}
-      w={['', '', '', '17rem']}
+      w={['', '', '', '20rem']}
       position={[null, null, null, 'fixed']}
     >
       <Image
         src="/images/logo.svg"
         alt="Logotipo"
-        boxSize="110px"
+        w="220px"
+        h="auto"
         mx="auto"
-        mt={3}
-        mb={3}
+        mt={5}
+        mb={4}
         flexShrink={0}
       />
       <VStack gap={6} ml={[4, 4, 4, 8]} align="flex-start">

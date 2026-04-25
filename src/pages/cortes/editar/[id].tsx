@@ -241,7 +241,7 @@ const EditarPedido = () => {
             {order.customer?.telephone && ` · ${order.customer.telephone}`}
           </Text>
           <Text fontSize="sm" color="gray.600" mt={1}>
-            Loja: {order.orderStore} · Vendedor original: {order.seller}
+            Vendedor original: {order.seller}
           </Text>
         </Box>
 

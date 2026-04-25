@@ -5,7 +5,6 @@ import {
   Button,
   Flex,
   Heading,
-  HStack,
   Stack,
   Text,
   Textarea,
@@ -14,6 +13,7 @@ import {
   Switch,
   Icon,
 } from '@chakra-ui/react';
+import { toaster } from '@/components/ui/toaster';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useRouter } from 'next/router';
 import React from 'react';
@@ -57,7 +57,6 @@ interface CreateOrderProps {
   telephone: string;
   address: string;
   area: string;
-  orderStore: string;
   deliveryType: string;
   paymentType: string;
   deliveryDate: Date;
@@ -113,7 +112,14 @@ export const OrderData = ({
       });
       return;
     }
-    const seller = querySnapshot.docs[0].data().name;
+    const seller = querySnapshot.docs[0].data().name as string | undefined;
+    if (!seller) {
+      createOrderSetError('sellerPassword', {
+        type: 'value',
+        message: 'Vendedor sem nome cadastrado. Avise o administrador.',
+      });
+      return;
+    }
 
     if (orderType === 'Serviço' && orderData.deliveryType === 'Entrega') {
       if (!orderData.telephone)
@@ -160,8 +166,14 @@ export const OrderData = ({
         });
         localStorage.removeItem('app@jrmcompensados:cutlist');
         router.push('/cortes/listadecortes');
-        return;
-      } catch {}
+      } catch (err) {
+        console.error('Erro ao criar orçamento:', err);
+        toaster.create({
+          type: 'error',
+          description: 'Não foi possível criar o orçamento.',
+        });
+      }
+      return;
     }
 
     try {
@@ -169,7 +181,6 @@ export const OrderData = ({
         cutlist,
         customer,
         orderStatus: 'Em Produção',
-        orderStore: orderData.orderStore,
         paymentType: orderData.paymentType,
         deliveryType: orderData.deliveryType,
         amountDue: orderData.amountDue || 'Total',
@@ -183,7 +194,13 @@ export const OrderData = ({
       localStorage.removeItem('app@jrmcompensados:cutlist');
       if (estimateId) await deleteDoc(doc(db, 'estimates', estimateId));
       router.push('/cortes/listadecortes');
-    } catch {}
+    } catch (err) {
+      console.error('Erro ao criar pedido:', err);
+      toaster.create({
+        type: 'error',
+        description: 'Não foi possível criar o pedido.',
+      });
+    }
   };
 
   return (
@@ -334,22 +351,30 @@ export const OrderData = ({
 
               <Box borderTopWidth="1px" borderColor="gray.100" my={2} />
 
-              <SimpleGrid columns={[1, 1, 3]} gap={6}>
-                <Stack gap={4}>
-                  <FormRadio
-                    options={['Japuíba', 'Frade']}
-                    label="Loja Responsável"
-                    name="orderStore"
-                    control={createOrderControl}
-                  />
-                  <FormRadio
-                    options={['Retirar na Loja', 'Entrega']}
-                    label="Logística"
-                    name="deliveryType"
-                    control={createOrderControl}
-                  />
-                </Stack>
-                <Stack gap={4}>
+              {/* Grid 2 colunas — Logística+Data | Pagamento+Valor */}
+              <SimpleGrid columns={[1, 1, 2]} gap={6}>
+                {/* Coluna 1: Logística + Previsão */}
+                <Stack
+                  gap={4}
+                  bg="gray.50"
+                  p={4}
+                  borderRadius="md"
+                  borderWidth="1px"
+                  borderColor="gray.200"
+                >
+                  <Box>
+                    <FormRadio
+                      options={['Retirar na Loja', 'Entrega']}
+                      label="Logística"
+                      name="deliveryType"
+                      control={createOrderControl}
+                    />
+                    {createOrderErrors.deliveryType && (
+                      <Text fontSize="xs" color="red.500" mt={1}>
+                        {createOrderErrors.deliveryType.message as string}
+                      </Text>
+                    )}
+                  </Box>
                   <Box>
                     <Text
                       mb={2}
@@ -364,15 +389,31 @@ export const OrderData = ({
                       control={createOrderControl}
                     />
                   </Box>
-                  <FormRadio
-                    options={['Pago', 'Receber na Entrega']}
-                    label="Status Pagamento"
-                    name="paymentType"
-                    control={createOrderControl}
-                  />
                 </Stack>
-                <Stack gap={4} justify="flex-end">
-                  {paymentType === 'Receber na Entrega' && (
+
+                {/* Coluna 2: Pagamento + Valor a Receber */}
+                <Stack
+                  gap={4}
+                  bg="gray.50"
+                  p={4}
+                  borderRadius="md"
+                  borderWidth="1px"
+                  borderColor="gray.200"
+                >
+                  <Box>
+                    <FormRadio
+                      options={['Pago', 'Receber na Entrega']}
+                      label="Status Pagamento"
+                      name="paymentType"
+                      control={createOrderControl}
+                    />
+                    {createOrderErrors.paymentType && (
+                      <Text fontSize="xs" color="red.500" mt={1}>
+                        {createOrderErrors.paymentType.message as string}
+                      </Text>
+                    )}
+                  </Box>
+                  {paymentType === 'Receber na Entrega' ? (
                     <Box
                       bg="orange.50"
                       p={3}
@@ -390,6 +431,20 @@ export const OrderData = ({
                       />
                       <Text fontSize="xs" color="orange.700" mt={1}>
                         * Se vazio, cobraremos o total.
+                      </Text>
+                    </Box>
+                  ) : (
+                    <Box
+                      bg="white"
+                      p={3}
+                      borderRadius="md"
+                      borderWidth="1px"
+                      borderStyle="dashed"
+                      borderColor="gray.300"
+                    >
+                      <Text fontSize="xs" color="gray.500">
+                        Selecione &ldquo;Receber na Entrega&rdquo; para informar
+                        o valor a cobrar.
                       </Text>
                     </Box>
                   )}
@@ -413,12 +468,13 @@ export const OrderData = ({
 
       {/* 3. BARRA DE FINALIZAÇÃO */}
       <Box
-        bg="gray.800"
+        bg="white"
         p={6}
         borderRadius="xl"
-        shadow="lg"
+        shadow="sm"
+        borderWidth="1px"
+        borderColor="gray.200"
         mt={4}
-        color="white"
       >
         <Flex
           direction={['column', 'column', 'row']}
@@ -428,21 +484,21 @@ export const OrderData = ({
         >
           {/* Lado Esquerdo: Senha (Limitado a 300px) */}
           <Box w="100%" maxW="300px">
-            {/* CORREÇÃO: Label alterado e placeholder removido */}
-            <Text mb={2} fontWeight="bold" color="gray.300">
+            <Text mb={2} fontWeight="bold" color="gray.700">
               Senha do Vendedor
             </Text>
             <Flex align="center" gap={3}>
-              <Icon as={FaLock} color="orange.400" boxSize={5} />
+              <Icon as={FaLock} color="orange.500" boxSize={5} />
               <FormInput
                 {...createOrderRegister('sellerPassword')}
                 error={createOrderErrors.sellerPassword}
                 name="sellerPassword"
                 type="password"
                 size="lg"
-                bg="gray.700"
-                border="none"
-                color="white"
+                bg="gray.50"
+                borderWidth="1px"
+                borderColor="gray.300"
+                color="gray.800"
               />
             </Flex>
           </Box>

@@ -205,43 +205,63 @@ export const Tags: React.FC<TagsProps> = ({ order, onAfterPrint }) => {
               </Flex>
 
               {/* AVISO DE EDIÇÃO (última apenas) */}
-              {orderData.edits && orderData.edits.length > 0 && (
-                <Box
-                  bg="gray.100"
-                  borderBottom="1px solid black"
-                  px={2}
-                  py={0.5}
-                >
-                  <Text fontSize="10px" fontWeight="bold" color="black">
-                    Pedido editado por{' '}
-                    {orderData.edits[orderData.edits.length - 1].editedBy}
-                    {orderData.edits[orderData.edits.length - 1].editedAt
-                      ?.seconds
-                      ? ' em ' +
-                        format(
-                          new Date(
-                            orderData.edits[orderData.edits.length - 1].editedAt
-                              .seconds * 1000,
-                          ),
-                          "dd/MM/yyyy 'às' HH:mm",
-                        )
-                      : ''}
-                  </Text>
-                </Box>
-              )}
+              {orderData.edits &&
+                orderData.edits.length > 0 &&
+                (() => {
+                  const last =
+                    orderData.edits![orderData.edits!.length - 1];
+                  const diff = last.priceDifference ?? 0;
+                  const shouldCharge = !!last.shouldCharge && diff !== 0;
+                  const formattedDiff = `R$ ${Math.abs(diff)},00`;
+                  const when = last.editedAt?.seconds
+                    ? ' em ' +
+                      format(
+                        new Date(last.editedAt.seconds * 1000),
+                        "dd/MM/yyyy 'às' HH:mm",
+                      )
+                    : '';
+                  return (
+                    <Box
+                      bg={shouldCharge ? 'black' : 'gray.200'}
+                      color={shouldCharge ? 'white' : 'black'}
+                      borderBottom="1px solid black"
+                      px={2}
+                      py={0.5}
+                    >
+                      <Text fontSize="10px" fontWeight="900">
+                        ⚠ PEDIDO EDITADO por {last.editedBy}
+                        {when}
+                      </Text>
+                      {shouldCharge && (
+                        <Text fontSize="11px" fontWeight="900">
+                          ACERTAR DIFERENÇA DE {formattedDiff}
+                          {diff > 0
+                            ? ' (RECEBER DO CLIENTE)'
+                            : ' (DEVOLVER AO CLIENTE)'}
+                        </Text>
+                      )}
+                    </Box>
+                  );
+                })()}
 
-              <Grid templateColumns="1.3fr 1.4fr 0.9fr" gap={0} fontSize="10px">
+              <Grid templateColumns="1fr 1.5fr 1fr" gap={0} fontSize="10px">
                 {/* Coluna 1: Contato */}
                 <GridItem p={1} borderRight="1px solid" borderColor="black">
                   <Text>
-                    <b>Tel:</b> {orderData.customer.telephone}
+                    <b>Tel:</b> {orderData.customer.telephone || '—'}
                   </Text>
                   <Text>
                     <b>Vendedor:</b> {orderData.seller}
                   </Text>
-                  <Text>
-                    <b>Loja:</b> {orderData.orderStore}
-                  </Text>
+                  {orderData.createdAt?.seconds && (
+                    <Text>
+                      <b>Pedido em:</b>{' '}
+                      {format(
+                        new Date(orderData.createdAt.seconds * 1000),
+                        'dd/MM/yyyy',
+                      )}
+                    </Text>
+                  )}
                 </GridItem>
 
                 {/* Coluna 2: Logística */}

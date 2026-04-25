@@ -8,7 +8,6 @@ export const createOrderSchema = Yup.object().shape({
   address: Yup.string().default(''),
   area: Yup.string().default(''),
   // City removido da validação obrigatória
-  orderStore: Yup.string().required('Selecione a loja do pedido'),
   deliveryType: Yup.string().required('Selecione o tipo de entrega'),
   paymentType: Yup.string().required('Selecione a forma de pagamento'),
   ps: Yup.string().default(''),
@@ -27,7 +26,6 @@ export const createEstimateSchema = Yup.object().shape({
   telephone: Yup.string().default(''),
   address: Yup.string().notRequired(),
   area: Yup.string().notRequired(),
-  orderStore: Yup.string().notRequired(),
   deliveryType: Yup.string().notRequired(),
   paymentType: Yup.string().notRequired(),
   ps: Yup.string().default(''),

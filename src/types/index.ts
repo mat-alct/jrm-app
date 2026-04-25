@@ -76,7 +76,6 @@ export interface Order {
     state?: string;
     customerId?: string;
   };
-  orderStore: string;
   deliveryType: string;
   paymentType: string;
   amountDue?: string;
