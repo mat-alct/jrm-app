@@ -6,10 +6,18 @@ import {
   Fieldset
 } from '@chakra-ui/react';
 import { addDays, getDay, isWeekend } from 'date-fns';
-import ptBR from 'date-fns/locale/pt-BR';
-import React from 'react';
-import DatePicker, { registerLocale } from 'react-datepicker';
+import dynamic from 'next/dynamic';
+import React, { type FC } from 'react';
+import type { DatePickerProps as ReactDatePickerProps } from 'react-datepicker';
 import { Control, useController } from 'react-hook-form';
+
+const DatePicker = dynamic(
+  () =>
+    import('react-datepicker') as unknown as Promise<{
+      default: FC<ReactDatePickerProps>;
+    }>,
+  { ssr: false },
+);
 
 interface DatePickerProps {
   name: string;

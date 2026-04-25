@@ -154,7 +154,7 @@ Adicionar:
 
 ## Fase 3 — Otimização de bundle
 
-### [ ] Passo 3.1 — Lazy-load dos componentes de impressão
+### [x] Passo 3.1 — Lazy-load dos componentes de impressão
 
 **Onde:** `src/pages/cortes/listadecortes.tsx` (linhas 52-55).
 
@@ -178,7 +178,7 @@ const EstimateResume = dynamic(
 
 **Validar:** `npm run analyze` — deve aparecer chunks separados.
 
-### [ ] Passo 3.2 — Lazy-load do `react-datepicker`
+### [x] Passo 3.2 — Lazy-load do `react-datepicker`
 
 **Onde:** `src/components/Form/DatePicker.tsx`.
 
