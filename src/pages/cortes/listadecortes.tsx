@@ -20,7 +20,7 @@ import {
 } from 'firebase/firestore';
 import Head from 'next/head';
 import Router from 'next/router';
-import React, { useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   FaExclamationTriangle,
   FaChevronLeft,
@@ -153,92 +153,111 @@ const Cortes: React.FC = () => {
   );
 
   // --- Ações ---
-  const handlePrintLabels = (orderData: any) => {
+  // Handlers em useCallback: refs estáveis garantem que cards/rows memoizados
+  // não re-renderizem quando o pai atualiza (ex: abrir um Dialog).
+  const handlePrintLabels = useCallback((orderData: any) => {
     setPrintingLabelsOrder(orderData);
-  };
+  }, []);
 
-  const handlePrintResume = (data: any, type: 'order' | 'estimate') => {
-    setPrintingResume({ data, type });
-  };
+  const handlePrintResume = useCallback(
+    (data: any, type: 'order' | 'estimate') => {
+      setPrintingResume({ data, type });
+    },
+    [],
+  );
 
-  const approveEstimate = async (id: string) => {
-    try {
-      const estimateRef = doc(db, 'estimates', id);
-      const estimateSnap = await getDoc(estimateRef);
-      if (estimateSnap.exists()) {
-        const estimateData = {
-          ...estimateSnap.data(),
-          id: estimateSnap.id,
-        } as Estimate & { id: string };
-        router.push({
-          pathname: '/cortes/novoservico',
-          query: {
-            orderType: 'estimate',
-            cutlist: JSON.stringify(estimateData.cutlist),
-            estimateId: estimateData.id,
-          },
+  const approveEstimate = useCallback(
+    async (id: string) => {
+      try {
+        const estimateRef = doc(db, 'estimates', id);
+        const estimateSnap = await getDoc(estimateRef);
+        if (estimateSnap.exists()) {
+          const estimateData = {
+            ...estimateSnap.data(),
+            id: estimateSnap.id,
+          } as Estimate & { id: string };
+          router.push({
+            pathname: '/cortes/novoservico',
+            query: {
+              orderType: 'estimate',
+              cutlist: JSON.stringify(estimateData.cutlist),
+              estimateId: estimateData.id,
+            },
+          });
+        }
+      } catch (error) {
+        toast.create({
+          type: 'error',
+          description: 'Erro ao carregar orçamento.',
         });
       }
-    } catch (error) {
-      toast.create({
-        type: 'error',
-        description: 'Erro ao carregar orçamento.',
-      });
-    }
-  };
+    },
+    [router, toast],
+  );
 
-  const updateCutlistStatus = async (id: string) => {
-    let nextState;
-    setAdvancingStatus(true);
-    try {
-      const orderRef = doc(db, 'orders', id);
-      const orderSnap = await getDoc(orderRef);
-      if (!orderSnap.exists()) return;
-      const order = { ...orderSnap.data(), id: orderSnap.id } as Order & {
-        id: string;
-      };
+  const updateCutlistStatus = useCallback(
+    async (id: string) => {
+      let nextState;
+      setAdvancingStatus(true);
+      try {
+        const orderRef = doc(db, 'orders', id);
+        const orderSnap = await getDoc(orderRef);
+        if (!orderSnap.exists()) return;
+        const order = { ...orderSnap.data(), id: orderSnap.id } as Order & {
+          id: string;
+        };
 
-      switch (order.orderStatus) {
-        case 'Em Produção':
-          nextState = 'Liberado para Transporte';
-          break;
-        case 'Liberado para Transporte':
-          nextState = 'Concluído';
-          break;
-        default:
-          nextState = null;
-          break;
+        switch (order.orderStatus) {
+          case 'Em Produção':
+            nextState = 'Liberado para Transporte';
+            break;
+          case 'Liberado para Transporte':
+            nextState = 'Concluído';
+            break;
+          default:
+            nextState = null;
+            break;
+        }
+
+        if (nextState) {
+          await updateDoc(orderRef, { orderStatus: nextState });
+          refetch();
+          toast.create({
+            type: 'success',
+            description: `Status atualizado para ${nextState}`,
+          });
+        }
+      } catch {
+        toast.create({ type: 'error', description: 'Erro ao concluir etapa' });
+      } finally {
+        setAdvancingStatus(false);
+        setConfirmingStatusOrder(null);
       }
+    },
+    [refetch, toast],
+  );
 
-      if (nextState) {
-        await updateDoc(orderRef, { orderStatus: nextState });
+  const handleRemove = useCallback(
+    async (id: string, type: 'orders' | 'estimates') => {
+      try {
+        const docRef = doc(db, type, id);
+        await deleteDoc(docRef);
         refetch();
         toast.create({
           type: 'success',
-          description: `Status atualizado para ${nextState}`,
+          description: 'Item excluído com sucesso',
         });
+      } catch {
+        toast.create({ type: 'error', description: 'Erro ao remover item' });
       }
-    } catch {
-      toast.create({ type: 'error', description: 'Erro ao concluir etapa' });
-    } finally {
-      setAdvancingStatus(false);
-      setConfirmingStatusOrder(null);
-    }
-  };
+    },
+    [refetch, toast],
+  );
 
-  const handleRemove = async (id: string, type: 'orders' | 'estimates') => {
-    try {
-      const docRef = doc(db, type, id);
-      await deleteDoc(docRef);
-      refetch();
-      toast.create({
-        type: 'success',
-        description: 'Item excluído com sucesso',
-      });
-    } catch {
-      toast.create({ type: 'error', description: 'Erro ao remover item' });
-    }
-  };
+  const handleEdit = useCallback(
+    (id: string) => router.push(`/cortes/editar/${id}`),
+    [router],
+  );
 
   // --- Busca ---
   const [searchQuery, setSearchQuery] = useState<string | undefined>(undefined);
@@ -261,8 +280,13 @@ const Cortes: React.FC = () => {
 
   if (!user) return <Loader />;
 
-  const dataToShow =
-    searchQuery && searchData ? searchData : pagedResult?.data || [];
+  // useMemo evita criar [] novo a cada render quando lista está vazia
+  // (caso contrário o React.memo nos cards/rows não tem efeito).
+  const dataToShow = useMemo(
+    () =>
+      searchQuery && searchData ? searchData : pagedResult?.data || [],
+    [searchQuery, searchData, pagedResult?.data],
+  );
   const isEstimateList = ordersFilter === 'Orçamento';
   const isLoading = searchQuery ? isSearchLoading : isInitialLoading;
 
@@ -427,7 +451,7 @@ const Cortes: React.FC = () => {
               onRemove={handleRemove}
               onShowHistory={setHistoryOrder}
               onConfirmStatus={setConfirmingStatusOrder}
-              onEdit={(id) => router.push(`/cortes/editar/${id}`)}
+              onEdit={handleEdit}
             />
           ) : (
             <OrderListDesktop
@@ -441,7 +465,7 @@ const Cortes: React.FC = () => {
               onRemove={handleRemove}
               onShowHistory={setHistoryOrder}
               onConfirmStatus={setConfirmingStatusOrder}
-              onEdit={(id) => router.push(`/cortes/editar/${id}`)}
+              onEdit={handleEdit}
             />
           )}
 

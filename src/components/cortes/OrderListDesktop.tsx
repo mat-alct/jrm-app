@@ -24,9 +24,228 @@ import {
   FaTrash,
 } from 'react-icons/fa';
 
-import type { OrderListProps } from './OrderListTypes';
+import type { OrderListCallbacks, OrderListProps } from './OrderListTypes';
 
-export const OrderListDesktop: React.FC<OrderListProps> = ({
+type RowVisualProps = {
+  bg: string;
+  hoverBg: string;
+};
+
+type EstimateRowProps = {
+  item: any;
+} & RowVisualProps &
+  Pick<OrderListCallbacks, 'onPrintResume' | 'onApproveEstimate' | 'onRemove'>;
+
+const EstimateRow = React.memo<EstimateRowProps>(
+  ({ item, bg, hoverBg, onPrintResume, onApproveEstimate, onRemove }) => (
+    <Table.Row bg={bg} _hover={{ bg: hoverBg }}>
+      <Table.Cell fontWeight="bold">{item.estimateCode}</Table.Cell>
+      <Table.Cell>{item.name}</Table.Cell>
+      <Table.Cell>Orçamento</Table.Cell>
+      <Table.Cell>
+        <Box
+          as="span"
+          px={2}
+          py={1}
+          borderRadius="md"
+          fontSize="xs"
+          fontWeight="bold"
+          bg="gray.100"
+          color="gray.800"
+        >
+          Pendente
+        </Box>
+      </Table.Cell>
+      <Table.Cell
+        textAlign="right"
+        fontWeight="bold"
+      >{`R$ ${item.estimatePrice},00`}</Table.Cell>
+      <Table.Cell>
+        <HStack gap={2} justify="flex-end">
+          <IconButton
+            colorScheme="gray"
+            variant="ghost"
+            size="sm"
+            aria-label="Imprimir Orçamento"
+            onClick={() => onPrintResume(item, 'estimate')}
+          >
+            <FaRegFileAlt />
+          </IconButton>
+          <IconButton
+            colorScheme="red"
+            variant="ghost"
+            size="sm"
+            aria-label="Remover"
+            onClick={() => onRemove(item.id, 'estimates')}
+          >
+            <FaTrash />
+          </IconButton>
+          <IconButton
+            colorScheme="green"
+            size="sm"
+            aria-label="Aprovar"
+            onClick={() => onApproveEstimate(item.id)}
+          >
+            <FaHandshake />
+          </IconButton>
+        </HStack>
+      </Table.Cell>
+    </Table.Row>
+  ),
+);
+EstimateRow.displayName = 'EstimateRow';
+
+type OrderRowProps = {
+  item: any;
+} & RowVisualProps &
+  Pick<
+    OrderListCallbacks,
+    | 'onPrintResume'
+    | 'onPrintLabels'
+    | 'onShowHistory'
+    | 'onConfirmStatus'
+    | 'onEdit'
+  >;
+
+const OrderRow = React.memo<OrderRowProps>(
+  ({
+    item,
+    bg,
+    hoverBg,
+    onPrintResume,
+    onPrintLabels,
+    onShowHistory,
+    onConfirmStatus,
+    onEdit,
+  }) => {
+    const isUrgent = item?.isUrgent;
+    return (
+      <Table.Row bg={bg} _hover={{ bg: hoverBg }}>
+        <Table.Cell fontWeight="bold">{item.orderCode}</Table.Cell>
+        <Table.Cell>
+          <Flex direction="column">
+            <Text fontWeight="medium">
+              {item.customer?.name || 'Cliente Removido'}
+            </Text>
+            {item.customer?.telephone && (
+              <Text fontSize="xs" color="gray.500">
+                {item.customer.telephone}
+              </Text>
+            )}
+          </Flex>
+        </Table.Cell>
+        <Table.Cell>
+          <Box
+            as="span"
+            px={2}
+            py={1}
+            borderRadius="md"
+            fontSize="xs"
+            fontWeight="bold"
+            display="inline-flex"
+            alignItems="center"
+            gap={1}
+            bg={
+              item.orderStatus === 'Concluído'
+                ? 'green.100'
+                : item.orderStatus === 'Em Produção'
+                  ? 'orange.100'
+                  : 'blue.100'
+            }
+            color={
+              item.orderStatus === 'Concluído'
+                ? 'green.800'
+                : item.orderStatus === 'Em Produção'
+                  ? 'orange.800'
+                  : 'blue.800'
+            }
+          >
+            {isUrgent && <FaExclamationTriangle />}
+            {item.orderStatus}
+            {item.edits?.length > 0 && (
+              <Box
+                as="span"
+                title={`Editado ${item.edits.length}× — última: ${item.edits[item.edits.length - 1]?.editedBy}`}
+                ml={1}
+                display="inline-flex"
+                alignItems="center"
+              >
+                <FaHistory />
+              </Box>
+            )}
+          </Box>
+        </Table.Cell>
+        <Table.Cell textAlign="right">
+          {item.deliveryDate?.seconds
+            ? format(new Date(item.deliveryDate.seconds * 1000), 'dd/MM/yyyy')
+            : '-'}
+        </Table.Cell>
+        <Table.Cell
+          textAlign="right"
+          fontWeight="bold"
+        >{`R$ ${item.orderPrice},00`}</Table.Cell>
+        <Table.Cell>
+          <HStack gap={2} justify="flex-end">
+            <IconButton
+              colorScheme="gray"
+              variant="ghost"
+              size="sm"
+              aria-label="Imprimir Resumo"
+              onClick={() => onPrintResume(item, 'order')}
+            >
+              <FaRegFileAlt />
+            </IconButton>
+            <IconButton
+              aria-label="Etiquetas"
+              variant="ghost"
+              colorScheme="gray"
+              size="sm"
+              onClick={() => onPrintLabels(item)}
+            >
+              <FaTags />
+            </IconButton>
+            {item.edits?.length > 0 && (
+              <IconButton
+                aria-label="Histórico de edições"
+                variant="ghost"
+                colorScheme="purple"
+                size="sm"
+                onClick={() => onShowHistory(item)}
+                title={`${item.edits.length} edição(ões)`}
+              >
+                <FaHistory />
+              </IconButton>
+            )}
+            {item.orderStatus === 'Em Produção' && (
+              <IconButton
+                colorScheme="blue"
+                variant="ghost"
+                size="sm"
+                aria-label="Editar"
+                onClick={() => onEdit(item.id)}
+              >
+                <FaEdit />
+              </IconButton>
+            )}
+            {item.orderStatus !== 'Concluído' && (
+              <IconButton
+                colorScheme="green"
+                size="sm"
+                aria-label="Concluir"
+                onClick={() => onConfirmStatus(item)}
+              >
+                <FaCheck />
+              </IconButton>
+            )}
+          </HStack>
+        </Table.Cell>
+      </Table.Row>
+    );
+  },
+);
+OrderRow.displayName = 'OrderRow';
+
+const OrderListDesktopImpl: React.FC<OrderListProps> = ({
   items,
   isEstimateList,
   isLoading,
@@ -84,202 +303,36 @@ export const OrderListDesktop: React.FC<OrderListProps> = ({
             {items.map((item: any, index: number) => {
               const isEven = index % 2 === 0;
               const isUrgent = item?.isUrgent;
-              let rowBg = isEven ? 'white' : 'gray.50';
+              let bg = isEven ? 'white' : 'gray.50';
               let hoverBg = isEven ? 'gray.50' : 'gray.100';
 
               if (isUrgent && !isEstimateList) {
-                rowBg = 'red.50';
+                bg = 'red.50';
                 hoverBg = 'red.100';
               }
 
-              if (isEstimateList) {
-                return (
-                  <Table.Row
-                    key={item.id}
-                    bg={rowBg}
-                    _hover={{ bg: hoverBg }}
-                  >
-                    <Table.Cell fontWeight="bold">
-                      {item.estimateCode}
-                    </Table.Cell>
-                    <Table.Cell>{item.name}</Table.Cell>
-                    <Table.Cell>Orçamento</Table.Cell>
-                    <Table.Cell>
-                      <Box
-                        as="span"
-                        px={2}
-                        py={1}
-                        borderRadius="md"
-                        fontSize="xs"
-                        fontWeight="bold"
-                        bg="gray.100"
-                        color="gray.800"
-                      >
-                        Pendente
-                      </Box>
-                    </Table.Cell>
-                    <Table.Cell
-                      textAlign="right"
-                      fontWeight="bold"
-                    >{`R$ ${item.estimatePrice},00`}</Table.Cell>
-                    <Table.Cell>
-                      <HStack gap={2} justify="flex-end">
-                        <IconButton
-                          colorScheme="gray"
-                          variant="ghost"
-                          size="sm"
-                          aria-label="Imprimir Orçamento"
-                          onClick={() => onPrintResume(item, 'estimate')}
-                        >
-                          <FaRegFileAlt />
-                        </IconButton>
-                        <IconButton
-                          colorScheme="red"
-                          variant="ghost"
-                          size="sm"
-                          aria-label="Remover"
-                          onClick={() => onRemove(item.id, 'estimates')}
-                        >
-                          <FaTrash />
-                        </IconButton>
-                        <IconButton
-                          colorScheme="green"
-                          size="sm"
-                          aria-label="Aprovar"
-                          onClick={() => onApproveEstimate(item.id)}
-                        >
-                          <FaHandshake />
-                        </IconButton>
-                      </HStack>
-                    </Table.Cell>
-                  </Table.Row>
-                );
-              }
-
-              return (
-                <Table.Row key={item.id} bg={rowBg} _hover={{ bg: hoverBg }}>
-                  <Table.Cell fontWeight="bold">{item.orderCode}</Table.Cell>
-                  <Table.Cell>
-                    <Flex direction="column">
-                      <Text fontWeight="medium">
-                        {item.customer?.name || 'Cliente Removido'}
-                      </Text>
-                      {item.customer?.telephone && (
-                        <Text fontSize="xs" color="gray.500">
-                          {item.customer.telephone}
-                        </Text>
-                      )}
-                    </Flex>
-                  </Table.Cell>
-                  <Table.Cell>
-                    <Box
-                      as="span"
-                      px={2}
-                      py={1}
-                      borderRadius="md"
-                      fontSize="xs"
-                      fontWeight="bold"
-                      display="inline-flex"
-                      alignItems="center"
-                      gap={1}
-                      bg={
-                        item.orderStatus === 'Concluído'
-                          ? 'green.100'
-                          : item.orderStatus === 'Em Produção'
-                            ? 'orange.100'
-                            : 'blue.100'
-                      }
-                      color={
-                        item.orderStatus === 'Concluído'
-                          ? 'green.800'
-                          : item.orderStatus === 'Em Produção'
-                            ? 'orange.800'
-                            : 'blue.800'
-                      }
-                    >
-                      {isUrgent && <FaExclamationTriangle />}
-                      {item.orderStatus}
-                      {item.edits?.length > 0 && (
-                        <Box
-                          as="span"
-                          title={`Editado ${item.edits.length}× — última: ${item.edits[item.edits.length - 1]?.editedBy}`}
-                          ml={1}
-                          display="inline-flex"
-                          alignItems="center"
-                        >
-                          <FaHistory />
-                        </Box>
-                      )}
-                    </Box>
-                  </Table.Cell>
-                  <Table.Cell textAlign="right">
-                    {item.deliveryDate?.seconds
-                      ? format(
-                          new Date(item.deliveryDate.seconds * 1000),
-                          'dd/MM/yyyy',
-                        )
-                      : '-'}
-                  </Table.Cell>
-                  <Table.Cell
-                    textAlign="right"
-                    fontWeight="bold"
-                  >{`R$ ${item.orderPrice},00`}</Table.Cell>
-                  <Table.Cell>
-                    <HStack gap={2} justify="flex-end">
-                      <IconButton
-                        colorScheme="gray"
-                        variant="ghost"
-                        size="sm"
-                        aria-label="Imprimir Resumo"
-                        onClick={() => onPrintResume(item, 'order')}
-                      >
-                        <FaRegFileAlt />
-                      </IconButton>
-                      <IconButton
-                        aria-label="Etiquetas"
-                        variant="ghost"
-                        colorScheme="gray"
-                        size="sm"
-                        onClick={() => onPrintLabels(item)}
-                      >
-                        <FaTags />
-                      </IconButton>
-                      {item.edits?.length > 0 && (
-                        <IconButton
-                          aria-label="Histórico de edições"
-                          variant="ghost"
-                          colorScheme="purple"
-                          size="sm"
-                          onClick={() => onShowHistory(item)}
-                          title={`${item.edits.length} edição(ões)`}
-                        >
-                          <FaHistory />
-                        </IconButton>
-                      )}
-                      {item.orderStatus === 'Em Produção' && (
-                        <IconButton
-                          colorScheme="blue"
-                          variant="ghost"
-                          size="sm"
-                          aria-label="Editar"
-                          onClick={() => onEdit(item.id)}
-                        >
-                          <FaEdit />
-                        </IconButton>
-                      )}
-                      {item.orderStatus !== 'Concluído' && (
-                        <IconButton
-                          colorScheme="green"
-                          size="sm"
-                          aria-label="Concluir"
-                          onClick={() => onConfirmStatus(item)}
-                        >
-                          <FaCheck />
-                        </IconButton>
-                      )}
-                    </HStack>
-                  </Table.Cell>
-                </Table.Row>
+              return isEstimateList ? (
+                <EstimateRow
+                  key={item.id}
+                  item={item}
+                  bg={bg}
+                  hoverBg={hoverBg}
+                  onPrintResume={onPrintResume}
+                  onApproveEstimate={onApproveEstimate}
+                  onRemove={onRemove}
+                />
+              ) : (
+                <OrderRow
+                  key={item.id}
+                  item={item}
+                  bg={bg}
+                  hoverBg={hoverBg}
+                  onPrintResume={onPrintResume}
+                  onPrintLabels={onPrintLabels}
+                  onShowHistory={onShowHistory}
+                  onConfirmStatus={onConfirmStatus}
+                  onEdit={onEdit}
+                />
               );
             })}
           </Table.Body>
@@ -288,5 +341,8 @@ export const OrderListDesktop: React.FC<OrderListProps> = ({
     </Box>
   );
 };
+
+export const OrderListDesktop = React.memo(OrderListDesktopImpl);
+OrderListDesktop.displayName = 'OrderListDesktop';
 
 export default OrderListDesktop;

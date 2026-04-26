@@ -252,7 +252,7 @@ const isMobile = useBreakpointValue({ base: true, md: false }, { fallback: true 
 {isMobile ? <OrderListMobile ... /> : <OrderListDesktop ... />}
 ```
 
-### [ ] Passo 5.3 — Memoizar `<OrderRow>` / `<OrderCard>`
+### [x] Passo 5.3 — Memoizar `<OrderRow>` / `<OrderCard>`
 
 `React.memo` + `useCallback` nos handlers do pai.
 
