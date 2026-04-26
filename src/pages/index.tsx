@@ -33,6 +33,7 @@ import {
   FaExclamationTriangle,
   FaFileInvoiceDollar,
   FaIndustry,
+  FaMapMarkerAlt,
   FaPlus,
   FaShippingFast,
 } from 'react-icons/fa';
@@ -111,6 +112,132 @@ const StatCard: React.FC<StatCardProps> = ({
   );
 };
 
+interface UpcomingCardProps {
+  title: string;
+  emptyText: string;
+  isLoading?: boolean;
+  items?: any[];
+  onSeeAll: () => void;
+  showAddress: boolean;
+}
+
+const formatAddress = (customer: any): string | null => {
+  if (!customer) return null;
+  const parts = [customer.address, customer.area].filter(Boolean);
+  return parts.length ? parts.join(' — ') : null;
+};
+
+const UpcomingCard: React.FC<UpcomingCardProps> = ({
+  title,
+  emptyText,
+  isLoading,
+  items,
+  onSeeAll,
+  showAddress,
+}) => (
+  <Box
+    bg="white"
+    borderWidth="1px"
+    borderColor="gray.200"
+    borderRadius="xl"
+    shadow="sm"
+    p={5}
+  >
+    <Flex justify="space-between" align="center" mb={3}>
+      <Heading size="sm" color="gray.700">
+        {title}
+      </Heading>
+      <Button size="xs" variant="ghost" colorScheme="orange" onClick={onSeeAll}>
+        Ver todos <FaArrowRight style={{ marginLeft: 4 }} />
+      </Button>
+    </Flex>
+
+    {isLoading ? (
+      <Center py={6}>
+        <Spinner color="orange.500" />
+      </Center>
+    ) : !items?.length ? (
+      <Text fontSize="sm" color="gray.500" py={4} textAlign="center">
+        {emptyText}
+      </Text>
+    ) : (
+      <Stack gap={2}>
+        {items.map((order: any) => {
+          const isUrgent = order.isUrgent;
+          const date = format(
+            new Date(order.deliveryDate.seconds * 1000),
+            'dd/MM/yyyy',
+          );
+          const address = showAddress ? formatAddress(order.customer) : null;
+          return (
+            <Flex
+              key={order.id}
+              align={['flex-start', 'flex-start', 'center']}
+              direction={['column', 'column', 'row']}
+              justify="space-between"
+              gap={[1, 1, 3]}
+              p={3}
+              borderRadius="md"
+              bg={isUrgent ? 'red.50' : 'gray.50'}
+              borderWidth="1px"
+              borderColor={isUrgent ? 'red.200' : 'gray.100'}
+            >
+              <Box flex="1" minW={0} w="100%">
+                <Flex align="center" gap={2}>
+                  <Text fontSize="xs" color="gray.500" fontWeight="bold">
+                    #{order.orderCode}
+                  </Text>
+                  {isUrgent && (
+                    <Icon
+                      as={FaExclamationTriangle}
+                      color="red.500"
+                      boxSize={3}
+                    />
+                  )}
+                </Flex>
+                <Text fontWeight="bold" color="gray.800" lineClamp={1}>
+                  {order.customer?.name || 'Cliente Removido'}
+                </Text>
+                {address ? (
+                  <Flex align="center" gap={1} mt={0.5}>
+                    <Icon as={FaMapMarkerAlt} color="gray.400" boxSize={3} />
+                    <Text
+                      fontSize="xs"
+                      color="gray.500"
+                      lineClamp={1}
+                    >
+                      {address}
+                    </Text>
+                  </Flex>
+                ) : (
+                  <Text fontSize="xs" color="gray.500">
+                    {order.orderStatus}
+                    {order.deliveryType
+                      ? ` · ${order.deliveryType}`
+                      : ''}
+                  </Text>
+                )}
+              </Box>
+              <Box
+                textAlign={['left', 'left', 'right']}
+                flexShrink={0}
+                w={['100%', '100%', 'auto']}
+              >
+                <Text fontSize="xs" color="gray.500">
+                  Prazo
+                </Text>
+                <Text fontWeight="bold" color="gray.800">
+                  {date}
+                </Text>
+              </Box>
+            </Flex>
+          );
+        })}
+      </Stack>
+    )}
+  </Box>
+);
+
 const Home = () => {
   const { user } = useAuth();
   const router = useRouter();
@@ -169,13 +296,14 @@ const Home = () => {
     },
   });
 
-  // --- Próximas entregas (em produção + liberados, ordenadas por entrega) ---
-  const { data: nextDeliveries, isLoading: deliveriesLoading } = useQuery({
+  // --- Próximos prazos / próximas entregas (em produção + liberados) ---
+  // Uma única query para os dois cards: "prazos" mostra todos, "entregas" filtra
+  // por deliveryType === 'Entrega'. Filtragem em memória (volume é pequeno).
+  const { data: upcoming, isLoading: deliveriesLoading } = useQuery({
     queryKey: ['home-next-deliveries'],
     enabled: !!user,
     queryFn: async () => {
       const ordersRef = collection(db, 'orders');
-      // Busca os pedidos mais recentes em status ativo e ordena em memória pela data de entrega
       const [emProducaoSnap, liberadoSnap] = await Promise.all([
         getDocs(
           query(
@@ -195,17 +323,23 @@ const Home = () => {
         ),
       ]);
 
-      const merged = [
+      const sortedByDeadline = [
         ...emProducaoSnap.docs.map(d => ({ ...d.data(), id: d.id }) as any),
         ...liberadoSnap.docs.map(d => ({ ...d.data(), id: d.id }) as any),
       ]
         .filter(o => o.deliveryDate?.seconds)
-        .sort((a, b) => a.deliveryDate.seconds - b.deliveryDate.seconds)
-        .slice(0, 5);
+        .sort((a, b) => a.deliveryDate.seconds - b.deliveryDate.seconds);
 
-      return merged;
+      return {
+        deadlines: sortedByDeadline.slice(0, 5),
+        deliveries: sortedByDeadline
+          .filter(o => o.deliveryType === 'Entrega')
+          .slice(0, 5),
+      };
     },
   });
+  const nextDeadlines = upcoming?.deadlines;
+  const nextDeliveries = upcoming?.deliveries;
 
   if (!user) return <Loader />;
 
@@ -323,93 +457,26 @@ const Home = () => {
             </Box>
           )}
 
-          {/* Próximas entregas + Atalhos */}
+          {/* Coluna esquerda: prazos + entregas; Direita: atalhos */}
           <Grid templateColumns={['1fr', '1fr', '2fr 1fr']} gap={4}>
-            {/* Próximas entregas */}
-            <Box
-              bg="white"
-              borderWidth="1px"
-              borderColor="gray.200"
-              borderRadius="xl"
-              shadow="sm"
-              p={5}
-            >
-              <Flex justify="space-between" align="center" mb={3}>
-                <Heading size="sm" color="gray.700">
-                  Próximas entregas
-                </Heading>
-                <Button
-                  size="xs"
-                  variant="ghost"
-                  colorScheme="orange"
-                  onClick={() => router.push('/cortes/listadecortes')}
-                >
-                  Ver todos <FaArrowRight style={{ marginLeft: 4 }} />
-                </Button>
-              </Flex>
-
-              {deliveriesLoading ? (
-                <Center py={6}>
-                  <Spinner color="orange.500" />
-                </Center>
-              ) : !nextDeliveries?.length ? (
-                <Text fontSize="sm" color="gray.500" py={4} textAlign="center">
-                  Nenhum pedido com data de entrega cadastrada.
-                </Text>
-              ) : (
-                <Stack gap={2}>
-                  {nextDeliveries.map((order: any) => {
-                    const isUrgent = order.isUrgent;
-                    const date = format(
-                      new Date(order.deliveryDate.seconds * 1000),
-                      'dd/MM/yyyy',
-                    );
-                    return (
-                      <Flex
-                        key={order.id}
-                        align="center"
-                        justify="space-between"
-                        gap={3}
-                        p={3}
-                        borderRadius="md"
-                        bg={isUrgent ? 'red.50' : 'gray.50'}
-                        borderWidth="1px"
-                        borderColor={isUrgent ? 'red.200' : 'gray.100'}
-                      >
-                        <Box flex="1" minW={0}>
-                          <Flex align="center" gap={2}>
-                            <Text fontSize="xs" color="gray.500" fontWeight="bold">
-                              #{order.orderCode}
-                            </Text>
-                            {isUrgent && (
-                              <Icon
-                                as={FaExclamationTriangle}
-                                color="red.500"
-                                boxSize={3}
-                              />
-                            )}
-                          </Flex>
-                          <Text fontWeight="bold" color="gray.800" lineClamp={1}>
-                            {order.customer?.name || 'Cliente Removido'}
-                          </Text>
-                          <Text fontSize="xs" color="gray.500">
-                            {order.orderStatus}
-                          </Text>
-                        </Box>
-                        <Box textAlign="right" flexShrink={0}>
-                          <Text fontSize="xs" color="gray.500">
-                            Entrega
-                          </Text>
-                          <Text fontWeight="bold" color="gray.800">
-                            {date}
-                          </Text>
-                        </Box>
-                      </Flex>
-                    );
-                  })}
-                </Stack>
-              )}
-            </Box>
+            <Stack gap={4}>
+              <UpcomingCard
+                title="Próximos prazos"
+                emptyText="Nenhum pedido com prazo cadastrado."
+                isLoading={deliveriesLoading}
+                items={nextDeadlines}
+                onSeeAll={() => router.push('/cortes/listadecortes')}
+                showAddress={false}
+              />
+              <UpcomingCard
+                title="Próximas entregas"
+                emptyText="Nenhum pedido marcado como entrega."
+                isLoading={deliveriesLoading}
+                items={nextDeliveries}
+                onSeeAll={() => router.push('/cortes/listadecortes')}
+                showAddress
+              />
+            </Stack>
 
             {/* Atalhos */}
             <Box
@@ -419,6 +486,7 @@ const Home = () => {
               borderRadius="xl"
               shadow="sm"
               p={5}
+              alignSelf="flex-start"
             >
               <Heading size="sm" color="gray.700" mb={3}>
                 Atalhos
