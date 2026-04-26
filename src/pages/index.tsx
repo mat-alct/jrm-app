@@ -486,7 +486,6 @@ const Home = () => {
               borderRadius="xl"
               shadow="sm"
               p={5}
-              alignSelf="flex-start"
             >
               <Heading size="sm" color="gray.700" mb={3}>
                 Atalhos
