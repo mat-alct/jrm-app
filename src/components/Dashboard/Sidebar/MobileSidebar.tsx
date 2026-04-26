@@ -10,7 +10,7 @@ export const MobileSidebar: React.FC = () => {
   return (
     <Drawer.Root
       open={isOpen}
-      placement="end"
+      placement="start"
       onOpenChange={e => {
         if (!e.open) onClose();
       }}

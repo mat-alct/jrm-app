@@ -86,12 +86,28 @@ const capitalizeSearchTerm = (term: string) => {
   return term.toLowerCase().replace(/(?:^|\s)\S/g, a => a.toUpperCase());
 };
 
+// Remove campos `undefined` recursivamente (Firestore não aceita undefined).
+const stripUndefined = <T,>(value: T): T => {
+  if (Array.isArray(value)) {
+    return value.map(item => stripUndefined(item)) as unknown as T;
+  }
+  if (value && typeof value === 'object' && !(value instanceof Timestamp)) {
+    const out: Record<string, unknown> = {};
+    Object.entries(value as Record<string, unknown>).forEach(([k, v]) => {
+      if (v === undefined) return;
+      out[k] = stripUndefined(v);
+    });
+    return out as T;
+  }
+  return value;
+};
+
 export const OrderProvider = ({ children }: OrderProviderProps) => {
   // --- MUTATIONS ---
   const createEstimateMutation = useMutation({
     mutationFn: async (estimateData: EstimatePropsWithEstimateCode) => {
       const estimateRef = doc(db, 'estimates', v4());
-      await setDoc(estimateRef, estimateData);
+      await setDoc(estimateRef, stripUndefined(estimateData));
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['orders'] });
@@ -102,7 +118,7 @@ export const OrderProvider = ({ children }: OrderProviderProps) => {
   const createOrderMutation = useMutation({
     mutationFn: async (orderData: OrderPropsWithOrderCode) => {
       const orderRef = doc(db, 'orders', v4());
-      await setDoc(orderRef, orderData);
+      await setDoc(orderRef, stripUndefined(orderData));
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['orders'] });
@@ -301,22 +317,6 @@ export const OrderProvider = ({ children }: OrderProviderProps) => {
 
   const sumCutlistPrice = (items: Cutlist[]) =>
     items.reduce((acc, item) => acc + (item.price ?? 0), 0);
-
-  // Remove campos `undefined` recursivamente (Firestore não aceita undefined).
-  const stripUndefined = <T,>(value: T): T => {
-    if (Array.isArray(value)) {
-      return value.map(item => stripUndefined(item)) as unknown as T;
-    }
-    if (value && typeof value === 'object' && !(value instanceof Timestamp)) {
-      const out: Record<string, unknown> = {};
-      Object.entries(value as Record<string, unknown>).forEach(([k, v]) => {
-        if (v === undefined) return;
-        out[k] = stripUndefined(v);
-      });
-      return out as T;
-    }
-    return value;
-  };
 
   const updateOrderCutlist = useCallback(async (
     id: string,

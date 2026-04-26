@@ -382,7 +382,7 @@ export const OrderData = ({
                       color="gray.700"
                       fontSize="sm"
                     >
-                      Previsão de Entrega
+                      Prazo do pedido
                     </Text>
                     <FormDatePicker
                       name="deliveryDate"

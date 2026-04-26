@@ -456,7 +456,7 @@ export const OrderResume: React.FC<OrderResumeProps> = ({
               cliente. Prazo de retirada inicia-se após confirmação do
               pagamento. Pedidos não retirados em 30 dias sujeitos a descarte.
             </Text>
-            <Flex mt={4} gap={4}>
+            <Flex mt={16} gap={4}>
               <Box
                 borderTop="1px solid black"
                 w="50%"

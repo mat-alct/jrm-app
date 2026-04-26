@@ -50,15 +50,13 @@ export const FormDatePicker: React.FC<DatePickerProps> = ({
 
   return (
     <Fieldset.Root display="flex" flexDirection="row" invalid={!!errors[name]}>
-      <Fieldset.Legend mb={0}>Data de Entrega:</Fieldset.Legend>
       <Box>
         <DatePicker
           selected={field.value}
-          // onChange={(date: Date) => field.onChange(date)}
+          onChange={(date: Date | null) => field.onChange(date)}
           locale="ptBR"
-          dateFormat="P"
+          dateFormat="dd/MM/yyyy"
           filterDate={isWeekday}
-          value={field.value}
           name={name}
         />
       </Box>
