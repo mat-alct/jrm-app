@@ -82,6 +82,7 @@ const OrderListDesktop = dynamic(
 import { toaster } from '@/components/ui/toaster';
 import { useAuth } from '../../hooks/authContext';
 import { useOrder } from '../../hooks/order';
+import { queryClient } from '../../services/queryClient';
 import { db } from '../../services/firebase';
 import { Estimate, Order } from '../../types';
 
@@ -124,7 +125,6 @@ const Cortes: React.FC = () => {
     isLoading: isInitialLoading,
     isError,
     error,
-    refetch,
   } = useQuery({
     queryKey: ['orders', ordersFilter, currentPage],
     queryFn: async () => {
@@ -220,7 +220,11 @@ const Cortes: React.FC = () => {
 
         if (nextState) {
           await updateDoc(orderRef, { orderStatus: nextState });
-          refetch();
+          await Promise.all([
+            queryClient.invalidateQueries({ queryKey: ['orders'] }),
+            queryClient.invalidateQueries({ queryKey: ['home-stats'] }),
+            queryClient.invalidateQueries({ queryKey: ['home-next-deliveries'] }),
+          ]);
           toast.create({
             type: 'success',
             description: `Status atualizado para ${nextState}`,
@@ -233,7 +237,7 @@ const Cortes: React.FC = () => {
         setConfirmingStatusOrder(null);
       }
     },
-    [refetch, toast],
+    [toast],
   );
 
   const handleEdit = useCallback(
