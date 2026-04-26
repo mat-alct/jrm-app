@@ -148,7 +148,6 @@ const Materiais = () => {
 
   // Função chamada ao submeter o formulário de criação de material.
   const handleCreateMaterial = async (formData: Material) => {
-    console.log('ok');
     onClose(); // Fecha o modal.
     // Chama a função do contexto para criar o material, adicionando timestamps.
     await createMaterial({
