@@ -278,15 +278,17 @@ const Cortes: React.FC = () => {
     if (user === null) router.push('/login');
   }, [user, router]);
 
-  if (!user) return <Loader />;
-
   // useMemo evita criar [] novo a cada render quando lista está vazia
   // (caso contrário o React.memo nos cards/rows não tem efeito).
+  // Mantido antes do early return para respeitar Rules of Hooks.
   const dataToShow = useMemo(
     () =>
       searchQuery && searchData ? searchData : pagedResult?.data || [],
     [searchQuery, searchData, pagedResult?.data],
   );
+
+  if (!user) return <Loader />;
+
   const isEstimateList = ordersFilter === 'Orçamento';
   const isLoading = searchQuery ? isSearchLoading : isInitialLoading;
 

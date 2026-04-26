@@ -1,7 +1,13 @@
 import { toaster } from '@/components/ui/toaster';
 import { useMutation } from '@tanstack/react-query';
 import { v4 } from 'uuid';
-import React, { createContext, ReactNode, useContext } from 'react';
+import React, {
+  createContext,
+  ReactNode,
+  useCallback,
+  useContext,
+  useMemo,
+} from 'react';
 
 // Importações do Firebase Modular
 import {
@@ -81,8 +87,6 @@ const capitalizeSearchTerm = (term: string) => {
 };
 
 export const OrderProvider = ({ children }: OrderProviderProps) => {
-  const toast = toaster;
-
   // --- MUTATIONS ---
   const createEstimateMutation = useMutation({
     mutationFn: async (estimateData: EstimatePropsWithEstimateCode) => {
@@ -105,77 +109,95 @@ export const OrderProvider = ({ children }: OrderProviderProps) => {
     },
   });
 
+  const { mutateAsync: createEstimateAsync } = createEstimateMutation;
+  const { mutateAsync: createOrderAsync } = createOrderMutation;
+
   // --- METHODS ---
-  const createEstimate = async (estimateData: Estimate) => {
-    try {
-      removeUndefinedAndEmptyFields(estimateData);
-      const counterRef = doc(db, 'counters', 'estimates');
-      const counterSnap = await getDoc(counterRef);
-      const estimateCode = counterSnap.exists() ? counterSnap.data()?.code : 1;
-      const estimatePrice = estimateData.cutlist.reduce(
-        (prev, curr) => prev + curr.price,
-        0,
-      );
+  const createEstimate = useCallback(
+    async (estimateData: Estimate) => {
+      try {
+        removeUndefinedAndEmptyFields(estimateData);
+        const counterRef = doc(db, 'counters', 'estimates');
+        const counterSnap = await getDoc(counterRef);
+        const estimateCode = counterSnap.exists()
+          ? counterSnap.data()?.code
+          : 1;
+        const estimatePrice = estimateData.cutlist.reduce(
+          (prev, curr) => prev + curr.price,
+          0,
+        );
 
-      await createEstimateMutation.mutateAsync({
-        ...estimateData,
-        estimateCode,
-        estimatePrice,
-      });
+        await createEstimateAsync({
+          ...estimateData,
+          estimateCode,
+          estimatePrice,
+        });
 
-      if (counterSnap.exists()) {
-        await updateDoc(counterRef, { code: increment(1) });
-      } else {
-        await setDoc(counterRef, { code: 2 });
+        if (counterSnap.exists()) {
+          await updateDoc(counterRef, { code: increment(1) });
+        } else {
+          await setDoc(counterRef, { code: 2 });
+        }
+        toaster.create({
+          type: 'success',
+          description: 'Orçamento criado com sucesso',
+        });
+      } catch (err) {
+        console.error(err);
+        toaster.create({
+          type: 'error',
+          description: 'Erro ao criar orçamento.',
+        });
+        throw err;
       }
-      toast.create({
-        type: 'success',
-        description: 'Orçamento criado com sucesso',
-      });
-    } catch (err) {
-      console.error(err);
-      toast.create({ type: 'error', description: 'Erro ao criar orçamento.' });
-      throw err;
-    }
-  };
+    },
+    [createEstimateAsync],
+  );
 
-  const createOrder = async (orderData: Order) => {
-    try {
-      removeUndefinedAndEmptyFields(orderData);
-      if (orderData.customer) removeUndefinedAndEmptyFields(orderData.customer);
+  const createOrder = useCallback(
+    async (orderData: Order) => {
+      try {
+        removeUndefinedAndEmptyFields(orderData);
+        if (orderData.customer)
+          removeUndefinedAndEmptyFields(orderData.customer);
 
-      const counterRef = doc(db, 'counters', 'orders');
-      const counterSnap = await getDoc(counterRef);
-      const orderCode = counterSnap.exists() ? counterSnap.data()?.code : 1;
-      const orderPrice = orderData.cutlist.reduce(
-        (prev, curr) => prev + curr.price,
-        0,
-      );
+        const counterRef = doc(db, 'counters', 'orders');
+        const counterSnap = await getDoc(counterRef);
+        const orderCode = counterSnap.exists() ? counterSnap.data()?.code : 1;
+        const orderPrice = orderData.cutlist.reduce(
+          (prev, curr) => prev + curr.price,
+          0,
+        );
 
-      await createOrderMutation.mutateAsync({
-        ...orderData,
-        orderCode,
-        orderPrice,
-      });
+        await createOrderAsync({
+          ...orderData,
+          orderCode,
+          orderPrice,
+        });
 
-      if (counterSnap.exists()) {
-        await updateDoc(counterRef, { code: increment(1) });
-      } else {
-        await setDoc(counterRef, { code: 2 });
+        if (counterSnap.exists()) {
+          await updateDoc(counterRef, { code: increment(1) });
+        } else {
+          await setDoc(counterRef, { code: 2 });
+        }
+        toaster.create({
+          type: 'success',
+          description: 'Pedido criado com sucesso',
+        });
+      } catch (err) {
+        console.error(err);
+        toaster.create({
+          type: 'error',
+          description: 'Erro ao criar pedido.',
+        });
+        throw err;
       }
-      toast.create({
-        type: 'success',
-        description: 'Pedido criado com sucesso',
-      });
-    } catch (err) {
-      console.error(err);
-      toast.create({ type: 'error', description: 'Erro ao criar pedido.' });
-      throw err;
-    }
-  };
+    },
+    [createOrderAsync],
+  );
 
   // --- PAGINAÇÃO (Mantida Lógica de Cursor) ---
-  const getOrders = async (
+  const getOrders = useCallback(async (
     orderFilter: string,
     lastDoc?: QueryDocumentSnapshot<DocumentData> | null,
   ): Promise<PagedResult> => {
@@ -219,10 +241,10 @@ export const OrderProvider = ({ children }: OrderProviderProps) => {
       snapshot.docs.length > 0 ? snapshot.docs[snapshot.docs.length - 1] : null;
 
     return { data, totalCount, lastDoc: newLastDoc };
-  };
+  }, []);
 
   // --- BUSCA HÍBRIDA (Número ou Nome Capitalizado) ---
-  const getOrdersBySearch = async (
+  const getOrdersBySearch = useCallback(async (
     searchFilter: string | undefined,
     type: string,
   ) => {
@@ -275,7 +297,7 @@ export const OrderProvider = ({ children }: OrderProviderProps) => {
       }
       return [];
     }
-  };
+  }, []);
 
   const sumCutlistPrice = (items: Cutlist[]) =>
     items.reduce((acc, item) => acc + (item.price ?? 0), 0);
@@ -296,7 +318,7 @@ export const OrderProvider = ({ children }: OrderProviderProps) => {
     return value;
   };
 
-  const updateOrderCutlist = async (
+  const updateOrderCutlist = useCallback(async (
     id: string,
     newCutlist: Cutlist[],
     sellerPassword: string,
@@ -350,20 +372,27 @@ export const OrderProvider = ({ children }: OrderProviderProps) => {
       console.error('Erro ao atualizar pedido:', err);
       return { success: false, reason: 'error' };
     }
-  };
+  }, []);
+
+  const value = useMemo<OrderContext>(
+    () => ({
+      createEstimate,
+      createOrder,
+      getOrders,
+      getOrdersBySearch,
+      updateOrderCutlist,
+    }),
+    [
+      createEstimate,
+      createOrder,
+      getOrders,
+      getOrdersBySearch,
+      updateOrderCutlist,
+    ],
+  );
 
   return (
-    <OrderContext.Provider
-      value={{
-        createEstimate,
-        createOrder,
-        getOrders,
-        getOrdersBySearch,
-        updateOrderCutlist,
-      }}
-    >
-      {children}
-    </OrderContext.Provider>
+    <OrderContext.Provider value={value}>{children}</OrderContext.Provider>
   );
 };
 

@@ -6,7 +6,13 @@ import { toaster } from '@/components/ui/toaster';
 // Importa o hook useMutation do TanStack React Query para lidar com operações de escrita/alteração de dados.
 import { useMutation } from '@tanstack/react-query';
 // Importa hooks e tipos essenciais do React para criar o contexto e o componente.
-import React, { createContext, ReactNode, useContext } from 'react';
+import React, {
+  createContext,
+  ReactNode,
+  useCallback,
+  useContext,
+  useMemo,
+} from 'react';
 // Importa funções modulares do Firebase v9+ para interagir com o banco de dados Firestore.
 import {
   addDoc,
@@ -119,75 +125,73 @@ export const MaterialProvider = ({ children }: MaterialProviderProps) => {
 
   // --- Bloco de Funções Expostas pelo Contexto ---
 
-  // Estas são as funções que os componentes da sua aplicação irão chamar.
-  // Elas atuam como uma camada de abstração que "dispara" a mutação correspondente.
-  const createMaterial = async (materialData: Material) => {
-    await createMaterialMutation.mutateAsync(materialData);
-  };
+  // Estabilizando referências dos mutateAsync para useCallback abaixo.
+  const { mutateAsync: createMaterialAsync } = createMaterialMutation;
+  const { mutateAsync: removeMaterialAsync } = removeMaterialMutation;
+  const { mutateAsync: updateMaterialPriceAsync } = updateMaterialPriceMutation;
 
-  const removeMaterial = async (id: string) => {
-    await removeMaterialMutation.mutateAsync(id);
-  };
+  const createMaterial = useCallback(
+    async (materialData: Material) => {
+      await createMaterialAsync(materialData);
+    },
+    [createMaterialAsync],
+  );
 
-  const updateMaterialPrice = async (materialData: {
-    id: string;
-    newPrice: number;
-  }) => {
-    await updateMaterialPriceMutation.mutateAsync(materialData);
-  };
+  const removeMaterial = useCallback(
+    async (id: string) => {
+      await removeMaterialAsync(id);
+    },
+    [removeMaterialAsync],
+  );
+
+  const updateMaterialPrice = useCallback(
+    async (materialData: { id: string; newPrice: number }) => {
+      await updateMaterialPriceAsync(materialData);
+    },
+    [updateMaterialPriceAsync],
+  );
 
   // --- Bloco de Funções de Busca de Dados ---
 
-  // Função para buscar materiais com base em um filtro (ex: 'MDF' ou 'Compensado').
-  const getMaterials = async (materialFilter: string) => {
+  const getMaterials = useCallback(async (materialFilter: string) => {
     const materialsCollection = collection(db, 'materials');
-    // Cria uma query que busca na coleção 'materials' onde o campo 'materialType' é igual ao filtro.
     const q = query(
       materialsCollection,
       where('materialType', '==', materialFilter),
     );
     const querySnapshot = await getDocs(q);
-    // Mapeia os resultados, adicionando o ID do documento a cada objeto de material.
-    const materials = querySnapshot.docs.map(
+    return querySnapshot.docs.map(
       d => ({ ...d.data(), id: d.id }) as unknown as Material,
     );
+  }, []);
 
-    return materials;
-  };
-
-  // Função para buscar TODOS os materiais e formatá-los para um componente de Select.
-  const getAllMaterials = async (): Promise<Material[]> => {
-    // Pega a referência da coleção 'materials' no Firestore.
+  const getAllMaterials = useCallback(async (): Promise<Material[]> => {
     const materialsCollection = collection(db, 'materials');
-    // Busca todos os documentos da coleção.
     const querySnapshot = await getDocs(materialsCollection);
-
-    // Mapeia os documentos retornados para o formato da sua interface 'Material'.
-    const materialsList = querySnapshot.docs.map(
-      doc =>
-        ({
-          // Pega todos os dados do documento (name, width, height, price, etc.).
-          ...doc.data(),
-          // Adiciona o ID do documento, que é uma propriedade separada.
-          id: doc.id,
-          // Faz uma asserção de tipo para garantir que o objeto final corresponda à interface Material.
-        }) as Material,
+    return querySnapshot.docs.map(
+      doc => ({ ...doc.data(), id: doc.id }) as Material,
     );
+  }, []);
 
-    return materialsList;
-  };
-  // --- Renderização do Provedor ---
-  // O componente Provider efetivamente disponibiliza as funções para seus filhos através da prop 'value'.
+  const value = useMemo<MaterialContext>(
+    () => ({
+      createMaterial,
+      getMaterials,
+      getAllMaterials,
+      removeMaterial,
+      updateMaterialPrice,
+    }),
+    [
+      createMaterial,
+      getMaterials,
+      getAllMaterials,
+      removeMaterial,
+      updateMaterialPrice,
+    ],
+  );
+
   return (
-    <MaterialContext.Provider
-      value={{
-        createMaterial,
-        getMaterials,
-        getAllMaterials,
-        removeMaterial,
-        updateMaterialPrice,
-      }}
-    >
+    <MaterialContext.Provider value={value}>
       {children}
     </MaterialContext.Provider>
   );

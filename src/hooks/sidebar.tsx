@@ -4,8 +4,10 @@ import { useRouter } from 'next/router';
 import {
   createContext,
   ReactNode,
+  useCallback,
   useContext,
   useEffect,
+  useMemo,
   useState,
 } from 'react';
 
@@ -34,12 +36,14 @@ export function SidebarDrawerProvider({
     setIsOpen(false);
   }, [router.asPath]);
 
-  const value: SidebarDrawerContextData = {
-    isOpen,
-    onOpen: () => setIsOpen(true),
-    onClose: () => setIsOpen(false),
-    onToggle: () => setIsOpen(v => !v),
-  };
+  const onOpen = useCallback(() => setIsOpen(true), []);
+  const onClose = useCallback(() => setIsOpen(false), []);
+  const onToggle = useCallback(() => setIsOpen(v => !v), []);
+
+  const value = useMemo<SidebarDrawerContextData>(
+    () => ({ isOpen, onOpen, onClose, onToggle }),
+    [isOpen, onOpen, onClose, onToggle],
+  );
 
   return (
     <SidebarDrawerContext.Provider value={value}>

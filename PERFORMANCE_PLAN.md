@@ -317,11 +317,24 @@ const db = initializeFirestore(app, {
 
 ## Fase 9 — Auditoria final
 
-### [ ] Passo 9.1 — React Profiler + analyzer final
+### [x] Passo 9.1 — Auditoria estática + analyzer final
 
-1. Profilar `/`, `/cortes/listadecortes`, `/cortes/novoservico`.
-2. `React.memo`/`useMemo`/`useCallback` cirurgicamente.
-3. `npm run analyze` final → comparar com baseline.
+> **Nota:** trocada a etapa de "React Profiler" por **auditoria estática** após
+> a sessão de profiling com várias abas (DevTools + analyzer HTMLs) ter feito a
+> máquina cair em OOM (7,6 GiB sem swap). Auditoria estática nos hooks de
+> contexto, páginas-chave e componentes de lista. Bundle final via `npm run build`.
+
+**Achados aplicados:**
+
+1. **Providers globais com `value` literal** (`OrderProvider`, `MaterialProvider`,
+   `SidebarDrawerProvider`) — `value={{...}}` recriado a cada render forçava
+   todos consumidores a re-renderizar quando qualquer mutation ou state interno
+   do provider mudava. Corrigido com `useCallback` nas funções e `useMemo` no
+   value. **Maior ganho de runtime — afeta todas as páginas.**
+2. **Bug Rules of Hooks** em `listadecortes.tsx`: `useMemo` chamado depois do
+   early return `if (!user) return <Loader />`. Movido para antes do return.
+3. Restante (`Cutlist`, `OrderListMobile/Desktop`, `index.tsx`) já estava
+   bem otimizado das fases anteriores — sem alterações.
 
 ---
 
@@ -346,8 +359,25 @@ const db = initializeFirestore(app, {
 - **Relatório do analyzer:** `.next/analyze/client.html`
 - **Data da medição:** 2026-04-25
 
-## Resultado final (preencher no Passo 9.1)
+## Resultado final (Passo 9.1)
 
-- First Load JS: _________
-- Redução: _________ %
-- Data da medição: _________
+- **First Load JS compartilhado:** 385 kB (baseline 383 kB → +2 kB de overhead
+  do `useMemo`/`useCallback` nos providers, irrelevante na prática).
+- **First Load JS por rota:**
+  - `/` — 414 kB (baseline 413 kB) — ~0
+  - `/login` — 413 kB (baseline 411 kB) — +2 kB
+  - `/administracao/vendedores` — 432 kB (baseline 429 kB) — +3 kB
+  - `/cortes/materiais` — 434 kB (baseline 431 kB) — +3 kB
+  - `/cortes/listadecortes` — **431 kB (baseline 450 kB) — −19 kB (−4,2 %)**
+  - `/cortes/editar/[id]` — 457 kB (baseline 456 kB) — ~0
+  - `/cortes/novoservico` — **461 kB (baseline 504 kB) — −43 kB (−8,5 %)**
+- **Page chunk (código único da rota, sem o shared):**
+  - `/cortes/novoservico` — **43,7 → 6,95 kB (−84 %)**
+  - `/cortes/listadecortes` — **18,3 → 5,74 kB (−69 %)**
+- **Build:** Next.js 15.3.4, compilado em 17,0 s (baseline 22,0 s).
+- **Ganhos de runtime adicionais (não medidos no bundle):**
+  - Cache offline do Firestore (Fase 8) — navegação offline preservada.
+  - `staleTime: 2 min` no React Query (Fase 1) — sem refetch ao alternar rotas.
+  - Memoização dos providers (Fase 9) — fim do re-render em cascata em
+    consumers de `useOrder`/`useMaterial`/`useSidebarDrawer`.
+- **Data da medição:** 2026-04-25
