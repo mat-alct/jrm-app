@@ -240,7 +240,7 @@ Criar:
 Importar via `dynamic({ ssr: false })` e renderizar condicionalmente
 (`{state && <Dialog ... />}`) para que o chunk só baixe na primeira abertura.
 
-### [ ] Passo 5.2 — Renderizar só uma lista (mobile OU desktop)
+### [x] Passo 5.2 — Renderizar só uma lista (mobile OU desktop)
 
 Criar:
 - `OrderListMobile.tsx` (cards)
