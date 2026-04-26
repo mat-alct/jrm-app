@@ -230,15 +230,13 @@ export const EstimateResume: React.FC<EstimateResumeProps> = ({
 
           {/* TOTAIS (MONOCROMÁTICO) */}
           <Flex justify="flex-end">
-            <Box minW="200px">
-              <Flex justify="space-between" align="center" mb={1}>
-                <Text fontSize="sm" fontWeight="normal" color="black">
-                  TOTAL ORÇADO
-                </Text>
-                <Text fontSize="lg" fontWeight="black" color="black">
-                  R$ {estimate.estimatePrice},00
-                </Text>
-              </Flex>
+            <Box minW="200px" textAlign="right">
+              <Text fontSize="sm" fontWeight="normal" color="black" mb={1}>
+                TOTAL ORÇADO
+              </Text>
+              <Text fontSize="2xl" fontWeight="black" color="black">
+                R$ {estimate.estimatePrice},00
+              </Text>
               <Separator />
             </Box>
           </Flex>

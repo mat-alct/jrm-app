@@ -11,7 +11,6 @@ import {
   Alert,
 } from '@chakra-ui/react';
 import {
-  deleteDoc,
   doc,
   getDoc,
   updateDoc,
@@ -237,23 +236,6 @@ const Cortes: React.FC = () => {
     [refetch, toast],
   );
 
-  const handleRemove = useCallback(
-    async (id: string, type: 'orders' | 'estimates') => {
-      try {
-        const docRef = doc(db, type, id);
-        await deleteDoc(docRef);
-        refetch();
-        toast.create({
-          type: 'success',
-          description: 'Item excluído com sucesso',
-        });
-      } catch {
-        toast.create({ type: 'error', description: 'Erro ao remover item' });
-      }
-    },
-    [refetch, toast],
-  );
-
   const handleEdit = useCallback(
     (id: string) => router.push(`/cortes/editar/${id}`),
     [router],
@@ -450,7 +432,6 @@ const Cortes: React.FC = () => {
               onPrintResume={handlePrintResume}
               onPrintLabels={handlePrintLabels}
               onApproveEstimate={approveEstimate}
-              onRemove={handleRemove}
               onShowHistory={setHistoryOrder}
               onConfirmStatus={setConfirmingStatusOrder}
               onEdit={handleEdit}
@@ -464,7 +445,6 @@ const Cortes: React.FC = () => {
               onPrintResume={handlePrintResume}
               onPrintLabels={handlePrintLabels}
               onApproveEstimate={approveEstimate}
-              onRemove={handleRemove}
               onShowHistory={setHistoryOrder}
               onConfirmStatus={setConfirmingStatusOrder}
               onEdit={handleEdit}

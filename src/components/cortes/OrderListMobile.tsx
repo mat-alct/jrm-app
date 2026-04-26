@@ -19,17 +19,16 @@ import {
   FaHistory,
   FaRegFileAlt,
   FaTags,
-  FaTrash,
 } from 'react-icons/fa';
 
 import type { OrderListCallbacks, OrderListProps } from './OrderListTypes';
 
 type EstimateCardProps = {
   item: any;
-} & Pick<OrderListCallbacks, 'onPrintResume' | 'onApproveEstimate' | 'onRemove'>;
+} & Pick<OrderListCallbacks, 'onPrintResume' | 'onApproveEstimate'>;
 
 const EstimateCard = React.memo<EstimateCardProps>(
-  ({ item, onPrintResume, onApproveEstimate, onRemove }) => (
+  ({ item, onPrintResume, onApproveEstimate }) => (
     <Box
       bg="white"
       borderWidth="1px"
@@ -79,15 +78,6 @@ const EstimateCard = React.memo<EstimateCardProps>(
         >
           <FaHandshake /> Aprovar
         </Button>
-        <IconButton
-          colorScheme="red"
-          variant="outline"
-          size="md"
-          aria-label="Remover"
-          onClick={() => onRemove(item.id, 'estimates')}
-        >
-          <FaTrash />
-        </IconButton>
       </Stack>
     </Box>
   ),
@@ -193,6 +183,17 @@ const OrderCard = React.memo<OrderCardProps>(
         </Flex>
 
         <Flex gap={2} mt={3} wrap="wrap">
+          {item.edits?.length > 0 && (
+            <IconButton
+              size="md"
+              variant="outline"
+              colorScheme="purple"
+              aria-label="Histórico de edições"
+              onClick={() => onShowHistory(item)}
+            >
+              <FaHistory />
+            </IconButton>
+          )}
           <Button
             flex="1"
             minW="100px"
@@ -213,17 +214,6 @@ const OrderCard = React.memo<OrderCardProps>(
           >
             <FaTags /> Etiquetas
           </Button>
-          {item.edits?.length > 0 && (
-            <IconButton
-              size="md"
-              variant="outline"
-              colorScheme="purple"
-              aria-label="Histórico de edições"
-              onClick={() => onShowHistory(item)}
-            >
-              <FaHistory />
-            </IconButton>
-          )}
           {item.orderStatus === 'Em Produção' && (
             <IconButton
               size="md"
@@ -262,7 +252,6 @@ const OrderListMobileImpl: React.FC<OrderListProps> = ({
   onPrintResume,
   onPrintLabels,
   onApproveEstimate,
-  onRemove,
   onShowHistory,
   onConfirmStatus,
   onEdit,
@@ -303,7 +292,6 @@ const OrderListMobileImpl: React.FC<OrderListProps> = ({
             item={item}
             onPrintResume={onPrintResume}
             onApproveEstimate={onApproveEstimate}
-            onRemove={onRemove}
           />
         ) : (
           <OrderCard

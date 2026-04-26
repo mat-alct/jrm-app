@@ -21,7 +21,6 @@ import {
   FaHistory,
   FaRegFileAlt,
   FaTags,
-  FaTrash,
 } from 'react-icons/fa';
 
 import type { OrderListCallbacks, OrderListProps } from './OrderListTypes';
@@ -34,10 +33,10 @@ type RowVisualProps = {
 type EstimateRowProps = {
   item: any;
 } & RowVisualProps &
-  Pick<OrderListCallbacks, 'onPrintResume' | 'onApproveEstimate' | 'onRemove'>;
+  Pick<OrderListCallbacks, 'onPrintResume' | 'onApproveEstimate'>;
 
 const EstimateRow = React.memo<EstimateRowProps>(
-  ({ item, bg, hoverBg, onPrintResume, onApproveEstimate, onRemove }) => (
+  ({ item, bg, hoverBg, onPrintResume, onApproveEstimate }) => (
     <Table.Row bg={bg} _hover={{ bg: hoverBg }}>
       <Table.Cell fontWeight="bold">{item.estimateCode}</Table.Cell>
       <Table.Cell>{item.name}</Table.Cell>
@@ -70,15 +69,6 @@ const EstimateRow = React.memo<EstimateRowProps>(
             onClick={() => onPrintResume(item, 'estimate')}
           >
             <FaRegFileAlt />
-          </IconButton>
-          <IconButton
-            colorScheme="red"
-            variant="ghost"
-            size="sm"
-            aria-label="Remover"
-            onClick={() => onRemove(item.id, 'estimates')}
-          >
-            <FaTrash />
           </IconButton>
           <IconButton
             colorScheme="green"
@@ -186,6 +176,18 @@ const OrderRow = React.memo<OrderRowProps>(
         >{`R$ ${item.orderPrice},00`}</Table.Cell>
         <Table.Cell>
           <HStack gap={2} justify="flex-end">
+            {item.edits?.length > 0 && (
+              <IconButton
+                aria-label="Histórico de edições"
+                variant="ghost"
+                colorScheme="purple"
+                size="sm"
+                onClick={() => onShowHistory(item)}
+                title={`${item.edits.length} edição(ões)`}
+              >
+                <FaHistory />
+              </IconButton>
+            )}
             <IconButton
               colorScheme="gray"
               variant="ghost"
@@ -204,18 +206,6 @@ const OrderRow = React.memo<OrderRowProps>(
             >
               <FaTags />
             </IconButton>
-            {item.edits?.length > 0 && (
-              <IconButton
-                aria-label="Histórico de edições"
-                variant="ghost"
-                colorScheme="purple"
-                size="sm"
-                onClick={() => onShowHistory(item)}
-                title={`${item.edits.length} edição(ões)`}
-              >
-                <FaHistory />
-              </IconButton>
-            )}
             {item.orderStatus === 'Em Produção' && (
               <IconButton
                 colorScheme="blue"
@@ -253,7 +243,6 @@ const OrderListDesktopImpl: React.FC<OrderListProps> = ({
   onPrintResume,
   onPrintLabels,
   onApproveEstimate,
-  onRemove,
   onShowHistory,
   onConfirmStatus,
   onEdit,
@@ -319,7 +308,6 @@ const OrderListDesktopImpl: React.FC<OrderListProps> = ({
                   hoverBg={hoverBg}
                   onPrintResume={onPrintResume}
                   onApproveEstimate={onApproveEstimate}
-                  onRemove={onRemove}
                 />
               ) : (
                 <OrderRow
