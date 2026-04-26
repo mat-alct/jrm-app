@@ -226,13 +226,19 @@ module.exports = withBundleAnalyzer(config);
 
 ## Fase 5 — Refatorar `listadecortes.tsx`
 
-### [ ] Passo 5.1 — Extrair Dialogs
+### [x] Passo 5.1 — Extrair Dialogs
 
 Criar:
-- `src/pages/cortes/_components/HistoryDialog.tsx` — props: `order`, `onClose`, `onPrintVersion`.
-- `src/pages/cortes/_components/ConfirmStatusDialog.tsx` — props: `order`, `onCancel`, `onConfirm`, `loading`.
+- `src/components/cortes/HistoryDialog.tsx` — props: `order`, `onClose`, `onSelectVersion`.
+- `src/components/cortes/ConfirmStatusDialog.tsx` — props: `order`, `onCancel`, `onConfirm`, `loading`.
 
-Importar via `dynamic({ ssr: false })`.
+> **Nota:** o plano original sugeria `src/pages/cortes/_components/`, mas o
+> Pages Router do Next 15 não respeita a convenção de underscore para
+> pastas (diferente do App Router) — gerava rotas `/cortes/_components/...`.
+> Movido para `src/components/cortes/`.
+
+Importar via `dynamic({ ssr: false })` e renderizar condicionalmente
+(`{state && <Dialog ... />}`) para que o chunk só baixe na primeira abertura.
 
 ### [ ] Passo 5.2 — Renderizar só uma lista (mobile OU desktop)
 

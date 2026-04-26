@@ -2,12 +2,9 @@
 import {
   Box,
   Button,
-  CloseButton,
-  Dialog,
   Flex,
   HStack,
   IconButton,
-  Portal,
   RadioGroup,
   Stack,
   Table,
@@ -17,7 +14,6 @@ import {
   Center,
   Spinner,
   Alert,
-  VStack,
 } from '@chakra-ui/react';
 import { format } from 'date-fns';
 import {
@@ -30,7 +26,7 @@ import {
 } from 'firebase/firestore';
 import Head from 'next/head';
 import Router from 'next/router';
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   FaCheck,
   FaEdit,
@@ -64,6 +60,21 @@ const EstimateResume = dynamic(
   () =>
     import('../../components/Printables/EstimateResume').then(
       (m) => m.EstimateResume,
+    ),
+  { ssr: false },
+);
+// DIÁLOGOS (lazy — só baixam quando abertos)
+const HistoryDialog = dynamic(
+  () =>
+    import('../../components/cortes/HistoryDialog').then(
+      (m) => m.HistoryDialog,
+    ),
+  { ssr: false },
+);
+const ConfirmStatusDialog = dynamic(
+  () =>
+    import('../../components/cortes/ConfirmStatusDialog').then(
+      (m) => m.ConfirmStatusDialog,
     ),
   { ssr: false },
 );
@@ -102,34 +113,6 @@ const Cortes: React.FC = () => {
     any | null
   >(null);
   const [advancingStatus, setAdvancingStatus] = useState(false);
-
-  const nextStatusLabel = (status?: string) => {
-    if (status === 'Em Produção') return 'Liberar para Transporte';
-    if (status === 'Liberado para Transporte') return 'Concluir pedido';
-    return null;
-  };
-
-  // Reconstrói o snapshot do pedido em uma versão específica do histórico.
-  // versionIndex = 0 → versão original (antes de qualquer edição)
-  // versionIndex = N → após aplicar a edição (N-1)
-  const buildVersionSnapshot = (order: any, versionIndex: number) => {
-    const edits: any[] = order.edits ?? [];
-    if (versionIndex === 0) {
-      return {
-        ...order,
-        cutlist: edits[0]?.previousCutlist ?? order.cutlist,
-        orderPrice: edits[0]?.previousOrderPrice ?? order.orderPrice,
-        edits: [],
-      };
-    }
-    const nextEdit = edits[versionIndex];
-    return {
-      ...order,
-      cutlist: nextEdit?.previousCutlist ?? order.cutlist,
-      orderPrice: nextEdit?.previousOrderPrice ?? order.orderPrice,
-      edits: edits.slice(0, versionIndex),
-    };
-  };
 
   const toast = toaster;
   const { getOrders, getOrdersBySearch } = useOrder();
@@ -328,224 +311,27 @@ const Cortes: React.FC = () => {
             />
           )}
 
-          {/* Diálogo: histórico de edições do pedido */}
-          <Dialog.Root
-            open={!!historyOrder}
-            onOpenChange={e => {
-              if (!e.open) setHistoryOrder(null);
-            }}
-            size="md"
-          >
-            <Portal>
-              <Dialog.Backdrop />
-              <Dialog.Positioner>
-                <Dialog.Content>
-                  <Dialog.Header>
-                    <Dialog.Title>
-                      Histórico do Pedido #{historyOrder?.orderCode}
-                    </Dialog.Title>
-                  </Dialog.Header>
-                  <Dialog.Body pb={6}>
-                    {historyOrder && (
-                      <VStack gap={2} align="stretch">
-                        {(() => {
-                          const edits: any[] = historyOrder.edits ?? [];
-                          const versionCount = edits.length + 1;
-                          const items: React.ReactNode[] = [];
-                          for (let v = 0; v < versionCount; v++) {
-                            const isOriginal = v === 0;
-                            const editAtIndex = isOriginal ? null : edits[v - 1];
-                            const when = editAtIndex?.editedAt?.seconds
-                              ? format(
-                                  new Date(
-                                    editAtIndex.editedAt.seconds * 1000,
-                                  ),
-                                  "dd/MM/yyyy 'às' HH:mm",
-                                )
-                              : null;
-                            const diff = editAtIndex?.priceDifference ?? 0;
-                            const shouldCharge =
-                              !!editAtIndex?.shouldCharge && diff !== 0;
-                            items.push(
-                              <Button
-                                key={v}
-                                onClick={() => {
-                                  const snap = buildVersionSnapshot(
-                                    historyOrder,
-                                    v,
-                                  );
-                                  setHistoryOrder(null);
-                                  handlePrintResume(snap, 'order');
-                                }}
-                                variant="outline"
-                                colorScheme="orange"
-                                justifyContent="flex-start"
-                                height="auto"
-                                py={3}
-                                px={4}
-                                whiteSpace="normal"
-                                textAlign="left"
-                              >
-                                <Flex
-                                  direction="column"
-                                  align="flex-start"
-                                  w="100%"
-                                  gap={0.5}
-                                >
-                                  <Text fontWeight="bold">
-                                    {isOriginal
-                                      ? 'Versão Original'
-                                      : `Edição ${v}`}
-                                  </Text>
-                                  {isOriginal ? (
-                                    <Text fontSize="xs" color="gray.600">
-                                      Pedido como foi criado inicialmente
-                                    </Text>
-                                  ) : (
-                                    <>
-                                      <Text fontSize="xs" color="gray.700">
-                                        {when ?? 'Data indisponível'}
-                                        {editAtIndex?.editedBy
-                                          ? ` · por ${editAtIndex.editedBy}`
-                                          : ''}
-                                      </Text>
-                                      {diff !== 0 && (
-                                        <Text
-                                          fontSize="xs"
-                                          color={
-                                            diff > 0 ? 'red.600' : 'green.600'
-                                          }
-                                          fontWeight="medium"
-                                        >
-                                          Diferença: {diff > 0 ? '+' : '−'}R${' '}
-                                          {Math.abs(diff)},00
-                                          {shouldCharge && ' · acertar'}
-                                        </Text>
-                                      )}
-                                    </>
-                                  )}
-                                </Flex>
-                              </Button>,
-                            );
-                          }
-                          return items;
-                        })()}
-                        <Text fontSize="xs" color="gray.500" mt={2}>
-                          Clique em uma versão para imprimir o resumo
-                          correspondente.
-                        </Text>
-                      </VStack>
-                    )}
-                  </Dialog.Body>
-                  <Dialog.CloseTrigger asChild>
-                    <CloseButton />
-                  </Dialog.CloseTrigger>
-                </Dialog.Content>
-              </Dialog.Positioner>
-            </Portal>
-          </Dialog.Root>
+          {/* Diálogo: histórico de edições do pedido (lazy — só monta após primeiro open) */}
+          {historyOrder && (
+            <HistoryDialog
+              order={historyOrder}
+              onClose={() => setHistoryOrder(null)}
+              onSelectVersion={snap => {
+                setHistoryOrder(null);
+                handlePrintResume(snap, 'order');
+              }}
+            />
+          )}
 
-          {/* Diálogo: confirmação de avanço de status */}
-          <Dialog.Root
-            open={!!confirmingStatusOrder}
-            onOpenChange={e => {
-              if (!e.open && !advancingStatus) setConfirmingStatusOrder(null);
-            }}
-            placement="center"
-            motionPreset="slide-in-bottom"
-          >
-            <Portal>
-              <Dialog.Backdrop />
-              <Dialog.Positioner padding={[2, 4]}>
-                <Dialog.Content
-                  mx="auto"
-                  w={['100%', '100%', 'auto']}
-                  maxW={['100%', '100%', '420px']}
-                >
-                  <Dialog.Header>
-                    <Dialog.Title>Confirmar alteração de status</Dialog.Title>
-                  </Dialog.Header>
-                  <Dialog.Body pb={4}>
-                    {confirmingStatusOrder &&
-                      (() => {
-                        const next = nextStatusLabel(
-                          confirmingStatusOrder.orderStatus,
-                        );
-                        return (
-                          <Stack gap={3}>
-                            <Text color="gray.700">
-                              Tem certeza que deseja{' '}
-                              <Text as="span" fontWeight="bold">
-                                {next?.toLowerCase()}
-                              </Text>
-                              ?
-                            </Text>
-                            <Box
-                              bg="gray.50"
-                              borderWidth="1px"
-                              borderColor="gray.200"
-                              borderRadius="md"
-                              p={3}
-                            >
-                              <Text fontSize="sm" color="gray.500">
-                                Pedido #{confirmingStatusOrder.orderCode}
-                              </Text>
-                              <Text fontWeight="bold" color="gray.800">
-                                {confirmingStatusOrder.customer?.name ||
-                                  'Cliente Removido'}
-                              </Text>
-                              <Text fontSize="sm" color="gray.600" mt={1}>
-                                Status atual:{' '}
-                                <strong>
-                                  {confirmingStatusOrder.orderStatus}
-                                </strong>
-                              </Text>
-                            </Box>
-                            <Text fontSize="xs" color="gray.500">
-                              Esta ação não pode ser desfeita pela tela de
-                              listagem.
-                            </Text>
-                          </Stack>
-                        );
-                      })()}
-                  </Dialog.Body>
-                  <Dialog.Footer>
-                    <Stack
-                      direction={['column-reverse', 'column-reverse', 'row']}
-                      w="100%"
-                      gap={2}
-                      justify="flex-end"
-                    >
-                      <Button
-                        variant="outline"
-                        colorScheme="gray"
-                        size={['lg', 'lg', 'md']}
-                        onClick={() => setConfirmingStatusOrder(null)}
-                        disabled={advancingStatus}
-                        w={['100%', '100%', 'auto']}
-                      >
-                        Cancelar
-                      </Button>
-                      <Button
-                        colorScheme="green"
-                        size={['lg', 'lg', 'md']}
-                        loading={advancingStatus}
-                        onClick={() =>
-                          updateCutlistStatus(confirmingStatusOrder.id)
-                        }
-                        w={['100%', '100%', 'auto']}
-                      >
-                        <FaCheck /> Confirmar
-                      </Button>
-                    </Stack>
-                  </Dialog.Footer>
-                  <Dialog.CloseTrigger asChild>
-                    <CloseButton disabled={advancingStatus} />
-                  </Dialog.CloseTrigger>
-                </Dialog.Content>
-              </Dialog.Positioner>
-            </Portal>
-          </Dialog.Root>
+          {/* Diálogo: confirmação de avanço de status (lazy — só monta após primeiro open) */}
+          {confirmingStatusOrder && (
+            <ConfirmStatusDialog
+              order={confirmingStatusOrder}
+              onCancel={() => setConfirmingStatusOrder(null)}
+              onConfirm={updateCutlistStatus}
+              loading={advancingStatus}
+            />
+          )}
 
           <Flex
             direction={['column', 'column', 'column', 'row']}
