@@ -18,7 +18,7 @@ import {
   Badge,
 } from '@chakra-ui/react';
 import { yupResolver } from '@hookform/resolvers/yup';
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useForm, SubmitHandler } from 'react-hook-form';
 import {
   FaEdit,
@@ -77,6 +77,101 @@ interface CutlistPageProps {
   updateCutlist: (cutlistData: Cutlist[], maintainOldValues?: boolean) => void;
 }
 
+type CutlistRowProps = {
+  cut: Cutlist;
+  onEdit: (cutId: string) => void;
+  onRemove: (cutId: string) => void;
+};
+
+const CutlistRow = React.memo<CutlistRowProps>(({ cut, onEdit, onRemove }) => {
+  const { avatar, gside, pside } = sortCutlistData({
+    sideA: cut.sideA,
+    sideB: cut.sideB,
+    borderA: cut.borderA,
+    borderB: cut.borderB,
+  });
+
+  return (
+    <Table.Row _hover={{ bg: 'orange.50' }}>
+      <Table.Cell>
+        <img
+          src={avatar.src}
+          alt="Tag"
+          width="35px"
+          height="35px"
+          style={{
+            borderRadius: '4px',
+            border: '1px solid #eee',
+          }}
+        />
+      </Table.Cell>
+      <Table.Cell fontWeight="medium" color="gray.700">
+        {cut.material.name}
+      </Table.Cell>
+      <Table.Cell fontWeight="bold">{cut.amount}</Table.Cell>
+      <Table.Cell>
+        <Flex direction="column" justify="center">
+          <Text fontWeight="bold">
+            {gside} x {pside}
+          </Text>
+          {cut.hasHingeHoles && (
+            <Flex align="center" gap={1} mt={1}>
+              <Badge
+                colorScheme="green"
+                variant="subtle"
+                fontSize="0.6em"
+                borderRadius="full"
+                px={2}
+              >
+                {cut.hingeHolesQuantity} Furos
+              </Badge>
+              <Text fontSize="xs" color="gray.500">
+                (Lado {cut.hingeHolesSide === 'Maior' ? 'maior' : 'menor'})
+              </Text>
+            </Flex>
+          )}
+        </Flex>
+      </Table.Cell>
+      <Table.Cell>
+        <Badge variant="outline" colorScheme="gray">
+          {cut.borderA}
+        </Badge>{' '}
+        |{' '}
+        <Badge variant="outline" colorScheme="gray">
+          {cut.borderB}
+        </Badge>
+      </Table.Cell>
+      <Table.Cell
+        fontWeight="bold"
+        color="green.600"
+      >{`R$ ${cut.price},00`}</Table.Cell>
+      <Table.Cell>
+        <HStack gap={1}>
+          <IconButton
+            variant="ghost"
+            colorScheme="blue"
+            size="sm"
+            aria-label="Editar"
+            onClick={() => onEdit(cut.id)}
+          >
+            <FaEdit />
+          </IconButton>
+          <IconButton
+            variant="ghost"
+            colorScheme="red"
+            size="sm"
+            aria-label="Remover"
+            onClick={() => onRemove(cut.id)}
+          >
+            <FaTrash />
+          </IconButton>
+        </HStack>
+      </Table.Cell>
+    </Table.Row>
+  );
+});
+CutlistRow.displayName = 'CutlistRow';
+
 export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
   const {
     register: createCutlistRegister,
@@ -98,6 +193,7 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
 
   const {
     open: isOptionsOpen,
+    onOpen: onOpenOptions,
     onToggle: onToggleOptions,
     onClose: onCloseOptions,
   } = useDisclosure();
@@ -107,11 +203,10 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
   const [pricePercent, setPricePercent] = useState<number>(75);
 
   const { data: materialData, isLoading } = useQuery({
-    queryKey: ['materials'],
-    queryFn: async () => {
-      const data = await getAllMaterials();
-      return data || [];
-    },
+    queryKey: ['materials', 'all'],
+    queryFn: async () => (await getAllMaterials()) || [],
+    staleTime: 1000 * 60 * 30,
+    gcTime: 1000 * 60 * 60,
   });
 
   const materialOptions = React.useMemo(() => {
@@ -212,32 +307,49 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
     updateCutlist([...cutlistWithUpdatedPrice], false);
   };
 
-  const removeCut = (cutId: string) => {
-    updateCutlist([...cutlist.filter(cut => cut.id !== cutId)], false);
-  };
+  // Mantém ref atualizada para a cutlist corrente, permitindo que removeCut/
+  // updateCut sejam useCallback estáveis (sem cutlist nas deps), o que é
+  // requisito para o React.memo dos CutlistRow funcionar.
+  const cutlistRef = useRef(cutlist);
+  useEffect(() => {
+    cutlistRef.current = cutlist;
+  }, [cutlist]);
 
-  const updateCut = (cutId: string) => {
-    const cutToUpdate = cutlist.find(cut => cut.id === cutId);
-    if (!cutToUpdate) return;
-    const { amount, sideA, sideB, borderA, borderB, material } = cutToUpdate;
-    createCutlistSetValue('amount', amount);
-    createCutlistSetValue('sideA', sideA);
-    createCutlistSetValue('sideB', sideB);
-    createCutlistSetValue('borderA', borderA);
-    createCutlistSetValue('borderB', borderB);
-    createCutlistSetValue('materialId', material.materialId);
+  const removeCut = useCallback(
+    (cutId: string) => {
+      updateCutlist(
+        cutlistRef.current.filter(cut => cut.id !== cutId),
+        false,
+      );
+    },
+    [updateCutlist],
+  );
 
-    if (cutToUpdate.hasHingeHoles) {
-      setHasHinge(true);
-      if (cutToUpdate.hingeHolesSide) setHingeSide(cutToUpdate.hingeHolesSide);
-      if (!isOptionsOpen) onToggleOptions();
-    } else {
-      setHasHinge(false);
-      onCloseOptions();
-    }
+  const updateCut = useCallback(
+    (cutId: string) => {
+      const cutToUpdate = cutlistRef.current.find(cut => cut.id === cutId);
+      if (!cutToUpdate) return;
+      const { amount, sideA, sideB, borderA, borderB, material } = cutToUpdate;
+      createCutlistSetValue('amount', amount);
+      createCutlistSetValue('sideA', sideA);
+      createCutlistSetValue('sideB', sideB);
+      createCutlistSetValue('borderA', borderA);
+      createCutlistSetValue('borderB', borderB);
+      createCutlistSetValue('materialId', material.materialId);
 
-    removeCut(cutId);
-  };
+      if (cutToUpdate.hasHingeHoles) {
+        setHasHinge(true);
+        if (cutToUpdate.hingeHolesSide) setHingeSide(cutToUpdate.hingeHolesSide);
+        onOpenOptions();
+      } else {
+        setHasHinge(false);
+        onCloseOptions();
+      }
+
+      removeCut(cutId);
+    },
+    [createCutlistSetValue, onOpenOptions, onCloseOptions, removeCut],
+  );
 
   const borderOptions = [
     { value: 0, label: '0' },
@@ -586,94 +698,14 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
               </Table.Row>
             </Table.Header>
             <Table.Body>
-              {cutlist.map(c => {
-                const { avatar, gside, pside } = sortCutlistData({
-                  sideA: c.sideA,
-                  sideB: c.sideB,
-                  borderA: c.borderA,
-                  borderB: c.borderB,
-                });
-                return (
-                  <Table.Row key={c.id} _hover={{ bg: 'orange.50' }}>
-                    <Table.Cell>
-                      <img
-                        src={avatar.src}
-                        alt="Tag"
-                        width="35px"
-                        height="35px"
-                        style={{
-                          borderRadius: '4px',
-                          border: '1px solid #eee',
-                        }}
-                      />
-                    </Table.Cell>
-                    <Table.Cell fontWeight="medium" color="gray.700">
-                      {c.material.name}
-                    </Table.Cell>
-                    <Table.Cell fontWeight="bold">{c.amount}</Table.Cell>
-                    <Table.Cell>
-                      <Flex direction="column" justify="center">
-                        <Text fontWeight="bold">
-                          {gside} x {pside}
-                        </Text>
-                        {c.hasHingeHoles && (
-                          <Flex align="center" gap={1} mt={1}>
-                            <Badge
-                              colorScheme="green"
-                              variant="subtle"
-                              fontSize="0.6em"
-                              borderRadius="full"
-                              px={2}
-                            >
-                              {c.hingeHolesQuantity} Furos
-                            </Badge>
-                            <Text fontSize="xs" color="gray.500">
-                              (Lado{' '}
-                              {c.hingeHolesSide === 'Maior' ? 'maior' : 'menor'}
-                              )
-                            </Text>
-                          </Flex>
-                        )}
-                      </Flex>
-                    </Table.Cell>
-                    <Table.Cell>
-                      <Badge variant="outline" colorScheme="gray">
-                        {c.borderA}
-                      </Badge>{' '}
-                      |{' '}
-                      <Badge variant="outline" colorScheme="gray">
-                        {c.borderB}
-                      </Badge>
-                    </Table.Cell>
-                    <Table.Cell
-                      fontWeight="bold"
-                      color="green.600"
-                    >{`R$ ${c.price},00`}</Table.Cell>
-                    <Table.Cell>
-                      <HStack gap={1}>
-                        <IconButton
-                          variant="ghost"
-                          colorScheme="blue"
-                          size="sm"
-                          aria-label="Editar"
-                          onClick={() => updateCut(c.id)}
-                        >
-                          <FaEdit />
-                        </IconButton>
-                        <IconButton
-                          variant="ghost"
-                          colorScheme="red"
-                          size="sm"
-                          aria-label="Remover"
-                          onClick={() => removeCut(c.id)}
-                        >
-                          <FaTrash />
-                        </IconButton>
-                      </HStack>
-                    </Table.Cell>
-                  </Table.Row>
-                );
-              })}
+              {cutlist.map(c => (
+                <CutlistRow
+                  key={c.id}
+                  cut={c}
+                  onEdit={updateCut}
+                  onRemove={removeCut}
+                />
+              ))}
             </Table.Body>
           </Table.Root>
         </Box>

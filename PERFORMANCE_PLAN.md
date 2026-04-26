@@ -260,7 +260,7 @@ const isMobile = useBreakpointValue({ base: true, md: false }, { fallback: true 
 
 ## Fase 6 — `Cutlist.tsx`
 
-### [ ] Passo 6.1 — `staleTime` longo na query de materiais
+### [x] Passo 6.1 — `staleTime` longo na query de materiais
 
 **Onde:** linhas 109-115.
 
@@ -273,7 +273,7 @@ const { data: materialData, isLoading } = useQuery({
 });
 ```
 
-### [ ] Passo 6.2 — Memoizar `<CutlistRow>`
+### [x] Passo 6.2 — Memoizar `<CutlistRow>`
 
 Extrair `<Table.Row>` (linhas 588-676) para componente próprio com `React.memo`.
 
