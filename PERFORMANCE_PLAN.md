@@ -281,7 +281,7 @@ Extrair `<Table.Row>` (linhas 588-676) para componente próprio com `React.memo`
 
 ## Fase 7 — Sidebar
 
-### [ ] Passo 7.1 — Lazy-load Drawer só em mobile
+### [x] Passo 7.1 — Lazy-load Drawer só em mobile
 
 **Onde:** `src/components/Dashboard/Sidebar/index.tsx`.
 

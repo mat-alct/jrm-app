@@ -1,5 +1,4 @@
 import { Flex, Image, VStack } from '@chakra-ui/react';
-import { BsArrowLeftRight } from 'react-icons/bs';
 import {
   FaClipboardList,
   FaHome,
@@ -57,9 +56,6 @@ export const SidebarNav: React.FC = () => {
         <NavSection title="Administração">
           <NavLink icon={FaUserAstronaut} href="/administracao/vendedores">
             Novo vendedor
-          </NavLink>
-          <NavLink icon={BsArrowLeftRight} href="/administracao/transferencias">
-            Transferencias
           </NavLink>
         </NavSection>
         <NavSection title="Conta">
