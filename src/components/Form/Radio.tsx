@@ -58,7 +58,7 @@ export const FormRadio = <TFieldValues extends FieldValues>({
         <RadioGroup.Root
           value={field.value}
           onValueChange={e => field.onChange(e.value)}
-          colorScheme="orange"
+          colorScheme="yellow"
         >
           <Stack gap={4} direction={isHorizontal ? 'row' : 'column'}>
             {options.map(option => (

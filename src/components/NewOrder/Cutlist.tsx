@@ -34,11 +34,18 @@ import { useQuery } from '@tanstack/react-query';
 import { v4 } from 'uuid';
 
 import { useMaterial } from '../../hooks/material';
+import { findAreaFreight, useAreas } from '../../hooks/useAreas';
+import { RoundedCorners } from '../../types';
 import { calculateCutlistPrice } from '../../utils/cutlist/calculatePrice';
 import { sortCutlistData } from '../../utils/cutlist/sortAndReturnTag';
 import { createCutlistSchema } from '../../utils/yup/novoservicoValidations';
 import { FormInput } from '../Form/Input';
 import { FormSelect } from '../Form/Select';
+import {
+  TagSchemaSvg,
+  countCorners,
+  emptyCorners,
+} from './TagSchemaSvg';
 
 interface CutlistMaterial {
   materialId: string;
@@ -60,6 +67,10 @@ interface Cutlist {
   hasHingeHoles?: boolean;
   hingeHolesSide?: 'Maior' | 'Menor';
   hingeHolesQuantity?: number;
+  hasDrawerSlot?: boolean;
+  drawerSlotSide?: 'Maior' | 'Menor';
+  hasRoundedCorners?: boolean;
+  roundedCorners?: RoundedCorners;
 }
 
 interface CreateCutlistProps {
@@ -75,6 +86,8 @@ interface CreateCutlistProps {
 interface CutlistPageProps {
   cutlist: Cutlist[];
   updateCutlist: (cutlistData: Cutlist[], maintainOldValues?: boolean) => void;
+  selectedArea?: string;
+  deliveryType?: string;
 }
 
 type CutlistRowProps = {
@@ -91,19 +104,39 @@ const CutlistRow = React.memo<CutlistRowProps>(({ cut, onEdit, onRemove }) => {
     borderB: cut.borderB,
   });
 
+  const gborder = cut.sideA >= cut.sideB ? cut.borderA : cut.borderB;
+  const pborder = cut.sideA >= cut.sideB ? cut.borderB : cut.borderA;
+
   return (
     <Table.Row _hover={{ bg: 'orange.50' }}>
       <Table.Cell>
-        <img
-          src={avatar.src}
-          alt="Tag"
-          width="35px"
-          height="35px"
-          style={{
-            borderRadius: '4px',
-            border: '1px solid #eee',
-          }}
-        />
+        {cut.hasRoundedCorners ? (
+          <Box
+            width="35px"
+            height="35px"
+            borderRadius="4px"
+            border="1px solid #eee"
+            overflow="hidden"
+          >
+            <TagSchemaSvg
+              gborder={gborder}
+              pborder={pborder}
+              corners={cut.roundedCorners}
+              size={35}
+            />
+          </Box>
+        ) : (
+          <img
+            src={avatar.src}
+            alt="Tag"
+            width="35px"
+            height="35px"
+            style={{
+              borderRadius: '4px',
+              border: '1px solid #eee',
+            }}
+          />
+        )}
       </Table.Cell>
       <Table.Cell fontWeight="medium" color="gray.700">
         {cut.material.name}
@@ -128,6 +161,35 @@ const CutlistRow = React.memo<CutlistRowProps>(({ cut, onEdit, onRemove }) => {
               <Text fontSize="xs" color="gray.500">
                 (Lado {cut.hingeHolesSide === 'Maior' ? 'maior' : 'menor'})
               </Text>
+            </Flex>
+          )}
+          {cut.hasDrawerSlot && (
+            <Flex align="center" gap={1} mt={1}>
+              <Badge
+                colorScheme="orange"
+                variant="subtle"
+                fontSize="0.6em"
+                borderRadius="full"
+                px={2}
+              >
+                Rasgo
+              </Badge>
+              <Text fontSize="xs" color="gray.500">
+                (Lado {cut.drawerSlotSide === 'Maior' ? 'maior' : 'menor'})
+              </Text>
+            </Flex>
+          )}
+          {cut.hasRoundedCorners && (
+            <Flex align="center" gap={1} mt={1}>
+              <Badge
+                colorScheme="purple"
+                variant="subtle"
+                fontSize="0.6em"
+                borderRadius="full"
+                px={2}
+              >
+                Boleado x{countCorners(cut.roundedCorners)}
+              </Badge>
             </Flex>
           )}
         </Flex>
@@ -172,14 +234,21 @@ const CutlistRow = React.memo<CutlistRowProps>(({ cut, onEdit, onRemove }) => {
 });
 CutlistRow.displayName = 'CutlistRow';
 
-export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
+export const Cutlist = ({
+  cutlist,
+  updateCutlist,
+  selectedArea,
+  deliveryType,
+}: CutlistPageProps) => {
+  const isStorePickup = deliveryType === 'Retirar na Loja';
+  const showFreightValue = !isStorePickup && !!selectedArea;
   const {
     register: createCutlistRegister,
     handleSubmit: createCutlistHandleSubmit,
     control: createCutlistControl,
     reset: createCutlistReset,
     setValue: createCutlistSetValue,
-    setFocus: createCutlistSetFocus,
+    setError: createCutlistSetError,
     formState: { errors: createCutlistErrors },
   } = useForm<CreateCutlistProps>({
     resolver: yupResolver(createCutlistSchema as any),
@@ -190,6 +259,13 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
   const tableSize = useBreakpointValue(['sm', 'sm', 'md'], { fallback: 'sm' });
 
   const { getAllMaterials } = useMaterial();
+  const { data: areas } = useAreas();
+  const freightFromArea = findAreaFreight(areas, selectedArea);
+  const brl = (value: number) =>
+    new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    }).format(value);
 
   const {
     open: isOptionsOpen,
@@ -198,9 +274,28 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
     onClose: onCloseOptions,
   } = useDisclosure();
 
-  const [hasHinge, setHasHinge] = useState(false);
-  const [hingeSide, setHingeSide] = useState<'Maior' | 'Menor'>('Maior');
+  // Tipo de detalhe extra: nenhum, furação (dobradiça), rasgo (gaveta) ou
+  // canto boleado. Mutuamente exclusivos — uma peça só pode ter um deles.
+  const [extraType, setExtraType] = useState<
+    'none' | 'hinge' | 'slot' | 'round'
+  >('none');
+  const [extraSide, setExtraSide] = useState<'Maior' | 'Menor'>('Maior');
+  const [roundedCorners, setRoundedCorners] = useState<RoundedCorners>(
+    emptyCorners(),
+  );
   const [pricePercent, setPricePercent] = useState<number>(75);
+
+  const toggleCorner = useCallback((corner: keyof RoundedCorners) => {
+    setRoundedCorners(prev => ({ ...prev, [corner]: !prev[corner] }));
+  }, []);
+
+  // Peça boleada não pode ter fita: zera borderA/borderB sempre que entrar em 'round'.
+  useEffect(() => {
+    if (extraType === 'round') {
+      createCutlistSetValue('borderA', 0);
+      createCutlistSetValue('borderB', 0);
+    }
+  }, [extraType, createCutlistSetValue]);
 
   const { data: materialData, isLoading } = useQuery({
     queryKey: ['materials', 'all'],
@@ -243,6 +338,23 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
   const handleCreateCutlist: SubmitHandler<
     CreateCutlistProps
   > = cutlistFormData => {
+    // Rasgo de gaveta exige quantidade par (R$5 por par).
+    if (extraType === 'slot' && cutlistFormData.amount % 2 !== 0) {
+      createCutlistSetError('amount', {
+        type: 'value',
+        message: 'Qtd deve ser par para rasgo',
+      });
+      return;
+    }
+
+    if (extraType === 'round' && countCorners(roundedCorners) === 0) {
+      createCutlistSetError('amount', {
+        type: 'value',
+        message: 'Selecione ao menos um canto boleado',
+      });
+      return;
+    }
+
     createCutlistReset({ sideA: 0, sideB: 0, amount: 0 });
     createCutlistSetValue('borderA', 0);
     createCutlistSetValue('borderB', 0);
@@ -253,12 +365,17 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
     );
     if (!materialUsed) throw new Error('Material não encontrado');
 
+    const hasHinge = extraType === 'hinge';
+    const hasSlot = extraType === 'slot';
+    const hasRound = extraType === 'round';
+    const cornerCount = hasRound ? countCorners(roundedCorners) : 0;
+
     let calculatedQty = 0;
     if (hasHinge) {
       calculatedQty = calculateHoles(
         cutlistFormData.sideA,
         cutlistFormData.sideB,
-        hingeSide,
+        extraSide,
       );
     }
 
@@ -268,7 +385,12 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
         height: materialUsed.height,
         price: materialUsed.price,
       },
-      { ...cutlistFormData, hingeHolesQuantity: calculatedQty },
+      {
+        ...cutlistFormData,
+        hingeHolesQuantity: calculatedQty,
+        hasDrawerSlot: hasSlot,
+        roundedCornersCount: cornerCount,
+      },
       pricePercent,
     );
 
@@ -285,23 +407,44 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
         ...cutlistFormData,
         price,
         hasHingeHoles: hasHinge,
-        hingeHolesSide: hasHinge ? hingeSide : undefined,
+        hingeHolesSide: hasHinge ? extraSide : undefined,
         hingeHolesQuantity: calculatedQty,
+        hasDrawerSlot: hasSlot,
+        drawerSlotSide: hasSlot ? extraSide : undefined,
+        hasRoundedCorners: hasRound,
+        roundedCorners: hasRound ? { ...roundedCorners } : undefined,
       },
     ]);
 
     // RESET TOTAL
-    setHasHinge(false);
-    setHingeSide('Maior');
+    setExtraType('none');
+    setExtraSide('Maior');
+    setRoundedCorners(emptyCorners());
     onCloseOptions();
-    createCutlistSetFocus('amount');
+    // Volta foco ao primeiro campo (Material) para iniciar nova navegação por setas
+    document.getElementById('materialId')?.focus();
   };
 
   const updatePricePercent = (percentValue: string) => {
     const newPercent = Number(percentValue);
     setPricePercent(newPercent);
     const cutlistWithUpdatedPrice = cutlist.map(cut => {
-      const priceUpdated = calculateCutlistPrice(cut.material, cut, newPercent);
+      const priceUpdated = calculateCutlistPrice(
+        cut.material,
+        {
+          amount: cut.amount,
+          sideA: cut.sideA,
+          sideB: cut.sideB,
+          borderA: cut.borderA,
+          borderB: cut.borderB,
+          hingeHolesQuantity: cut.hingeHolesQuantity,
+          hasDrawerSlot: cut.hasDrawerSlot,
+          roundedCornersCount: cut.hasRoundedCorners
+            ? countCorners(cut.roundedCorners)
+            : 0,
+        },
+        newPercent,
+      );
       return { ...cut, price: priceUpdated };
     });
     updateCutlist([...cutlistWithUpdatedPrice], false);
@@ -338,11 +481,23 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
       createCutlistSetValue('materialId', material.materialId);
 
       if (cutToUpdate.hasHingeHoles) {
-        setHasHinge(true);
-        if (cutToUpdate.hingeHolesSide) setHingeSide(cutToUpdate.hingeHolesSide);
+        setExtraType('hinge');
+        if (cutToUpdate.hingeHolesSide) setExtraSide(cutToUpdate.hingeHolesSide);
+        setRoundedCorners(emptyCorners());
+        onOpenOptions();
+      } else if (cutToUpdate.hasDrawerSlot) {
+        setExtraType('slot');
+        if (cutToUpdate.drawerSlotSide)
+          setExtraSide(cutToUpdate.drawerSlotSide);
+        setRoundedCorners(emptyCorners());
+        onOpenOptions();
+      } else if (cutToUpdate.hasRoundedCorners) {
+        setExtraType('round');
+        setRoundedCorners(cutToUpdate.roundedCorners ?? emptyCorners());
         onOpenOptions();
       } else {
-        setHasHinge(false);
+        setExtraType('none');
+        setRoundedCorners(emptyCorners());
         onCloseOptions();
       }
 
@@ -356,6 +511,65 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
     { value: 1, label: '1' },
     { value: 2, label: '2' },
   ];
+
+  // Navegação por setas: → próximo campo, ← campo anterior.
+  // Em inputs de texto só pula se o cursor estiver na borda (não atrapalha edição).
+  // Em selects (react-select) pula direto — ArrowDown continua abrindo o menu.
+  const arrowNavFields = [
+    'materialId',
+    'amount',
+    'sideA',
+    'borderA',
+    'sideB',
+    'borderB',
+    'addCutBtn',
+  ];
+
+  const focusFieldByIdx = useCallback((idx: number) => {
+    const id = arrowNavFields[idx];
+    if (!id) return;
+    const el = document.getElementById(id) as HTMLElement | null;
+    el?.focus();
+  }, []);
+
+  const handleArrowNav = useCallback(
+    (e: React.KeyboardEvent<HTMLDivElement>) => {
+      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+      const active = document.activeElement as HTMLElement | null;
+      if (!active) return;
+      const idx = arrowNavFields.indexOf(active.id);
+      if (idx === -1) return;
+
+      // Boundary check: para inputs de texto, só pula se cursor estiver na borda.
+      // Para inputs onde selectionStart é null (ex: type=number no Chrome) ou
+      // para react-select (input vazio), tratamos como sempre na borda.
+      if (
+        active instanceof HTMLInputElement ||
+        active instanceof HTMLTextAreaElement
+      ) {
+        let start: number | null = null;
+        let end: number | null = null;
+        try {
+          start = active.selectionStart;
+          end = active.selectionEnd;
+        } catch {
+          /* alguns tipos não suportam selection */
+        }
+        if (start !== null && end !== null) {
+          const len = active.value.length;
+          if (e.key === 'ArrowLeft' && (start !== 0 || end !== 0)) return;
+          if (e.key === 'ArrowRight' && (start !== len || end !== len)) return;
+        }
+      }
+
+      const target = idx + (e.key === 'ArrowRight' ? 1 : -1);
+      if (target < 0 || target >= arrowNavFields.length) return;
+      e.preventDefault();
+      e.stopPropagation();
+      focusFieldByIdx(target);
+    },
+    [focusFieldByIdx],
+  );
 
   return (
     <Stack gap={6} mb={8}>
@@ -409,7 +623,7 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
                       _checked={{
                         bg: 'white',
                         shadow: 'sm',
-                        color: 'orange.600',
+                        color: 'yellow.700',
                       }}
                     >
                       <RadioGroup.ItemHiddenInput />
@@ -425,17 +639,58 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
                 </HStack>
               </RadioGroup.Root>
 
-              <Text
-                fontSize={['2xl', '3xl']}
-                fontWeight="800"
-                color="orange.500"
-                letterSpacing="tight"
-              >
-                {new Intl.NumberFormat('pt-BR', {
-                  style: 'currency',
-                  currency: 'BRL',
-                }).format(cutlist.reduce((prev, curr) => prev + curr.price, 0))}
-              </Text>
+              <Flex align="baseline" gap={2} wrap="wrap" justify={['center', 'flex-end']}>
+                <Text
+                  fontSize={['2xl', '3xl']}
+                  fontWeight="800"
+                  color="orange.500"
+                  letterSpacing="tight"
+                  lineHeight="1"
+                >
+                  {brl(cutlist.reduce((prev, curr) => prev + curr.price, 0))}
+                </Text>
+                {!isStorePickup && (
+                  <>
+                    <Text
+                      fontSize={['md', 'lg']}
+                      fontWeight="700"
+                      color="orange.500"
+                      lineHeight="1"
+                    >
+                      +
+                    </Text>
+                    {showFreightValue ? (
+                      <Text
+                        fontSize={['md', 'lg']}
+                        fontWeight="700"
+                        color="orange.500"
+                        lineHeight="1"
+                      >
+                        {brl(freightFromArea)}{' '}
+                        <Text
+                          as="span"
+                          fontSize={['xs', 'sm']}
+                          fontWeight="bold"
+                          color="orange.700"
+                          letterSpacing="wide"
+                        >
+                          (FRETE)
+                        </Text>
+                      </Text>
+                    ) : (
+                      <Text
+                        fontSize={['md', 'lg']}
+                        fontWeight="800"
+                        color="orange.500"
+                        letterSpacing="wide"
+                        lineHeight="1"
+                      >
+                        FRETE
+                      </Text>
+                    )}
+                  </>
+                )}
+              </Flex>
             </Flex>
           </Flex>
         </Box>
@@ -444,6 +699,7 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
           p={6}
           as="form"
           onSubmit={createCutlistHandleSubmit(handleCreateCutlist)}
+          onKeyDownCapture={handleArrowNav}
         >
           <Grid
             templateColumns={['1fr', '1fr', '3fr 70px 1.6fr 1.6fr 160px']}
@@ -502,6 +758,7 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
                     options={borderOptions}
                     defaultValue={0}
                     placeholder=""
+                    isDisabled={extraType === 'round'}
                   />
                 </Box>
               </Flex>
@@ -534,6 +791,7 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
                     options={borderOptions}
                     defaultValue={0}
                     placeholder=""
+                    isDisabled={extraType === 'round'}
                   />
                 </Box>
               </Flex>
@@ -542,9 +800,17 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
             <Box>
               <Flex gap={2} align="center" pb="2px">
                 <IconButton
-                  aria-label="Opções de Furação"
-                  colorScheme={hasHinge ? 'green' : 'gray'}
-                  variant={hasHinge ? 'solid' : 'outline'}
+                  aria-label="Opções de Detalhe"
+                  colorScheme={
+                    extraType === 'hinge'
+                      ? 'green'
+                      : extraType === 'slot'
+                        ? 'orange'
+                        : extraType === 'round'
+                          ? 'purple'
+                          : 'gray'
+                  }
+                  variant={extraType !== 'none' ? 'solid' : 'outline'}
                   onClick={onToggleOptions}
                   size="md"
                 >
@@ -552,6 +818,7 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
                 </IconButton>
 
                 <Button
+                  id="addCutBtn"
                   colorScheme="orange"
                   size="md"
                   flex="1"
@@ -564,32 +831,58 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
             </Box>
           </Grid>
 
-          {/* ÁREA DE FURAÇÃO */}
+          {/* ÁREA DE DETALHE (Furação, Rasgo ou Boleado) */}
           {isOptionsOpen && (
             <Box
               mt={5}
               p={5}
-              bg={hasHinge ? 'green.50' : 'gray.50'}
+              bg={
+                extraType === 'hinge'
+                  ? 'green.50'
+                  : extraType === 'slot'
+                    ? 'orange.50'
+                    : extraType === 'round'
+                      ? 'purple.50'
+                      : 'gray.50'
+              }
               borderRadius="lg"
               border="1px solid"
-              borderColor={hasHinge ? 'green.200' : 'gray.200'}
+              borderColor={
+                extraType === 'hinge'
+                  ? 'green.200'
+                  : extraType === 'slot'
+                    ? 'orange.200'
+                    : extraType === 'round'
+                      ? 'purple.200'
+                      : 'gray.200'
+              }
               position="relative"
             >
-              {hasHinge && (
+              {extraType !== 'none' && (
                 <Badge
                   position="absolute"
                   top="-10px"
                   left="20px"
-                  colorScheme="green"
+                  colorScheme={
+                    extraType === 'hinge'
+                      ? 'green'
+                      : extraType === 'slot'
+                        ? 'orange'
+                        : 'purple'
+                  }
                   variant="solid"
                   px={2}
                 >
-                  FURAÇÃO ATIVADA
+                  {extraType === 'hinge'
+                    ? 'FURAÇÃO ATIVADA'
+                    : extraType === 'slot'
+                      ? 'RASGO ATIVADO'
+                      : 'BOLEADO ATIVADO'}
                 </Badge>
               )}
 
-              <Flex align="flex-end" gap={6} wrap="wrap">
-                {/* Status */}
+              <Flex align="center" gap={6} wrap="wrap">
+                {/* Tipo de Detalhe */}
                 <Box>
                   <Text
                     fontSize="xs"
@@ -598,25 +891,46 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
                     color="gray.500"
                     textTransform="uppercase"
                   >
-                    Status
+                    Tipo de Detalhe
                   </Text>
-                  <Button
-                    onClick={() => setHasHinge(!hasHinge)}
-                    colorScheme={hasHinge ? 'green' : 'gray'}
-                    variant={hasHinge ? 'solid' : 'outline'}
-                    size="sm"
-                  >
-                    {hasHinge ? (
-                      <FaCheckCircle style={{ marginRight: 8 }} />
-                    ) : (
-                      <FaTimesCircle style={{ marginRight: 8 }} />
-                    )}
-                    {hasHinge ? 'Com Furação' : 'Sem Furação'}
-                  </Button>
+                  <HStack gap={2} wrap="wrap">
+                    <Button
+                      onClick={() => setExtraType('none')}
+                      colorScheme="gray"
+                      variant={extraType === 'none' ? 'solid' : 'outline'}
+                      size="sm"
+                    >
+                      <FaTimesCircle style={{ marginRight: 6 }} /> Nenhum
+                    </Button>
+                    <Button
+                      onClick={() => setExtraType('hinge')}
+                      colorScheme="green"
+                      variant={extraType === 'hinge' ? 'solid' : 'outline'}
+                      size="sm"
+                    >
+                      <FaCheckCircle style={{ marginRight: 6 }} /> Furação
+                    </Button>
+                    <Button
+                      onClick={() => setExtraType('slot')}
+                      colorScheme="orange"
+                      variant={extraType === 'slot' ? 'solid' : 'outline'}
+                      size="sm"
+                    >
+                      <FaCheckCircle style={{ marginRight: 6 }} /> Rasgo
+                    </Button>
+                    <Button
+                      onClick={() => setExtraType('round')}
+                      colorScheme="purple"
+                      variant={extraType === 'round' ? 'solid' : 'outline'}
+                      size="sm"
+                    >
+                      <FaCheckCircle style={{ marginRight: 6 }} /> Boleado
+                    </Button>
+                  </HStack>
                 </Box>
 
-                {/* Seleção de Lado */}
-                {hasHinge && (
+                {/* Seleção de Lado (Furação / Rasgo) */}
+                {(extraType === 'hinge' || extraType === 'slot') && (
                   <Box>
                     <Text
                       fontSize="xs"
@@ -625,29 +939,71 @@ export const Cutlist = ({ cutlist, updateCutlist }: CutlistPageProps) => {
                       color="gray.500"
                       textTransform="uppercase"
                     >
-                      Posição dos Furos
+                      {extraType === 'hinge'
+                        ? 'Posição dos Furos'
+                        : 'Posição do Rasgo'}
                     </Text>
                     <HStack gap={2}>
                       <Button
                         size="sm"
-                        colorScheme="green"
-                        variant={hingeSide === 'Maior' ? 'solid' : 'outline'}
-                        onClick={() => setHingeSide('Maior')}
+                        colorScheme={extraType === 'hinge' ? 'green' : 'orange'}
+                        variant={extraSide === 'Maior' ? 'solid' : 'outline'}
+                        onClick={() => setExtraSide('Maior')}
                       >
                         <FaArrowsAltH style={{ marginRight: 6 }} /> Lado Maior
                       </Button>
                       <Button
                         size="sm"
-                        colorScheme="green"
-                        variant={hingeSide === 'Menor' ? 'solid' : 'outline'}
-                        onClick={() => setHingeSide('Menor')}
+                        colorScheme={extraType === 'hinge' ? 'green' : 'orange'}
+                        variant={extraSide === 'Menor' ? 'solid' : 'outline'}
+                        onClick={() => setExtraSide('Menor')}
                       >
                         <FaArrowsAltV style={{ marginRight: 6 }} /> Lado Menor
                       </Button>
                     </HStack>
                   </Box>
                 )}
+
+                {/* Seleção interativa dos cantos a bolear */}
+                {extraType === 'round' && (
+                  <Box>
+                    <Text
+                      fontSize="xs"
+                      fontWeight="bold"
+                      mb={2}
+                      color="gray.500"
+                      textTransform="uppercase"
+                    >
+                      Cantos a Bolear
+                    </Text>
+                    <Flex align="center" gap={3}>
+                      <TagSchemaSvg
+                        gborder={0}
+                        pborder={0}
+                        corners={roundedCorners}
+                        interactive
+                        size={88}
+                        onToggleCorner={toggleCorner}
+                      />
+                      <Text fontSize="xs" color="purple.700">
+                        {countCorners(roundedCorners)} canto(s) · +R${' '}
+                        {countCorners(roundedCorners) * 5},00 por peça
+                      </Text>
+                    </Flex>
+                  </Box>
+                )}
               </Flex>
+
+              {extraType === 'slot' && (
+                <Text fontSize="xs" color="orange.700" mt={3} fontWeight="bold">
+                  ⚠ Quantidade deve ser par — R$5 por par de peças
+                </Text>
+              )}
+              {extraType === 'round' && (
+                <Text fontSize="xs" color="purple.700" mt={2}>
+                  Peça orientada com o lado maior na horizontal.
+                </Text>
+              )}
             </Box>
           )}
         </Box>

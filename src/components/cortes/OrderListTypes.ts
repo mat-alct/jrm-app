@@ -6,6 +6,7 @@ export type OrderListCallbacks = {
   onShowHistory: (item: any) => void;
   onConfirmStatus: (item: any) => void;
   onEdit: (id: string) => void;
+  onDeactivate: (item: any) => void;
 };
 
 export type OrderListProps = OrderListCallbacks & {

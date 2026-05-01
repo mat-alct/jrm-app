@@ -14,11 +14,16 @@ import { useReactToPrint } from 'react-to-print';
 import { v4 } from 'uuid';
 
 import { sortCutlistData } from '../../utils/cutlist/sortAndReturnTag';
-import { Order } from '../../types';
+import { Order, RoundedCorners } from '../../types';
+import {
+  TagSchemaSvg,
+  countCorners,
+} from '../NewOrder/TagSchemaSvg';
 
 interface OrderWithExtras extends Order {
   orderCode: number;
   orderPrice?: number;
+  freightPrice?: number;
   isUrgent?: boolean;
   amountDue?: string;
 }
@@ -94,6 +99,9 @@ export const Tags: React.FC<TagsProps> = ({ order, onAfterPrint }) => {
       }
       if (cut.hasHingeHoles) qty = Math.max(2, qty || 0);
 
+      const gborder = cut.sideA >= cut.sideB ? cut.borderA : cut.borderB;
+      const pborder = cut.sideA >= cut.sideB ? cut.borderB : cut.borderA;
+
       for (let i = 0; i < cut.amount; i++) {
         tags.push({
           id: v4(),
@@ -105,9 +113,22 @@ export const Tags: React.FC<TagsProps> = ({ order, onAfterPrint }) => {
           hingeSide: cut.hingeHolesSide,
           hingeQuantity: qty,
           lengthForHoles: length,
+          hasSlot: cut.hasDrawerSlot,
+          slotSide: cut.drawerSlotSide,
+          hasRound: cut.hasRoundedCorners,
+          roundedCorners: cut.roundedCorners as RoundedCorners | undefined,
+          gborder,
+          pborder,
         });
       }
       return tags;
+    });
+
+    // Ordena do maior para o menor (gside primário, pside como desempate)
+    // ANTES de numerar, para que a sequência 1/x..x/x bata com a ordem visual.
+    allTags.sort((a, b) => {
+      if (b.gside !== a.gside) return b.gside - a.gside;
+      return b.pside - a.pside;
     });
 
     const totalPieces = allTags.length;
@@ -297,8 +318,21 @@ export const Tags: React.FC<TagsProps> = ({ order, onAfterPrint }) => {
                   justifyContent="center"
                   alignItems="center"
                 >
+                  <Text fontSize="8px" lineHeight="1.1">
+                    Pedido: R$ {orderData.orderPrice ?? 0},00
+                  </Text>
+                  {orderData.deliveryType === 'Entrega' && (
+                    <Text fontSize="8px" lineHeight="1.1">
+                      Frete: R$ {orderData.freightPrice ?? 0},00
+                    </Text>
+                  )}
                   <Text fontSize="9px" fontWeight="bold">
-                    TOTAL: R$ {orderData.orderPrice},00
+                    TOTAL: R${' '}
+                    {(orderData.orderPrice ?? 0) +
+                      (orderData.deliveryType === 'Entrega'
+                        ? orderData.freightPrice ?? 0
+                        : 0)}
+                    ,00
                   </Text>
 
                   {/* STATUS EXPLÍCITO */}
@@ -344,7 +378,8 @@ export const Tags: React.FC<TagsProps> = ({ order, onAfterPrint }) => {
                         R${' '}
                         {orderData.amountDue && orderData.amountDue !== '0'
                           ? orderData.amountDue
-                          : orderData.orderPrice + ',00'}
+                          : (orderData.orderPrice ?? 0) +
+                              (orderData.freightPrice ?? 0) + ',00'}
                       </Text>
                     </Box>
                   )}
@@ -504,6 +539,37 @@ export const Tags: React.FC<TagsProps> = ({ order, onAfterPrint }) => {
                                 {cut.calculatedHolesQty} FUROS
                               </Text>
                             )}
+                            {cut.hasDrawerSlot && (
+                              <Text
+                                as="span"
+                                fontWeight="bold"
+                                fontSize="8px"
+                                bg="gray.600"
+                                color="white"
+                                px={1}
+                                borderRadius="sm"
+                                ml={cut.hasHingeHoles ? 1 : 0}
+                              >
+                                RASGO
+                              </Text>
+                            )}
+                            {cut.hasRoundedCorners && (
+                              <Text
+                                as="span"
+                                fontWeight="bold"
+                                fontSize="8px"
+                                bg="white"
+                                color="black"
+                                border="1px solid black"
+                                px={1}
+                                borderRadius="sm"
+                              >
+                                BOLEADO x
+                                {(['tl', 'tr', 'bl', 'br'] as const).filter(
+                                  k => cut.roundedCorners?.[k],
+                                ).length}
+                              </Text>
+                            )}
                           </Table.Cell>
                         </Table.Row>
                       );
@@ -555,9 +621,37 @@ export const Tags: React.FC<TagsProps> = ({ order, onAfterPrint }) => {
 
           {/* --- ETIQUETAS INDIVIDUAIS --- */}
           <Box display="block">
-            {[...tagCutlist]
-              .sort((a, b) => b.gside - a.gside)
-              .map(cut => {
+            {tagCutlist.map(cut => {
+                const renderSlot = () => {
+                  // Linha pontilhada nativa do browser — imprime confiável.
+                  // SVG do esquema tem borda interna em ~21% (vertical) e ~10% (horizontal),
+                  // então posicionamos próxima dela mas dentro do contorno da peça.
+                  const isMaior = cut.slotSide !== 'Menor';
+                  if (isMaior) {
+                    // Horizontal — paralela ao lado maior, próxima do topo
+                    return (
+                      <Box
+                        position="absolute"
+                        top="25%"
+                        left="18%"
+                        right="18%"
+                        borderTop="2.5px dotted #333"
+                        zIndex={2}
+                      />
+                    );
+                  }
+                  // Vertical — paralela ao lado menor, próxima da esquerda
+                  return (
+                    <Box
+                      position="absolute"
+                      top="25%"
+                      bottom="25%"
+                      left="18%"
+                      borderLeft="2.5px dotted #333"
+                      zIndex={2}
+                    />
+                  );
+                };
                 const renderHoles = () => {
                   const pos1 = '30%';
                   const pos2 = '70%';
@@ -652,14 +746,14 @@ export const Tags: React.FC<TagsProps> = ({ order, onAfterPrint }) => {
                         {cut.hasHinge && (
                           <Box
                             position="absolute"
-                            top="-5px"
-                            right="-5px"
+                            top="-4px"
+                            right="-4px"
                             bg="black"
                             color="white"
-                            fontSize="9px"
+                            fontSize="7px"
                             fontWeight="900"
-                            px={1.5}
-                            py={0.5}
+                            px={1}
+                            py={0}
                             borderRadius="sm"
                             zIndex={3}
                           >
@@ -667,22 +761,72 @@ export const Tags: React.FC<TagsProps> = ({ order, onAfterPrint }) => {
                           </Box>
                         )}
 
-                        <Image
-                          src={cut.avatar.src}
-                          height="45px"
-                          width="auto"
-                          alt="Esquema"
-                          style={{
-                            display: 'block',
-                            filter: 'grayscale(100%)',
-                          }}
-                        />
+                        {/* BADGE DE RASGO */}
+                        {cut.hasSlot && (
+                          <Box
+                            position="absolute"
+                            top="-4px"
+                            right="-4px"
+                            bg="gray.700"
+                            color="white"
+                            fontSize="7px"
+                            fontWeight="900"
+                            px={1}
+                            py={0}
+                            borderRadius="sm"
+                            zIndex={3}
+                          >
+                            R
+                          </Box>
+                        )}
+
+                        {/* BADGE DE BOLEADO — centralizado para não esconder os cantos boleados */}
+                        {cut.hasRound && (
+                          <Box
+                            position="absolute"
+                            top="50%"
+                            left="50%"
+                            transform="translate(-50%, -50%)"
+                            bg="white"
+                            color="black"
+                            border="1px solid black"
+                            fontSize="7px"
+                            fontWeight="900"
+                            px={1}
+                            py={0}
+                            borderRadius="sm"
+                            zIndex={3}
+                          >
+                            B{countCorners(cut.roundedCorners)}
+                          </Box>
+                        )}
+
+                        {cut.hasRound ? (
+                          <TagSchemaSvg
+                            gborder={cut.gborder ?? 0}
+                            pborder={cut.pborder ?? 0}
+                            corners={cut.roundedCorners}
+                            size={45}
+                          />
+                        ) : (
+                          <Image
+                            src={cut.avatar.src}
+                            height="45px"
+                            width="auto"
+                            alt="Esquema"
+                            style={{
+                              display: 'block',
+                              filter: 'grayscale(100%)',
+                            }}
+                          />
+                        )}
                         {cut.hasHinge && renderHoles()}
+                        {cut.hasSlot && renderSlot()}
                       </Box>
 
                       <Text
                         fontWeight="900"
-                        fontSize="16px"
+                        fontSize="14px"
                         lineHeight="1"
                         color="black"
                       >
@@ -690,7 +834,8 @@ export const Tags: React.FC<TagsProps> = ({ order, onAfterPrint }) => {
                       </Text>
 
                       <Text
-                        fontSize="10px"
+                        fontSize="12px"
+                        fontWeight="bold"
                         textAlign="center"
                         lineClamp={2}
                         lineHeight="1.1"

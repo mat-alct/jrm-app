@@ -252,7 +252,13 @@ export const OrderProvider = ({ children }: OrderProviderProps) => {
     const q = query(colRef, ...queryConstraints);
     const snapshot = await getDocs(q);
 
-    const data = snapshot.docs.map(d => ({ ...d.data(), id: d.id }));
+    const rawData = snapshot.docs.map(d => ({ ...d.data(), id: d.id }));
+    // Pedidos desativados não aparecem na listagem normal; só na busca
+    // (filtro client-side porque docs antigos não têm o campo isDeactivated)
+    const data =
+      orderFilter === 'Orçamento'
+        ? rawData
+        : rawData.filter(d => (d as any).isDeactivated !== true);
     const newLastDoc =
       snapshot.docs.length > 0 ? snapshot.docs[snapshot.docs.length - 1] : null;
 

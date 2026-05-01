@@ -5,6 +5,7 @@ import {
   Button,
   Flex,
   Heading,
+  HStack,
   Stack,
   Text,
   Textarea,
@@ -32,9 +33,9 @@ import {
 import { db } from '../../services/firebase';
 
 import { useOrder } from '../../hooks/order';
+import { findAreaFreight, useAreas } from '../../hooks/useAreas';
 import { Cutlist } from '../../types';
 import { capitalizeAndStrip } from '../../utils/capitalizeAndStripString';
-import { areas } from '../../utils/listOfAreas';
 import { normalizeTelephoneInput } from '../../utils/normalizeTelephone';
 import {
   createOrderSchema,
@@ -49,6 +50,9 @@ interface OrderDataProps {
   orderType: string;
   cutlist: Cutlist[];
   estimateId: string | undefined;
+  prefillArea?: string;
+  onAreaChange?: (area: string | undefined) => void;
+  onDeliveryTypeChange?: (deliveryType: string | undefined) => void;
 }
 
 interface CreateOrderProps {
@@ -70,6 +74,9 @@ export const OrderData = ({
   orderType,
   cutlist,
   estimateId,
+  prefillArea,
+  onAreaChange,
+  onDeliveryTypeChange,
 }: OrderDataProps) => {
   const validationSchema =
     orderType === 'Orçamento' ? createEstimateSchema : createOrderSchema;
@@ -90,9 +97,46 @@ export const OrderData = ({
   const router = useRouter();
   const [tel, setTel] = React.useState('');
   const { createEstimate, createOrder } = useOrder();
+  const { data: areas } = useAreas();
+
+  // Pré-preenche o bairro vindo do orçamento ao converter em pedido.
+  // Roda uma vez quando o valor chega — o usuário pode sobrescrever depois.
+  React.useEffect(() => {
+    if (prefillArea) createOrderSetValue('area', prefillArea);
+  }, [prefillArea, createOrderSetValue]);
 
   const isUrgent = watch('isUrgent');
   const paymentType = watch('paymentType');
+  const deliveryType = watch('deliveryType');
+  const selectedArea = watch('area');
+
+  // Notifica o parent toda vez que o bairro mudar (para o Cutlist exibir o frete).
+  React.useEffect(() => {
+    onAreaChange?.(selectedArea);
+  }, [selectedArea, onAreaChange]);
+
+  React.useEffect(() => {
+    onDeliveryTypeChange?.(deliveryType);
+  }, [deliveryType, onDeliveryTypeChange]);
+
+  const orderPrice = React.useMemo(
+    () => cutlist.reduce((acc, item) => acc + (item.price ?? 0), 0),
+    [cutlist],
+  );
+  // Para orçamento o frete é sempre calculado a partir do bairro (sem toggle de logística).
+  // Para serviço, só quando 'Entrega'.
+  const freightPrice =
+    orderType === 'Orçamento'
+      ? findAreaFreight(areas, selectedArea)
+      : deliveryType === 'Entrega'
+        ? findAreaFreight(areas, selectedArea)
+        : 0;
+  const totalPrice = orderPrice + freightPrice;
+  const formatBRL = (value: number) =>
+    new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL',
+    }).format(value);
 
   const handleSubmitOrder: SubmitHandler<
     CreateOrderProps
@@ -155,12 +199,15 @@ export const OrderData = ({
     };
 
     if (orderType === 'Orçamento') {
+      const estimateFreight = findAreaFreight(areas, orderData.area);
       try {
         await createEstimate({
           cutlist,
           name,
           customerId: '',
           telephone: customer.telephone,
+          area: orderData.area,
+          freightPrice: estimateFreight,
           createdAt: now,
           updatedAt: now,
         });
@@ -176,6 +223,11 @@ export const OrderData = ({
       return;
     }
 
+    const orderFreight =
+      orderData.deliveryType === 'Entrega'
+        ? findAreaFreight(areas, orderData.area)
+        : 0;
+
     try {
       await createOrder({
         cutlist,
@@ -184,6 +236,7 @@ export const OrderData = ({
         paymentType: orderData.paymentType,
         deliveryType: orderData.deliveryType,
         amountDue: orderData.amountDue || 'Total',
+        freightPrice: orderFreight,
         isUrgent: orderData.isUrgent,
         seller,
         ps: orderData.ps,
@@ -340,7 +393,10 @@ export const OrderData = ({
                   size="md"
                 />
                 <FormSelect
-                  options={areas.map(area => ({ value: area, label: area }))}
+                  options={(areas ?? []).map(area => ({
+                    value: area.name,
+                    label: area.name,
+                  }))}
                   name="area"
                   control={createOrderControl}
                   label="Bairro"
@@ -425,12 +481,13 @@ export const OrderData = ({
                         {...createOrderRegister('amountDue')}
                         name="amountDue"
                         label="Valor a Receber (R$)"
-                        placeholder="Ex: 500,00"
+                        placeholder={`Ex: ${totalPrice.toFixed(2).replace('.', ',')}`}
                         size="md"
                         bg="white"
                       />
                       <Text fontSize="xs" color="orange.700" mt={1}>
-                        * Se vazio, cobraremos o total.
+                        * Se vazio, cobraremos o total ({formatBRL(totalPrice)}
+                        ).
                       </Text>
                     </Box>
                   ) : (
@@ -465,6 +522,104 @@ export const OrderData = ({
           </Box>
         </Box>
       )}
+
+      {/* 2. BAIRRO DO CLIENTE (apenas orçamento) */}
+      {orderType === 'Orçamento' && (
+        <Box
+          bg="white"
+          borderRadius="xl"
+          shadow="sm"
+          borderWidth="1px"
+          borderColor="gray.200"
+          overflow="hidden"
+        >
+          <Box p={6} bg="gray.50" borderBottomWidth="1px" borderColor="gray.200">
+            <Heading size="md" color="gray.700">
+              2. Bairro do Cliente
+            </Heading>
+            <Text fontSize="xs" color="gray.500" mt={1}>
+              Necessário para calcular o frete do orçamento.
+            </Text>
+          </Box>
+          <Box p={6}>
+            <FormSelect
+              options={(areas ?? []).map(area => ({
+                value: area.name,
+                label: area.name,
+              }))}
+              name="area"
+              control={createOrderControl}
+              label="Bairro"
+              placeholder="Selecione..."
+              isClearable
+            />
+            {createOrderErrors.area && (
+              <Text fontSize="xs" color="red.500" mt={1}>
+                {createOrderErrors.area.message as string}
+              </Text>
+            )}
+          </Box>
+        </Box>
+      )}
+
+      {/* 2.5 RESUMO DE VALORES */}
+      <Flex
+        bg="white"
+        borderRadius="md"
+        borderWidth="1px"
+        borderColor="gray.200"
+        px={4}
+        py={3}
+        align="center"
+        justify="space-between"
+        gap={4}
+        wrap="wrap"
+        fontSize="sm"
+      >
+        <HStack gap={4} color="gray.600" wrap="wrap">
+          <Text>
+            Pedido: <strong>{formatBRL(orderPrice)}</strong>
+          </Text>
+          {(orderType === 'Orçamento' || deliveryType === 'Entrega') && (
+            <Text>
+              Frete: <strong>{formatBRL(freightPrice)}</strong>
+              {selectedArea && freightPrice === 0 && (
+                <Text as="span" color="orange.600" ml={1}>
+                  (não cadastrado)
+                </Text>
+              )}
+            </Text>
+          )}
+        </HStack>
+          <HStack
+            gap={2}
+            bg="orange.50"
+            borderWidth="1px"
+            borderColor="orange.200"
+            borderRadius="md"
+            px={3}
+            py={1.5}
+          >
+            <Text
+              fontSize="sm"
+              fontWeight="semibold"
+              color="orange.700"
+              textTransform="uppercase"
+              letterSpacing="wide"
+            >
+              Total
+            </Text>
+            <Text
+              fontSize={['xl', '2xl']}
+              fontWeight="extrabold"
+              color="orange.600"
+              letterSpacing="tight"
+              lineHeight="1"
+            >
+              {formatBRL(totalPrice)}
+            </Text>
+          </HStack>
+        </Flex>
 
       {/* 3. BARRA DE FINALIZAÇÃO */}
       <Box

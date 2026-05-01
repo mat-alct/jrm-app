@@ -1,10 +1,11 @@
-import { Flex, Image, VStack } from '@chakra-ui/react';
+import { Box, Flex, Image, VStack } from '@chakra-ui/react';
 import {
   FaClipboardList,
   FaHome,
   FaRegSquare,
   FaSignOutAlt,
   FaSlack,
+  FaTruck,
   FaUserAstronaut,
 } from 'react-icons/fa';
 
@@ -23,19 +24,19 @@ export const SidebarNav: React.FC = () => {
       align="flex-start"
       borderRight={['', '', '', '1px solid']}
       borderColor={['', '', '', 'gray.200']}
-      w={['', '', '', '20rem']}
+      w={['', '', '', '16rem']}
       position={[null, null, null, 'fixed']}
     >
-      <Image
-        src="/images/logo.svg"
-        alt="Logotipo"
-        w="220px"
-        h="auto"
-        mx="auto"
-        mt={5}
-        mb={4}
-        flexShrink={0}
-      />
+      <Box bg="#2E2D2C" w="100%" pb={4} mb={4} flexShrink={0}>
+        <Image
+          src="/images/logo.svg"
+          alt="Logotipo"
+          w="170px"
+          h="auto"
+          mx="auto"
+          display="block"
+        />
+      </Box>
       <VStack gap={6} ml={[4, 4, 4, 8]} align="flex-start">
         <NavSection title=" Geral">
           <NavLink icon={FaHome} href="/">
@@ -56,6 +57,9 @@ export const SidebarNav: React.FC = () => {
         <NavSection title="Administração">
           <NavLink icon={FaUserAstronaut} href="/administracao/vendedores">
             Novo vendedor
+          </NavLink>
+          <NavLink icon={FaTruck} href="/administracao/fretes">
+            Fretes
           </NavLink>
         </NavSection>
         <NavSection title="Conta">

@@ -25,7 +25,7 @@ export const NavLink: React.FC<NavLinkProps> = ({
       onClick={onClick}
       style={{ textDecoration: 'none' }}
     >
-      <Flex align="center" color={isActive ? 'orange.700' : 'gray.600'}>
+      <Flex align="center" color={isActive ? 'yellow.500' : 'gray.600'}>
         <Icon as={icon} fontSize="20" />
         <Text ml="4" fontWeight="medium">
           {children}

@@ -64,6 +64,13 @@ const ConfirmStatusDialog = dynamic(
     ),
   { ssr: false },
 );
+const ConfirmDeactivateDialog = dynamic(
+  () =>
+    import('../../components/cortes/ConfirmDeactivateDialog').then(
+      (m) => m.ConfirmDeactivateDialog,
+    ),
+  { ssr: false },
+);
 // LISTAS (lazy — só uma das duas é montada por vez, conforme breakpoint)
 const OrderListMobile = dynamic(
   () =>
@@ -115,6 +122,10 @@ const Cortes: React.FC = () => {
     any | null
   >(null);
   const [advancingStatus, setAdvancingStatus] = useState(false);
+
+  // Pedido com confirmação de desativação pendente
+  const [deactivatingOrder, setDeactivatingOrder] = useState<any | null>(null);
+  const [deactivatingLoading, setDeactivatingLoading] = useState(false);
 
   const toast = toaster;
   const { getOrders, getOrdersBySearch } = useOrder();
@@ -181,6 +192,7 @@ const Cortes: React.FC = () => {
               orderType: 'estimate',
               cutlist: JSON.stringify(estimateData.cutlist),
               estimateId: estimateData.id,
+              ...(estimateData.area ? { area: estimateData.area } : {}),
             },
           });
         }
@@ -243,6 +255,35 @@ const Cortes: React.FC = () => {
   const handleEdit = useCallback(
     (id: string) => router.push(`/cortes/editar/${id}`),
     [router],
+  );
+
+  const deactivateOrder = useCallback(
+    async (id: string) => {
+      setDeactivatingLoading(true);
+      try {
+        const orderRef = doc(db, 'orders', id);
+        await updateDoc(orderRef, { isDeactivated: true });
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ['orders'] }),
+          queryClient.invalidateQueries({ queryKey: ['orders_search'] }),
+          queryClient.invalidateQueries({ queryKey: ['home-stats'] }),
+          queryClient.invalidateQueries({ queryKey: ['home-next-deliveries'] }),
+        ]);
+        toast.create({
+          type: 'success',
+          description: 'Pedido desativado',
+        });
+      } catch {
+        toast.create({
+          type: 'error',
+          description: 'Erro ao desativar pedido',
+        });
+      } finally {
+        setDeactivatingLoading(false);
+        setDeactivatingOrder(null);
+      }
+    },
+    [toast],
   );
 
   // --- Busca ---
@@ -350,6 +391,16 @@ const Cortes: React.FC = () => {
             />
           )}
 
+          {/* Diálogo: confirmação de desativação (lazy — só monta após primeiro open) */}
+          {deactivatingOrder && (
+            <ConfirmDeactivateDialog
+              order={deactivatingOrder}
+              onCancel={() => setDeactivatingOrder(null)}
+              onConfirm={deactivateOrder}
+              loading={deactivatingLoading}
+            />
+          )}
+
           <Flex
             direction={['column', 'column', 'column', 'row']}
             align={['stretch', 'stretch', 'stretch', 'center']}
@@ -439,6 +490,7 @@ const Cortes: React.FC = () => {
               onShowHistory={setHistoryOrder}
               onConfirmStatus={setConfirmingStatusOrder}
               onEdit={handleEdit}
+              onDeactivate={setDeactivatingOrder}
             />
           ) : (
             <OrderListDesktop
@@ -452,6 +504,7 @@ const Cortes: React.FC = () => {
               onShowHistory={setHistoryOrder}
               onConfirmStatus={setConfirmingStatusOrder}
               onEdit={handleEdit}
+              onDeactivate={setDeactivatingOrder}
             />
           )}
 

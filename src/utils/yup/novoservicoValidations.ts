@@ -25,7 +25,7 @@ export const createEstimateSchema = Yup.object().shape({
   lastName: Yup.string().required('Sobrenome obrigatório'),
   telephone: Yup.string().default(''),
   address: Yup.string().notRequired(),
-  area: Yup.string().notRequired(),
+  area: Yup.string().required('Bairro obrigatório para calcular o frete'),
   deliveryType: Yup.string().notRequired(),
   paymentType: Yup.string().notRequired(),
   ps: Yup.string().default(''),

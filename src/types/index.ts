@@ -1,6 +1,11 @@
 // src/types/index.ts
 import { Timestamp } from 'firebase/firestore';
 
+export interface Area {
+  name: string;
+  freight: number;
+}
+
 export interface Material {
   id?: string;
   name: string;
@@ -31,6 +36,13 @@ export interface CutlistMaterial {
   price: number;
 }
 
+export interface RoundedCorners {
+  tl: boolean;
+  tr: boolean;
+  bl: boolean;
+  br: boolean;
+}
+
 export interface Cutlist {
   id: string;
   material: CutlistMaterial;
@@ -44,6 +56,15 @@ export interface Cutlist {
   hasHingeHoles?: boolean;
   hingeHolesSide?: 'Maior' | 'Menor';
   hingeHolesQuantity?: number; // Calculado automaticamente
+  // --- NOVOS CAMPOS PARA RASGO DE GAVETA ---
+  // Mutuamente exclusivo com hasHingeHoles. Quantidade deve ser par.
+  hasDrawerSlot?: boolean;
+  drawerSlotSide?: 'Maior' | 'Menor';
+  // --- NOVOS CAMPOS PARA CANTO BOLEADO ---
+  // Mutuamente exclusivo com furo e rasgo. Cantos referentes à peça
+  // orientada com o lado maior na horizontal. R$5 por canto, por peça.
+  hasRoundedCorners?: boolean;
+  roundedCorners?: RoundedCorners;
 }
 
 export interface Estimate {
@@ -51,6 +72,8 @@ export interface Estimate {
   telephone?: string;
   customerId?: string;
   cutlist: Cutlist[];
+  area?: string;
+  freightPrice?: number;
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
@@ -79,6 +102,7 @@ export interface Order {
   deliveryType: string;
   paymentType: string;
   amountDue?: string;
+  freightPrice?: number;
   isUrgent?: boolean;
   seller: string;
   orderStatus: string;
@@ -87,6 +111,7 @@ export interface Order {
   createdAt: Timestamp;
   updatedAt: Timestamp;
   edits?: OrderEdit[];
+  isDeactivated?: boolean;
 }
 
 export interface MaterialRequest {

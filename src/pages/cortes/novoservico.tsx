@@ -109,6 +109,24 @@ const NovoServiço = () => {
     return undefined;
   });
 
+  // Bairro pré-preenchido vindo do orçamento (se existia).
+  const [prefillArea] = useState<string | undefined>(() => {
+    if (query.area && typeof query.area === 'string') {
+      return query.area;
+    }
+    return undefined;
+  });
+
+  // Bairro corrente do form, espelhado pelo OrderData via callback,
+  // para que o Cutlist exiba o frete junto com o total.
+  const [currentArea, setCurrentArea] = useState<string | undefined>(
+    prefillArea,
+  );
+
+  const [currentDeliveryType, setCurrentDeliveryType] = useState<
+    string | undefined
+  >(undefined);
+
   // --- Bloco de Renderização ---
 
   // Se o estado 'user' for indefinido, significa que a verificação de autenticação ainda está em andamento.
@@ -158,13 +176,21 @@ const NovoServiço = () => {
         </Header>
 
         {/* Componente para gerenciar o plano de corte (adicionar/remover peças). */}
-        <Cutlist cutlist={cutlist} updateCutlist={updateCutlist} />
+        <Cutlist
+          cutlist={cutlist}
+          updateCutlist={updateCutlist}
+          selectedArea={currentArea}
+          deliveryType={currentDeliveryType}
+        />
 
         {/* Componente para preencher os dados do cliente e do pedido. */}
         <OrderData
           orderType={orderType}
           cutlist={cutlist}
           estimateId={estimateId}
+          prefillArea={prefillArea}
+          onAreaChange={setCurrentArea}
+          onDeliveryTypeChange={setCurrentDeliveryType}
         />
       </Dashboard>
     </>

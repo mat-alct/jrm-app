@@ -230,13 +230,36 @@ export const EstimateResume: React.FC<EstimateResumeProps> = ({
 
           {/* TOTAIS (MONOCROMÁTICO) */}
           <Flex justify="flex-end">
-            <Box minW="200px" textAlign="right">
-              <Text fontSize="sm" fontWeight="normal" color="black" mb={1}>
-                TOTAL ORÇADO
-              </Text>
-              <Text fontSize="2xl" fontWeight="black" color="black">
-                R$ {estimate.estimatePrice},00
-              </Text>
+            <Box minW="220px">
+              <Flex justify="space-between" align="center" fontSize="xs">
+                <Text color="gray.700">Pedido:</Text>
+                <Text fontWeight="medium">
+                  R$ {estimate.estimatePrice ?? 0},00
+                </Text>
+              </Flex>
+              <Flex
+                justify="space-between"
+                align="center"
+                mt={0.5}
+                fontSize="xs"
+              >
+                <Text color="gray.700">Frete:</Text>
+                <Text fontWeight="medium">
+                  R$ {estimate.freightPrice ?? 0},00
+                </Text>
+              </Flex>
+              <Separator />
+              <Flex justify="space-between" align="center">
+                <Text fontSize="sm" fontWeight="bold" color="black">
+                  TOTAL ORÇADO
+                </Text>
+                <Text fontSize="2xl" fontWeight="black" color="black">
+                  R${' '}
+                  {(estimate.estimatePrice ?? 0) +
+                    (estimate.freightPrice ?? 0)}
+                  ,00
+                </Text>
+              </Flex>
               <Separator />
             </Box>
           </Flex>

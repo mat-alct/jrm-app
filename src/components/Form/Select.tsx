@@ -42,7 +42,7 @@ export const FormSelect: React.FC<FormSelectProps> = ({
     <Fieldset.Root invalid={!!errors[name]}>
       {label && <Fieldset.Legend color="gray.700">{label}</Fieldset.Legend>}
       <Select
-        id={name}
+        inputId={name}
         name={name}
         options={options}
         isClearable={isClearable}

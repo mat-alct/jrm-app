@@ -11,6 +11,8 @@ interface CutlistProps {
   borderA: number;
   borderB: number;
   hingeHolesQuantity?: number;
+  hasDrawerSlot?: boolean;
+  roundedCornersCount?: number;
 }
 
 export const calculateCutlistPrice = (
@@ -38,7 +40,14 @@ export const calculateCutlistPrice = (
 
   const holesCost = (cutlistData.hingeHolesQuantity || 0) * 5;
 
-  const calculatedPrice = calculatedMaterial + calculatedBorder + holesCost;
+  // R$5 por canto boleado, por peça (multiplicado por qtd no return).
+  const roundedCost = (cutlistData.roundedCornersCount || 0) * 5;
 
-  return qtd * Math.ceil(calculatedPrice);
+  const calculatedPrice =
+    calculatedMaterial + calculatedBorder + holesCost + roundedCost;
+
+  // Rasgo de gaveta: R$5 por par. Somado por fora pra não inflar com Math.ceil.
+  const slotCost = cutlistData.hasDrawerSlot ? Math.floor(qtd / 2) * 5 : 0;
+
+  return qtd * Math.ceil(calculatedPrice) + slotCost;
 };

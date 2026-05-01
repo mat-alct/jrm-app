@@ -296,6 +296,106 @@ const Home = () => {
     },
   });
 
+  // --- Timeline de atividade (último mês) ---
+  // Pedidos: query por updatedAt cobre criação e edições no período.
+  // Edições antigas em pedidos criados há mais de 1 mês são incluídas
+  // porque updatedAt é atualizado a cada edição.
+  const { data: timeline, isLoading: timelineLoading } = useQuery({
+    queryKey: ['home-timeline'],
+    enabled: !!user,
+    queryFn: async () => {
+      const oneMonthAgo = new Date();
+      oneMonthAgo.setDate(oneMonthAgo.getDate() - 30);
+
+      const ordersRef = collection(db, 'orders');
+      const estimatesRef = collection(db, 'estimates');
+
+      const [ordersSnap, estimatesSnap] = await Promise.all([
+        getDocs(
+          query(
+            ordersRef,
+            where('updatedAt', '>=', oneMonthAgo),
+            orderBy('updatedAt', 'desc'),
+            limit(150),
+          ),
+        ),
+        getDocs(
+          query(
+            estimatesRef,
+            where('createdAt', '>=', oneMonthAgo),
+            orderBy('createdAt', 'desc'),
+            limit(50),
+          ),
+        ),
+      ]);
+
+      type TimelineEvent = {
+        id: string;
+        at: Date;
+        sentence: string;
+        isEdit?: boolean;
+      };
+      const events: TimelineEvent[] = [];
+
+      const fmtDate = (d: Date) =>
+        format(d, 'dd/MM HH:mm', { locale: ptBR });
+
+      ordersSnap.docs.forEach(d => {
+        const data = d.data() as any;
+        const customerName = data.customer?.name ?? 'Cliente';
+        const createdAt = data.createdAt?.seconds
+          ? new Date(data.createdAt.seconds * 1000)
+          : null;
+        if (createdAt && createdAt >= oneMonthAgo) {
+          const seller = data.seller ? ` por ${data.seller}` : '';
+          events.push({
+            id: `${d.id}-c`,
+            at: createdAt,
+            sentence: `${fmtDate(createdAt)} — Pedido #${data.orderCode ?? '—'} de ${customerName} criado${seller}.`,
+          });
+        }
+        (data.edits ?? []).forEach((e: any, i: number) => {
+          const editedAt = e.editedAt?.seconds
+            ? new Date(e.editedAt.seconds * 1000)
+            : null;
+          if (!editedAt || editedAt < oneMonthAgo) return;
+          const editedBy = e.editedBy ? ` por ${e.editedBy}` : '';
+          const diff = e.priceDifference ?? 0;
+          let diffText = '';
+          if (e.shouldCharge && diff !== 0) {
+            const verb = diff > 0 ? 'a receber do cliente' : 'a devolver ao cliente';
+            diffText = `, com R$ ${Math.abs(diff)},00 ${verb}`;
+          }
+          events.push({
+            id: `${d.id}-e-${i}`,
+            at: editedAt,
+            sentence: `${fmtDate(editedAt)} — Pedido #${data.orderCode ?? '—'} de ${customerName} editado${editedBy}${diffText}.`,
+            isEdit: true,
+          });
+        });
+      });
+
+      estimatesSnap.docs.forEach(d => {
+        const data = d.data() as any;
+        const createdAt = data.createdAt?.seconds
+          ? new Date(data.createdAt.seconds * 1000)
+          : null;
+        if (createdAt && createdAt >= oneMonthAgo) {
+          const who = data.name ?? 'Cliente';
+          const code = data.estimateCode ? `#${data.estimateCode} ` : '';
+          events.push({
+            id: `${d.id}-est-c`,
+            at: createdAt,
+            sentence: `${fmtDate(createdAt)} — Orçamento ${code}criado para ${who}.`,
+          });
+        }
+      });
+
+      events.sort((a, b) => b.at.getTime() - a.at.getTime());
+      return events;
+    },
+  });
+
   // --- Próximos prazos / próximas entregas (em produção + liberados) ---
   // Uma única query para os dois cards: "prazos" mostra todos, "entregas" filtra
   // por deliveryType === 'Entrega'. Filtragem em memória (volume é pequeno).
@@ -456,6 +556,62 @@ const Home = () => {
               </Flex>
             </Box>
           )}
+
+          {/* Timeline de atividade (5 visíveis, scroll para o restante do mês) */}
+          <Box
+            bg="white"
+            borderWidth="1px"
+            borderColor="gray.200"
+            borderRadius="xl"
+            shadow="sm"
+            p={5}
+          >
+            <Flex justify="space-between" align="center" mb={3}>
+              <Heading size="sm" color="gray.700">
+                Atividade recente
+              </Heading>
+              {!timelineLoading && (timeline?.length ?? 0) > 5 && (
+                <Text fontSize="xs" color="gray.500">
+                  {timeline!.length} no último mês
+                </Text>
+              )}
+            </Flex>
+            {timelineLoading ? (
+              <Center py={4}>
+                <Spinner size="sm" color="orange.500" />
+              </Center>
+            ) : !timeline?.length ? (
+              <Text fontSize="sm" color="gray.500" py={2}>
+                Sem atividade no último mês.
+              </Text>
+            ) : (
+              <Box
+                maxH={['170px', '170px', '200px']}
+                overflowY="auto"
+                pr={2}
+              >
+                <Stack gap={0}>
+                  {timeline.map((ev, idx) => (
+                    <Box
+                      key={ev.id}
+                      py={[1.5, 2]}
+                      borderBottomWidth={idx === timeline.length - 1 ? 0 : '1px'}
+                      borderColor="gray.100"
+                    >
+                      <Text
+                        fontSize={['xs', 'sm']}
+                        color={ev.isEdit ? 'gray.900' : 'gray.700'}
+                        fontWeight={ev.isEdit ? 'bold' : 'normal'}
+                        lineHeight="1.4"
+                      >
+                        {ev.sentence}
+                      </Text>
+                    </Box>
+                  ))}
+                </Stack>
+              </Box>
+            )}
+          </Box>
 
           {/* Coluna esquerda: prazos + entregas; Direita: atalhos */}
           <Grid templateColumns={['1fr', '1fr', '2fr 1fr']} gap={4}>

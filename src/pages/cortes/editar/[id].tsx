@@ -243,6 +243,23 @@ const EditarPedido = () => {
           <Text fontSize="sm" color="gray.600" mt={1}>
             Vendedor original: {order.seller}
           </Text>
+          {order.deliveryType === 'Entrega' && (
+            <Box
+              mt={3}
+              pt={3}
+              borderTopWidth="1px"
+              borderColor="gray.200"
+            >
+              <Text fontSize="sm" color="gray.600">
+                Entrega em{' '}
+                <strong>{order.customer?.area || '—'}</strong>
+              </Text>
+              <Text fontSize="sm" color="gray.600" mt={1}>
+                Frete (fixo, não editável):{' '}
+                <strong>R$ {(order.freightPrice ?? 0)},00</strong>
+              </Text>
+            </Box>
+          )}
         </Box>
 
         {hydrated && (
@@ -301,6 +318,21 @@ const EditarPedido = () => {
                   {priceDifference > 0 ? '+' : ''}R$ {priceDifference},00
                 </Text>
               </Box>
+              {((order as any).freightPrice ?? 0) > 0 && (
+                <Box>
+                  <Text fontSize="sm" color="gray.600">
+                    Total novo (c/ frete)
+                  </Text>
+                  <Text
+                    fontSize="xl"
+                    fontWeight="bold"
+                    color="orange.600"
+                  >
+                    R${' '}
+                    {newOrderPrice + ((order as any).freightPrice ?? 0)},00
+                  </Text>
+                </Box>
+              )}
             </Flex>
 
             {hasDiff && (

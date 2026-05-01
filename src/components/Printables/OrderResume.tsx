@@ -115,7 +115,7 @@ export const OrderResume: React.FC<OrderResumeProps> = ({
 
           <Box w="100%" borderBottomWidth="3px" borderColor="black" mb={4} />
 
-          {/* --- AVISO DE EDIÇÃO (mostra apenas a última) --- */}
+          {/* --- AVISO DE EDIÇÃO (uma única frase compacta) --- */}
           {order.edits?.length > 0 &&
             (() => {
               const last = order.edits[order.edits.length - 1];
@@ -128,44 +128,27 @@ export const OrderResume: React.FC<OrderResumeProps> = ({
               const diff = last.priceDifference ?? 0;
               const shouldCharge = !!last.shouldCharge && diff !== 0;
               const formattedDiff = `R$ ${Math.abs(diff)},00`;
+              const diffPart = shouldCharge
+                ? `, diferença de ${diff > 0 ? '+' : '−'}${formattedDiff}${
+                    diff > 0
+                      ? ' a receber do cliente'
+                      : ' a devolver ao cliente'
+                  }`
+                : '';
               return (
                 <Box
-                  bg={shouldCharge ? 'black' : 'gray.100'}
-                  color={shouldCharge ? 'white' : 'black'}
-                  borderLeftWidth="6px"
+                  borderLeftWidth="3px"
                   borderColor="black"
-                  px={3}
-                  py={2}
-                  mb={4}
+                  bg="gray.100"
+                  px={2}
+                  py={1}
+                  mb={3}
                 >
-                  <Text
-                    fontSize="sm"
-                    fontWeight="black"
-                    textTransform="uppercase"
-                    letterSpacing="wide"
-                  >
-                    ⚠ Pedido editado
-                  </Text>
-                  <Text fontSize="xs" fontWeight="bold">
-                    Editado por {last.editedBy}
+                  <Text fontSize="2xs" lineHeight="1.3">
+                    <strong>⚠ Pedido editado</strong> por {last.editedBy}
                     {when ? ` em ${when}` : ''}
+                    {diffPart}.
                   </Text>
-                  {diff !== 0 && (
-                    <Text fontSize="xs" mt={0.5}>
-                      Diferença de preço:{' '}
-                      <strong>
-                        {diff > 0 ? '+' : '−'}
-                        {formattedDiff}
-                      </strong>
-                    </Text>
-                  )}
-                  {shouldCharge && (
-                    <Text fontSize="sm" fontWeight="black" mt={1}>
-                      A DIFERENÇA DE {formattedDiff} DEVE SER ACERTADA
-                      {diff > 0 ? ' (RECEBER DO CLIENTE)' : ' (DEVOLVER AO CLIENTE)'}
-                      .
-                    </Text>
-                  )}
                 </Box>
               );
             })()}
@@ -366,6 +349,38 @@ export const OrderResume: React.FC<OrderResumeProps> = ({
                           +{cut.hingeHolesQuantity}f
                         </Text>
                       )}
+                      {cut.hasDrawerSlot && (
+                        <Text
+                          as="span"
+                          fontSize="2xs"
+                          fontWeight="bold"
+                          ml={1}
+                          bg="gray.600"
+                          color="white"
+                          px={1}
+                          borderRadius="full"
+                        >
+                          +R
+                        </Text>
+                      )}
+                      {cut.hasRoundedCorners && (
+                        <Text
+                          as="span"
+                          fontSize="2xs"
+                          fontWeight="bold"
+                          ml={1}
+                          bg="white"
+                          color="black"
+                          border="1px solid black"
+                          px={1}
+                          borderRadius="full"
+                        >
+                          +B
+                          {(['tl', 'tr', 'bl', 'br'] as const).filter(
+                            k => cut.roundedCorners?.[k],
+                          ).length}
+                        </Text>
+                      )}
                     </Table.Cell>
                     <Table.Cell py={1} textAlign="center" fontSize="xs">
                       {cut.borderA} | {cut.borderB}
@@ -386,13 +401,40 @@ export const OrderResume: React.FC<OrderResumeProps> = ({
 
           {/* --- TOTAIS --- */}
           <Flex justify="flex-end" mb={4}>
-            <Box w="220px">
+            <Box w="240px">
+              {order.deliveryType === 'Entrega' && (
+                <>
+                  <Flex justify="space-between" align="center" fontSize="xs">
+                    <Text color="gray.600">Pedido:</Text>
+                    <Text fontWeight="medium">
+                      R$ {order.orderPrice ?? 0},00
+                    </Text>
+                  </Flex>
+                  <Flex
+                    justify="space-between"
+                    align="center"
+                    mt={0.5}
+                    fontSize="xs"
+                  >
+                    <Text color="gray.600">Frete:</Text>
+                    <Text fontWeight="medium">
+                      R$ {order.freightPrice ?? 0},00
+                    </Text>
+                  </Flex>
+                  <Separator />
+                </>
+              )}
               <Flex justify="space-between" align="center" mb={1}>
                 <Text fontSize="sm" fontWeight="bold">
                   TOTAL
                 </Text>
                 <Text fontSize="xl" fontWeight="black">
-                  R$ {order.orderPrice},00
+                  R${' '}
+                  {(order.orderPrice ?? 0) +
+                    (order.deliveryType === 'Entrega'
+                      ? order.freightPrice ?? 0
+                      : 0)}
+                  ,00
                 </Text>
               </Flex>
               <Separator />

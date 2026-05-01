@@ -19,6 +19,7 @@ import {
   FaHistory,
   FaRegFileAlt,
   FaTags,
+  FaTrash,
 } from 'react-icons/fa';
 
 import type { OrderListCallbacks, OrderListProps } from './OrderListTypes';
@@ -93,6 +94,7 @@ type OrderCardProps = {
   | 'onShowHistory'
   | 'onConfirmStatus'
   | 'onEdit'
+  | 'onDeactivate'
 >;
 
 const OrderCard = React.memo<OrderCardProps>(
@@ -103,16 +105,20 @@ const OrderCard = React.memo<OrderCardProps>(
     onShowHistory,
     onConfirmStatus,
     onEdit,
+    onDeactivate,
   }) => {
     const isUrgent = item?.isUrgent;
-    const statusBg =
-      item.orderStatus === 'Concluído'
+    const isDeactivated = item?.isDeactivated === true;
+    const statusBg = isDeactivated
+      ? 'gray.200'
+      : item.orderStatus === 'Concluído'
         ? 'green.100'
         : item.orderStatus === 'Em Produção'
           ? 'orange.100'
           : 'blue.100';
-    const statusColor =
-      item.orderStatus === 'Concluído'
+    const statusColor = isDeactivated
+      ? 'gray.600'
+      : item.orderStatus === 'Concluído'
         ? 'green.800'
         : item.orderStatus === 'Em Produção'
           ? 'orange.800'
@@ -124,14 +130,26 @@ const OrderCard = React.memo<OrderCardProps>(
           ? 'Concluir pedido'
           : null;
 
+    const cardBg = isDeactivated
+      ? 'gray.100'
+      : isUrgent
+        ? 'red.50'
+        : 'white';
+    const cardBorder = isDeactivated
+      ? 'gray.300'
+      : isUrgent
+        ? 'red.300'
+        : 'gray.200';
+
     return (
       <Box
-        bg={isUrgent ? 'red.50' : 'white'}
+        bg={cardBg}
         borderWidth="1px"
-        borderColor={isUrgent ? 'red.300' : 'gray.200'}
+        borderColor={cardBorder}
         borderRadius="xl"
         shadow="sm"
         p={4}
+        opacity={isDeactivated ? 0.75 : 1}
       >
         <Flex justify="space-between" align="center" mb={2}>
           <Text fontSize="sm" color="gray.500" fontWeight="bold">
@@ -151,12 +169,17 @@ const OrderCard = React.memo<OrderCardProps>(
             color={statusColor}
           >
             {isUrgent && <FaExclamationTriangle />}
-            {item.orderStatus}
+            {isDeactivated ? 'Desativado' : item.orderStatus}
             {item.edits?.length > 0 && <FaHistory />}
           </Box>
         </Flex>
 
-        <Text fontSize="lg" fontWeight="bold" color="gray.800">
+        <Text
+          fontSize="lg"
+          fontWeight="bold"
+          color={isDeactivated ? 'gray.500' : 'gray.800'}
+          textDecoration={isDeactivated ? 'line-through' : undefined}
+        >
           {item.customer?.name || 'Cliente Removido'}
         </Text>
         {item.customer?.telephone && (
@@ -177,8 +200,13 @@ const OrderCard = React.memo<OrderCardProps>(
               ? `Entrega ${format(new Date(item.deliveryDate.seconds * 1000), 'dd/MM/yyyy')}`
               : 'Sem data de entrega'}
           </Text>
-          <Text fontSize="lg" fontWeight="bold" color="orange.600">
-            R$ {item.orderPrice},00
+          <Text
+            fontSize="lg"
+            fontWeight="bold"
+            color={isDeactivated ? 'gray.500' : 'orange.600'}
+            textDecoration={isDeactivated ? 'line-through' : undefined}
+          >
+            R$ {(item.orderPrice ?? 0) + (item.freightPrice ?? 0)},00
           </Text>
         </Flex>
 
@@ -214,7 +242,7 @@ const OrderCard = React.memo<OrderCardProps>(
           >
             <FaTags /> Etiquetas
           </Button>
-          {item.orderStatus === 'Em Produção' && (
+          {!isDeactivated && item.orderStatus === 'Em Produção' && (
             <IconButton
               size="md"
               variant="outline"
@@ -225,9 +253,20 @@ const OrderCard = React.memo<OrderCardProps>(
               <FaEdit />
             </IconButton>
           )}
+          {!isDeactivated && item.orderStatus !== 'Concluído' && (
+            <IconButton
+              size="md"
+              variant="outline"
+              colorScheme="red"
+              aria-label="Desativar"
+              onClick={() => onDeactivate(item)}
+            >
+              <FaTrash />
+            </IconButton>
+          )}
         </Flex>
 
-        {nextLabel && (
+        {!isDeactivated && nextLabel && (
           <Button
             mt={3}
             w="100%"
@@ -255,6 +294,7 @@ const OrderListMobileImpl: React.FC<OrderListProps> = ({
   onShowHistory,
   onConfirmStatus,
   onEdit,
+  onDeactivate,
 }) => {
   if (isLoading) {
     return (
@@ -302,6 +342,7 @@ const OrderListMobileImpl: React.FC<OrderListProps> = ({
             onShowHistory={onShowHistory}
             onConfirmStatus={onConfirmStatus}
             onEdit={onEdit}
+            onDeactivate={onDeactivate}
           />
         ),
       )}

@@ -21,6 +21,7 @@ import {
   FaHistory,
   FaRegFileAlt,
   FaTags,
+  FaTrash,
 } from 'react-icons/fa';
 
 import type { OrderListCallbacks, OrderListProps } from './OrderListTypes';
@@ -95,6 +96,7 @@ type OrderRowProps = {
     | 'onShowHistory'
     | 'onConfirmStatus'
     | 'onEdit'
+    | 'onDeactivate'
   >;
 
 const OrderRow = React.memo<OrderRowProps>(
@@ -107,10 +109,18 @@ const OrderRow = React.memo<OrderRowProps>(
     onShowHistory,
     onConfirmStatus,
     onEdit,
+    onDeactivate,
   }) => {
     const isUrgent = item?.isUrgent;
+    const isDeactivated = item?.isDeactivated === true;
     return (
-      <Table.Row bg={bg} _hover={{ bg: hoverBg }}>
+      <Table.Row
+        bg={bg}
+        _hover={{ bg: hoverBg }}
+        opacity={isDeactivated ? 0.65 : 1}
+        color={isDeactivated ? 'gray.500' : undefined}
+        textDecoration={isDeactivated ? 'line-through' : undefined}
+      >
         <Table.Cell fontWeight="bold">{item.orderCode}</Table.Cell>
         <Table.Cell>
           <Flex direction="column">
@@ -136,22 +146,26 @@ const OrderRow = React.memo<OrderRowProps>(
             alignItems="center"
             gap={1}
             bg={
-              item.orderStatus === 'Concluído'
-                ? 'green.100'
-                : item.orderStatus === 'Em Produção'
-                  ? 'orange.100'
-                  : 'blue.100'
+              isDeactivated
+                ? 'gray.200'
+                : item.orderStatus === 'Concluído'
+                  ? 'green.100'
+                  : item.orderStatus === 'Em Produção'
+                    ? 'orange.100'
+                    : 'blue.100'
             }
             color={
-              item.orderStatus === 'Concluído'
-                ? 'green.800'
-                : item.orderStatus === 'Em Produção'
-                  ? 'orange.800'
-                  : 'blue.800'
+              isDeactivated
+                ? 'gray.600'
+                : item.orderStatus === 'Concluído'
+                  ? 'green.800'
+                  : item.orderStatus === 'Em Produção'
+                    ? 'orange.800'
+                    : 'blue.800'
             }
           >
             {isUrgent && <FaExclamationTriangle />}
-            {item.orderStatus}
+            {isDeactivated ? 'Desativado' : item.orderStatus}
             {item.edits?.length > 0 && (
               <Box
                 as="span"
@@ -173,7 +187,7 @@ const OrderRow = React.memo<OrderRowProps>(
         <Table.Cell
           textAlign="right"
           fontWeight="bold"
-        >{`R$ ${item.orderPrice},00`}</Table.Cell>
+        >{`R$ ${(item.orderPrice ?? 0) + (item.freightPrice ?? 0)},00`}</Table.Cell>
         <Table.Cell>
           <HStack gap={2} justify="flex-end">
             {item.edits?.length > 0 && (
@@ -206,7 +220,7 @@ const OrderRow = React.memo<OrderRowProps>(
             >
               <FaTags />
             </IconButton>
-            {item.orderStatus === 'Em Produção' && (
+            {!isDeactivated && item.orderStatus === 'Em Produção' && (
               <IconButton
                 colorScheme="blue"
                 variant="ghost"
@@ -217,7 +231,19 @@ const OrderRow = React.memo<OrderRowProps>(
                 <FaEdit />
               </IconButton>
             )}
-            {item.orderStatus !== 'Concluído' && (
+            {!isDeactivated && item.orderStatus !== 'Concluído' && (
+              <IconButton
+                colorScheme="red"
+                variant="ghost"
+                size="sm"
+                aria-label="Desativar"
+                onClick={() => onDeactivate(item)}
+                title="Desativar pedido"
+              >
+                <FaTrash />
+              </IconButton>
+            )}
+            {!isDeactivated && item.orderStatus !== 'Concluído' && (
               <IconButton
                 colorScheme="green"
                 size="sm"
@@ -246,6 +272,7 @@ const OrderListDesktopImpl: React.FC<OrderListProps> = ({
   onShowHistory,
   onConfirmStatus,
   onEdit,
+  onDeactivate,
 }) => {
   const tableSize = useBreakpointValue(['sm', 'md'], { fallback: 'sm' });
 
@@ -292,12 +319,17 @@ const OrderListDesktopImpl: React.FC<OrderListProps> = ({
             {items.map((item: any, index: number) => {
               const isEven = index % 2 === 0;
               const isUrgent = item?.isUrgent;
+              const isDeactivated = item?.isDeactivated === true;
               let bg = isEven ? 'white' : 'gray.50';
               let hoverBg = isEven ? 'gray.50' : 'gray.100';
 
-              if (isUrgent && !isEstimateList) {
+              if (isUrgent && !isEstimateList && !isDeactivated) {
                 bg = 'red.50';
                 hoverBg = 'red.100';
+              }
+              if (isDeactivated) {
+                bg = 'gray.100';
+                hoverBg = 'gray.200';
               }
 
               return isEstimateList ? (
@@ -320,6 +352,7 @@ const OrderListDesktopImpl: React.FC<OrderListProps> = ({
                   onShowHistory={onShowHistory}
                   onConfirmStatus={onConfirmStatus}
                   onEdit={onEdit}
+                  onDeactivate={onDeactivate}
                 />
               );
             })}
