@@ -12,7 +12,7 @@ import {
 } from '@chakra-ui/react';
 import { format } from 'date-fns';
 import { DocumentData } from 'firebase/firestore';
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useLayoutEffect, useState } from 'react';
 import {
   FaRegFileAlt,
   FaWhatsapp,
@@ -33,6 +33,49 @@ interface OrderResumeProps {
   onAfterPrint?: () => void;
 }
 
+type Density = 'normal' | 'compact' | 'ultra';
+
+const densityPresets: Record<
+  Density,
+  {
+    rowPy: number;
+    cellFs: string;
+    logoH: string;
+    headerMb: number;
+    sectionMb: number;
+    miniMb: number;
+    termsMt: number;
+  }
+> = {
+  normal: {
+    rowPy: 1,
+    cellFs: 'xs',
+    logoH: '120px',
+    headerMb: 3,
+    sectionMb: 4,
+    miniMb: 2,
+    termsMt: 16,
+  },
+  compact: {
+    rowPy: 0.5,
+    cellFs: '2xs',
+    logoH: '90px',
+    headerMb: 2,
+    sectionMb: 2,
+    miniMb: 1,
+    termsMt: 10,
+  },
+  ultra: {
+    rowPy: 0,
+    cellFs: '2xs',
+    logoH: '70px',
+    headerMb: 1,
+    sectionMb: 1,
+    miniMb: 0.5,
+    termsMt: 6,
+  },
+};
+
 export const OrderResume: React.FC<OrderResumeProps> = ({
   order,
   variant = 'ghost',
@@ -42,6 +85,12 @@ export const OrderResume: React.FC<OrderResumeProps> = ({
   onAfterPrint,
 }) => {
   const componentRef = useRef<HTMLDivElement>(null);
+  const [zoom, setZoom] = useState(1);
+
+  const cutCount = order.cutlist?.length ?? 0;
+  const density: Density =
+    cutCount <= 12 ? 'normal' : cutCount <= 20 ? 'compact' : 'ultra';
+  const dp = densityPresets[density];
 
   const handlePrint = useReactToPrint({
     contentRef: componentRef,
@@ -50,6 +99,23 @@ export const OrderResume: React.FC<OrderResumeProps> = ({
       if (onAfterPrint) onAfterPrint();
     },
   });
+
+  useLayoutEffect(() => {
+    const el = componentRef.current;
+    if (!el) return;
+
+    const targetMm = 275;
+    const mmToPx = 96 / 25.4;
+    const targetPx = targetMm * mmToPx;
+
+    const prev = el.style.zoom;
+    el.style.zoom = '1';
+    const naturalHeight = el.scrollHeight;
+    el.style.zoom = prev;
+
+    const next = naturalHeight > targetPx ? targetPx / naturalHeight : 1;
+    setZoom(curr => (Math.abs(curr - next) > 0.005 ? next : curr));
+  }, [order, density]);
 
   useEffect(() => {
     if (autoPrint) {
@@ -63,7 +129,17 @@ export const OrderResume: React.FC<OrderResumeProps> = ({
 
   return (
     <>
-      <div style={{ display: 'none' }}>
+      <div
+        aria-hidden="true"
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: '-9999px',
+          width: '210mm',
+          pointerEvents: 'none',
+          zIndex: -9999,
+        }}
+      >
         <Box
           ref={componentRef}
           p={5}
@@ -77,14 +153,15 @@ export const OrderResume: React.FC<OrderResumeProps> = ({
           flexDirection="column"
           minH="280mm" // Força a altura de uma página A4 (297mm - margens)
           boxSizing="border-box"
+          style={{ zoom }}
         >
           {/* --- CABEÇALHO --- */}
-          <Flex justify="space-between" align="center" mb={3}>
+          <Flex justify="space-between" align="center" mb={dp.headerMb}>
             <Box>
               <Image
-                src="/images/logo.svg"
+                src="/images/cm.png"
                 alt="JRM Compensados"
-                h="50px"
+                h={dp.logoH}
                 objectFit="contain"
                 filter="grayscale(100%)"
               />
@@ -113,7 +190,12 @@ export const OrderResume: React.FC<OrderResumeProps> = ({
             </VStack>
           </Flex>
 
-          <Box w="100%" borderBottomWidth="3px" borderColor="black" mb={4} />
+          <Box
+            w="100%"
+            borderBottomWidth="3px"
+            borderColor="black"
+            mb={dp.sectionMb}
+          />
 
           {/* --- AVISO DE EDIÇÃO (uma única frase compacta) --- */}
           {order.edits?.length > 0 &&
@@ -142,7 +224,7 @@ export const OrderResume: React.FC<OrderResumeProps> = ({
                   bg="gray.100"
                   px={2}
                   py={1}
-                  mb={3}
+                  mb={dp.miniMb}
                 >
                   <Text fontSize="2xs" lineHeight="1.3">
                     <strong>⚠ Pedido editado</strong> por {last.editedBy}
@@ -154,7 +236,7 @@ export const OrderResume: React.FC<OrderResumeProps> = ({
             })()}
 
           {/* --- DADOS DO CLIENTE --- */}
-          <Box mb={4}>
+          <Box mb={dp.sectionMb}>
             <Text
               fontSize="2xs"
               fontWeight="bold"
@@ -198,7 +280,7 @@ export const OrderResume: React.FC<OrderResumeProps> = ({
             p={2}
             borderRadius="md"
             bg="gray.50"
-            mb={4}
+            mb={dp.sectionMb}
           >
             <Text
               fontWeight="bold"
@@ -248,7 +330,7 @@ export const OrderResume: React.FC<OrderResumeProps> = ({
           {/* OBSERVAÇÕES */}
           {order.ps && (
             <Box
-              mb={4}
+              mb={dp.sectionMb}
               p={2}
               borderLeft="3px solid"
               borderColor="black"
@@ -281,7 +363,7 @@ export const OrderResume: React.FC<OrderResumeProps> = ({
                     color="black"
                     fontWeight="black"
                     fontSize="2xs"
-                    py={1}
+                    py={dp.rowPy}
                   >
                     QTD
                   </Table.ColumnHeader>
@@ -289,7 +371,7 @@ export const OrderResume: React.FC<OrderResumeProps> = ({
                     color="black"
                     fontWeight="black"
                     fontSize="2xs"
-                    py={1}
+                    py={dp.rowPy}
                   >
                     MATERIAL
                   </Table.ColumnHeader>
@@ -297,7 +379,7 @@ export const OrderResume: React.FC<OrderResumeProps> = ({
                     color="black"
                     fontWeight="black"
                     fontSize="2xs"
-                    py={1}
+                    py={dp.rowPy}
                   >
                     MEDIDAS (mm)
                   </Table.ColumnHeader>
@@ -306,7 +388,7 @@ export const OrderResume: React.FC<OrderResumeProps> = ({
                     fontWeight="black"
                     fontSize="2xs"
                     textAlign="center"
-                    py={1}
+                    py={dp.rowPy}
                   >
                     FITAS
                   </Table.ColumnHeader>
@@ -315,7 +397,7 @@ export const OrderResume: React.FC<OrderResumeProps> = ({
                     fontWeight="black"
                     fontSize="2xs"
                     textAlign="right"
-                    py={1}
+                    py={dp.rowPy}
                   >
                     VALOR
                   </Table.ColumnHeader>
@@ -327,13 +409,13 @@ export const OrderResume: React.FC<OrderResumeProps> = ({
                     key={cut.id || idx}
                     borderBottom="1px solid #e2e8f0"
                   >
-                    <Table.Cell py={1} fontWeight="bold" fontSize="xs">
+                    <Table.Cell py={dp.rowPy} fontWeight="bold" fontSize={dp.cellFs}>
                       {cut.amount}
                     </Table.Cell>
-                    <Table.Cell py={1} fontSize="xs">
+                    <Table.Cell py={dp.rowPy} fontSize={dp.cellFs}>
                       {cut.material.name}
                     </Table.Cell>
-                    <Table.Cell py={1} fontSize="xs">
+                    <Table.Cell py={dp.rowPy} fontSize={dp.cellFs}>
                       {cut.sideA} x {cut.sideB}
                       {cut.hasHingeHoles && (
                         <Text
@@ -382,14 +464,14 @@ export const OrderResume: React.FC<OrderResumeProps> = ({
                         </Text>
                       )}
                     </Table.Cell>
-                    <Table.Cell py={1} textAlign="center" fontSize="xs">
+                    <Table.Cell py={dp.rowPy} textAlign="center" fontSize={dp.cellFs}>
                       {cut.borderA} | {cut.borderB}
                     </Table.Cell>
                     <Table.Cell
-                      py={1}
+                      py={dp.rowPy}
                       textAlign="right"
                       fontWeight="medium"
-                      fontSize="xs"
+                      fontSize={dp.cellFs}
                     >
                       {cut.price}
                     </Table.Cell>
@@ -400,7 +482,7 @@ export const OrderResume: React.FC<OrderResumeProps> = ({
           </Box>
 
           {/* --- TOTAIS --- */}
-          <Flex justify="flex-end" mb={4}>
+          <Flex justify="flex-end" mb={dp.sectionMb}>
             <Box w="240px">
               {order.deliveryType === 'Entrega' && (
                 <>
@@ -472,7 +554,7 @@ export const OrderResume: React.FC<OrderResumeProps> = ({
 
           {/* --- TERMOS E CONDIÇÕES --- */}
           <Box
-            mb={4}
+            mb={dp.sectionMb}
             p={2}
             border="1px solid"
             borderColor="gray.300"
@@ -498,7 +580,7 @@ export const OrderResume: React.FC<OrderResumeProps> = ({
               cliente. Prazo de retirada inicia-se após confirmação do
               pagamento. Pedidos não retirados em 30 dias sujeitos a descarte.
             </Text>
-            <Flex mt={16} gap={4}>
+            <Flex mt={dp.termsMt} gap={4}>
               <Box
                 borderTop="1px solid black"
                 w="50%"

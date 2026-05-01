@@ -70,9 +70,9 @@ export const EstimateResume: React.FC<EstimateResumeProps> = ({
           <Flex justify="space-between" align="center" mb={2}>
             <Box>
               <Image
-                src="/images/logo.svg"
+                src="/images/cm.png"
                 alt="JRM Compensados"
-                h="50px"
+                h="120px"
                 objectFit="contain"
                 filter="grayscale(100%)"
               />
