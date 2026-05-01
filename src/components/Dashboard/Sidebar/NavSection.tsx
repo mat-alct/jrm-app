@@ -8,11 +8,21 @@ interface NavSectionProps {
 
 export const NavSection: React.FC<NavSectionProps> = ({ title, children }) => {
   return (
-    <Box>
-      <Text fontWeight="bold" fontSize="sm" color="orange.900">
+    <Box w="100%">
+      <Text
+        fontSize="10px"
+        fontWeight="semibold"
+        letterSpacing="0.08em"
+        textTransform="uppercase"
+        color="whiteAlpha.400"
+        px="3"
+        pt="3.5"
+        pb="1.5"
+        whiteSpace="nowrap"
+      >
         {title}
       </Text>
-      <Stack gap="3" mt="3" align="stretch">
+      <Stack gap="0.5" align="stretch">
         {children}
       </Stack>
     </Box>

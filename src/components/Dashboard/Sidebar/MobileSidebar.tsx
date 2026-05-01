@@ -18,9 +18,13 @@ export const MobileSidebar: React.FC = () => {
       <Portal>
         <Drawer.Backdrop />
         <Drawer.Positioner>
-          <Drawer.Content>
-            <Drawer.Header>Navegação</Drawer.Header>
-            <Drawer.Body>
+          <Drawer.Content
+            bg="#2E2D2C"
+            maxW="16rem"
+            w="16rem"
+            p="0"
+          >
+            <Drawer.Body p="0">
               <SidebarNav />
             </Drawer.Body>
             <Drawer.CloseTrigger
@@ -29,7 +33,7 @@ export const MobileSidebar: React.FC = () => {
               top="3"
               right="4"
             >
-              <CloseButton />
+              <CloseButton color="whiteAlpha.700" />
             </Drawer.CloseTrigger>
           </Drawer.Content>
         </Drawer.Positioner>

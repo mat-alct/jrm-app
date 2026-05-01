@@ -159,8 +159,9 @@ const NovoServiço = () => {
                 setOrderType(e.value);
               }
             }}
+            ml={[1, 1, 5]}
           >
-            <HStack gap={[4, 4, 8]}>
+            <HStack gap="3">
               <RadioGroup.Item value="Serviço">
                 <RadioGroup.ItemHiddenInput />
                 <RadioGroup.ItemIndicator />

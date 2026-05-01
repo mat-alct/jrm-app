@@ -355,7 +355,7 @@ export const Cutlist = ({
       return;
     }
 
-    createCutlistReset({ sideA: 0, sideB: 0, amount: 0 });
+    createCutlistReset({ sideA: undefined, sideB: undefined, amount: 0 } as any);
     createCutlistSetValue('borderA', 0);
     createCutlistSetValue('borderB', 0);
     createCutlistSetValue('materialId', cutlistFormData.materialId);
@@ -572,7 +572,7 @@ export const Cutlist = ({
   );
 
   return (
-    <Stack gap={6} mb={8}>
+    <Stack gap={6} mb={3}>
       <Box
         bg="white"
         borderRadius="xl"
