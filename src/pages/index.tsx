@@ -14,17 +14,22 @@ import {
 import { differenceInCalendarDays, format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
+  Timestamp,
   collection,
+  doc,
   getCountFromServer,
+  getDoc,
   getDocs,
   limit,
   orderBy,
   query,
+  updateDoc,
   where,
 } from 'firebase/firestore';
+import dynamic from 'next/dynamic';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   FaArrowRight,
   FaCheckCircle,
@@ -34,17 +39,31 @@ import {
   FaIndustry,
   FaMapMarkerAlt,
   FaPen,
+  FaPhone,
   FaPlus,
   FaShippingFast,
   FaThLarge,
+  FaTrash,
+  FaTruck,
+  FaUserTie,
 } from 'react-icons/fa';
 import { useQuery } from '@tanstack/react-query';
 
 import { Dashboard } from '../components/Dashboard';
 import { Header } from '../components/Dashboard/Content/Header';
 import { Loader } from '../components/Loader';
+import { toaster } from '@/components/ui/toaster';
 import { useAuth } from '../hooks/authContext';
 import { db } from '../services/firebase';
+import { queryClient } from '../services/queryClient';
+
+const ConfirmStatusDialog = dynamic(
+  () =>
+    import('../components/cortes/ConfirmStatusDialog').then(
+      m => m.ConfirmStatusDialog,
+    ),
+  { ssr: false },
+);
 
 const GOLD = '#F5B820';
 const DARK = '#2E2D2C';
@@ -59,16 +78,17 @@ const RED = '#E03C3C';
 const RED_BG = '#FEF2F2';
 const RED_BORDER = '#FECACA';
 const BLUE = '#2563EB';
+const AMBER = '#D97706';
+const GREEN = '#16A34A';
+
+type TimelineEventType = 'created' | 'edited' | 'deleted' | 'released';
 
 type TimelineEvent = {
   id: string;
   at: Date;
   sentence: string;
-  isEdit?: boolean;
+  type: TimelineEventType;
 };
-
-const greetingForHour = (h: number) =>
-  h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite';
 
 const deliveryRelativeLabel = (date: Date): string => {
   const days = differenceInCalendarDays(date, new Date());
@@ -190,6 +210,8 @@ interface DeadlineItem {
   orderCode: string | number;
   customerName: string;
   customerAddress: string | null;
+  customerTelephone: string | null;
+  seller: string | null;
   deliveryDate: Date;
   deliveryType?: string;
   orderStatus: string;
@@ -211,7 +233,57 @@ type DeadlineFilter =
 const Home = () => {
   const { user } = useAuth();
   const router = useRouter();
+  const toast = toaster;
   const [deadlineFilter, setDeadlineFilter] = useState<DeadlineFilter>('all');
+  const [confirmingStatusOrder, setConfirmingStatusOrder] = useState<any | null>(
+    null,
+  );
+  const [advancingStatus, setAdvancingStatus] = useState(false);
+
+  const updateOrderStatus = useCallback(
+    async (id: string) => {
+      setAdvancingStatus(true);
+      try {
+        const orderRef = doc(db, 'orders', id);
+        const orderSnap = await getDoc(orderRef);
+        if (!orderSnap.exists()) return;
+        const order = orderSnap.data() as any;
+        let nextState: string | null = null;
+        if (order.orderStatus === 'Em Produção') {
+          nextState = 'Liberado para Transporte';
+        } else if (order.orderStatus === 'Liberado para Transporte') {
+          nextState = 'Concluído';
+        }
+        if (nextState) {
+          const now = Timestamp.now();
+          await updateDoc(
+            orderRef,
+            nextState === 'Liberado para Transporte'
+              ? { orderStatus: nextState, updatedAt: now, releasedAt: now }
+              : { orderStatus: nextState, updatedAt: now },
+          );
+          await Promise.all([
+            queryClient.invalidateQueries({ queryKey: ['orders'] }),
+            queryClient.invalidateQueries({ queryKey: ['home-stats'] }),
+            queryClient.invalidateQueries({
+              queryKey: ['home-next-deadlines'],
+            }),
+            queryClient.invalidateQueries({ queryKey: ['home-timeline'] }),
+          ]);
+          toast.create({
+            type: 'success',
+            description: `Status atualizado para ${nextState}`,
+          });
+        }
+      } catch {
+        toast.create({ type: 'error', description: 'Erro ao concluir etapa' });
+      } finally {
+        setAdvancingStatus(false);
+        setConfirmingStatusOrder(null);
+      }
+    },
+    [toast],
+  );
 
   useEffect(() => {
     if (user === null) {
@@ -266,8 +338,9 @@ const Home = () => {
     },
   });
 
-  // --- Atividade recente (últimos 30 dias). Frases seguem o padrão atual:
-  //     "Pedido #N de Cliente criado/editado/..." com data renderizada à parte.
+  // --- Atividade recente (últimos 30 dias). Eventos: cortes adicionados,
+  //     editados e desativados. Cada evento carrega seu tipo para definir
+  //     o ícone/cor de exibição.
   const { data: timeline, isLoading: timelineLoading } = useQuery({
     queryKey: ['home-timeline'],
     enabled: !!user,
@@ -276,32 +349,23 @@ const Home = () => {
       oneMonthAgo.setDate(oneMonthAgo.getDate() - 30);
 
       const ordersRef = collection(db, 'orders');
-      const estimatesRef = collection(db, 'estimates');
 
-      const [ordersSnap, estimatesSnap] = await Promise.all([
-        getDocs(
-          query(
-            ordersRef,
-            where('updatedAt', '>=', oneMonthAgo),
-            orderBy('updatedAt', 'desc'),
-            limit(150),
-          ),
+      const ordersSnap = await getDocs(
+        query(
+          ordersRef,
+          where('updatedAt', '>=', oneMonthAgo),
+          orderBy('updatedAt', 'desc'),
+          limit(150),
         ),
-        getDocs(
-          query(
-            estimatesRef,
-            where('createdAt', '>=', oneMonthAgo),
-            orderBy('createdAt', 'desc'),
-            limit(50),
-          ),
-        ),
-      ]);
+      );
 
       const events: TimelineEvent[] = [];
 
       ordersSnap.docs.forEach(d => {
         const data = d.data() as any;
         const customerName = data.customer?.name ?? 'Cliente';
+        const orderCode = data.orderCode ?? '—';
+
         const createdAt = data.createdAt?.seconds
           ? new Date(data.createdAt.seconds * 1000)
           : null;
@@ -310,9 +374,11 @@ const Home = () => {
           events.push({
             id: `${d.id}-c`,
             at: createdAt,
-            sentence: `Pedido #${data.orderCode ?? '—'} de ${customerName} criado${seller}.`,
+            sentence: `Pedido #${orderCode} de ${customerName} adicionado${seller}.`,
+            type: 'created',
           });
         }
+
         (data.edits ?? []).forEach((e: any, i: number) => {
           const editedAt = e.editedAt?.seconds
             ? new Date(e.editedAt.seconds * 1000)
@@ -328,24 +394,32 @@ const Home = () => {
           events.push({
             id: `${d.id}-e-${i}`,
             at: editedAt,
-            sentence: `Pedido #${data.orderCode ?? '—'} de ${customerName} editado${editedBy}${diffText}.`,
-            isEdit: true,
+            sentence: `Pedido #${orderCode} de ${customerName} editado${editedBy}${diffText}.`,
+            type: 'edited',
           });
         });
-      });
 
-      estimatesSnap.docs.forEach(d => {
-        const data = d.data() as any;
-        const createdAt = data.createdAt?.seconds
-          ? new Date(data.createdAt.seconds * 1000)
+        const deactivatedAt = data.deactivatedAt?.seconds
+          ? new Date(data.deactivatedAt.seconds * 1000)
           : null;
-        if (createdAt && createdAt >= oneMonthAgo) {
-          const who = data.name ?? 'Cliente';
-          const code = data.estimateCode ? `#${data.estimateCode} ` : '';
+        if (deactivatedAt && deactivatedAt >= oneMonthAgo) {
           events.push({
-            id: `${d.id}-est-c`,
-            at: createdAt,
-            sentence: `Orçamento ${code}criado para ${who}.`,
+            id: `${d.id}-d`,
+            at: deactivatedAt,
+            sentence: `Pedido #${orderCode} de ${customerName} excluído.`,
+            type: 'deleted',
+          });
+        }
+
+        const releasedAt = data.releasedAt?.seconds
+          ? new Date(data.releasedAt.seconds * 1000)
+          : null;
+        if (releasedAt && releasedAt >= oneMonthAgo) {
+          events.push({
+            id: `${d.id}-r`,
+            at: releasedAt,
+            sentence: `Pedido #${orderCode} de ${customerName} liberado para transporte.`,
+            type: 'released',
           });
         }
       });
@@ -388,11 +462,14 @@ const Home = () => {
         .map(d => {
           const data = d.data() as any;
           if (!data.deliveryDate?.seconds) return null;
+          if (data.isDeactivated === true) return null;
           return {
             id: d.id,
             orderCode: data.orderCode ?? '—',
             customerName: data.customer?.name ?? 'Cliente Removido',
             customerAddress: formatAddress(data.customer),
+            customerTelephone: data.customer?.telephone ?? null,
+            seller: data.seller ?? null,
             deliveryDate: new Date(data.deliveryDate.seconds * 1000),
             deliveryType: data.deliveryType,
             orderStatus: data.orderStatus,
@@ -418,7 +495,7 @@ const Home = () => {
       case 'shop_released':
         return deadlines.filter(
           d =>
-            d.deliveryType !== 'Entrega' &&
+            d.deliveryType === 'Retirar na Loja' &&
             d.orderStatus === 'Liberado para Transporte',
         );
       default:
@@ -428,8 +505,6 @@ const Home = () => {
 
   if (!user) return <Loader />;
 
-  const greeting = greetingForHour(new Date().getHours());
-
   return (
     <>
       <Head>
@@ -437,6 +512,15 @@ const Home = () => {
       </Head>
       <Dashboard>
         <Header pageTitle="Início" />
+
+        {confirmingStatusOrder && (
+          <ConfirmStatusDialog
+            order={confirmingStatusOrder}
+            onCancel={() => setConfirmingStatusOrder(null)}
+            onConfirm={updateOrderStatus}
+            loading={advancingStatus}
+          />
+        )}
 
         <Stack gap={7} maxW="1280px" w="100%">
           {/* GREETING + ATALHOS */}
@@ -454,10 +538,10 @@ const Home = () => {
                 letterSpacing="-0.02em"
                 lineHeight="1.2"
               >
-                {greeting} 👋
+                Visão geral
               </Heading>
               <Text fontSize="14px" color={TEXT_SECONDARY} mt={1}>
-                Aqui está o resumo da operação de hoje.
+                Resumo da operação de hoje.
               </Text>
             </Box>
             <HStack gap={1.5} flexShrink={0}>
@@ -617,63 +701,77 @@ const Home = () => {
               </Text>
             ) : (
               <Box maxH="260px" overflowY="auto" py={1}>
-                {timeline.map((ev, idx) => (
-                  <Flex
-                    key={ev.id}
-                    align="center"
-                    gap={3}
-                    px={5}
-                    py={3.5}
-                    borderBottomWidth={idx === timeline.length - 1 ? 0 : '1px'}
-                    borderColor={BORDER}
-                    bg={ev.isEdit ? 'rgba(37,99,235,0.04)' : undefined}
-                    transition="background 0.12s"
-                    _hover={{ bg: ev.isEdit ? 'rgba(37,99,235,0.08)' : SURFACE }}
-                  >
-                    {ev.isEdit ? (
+                {timeline.map((ev, idx) => {
+                  const isEdit = ev.type === 'edited';
+                  const isDeleted = ev.type === 'deleted';
+                  const isReleased = ev.type === 'released';
+                  const iconColor = isEdit
+                    ? AMBER
+                    : isDeleted
+                      ? RED
+                      : isReleased
+                        ? GREEN
+                        : BLUE;
+                  const iconBg = isEdit
+                    ? 'rgba(217,119,6,0.14)'
+                    : isDeleted
+                      ? 'rgba(224,60,60,0.14)'
+                      : isReleased
+                        ? 'rgba(22,163,74,0.14)'
+                        : 'rgba(37,99,235,0.14)';
+                  const IconComponent = isEdit
+                    ? FaPen
+                    : isDeleted
+                      ? FaTrash
+                      : isReleased
+                        ? FaTruck
+                        : FaPlus;
+                  return (
+                    <Flex
+                      key={ev.id}
+                      align="center"
+                      gap={3}
+                      px={5}
+                      py={3.5}
+                      borderBottomWidth={idx === timeline.length - 1 ? 0 : '1px'}
+                      borderColor={BORDER}
+                      bg={isEdit ? 'rgba(217,119,6,0.05)' : undefined}
+                      transition="background 0.12s"
+                      _hover={{ bg: isEdit ? 'rgba(217,119,6,0.10)' : SURFACE }}
+                    >
                       <Flex
                         w="20px"
                         h="20px"
                         align="center"
                         justify="center"
                         borderRadius="full"
-                        bg="rgba(37,99,235,0.14)"
-                        color={BLUE}
+                        bg={iconBg}
+                        color={iconColor}
                         flexShrink={0}
                       >
-                        <Icon as={FaPen} boxSize={2.5} />
+                        <Icon as={IconComponent} boxSize={2.5} />
                       </Flex>
-                    ) : (
-                      <Box
-                        w="7px"
-                        h="7px"
-                        borderRadius="full"
-                        bg={GOLD}
+                      <Text
+                        flex="1"
+                        fontSize="13.5px"
+                        color={TEXT_PRIMARY}
+                        fontWeight={isEdit ? 'semibold' : 'normal'}
+                        lineHeight="1.45"
+                      >
+                        {renderSentence(ev.sentence)}
+                      </Text>
+                      <Text
+                        fontFamily="mono"
+                        fontSize="11px"
+                        color={TEXT_TERTIARY}
+                        whiteSpace="nowrap"
                         flexShrink={0}
-                        ml="6.5px"
-                        mr="6.5px"
-                      />
-                    )}
-                    <Text
-                      flex="1"
-                      fontSize="13.5px"
-                      color={TEXT_PRIMARY}
-                      fontWeight={ev.isEdit ? 'semibold' : 'normal'}
-                      lineHeight="1.45"
-                    >
-                      {renderSentence(ev.sentence)}
-                    </Text>
-                    <Text
-                      fontFamily="mono"
-                      fontSize="11px"
-                      color={TEXT_TERTIARY}
-                      whiteSpace="nowrap"
-                      flexShrink={0}
-                    >
-                      {format(ev.at, "dd/MM/yy 'às' HH:mm", { locale: ptBR })}
-                    </Text>
-                  </Flex>
-                ))}
+                      >
+                        {format(ev.at, "dd/MM/yy 'às' HH:mm", { locale: ptBR })}
+                      </Text>
+                    </Flex>
+                  );
+                })}
               </Box>
             )}
           </Box>
@@ -776,100 +874,157 @@ const Home = () => {
                         : 'Nenhum pedido com prazo cadastrado.'}
                 </Text>
               ) : (
-                <Box maxH="420px" overflowY="auto" px={5} py={1}>
+                <Box maxH="520px" overflowY="auto" py={1}>
                   {filteredDeadlines.map((d, idx) => {
                     const isLast = idx === filteredDeadlines.length - 1;
                     const isDelivery = d.deliveryType === 'Entrega';
                     const isReleased =
                       d.orderStatus === 'Liberado para Transporte';
+                    const advanceLabel = isReleased ? 'Concluir' : 'Liberar';
                     return (
                       <Flex
                         key={d.id}
                         align="center"
-                        gap={2.5}
+                        gap={3}
+                        px={5}
                         py={2.5}
                         borderBottomWidth={isLast ? 0 : '1px'}
                         borderColor={BORDER}
+                        transition="background 0.12s"
+                        _hover={{ bg: SURFACE }}
                       >
                         <Text
                           fontFamily="mono"
                           fontSize="11px"
                           fontWeight="medium"
                           color={TEXT_TERTIARY}
-                          w="42px"
+                          w="48px"
                           flexShrink={0}
                         >
                           #{d.orderCode}
                         </Text>
+
                         <Box flex="1" minW={0}>
-                          <Text
-                            fontSize="13px"
-                            fontWeight="medium"
-                            color={TEXT_PRIMARY}
-                            lineClamp={1}
-                          >
-                            {d.customerName}
-                          </Text>
-                          <HStack gap={1.5} mt={0.5} fontSize="11px">
-                            <Box
-                              display="inline-flex"
-                              alignItems="center"
-                              fontSize="10px"
+                          <HStack gap={2} align="center">
+                            <Text
+                              fontSize="13px"
                               fontWeight="semibold"
-                              px="1.5"
-                              py="0.5"
-                              borderRadius="full"
-                              letterSpacing="0.02em"
-                              bg={
-                                isReleased
-                                  ? 'rgba(37,99,235,0.10)'
-                                  : 'rgba(245,184,32,0.14)'
-                              }
-                              color={isReleased ? BLUE : '#92700a'}
+                              color={TEXT_PRIMARY}
+                              lineClamp={1}
                             >
-                              {isReleased ? 'Liberado' : 'Em produção'}
-                            </Box>
-                            {isDelivery && (
+                              {d.customerName}
+                            </Text>
+                            {d.isUrgent && (
                               <Box
                                 display="inline-flex"
                                 alignItems="center"
-                                fontSize="10px"
-                                fontWeight="semibold"
+                                gap="1"
+                                fontSize="9.5px"
+                                fontWeight="bold"
                                 px="1.5"
                                 py="0.5"
                                 borderRadius="full"
-                                letterSpacing="0.02em"
-                                bg={SURFACE_2}
-                                color={TEXT_SECONDARY}
+                                letterSpacing="0.04em"
+                                textTransform="uppercase"
+                                bg="rgba(224,60,60,0.12)"
+                                color={RED}
+                                flexShrink={0}
                               >
-                                Entrega
+                                <Icon
+                                  as={FaExclamationTriangle}
+                                  boxSize={2}
+                                />
+                                Urgente
                               </Box>
                             )}
-                            {d.isUrgent && (
-                              <Box
-                                w="5px"
-                                h="5px"
-                                borderRadius="full"
-                                bg={RED}
-                                flexShrink={0}
-                              />
+                          </HStack>
+                          <HStack
+                            gap={3}
+                            mt={0.5}
+                            fontSize="11px"
+                            color={TEXT_SECONDARY}
+                            flexWrap="wrap"
+                            rowGap={0.5}
+                          >
+                            {d.seller && (
+                              <HStack gap={1} minW={0}>
+                                <Icon
+                                  as={FaUserTie}
+                                  boxSize={2.5}
+                                  color={TEXT_TERTIARY}
+                                />
+                                <Text lineClamp={1}>{d.seller}</Text>
+                              </HStack>
+                            )}
+                            {d.customerTelephone && (
+                              <HStack gap={1} minW={0}>
+                                <Icon
+                                  as={FaPhone}
+                                  boxSize={2.5}
+                                  color={TEXT_TERTIARY}
+                                />
+                                <Text lineClamp={1}>
+                                  {d.customerTelephone}
+                                </Text>
+                              </HStack>
+                            )}
+                            {isDelivery && d.customerAddress && (
+                              <HStack gap={1} minW={0}>
+                                <Icon
+                                  as={FaMapMarkerAlt}
+                                  boxSize={2.5}
+                                  color={TEXT_TERTIARY}
+                                />
+                                <Text lineClamp={1}>{d.customerAddress}</Text>
+                              </HStack>
                             )}
                           </HStack>
-                          {isDelivery && d.customerAddress && (
-                            <HStack
-                              gap={1}
-                              mt={1}
-                              color={TEXT_TERTIARY}
-                              minW={0}
-                            >
-                              <Icon as={FaMapMarkerAlt} boxSize={2.5} />
-                              <Text fontSize="11px" lineClamp={1}>
-                                {d.customerAddress}
-                              </Text>
-                            </HStack>
-                          )}
                         </Box>
-                        <Box textAlign="right" flexShrink={0}>
+
+                        <HStack
+                          gap={1}
+                          flexShrink={0}
+                          display={['none', 'none', 'flex']}
+                        >
+                          <Box
+                            display="inline-flex"
+                            alignItems="center"
+                            fontSize="10px"
+                            fontWeight="semibold"
+                            px="1.5"
+                            py="0.5"
+                            borderRadius="full"
+                            letterSpacing="0.02em"
+                            bg={
+                              isReleased
+                                ? 'rgba(37,99,235,0.10)'
+                                : 'rgba(245,184,32,0.14)'
+                            }
+                            color={isReleased ? BLUE : '#92700a'}
+                          >
+                            {isReleased ? 'Liberado' : 'Em produção'}
+                          </Box>
+                          <Box
+                            display="inline-flex"
+                            alignItems="center"
+                            fontSize="10px"
+                            fontWeight="semibold"
+                            px="1.5"
+                            py="0.5"
+                            borderRadius="full"
+                            letterSpacing="0.02em"
+                            bg={SURFACE_2}
+                            color={TEXT_SECONDARY}
+                          >
+                            {isDelivery ? 'Entrega' : 'Loja'}
+                          </Box>
+                        </HStack>
+
+                        <Box
+                          textAlign="right"
+                          flexShrink={0}
+                          minW="60px"
+                        >
                           <Text
                             fontFamily="mono"
                             fontSize="12px"
@@ -882,6 +1037,44 @@ const Home = () => {
                             {deliveryRelativeLabel(d.deliveryDate)}
                           </Text>
                         </Box>
+
+                        <HStack gap={1} flexShrink={0}>
+                          <Button
+                            size="xs"
+                            h="26px"
+                            px="2.5"
+                            fontSize="11px"
+                            fontWeight="semibold"
+                            bg={DARK}
+                            color="white"
+                            _hover={{ bg: DARK_2 }}
+                            onClick={() =>
+                              setConfirmingStatusOrder({
+                                id: d.id,
+                                orderCode: d.orderCode,
+                                orderStatus: d.orderStatus,
+                                customer: { name: d.customerName },
+                              })
+                            }
+                          >
+                            <Icon as={FaCheckCircle} boxSize={2.5} mr="1" />
+                            {advanceLabel}
+                          </Button>
+                          <Button
+                            size="xs"
+                            h="26px"
+                            px="2"
+                            variant="ghost"
+                            color={TEXT_SECONDARY}
+                            _hover={{ bg: SURFACE_2, color: TEXT_PRIMARY }}
+                            onClick={() =>
+                              router.push(`/cortes/editar/${d.id}`)
+                            }
+                            aria-label="Editar pedido"
+                          >
+                            <Icon as={FaPen} boxSize={2.5} />
+                          </Button>
+                        </HStack>
                       </Flex>
                     );
                   })}

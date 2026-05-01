@@ -16,6 +16,7 @@ import {
   updateDoc,
   QueryDocumentSnapshot,
   DocumentData,
+  Timestamp,
 } from 'firebase/firestore';
 import Head from 'next/head';
 import Router from 'next/router';
@@ -231,11 +232,19 @@ const Cortes: React.FC = () => {
         }
 
         if (nextState) {
-          await updateDoc(orderRef, { orderStatus: nextState });
+          const now = Timestamp.fromDate(new Date());
+          await updateDoc(
+            orderRef,
+            nextState === 'Liberado para Transporte'
+              ? { orderStatus: nextState, updatedAt: now, releasedAt: now }
+              : { orderStatus: nextState, updatedAt: now },
+          );
           await Promise.all([
             queryClient.invalidateQueries({ queryKey: ['orders'] }),
             queryClient.invalidateQueries({ queryKey: ['home-stats'] }),
             queryClient.invalidateQueries({ queryKey: ['home-next-deliveries'] }),
+            queryClient.invalidateQueries({ queryKey: ['home-next-deadlines'] }),
+            queryClient.invalidateQueries({ queryKey: ['home-timeline'] }),
           ]);
           toast.create({
             type: 'success',
@@ -262,12 +271,18 @@ const Cortes: React.FC = () => {
       setDeactivatingLoading(true);
       try {
         const orderRef = doc(db, 'orders', id);
-        await updateDoc(orderRef, { isDeactivated: true });
+        const now = Timestamp.fromDate(new Date());
+        await updateDoc(orderRef, {
+          isDeactivated: true,
+          deactivatedAt: now,
+          updatedAt: now,
+        });
         await Promise.all([
           queryClient.invalidateQueries({ queryKey: ['orders'] }),
           queryClient.invalidateQueries({ queryKey: ['orders_search'] }),
           queryClient.invalidateQueries({ queryKey: ['home-stats'] }),
           queryClient.invalidateQueries({ queryKey: ['home-next-deliveries'] }),
+          queryClient.invalidateQueries({ queryKey: ['home-timeline'] }),
         ]);
         toast.create({
           type: 'success',
