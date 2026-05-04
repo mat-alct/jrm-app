@@ -15,7 +15,7 @@ import {
 // Resolvedor do Yup para integração com react-hook-form
 import { yupResolver } from '@hookform/resolvers/yup';
 // Funções e tipos do Firebase v9+ para interagir com o banco de dados
-import { addDoc, collection, doc, getDocs, setDoc } from 'firebase/firestore';
+import { collection, doc, getDocs, setDoc } from 'firebase/firestore';
 // Hooks e tipos do Next.js e React
 import Head from 'next/head';
 import { useRouter } from 'next/router';
@@ -36,6 +36,11 @@ import { FormModal } from '../../components/Form/Modal';
 import { Loader } from '../../components/Loader';
 // Instância do banco de dados Firestore
 import { db } from '../../services/firebase';
+import {
+  getSellerByPassword,
+  isValidSellerPasswordId,
+  normalizeSellerPassword,
+} from '../../services/sellers';
 // Esquema de validação do Yup
 import { createSellerSchema } from '../../utils/yup/vendedoresValidations';
 
@@ -88,7 +93,7 @@ const Vendedores = () => {
 
   // Hook que busca os dados usando a função acima e gerencia o cache.
   // A sintaxe foi atualizada para o novo padrão de objeto do React Query.
-  const { data, isFetching, isLoading } = useQuery({
+  const { data, isFetching, isLoading, refetch } = useQuery({
     queryKey: ['sellers'],
     queryFn: getSellers,
   });
@@ -99,6 +104,8 @@ const Vendedores = () => {
   const {
     register: createSellerRegister,
     handleSubmit: createSellerHandleSubmit,
+    reset: resetCreateSellerForm,
+    setError: setCreateSellerError,
     formState: {
       errors: createSellerErrors,
       isSubmitting: createSellerIsSubmitting,
@@ -111,18 +118,30 @@ const Vendedores = () => {
 
   // Função chamada ao submeter o formulário de criação de vendedor
   const handleCreateSeller = async (sellerData: CreateSellerData) => {
-    // Pega a referência da coleção 'sellers'
-    const sellersCollection = collection(db, 'sellers');
+    const password = normalizeSellerPassword(sellerData.password);
+    const name = sellerData.name.trim();
 
-    // Adiciona um novo documento à coleção.
-    // O Firestore irá gerar um ID automático.
-    await addDoc(sellersCollection, {
-      name: sellerData.name,
-      password: sellerData.password,
-      // Nota de segurança: A senha não é salva no documento.
-      // Ela deve ser usada apenas para autenticação, não armazenada aqui.
-    });
+    if (!isValidSellerPasswordId(password)) {
+      setCreateSellerError('password', {
+        type: 'value',
+        message: 'Use uma senha sem barra (/).',
+      });
+      return;
+    }
 
+    const existingSeller = await getSellerByPassword(password);
+    if (existingSeller) {
+      setCreateSellerError('password', {
+        type: 'value',
+        message: 'Já existe um vendedor com essa senha (ID).',
+      });
+      return;
+    }
+
+    await setDoc(doc(db, 'sellers', password), { name });
+
+    await refetch();
+    resetCreateSellerForm();
     onClose();
   };
 

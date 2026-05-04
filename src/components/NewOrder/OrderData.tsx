@@ -21,19 +21,12 @@ import React from 'react';
 import { useForm, SubmitHandler, Controller } from 'react-hook-form';
 import { FaExclamationTriangle, FaCheckCircle, FaLock } from 'react-icons/fa';
 
-import {
-  deleteDoc,
-  doc,
-  Timestamp,
-  collection,
-  query,
-  where,
-  getDocs,
-} from 'firebase/firestore';
-import { db } from '../../services/firebase';
+import { deleteDoc, doc, Timestamp } from 'firebase/firestore';
 
 import { useOrder } from '../../hooks/order';
 import { findAreaFreight, useAreas } from '../../hooks/useAreas';
+import { db } from '../../services/firebase';
+import { getSellerByPassword } from '../../services/sellers';
 import { Cutlist } from '../../types';
 import { capitalizeAndStrip } from '../../utils/capitalizeAndStripString';
 import { normalizeTelephoneInput } from '../../utils/normalizeTelephone';
@@ -141,22 +134,16 @@ export const OrderData = ({
   const handleSubmitOrder: SubmitHandler<
     CreateOrderProps
   > = async orderData => {
-    // --- LÓGICA DE SENHA ---
-    const sellersRef = collection(db, 'sellers');
-    const q = query(
-      sellersRef,
-      where('password', '==', orderData.sellerPassword),
-    );
-    const querySnapshot = await getDocs(q);
+    const sellerRecord = await getSellerByPassword(orderData.sellerPassword);
 
-    if (querySnapshot.empty) {
+    if (!sellerRecord) {
       createOrderSetError('sellerPassword', {
         type: 'value',
         message: 'Senha inválida',
       });
       return;
     }
-    const seller = querySnapshot.docs[0].data().name as string | undefined;
+    const seller = sellerRecord.name;
     if (!seller) {
       createOrderSetError('sellerPassword', {
         type: 'value',

@@ -32,6 +32,7 @@ import {
 
 import { db } from '../services/firebase';
 import { queryClient } from '../services/queryClient';
+import { getSellerByPassword } from '../services/sellers';
 import { Cutlist, Estimate, Order, OrderEdit } from '../types';
 import { removeUndefinedAndEmptyFields } from '../utils/removeUndefinedAndEmpty';
 
@@ -331,16 +332,11 @@ export const OrderProvider = ({ children }: OrderProviderProps) => {
     shouldCharge: boolean,
   ): Promise<UpdateOrderCutlistResult> => {
     try {
-      const sellersRef = collection(db, 'sellers');
-      const sellerQuery = query(
-        sellersRef,
-        where('password', '==', sellerPassword),
-      );
-      const sellerSnap = await getDocs(sellerQuery);
-      if (sellerSnap.empty) {
+      const sellerRecord = await getSellerByPassword(sellerPassword);
+      if (!sellerRecord) {
         return { success: false, reason: 'invalid-password' };
       }
-      const editedBy = sellerSnap.docs[0].data().name as string;
+      const editedBy = sellerRecord.name;
 
       const orderRef = doc(db, 'orders', id);
       const orderSnap = await getDoc(orderRef);
