@@ -182,6 +182,7 @@ const NovoServiço = () => {
           updateCutlist={updateCutlist}
           selectedArea={currentArea}
           deliveryType={currentDeliveryType}
+          orderType={orderType}
         />
 
         {/* Componente para preencher os dados do cliente e do pedido. */}

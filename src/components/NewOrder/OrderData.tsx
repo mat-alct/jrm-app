@@ -123,7 +123,7 @@ export const OrderData = ({
     () => cutlist.reduce((acc, item) => acc + (item.price ?? 0), 0),
     [cutlist],
   );
-  // Para orçamento o frete é sempre calculado a partir do bairro (sem toggle de logística).
+  // Para orçamento o frete entra somente quando há bairro selecionado.
   // Para serviço, só quando 'Entrega'.
   const freightPrice =
     orderType === 'Orçamento'
@@ -199,14 +199,15 @@ export const OrderData = ({
     };
 
     if (orderType === 'Orçamento') {
-      const estimateFreight = findAreaFreight(areas, orderData.area);
+      const estimateArea = orderData.area || '';
+      const estimateFreight = findAreaFreight(areas, estimateArea);
       try {
         await createEstimate({
           cutlist,
           name,
           customerId: '',
           telephone: customer.telephone,
-          area: orderData.area,
+          area: estimateArea,
           freightPrice: estimateFreight,
           createdAt: now,
           updatedAt: now,
@@ -533,12 +534,17 @@ export const OrderData = ({
           borderColor="gray.200"
           overflow="hidden"
         >
-          <Box p={6} bg="gray.50" borderBottomWidth="1px" borderColor="gray.200">
+          <Box
+            p={6}
+            bg="gray.50"
+            borderBottomWidth="1px"
+            borderColor="gray.200"
+          >
             <Heading size="md" color="gray.700">
               2. Bairro do Cliente
             </Heading>
             <Text fontSize="xs" color="gray.500" mt={1}>
-              Necessário para calcular o frete do orçamento.
+              Opcional. Se informado, o frete entra no orçamento.
             </Text>
           </Box>
           <Box p={6}>
@@ -580,7 +586,8 @@ export const OrderData = ({
           <Text>
             Pedido: <strong>{formatBRL(orderPrice)}</strong>
           </Text>
-          {(orderType === 'Orçamento' || deliveryType === 'Entrega') && (
+          {((orderType === 'Orçamento' && !!selectedArea) ||
+            deliveryType === 'Entrega') && (
             <Text>
               Frete: <strong>{formatBRL(freightPrice)}</strong>
               {selectedArea && freightPrice === 0 && (
@@ -591,35 +598,35 @@ export const OrderData = ({
             </Text>
           )}
         </HStack>
-          <HStack
-            gap={2}
-            bg="orange.50"
-            borderWidth="1px"
-            borderColor="orange.200"
-            borderRadius="md"
-            px={3}
-            py={1.5}
+        <HStack
+          gap={2}
+          bg="orange.50"
+          borderWidth="1px"
+          borderColor="orange.200"
+          borderRadius="md"
+          px={3}
+          py={1.5}
+        >
+          <Text
+            fontSize="sm"
+            fontWeight="semibold"
+            color="orange.700"
+            textTransform="uppercase"
+            letterSpacing="wide"
           >
-            <Text
-              fontSize="sm"
-              fontWeight="semibold"
-              color="orange.700"
-              textTransform="uppercase"
-              letterSpacing="wide"
-            >
-              Total
-            </Text>
-            <Text
-              fontSize={['xl', '2xl']}
-              fontWeight="extrabold"
-              color="orange.600"
-              letterSpacing="tight"
-              lineHeight="1"
-            >
-              {formatBRL(totalPrice)}
-            </Text>
-          </HStack>
-        </Flex>
+            Total
+          </Text>
+          <Text
+            fontSize={['xl', '2xl']}
+            fontWeight="extrabold"
+            color="orange.600"
+            letterSpacing="tight"
+            lineHeight="1"
+          >
+            {formatBRL(totalPrice)}
+          </Text>
+        </HStack>
+      </Flex>
 
       {/* 3. BARRA DE FINALIZAÇÃO */}
       <Box

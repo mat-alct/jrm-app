@@ -41,11 +41,7 @@ import { sortCutlistData } from '../../utils/cutlist/sortAndReturnTag';
 import { createCutlistSchema } from '../../utils/yup/novoservicoValidations';
 import { FormInput } from '../Form/Input';
 import { FormSelect } from '../Form/Select';
-import {
-  TagSchemaSvg,
-  countCorners,
-  emptyCorners,
-} from './TagSchemaSvg';
+import { TagSchemaSvg, countCorners, emptyCorners } from './TagSchemaSvg';
 
 interface CutlistMaterial {
   materialId: string;
@@ -88,6 +84,7 @@ interface CutlistPageProps {
   updateCutlist: (cutlistData: Cutlist[], maintainOldValues?: boolean) => void;
   selectedArea?: string;
   deliveryType?: string;
+  orderType?: string;
 }
 
 type CutlistRowProps = {
@@ -239,9 +236,12 @@ export const Cutlist = ({
   updateCutlist,
   selectedArea,
   deliveryType,
+  orderType,
 }: CutlistPageProps) => {
   const isStorePickup = deliveryType === 'Retirar na Loja';
-  const showFreightValue = !isStorePickup && !!selectedArea;
+  const shouldShowFreightLine =
+    orderType === 'Orçamento' ? !!selectedArea : !isStorePickup;
+  const showFreightValue = shouldShowFreightLine && !!selectedArea;
   const {
     register: createCutlistRegister,
     handleSubmit: createCutlistHandleSubmit,
@@ -280,9 +280,8 @@ export const Cutlist = ({
     'none' | 'hinge' | 'slot' | 'round'
   >('none');
   const [extraSide, setExtraSide] = useState<'Maior' | 'Menor'>('Maior');
-  const [roundedCorners, setRoundedCorners] = useState<RoundedCorners>(
-    emptyCorners(),
-  );
+  const [roundedCorners, setRoundedCorners] =
+    useState<RoundedCorners>(emptyCorners());
   const [pricePercent, setPricePercent] = useState<number>(75);
 
   const toggleCorner = useCallback((corner: keyof RoundedCorners) => {
@@ -355,7 +354,11 @@ export const Cutlist = ({
       return;
     }
 
-    createCutlistReset({ sideA: undefined, sideB: undefined, amount: 0 } as any);
+    createCutlistReset({
+      sideA: undefined,
+      sideB: undefined,
+      amount: 0,
+    } as any);
     createCutlistSetValue('borderA', 0);
     createCutlistSetValue('borderB', 0);
     createCutlistSetValue('materialId', cutlistFormData.materialId);
@@ -482,7 +485,8 @@ export const Cutlist = ({
 
       if (cutToUpdate.hasHingeHoles) {
         setExtraType('hinge');
-        if (cutToUpdate.hingeHolesSide) setExtraSide(cutToUpdate.hingeHolesSide);
+        if (cutToUpdate.hingeHolesSide)
+          setExtraSide(cutToUpdate.hingeHolesSide);
         setRoundedCorners(emptyCorners());
         onOpenOptions();
       } else if (cutToUpdate.hasDrawerSlot) {
@@ -639,7 +643,12 @@ export const Cutlist = ({
                 </HStack>
               </RadioGroup.Root>
 
-              <Flex align="baseline" gap={2} wrap="wrap" justify={['center', 'flex-end']}>
+              <Flex
+                align="baseline"
+                gap={2}
+                wrap="wrap"
+                justify={['center', 'flex-end']}
+              >
                 <Text
                   fontSize={['2xl', '3xl']}
                   fontWeight="800"
@@ -649,7 +658,7 @@ export const Cutlist = ({
                 >
                   {brl(cutlist.reduce((prev, curr) => prev + curr.price, 0))}
                 </Text>
-                {!isStorePickup && (
+                {shouldShowFreightLine && (
                   <>
                     <Text
                       fontSize={['md', 'lg']}
