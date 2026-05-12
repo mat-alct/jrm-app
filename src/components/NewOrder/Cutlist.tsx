@@ -79,6 +79,16 @@ interface CreateCutlistProps {
   price: number;
 }
 
+const defaultCreateCutlistValues = {
+  materialId: '',
+  amount: '',
+  sideA: '',
+  sideB: '',
+  borderA: 0,
+  borderB: 0,
+  price: 0,
+} as unknown as CreateCutlistProps;
+
 interface CutlistPageProps {
   cutlist: Cutlist[];
   updateCutlist: (cutlistData: Cutlist[], maintainOldValues?: boolean) => void;
@@ -253,6 +263,7 @@ export const Cutlist = ({
   } = useForm<CreateCutlistProps>({
     resolver: yupResolver(createCutlistSchema as any),
     reValidateMode: 'onSubmit',
+    defaultValues: defaultCreateCutlistValues,
   });
 
   const radioSize = useBreakpointValue(['sm', 'sm', 'md'], { fallback: 'sm' });
@@ -354,15 +365,6 @@ export const Cutlist = ({
       return;
     }
 
-    createCutlistReset({
-      sideA: undefined,
-      sideB: undefined,
-      amount: 0,
-    } as any);
-    createCutlistSetValue('borderA', 0);
-    createCutlistSetValue('borderB', 0);
-    createCutlistSetValue('materialId', cutlistFormData.materialId);
-
     const materialUsed = materialData?.find(
       m => m.id === cutlistFormData.materialId,
     );
@@ -419,13 +421,15 @@ export const Cutlist = ({
       },
     ]);
 
-    // RESET TOTAL
+    createCutlistReset({
+      ...defaultCreateCutlistValues,
+      materialId: cutlistFormData.materialId,
+    });
     setExtraType('none');
     setExtraSide('Maior');
     setRoundedCorners(emptyCorners());
     onCloseOptions();
-    // Volta foco ao primeiro campo (Material) para iniciar nova navegação por setas
-    document.getElementById('materialId')?.focus();
+    document.getElementById('amount')?.focus();
   };
 
   const updatePricePercent = (percentValue: string) => {

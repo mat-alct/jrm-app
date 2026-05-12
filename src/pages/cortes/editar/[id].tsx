@@ -380,7 +380,13 @@ const EditarPedido = () => {
                   <Icon as={FaLock} color="orange.500" boxSize={5} />
                   <FormInput
                     name="sellerPassword"
-                    type="password"
+                    type="text"
+                    autoComplete="one-time-code"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    style={
+                      { WebkitTextSecurity: 'disc' } as React.CSSProperties
+                    }
                     size="lg"
                     bg="gray.50"
                     borderWidth="1px"

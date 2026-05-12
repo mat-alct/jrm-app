@@ -446,7 +446,7 @@ export const OrderData = ({
                 >
                   <Box>
                     <FormRadio
-                      options={['Pago', 'Receber na Entrega']}
+                      options={['Pago', 'Falta receber']}
                       label="Status Pagamento"
                       name="paymentType"
                       control={createOrderControl}
@@ -457,7 +457,7 @@ export const OrderData = ({
                       </Text>
                     )}
                   </Box>
-                  {paymentType === 'Receber na Entrega' ? (
+                  {paymentType === 'Falta receber' ? (
                     <Box
                       bg="orange.50"
                       p={3}
@@ -488,8 +488,8 @@ export const OrderData = ({
                       borderColor="gray.300"
                     >
                       <Text fontSize="xs" color="gray.500">
-                        Selecione &ldquo;Receber na Entrega&rdquo; para informar
-                        o valor a cobrar.
+                        Selecione &ldquo;Falta receber&rdquo; para informar o
+                        valor a cobrar.
                       </Text>
                     </Box>
                   )}
@@ -642,7 +642,11 @@ export const OrderData = ({
                 {...createOrderRegister('sellerPassword')}
                 error={createOrderErrors.sellerPassword}
                 name="sellerPassword"
-                type="password"
+                type="text"
+                autoComplete="one-time-code"
+                autoCorrect="off"
+                spellCheck={false}
+                style={{ WebkitTextSecurity: 'disc' } as React.CSSProperties}
                 size="lg"
                 bg="gray.50"
                 borderWidth="1px"

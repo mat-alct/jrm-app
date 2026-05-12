@@ -1038,7 +1038,11 @@ const Home = () => {
                           </Text>
                         </Box>
 
-                        <HStack gap={1} flexShrink={0}>
+                        <HStack
+                          gap={1}
+                          flexShrink={0}
+                          display={['none', 'none', 'flex']}
+                        >
                           <Button
                             size="xs"
                             h="26px"
