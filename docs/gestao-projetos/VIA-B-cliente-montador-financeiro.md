@@ -9,7 +9,7 @@ Tudo do portal do cliente é **server-side** (spec seção 20): cliente anônimo
 
 ---
 
-## [ ] B1 — Núcleo de acesso do cliente
+## [x] B1 — Núcleo de acesso do cliente
 
 **Objetivo:** credenciais do cliente com senha hasheada, publicId e expiração (spec seções 10 e 20).
 
@@ -29,7 +29,7 @@ Tudo do portal do cliente é **server-side** (spec seção 20): cliente anônimo
 
 ---
 
-## [ ] B2 — API routes do portal do cliente
+## [x] B2 — API routes do portal do cliente
 
 **Objetivo:** todas as operações do cliente via server-side com `adminDb` (spec seções 10, 20 e DTOs).
 
@@ -51,7 +51,7 @@ Tudo do portal do cliente é **server-side** (spec seção 20): cliente anônimo
 
 ---
 
-## [ ] B3 — Portal do cliente (páginas)
+## [x] B3 — Portal do cliente (páginas)
 
 **Objetivo:** telas públicas mobile-first (spec seções 8, 10, 27).
 
@@ -75,7 +75,7 @@ Tudo do portal do cliente é **server-side** (spec seção 20): cliente anônimo
 
 ---
 
-## [ ] B4 — Montadores: atribuição e painel mobile-first
+## [x] B4 — Montadores: atribuição e painel mobile-first
 
 **Objetivo:** admin atribui montadores com valores; montador trabalha pelo celular (spec seções 16.6, 22, 26, 28).
 
@@ -98,7 +98,7 @@ Tudo do portal do cliente é **server-side** (spec seção 20): cliente anônimo
 
 ---
 
-## [ ] B5 — Financeiro dos montadores
+## [x] B5 — Financeiro dos montadores
 
 **Objetivo:** ciclo completo pendente → pago → confirmado (spec seções 7, 14.7, 14.8, 16.7).
 
@@ -123,7 +123,7 @@ Tudo do portal do cliente é **server-side** (spec seção 20): cliente anônimo
 
 ---
 
-## [ ] B6 — Endurecimento de segurança
+## [x] B6 — Endurecimento de segurança
 
 **Objetivo:** fechar a matriz de permissões (spec seções 4, 20, 21, 32).
 
