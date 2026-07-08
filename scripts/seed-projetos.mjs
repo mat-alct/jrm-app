@@ -162,8 +162,9 @@ async function seedProject({ users, index, itemsSpec }) {
       status: itemSpec.status,
       clientApprovalStatus: itemSpec.clientApprovalStatus,
       requiresDesigner: itemSpec.requiresDesigner,
-      designerId: itemSpec.requiresDesigner ? users.designer.uid : undefined,
-      designerName: itemSpec.requiresDesigner ? users.designer.name : undefined,
+      ...(itemSpec.requiresDesigner
+        ? { designerId: users.designer.uid, designerName: users.designer.name }
+        : {}),
       deadlineCurrent: futureTimestamp(itemSpec.deadlineDays),
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
