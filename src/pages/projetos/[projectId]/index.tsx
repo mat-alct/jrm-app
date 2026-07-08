@@ -5,6 +5,7 @@ import React from 'react';
 
 import { AttachmentList } from '@/components/projects/AttachmentList';
 import { AttachmentUploader } from '@/components/projects/AttachmentUploader';
+import { ClientAccessPanel } from '@/components/projects/ClientAccessPanel';
 import { ProjectItemCard } from '@/components/projects/ProjectItemCard';
 import { ProjectSummaryCards } from '@/components/projects/ProjectSummaryCards';
 import { useAttachments } from '@/services/projects/attachmentHooks';
@@ -69,7 +70,10 @@ const ProjectDetail = () => {
 
           <ProjectSummaryCards summary={project.itemSummary} />
 
-          {/* Reservado para o ClientAccessPanel (Via B) — integração no CP1 */}
+          <ClientAccessPanel
+            projectId={projectId}
+            expiresAt={project.clientLinkExpiresAt?.toDate().toISOString()}
+          />
 
           <Box>
             <Heading size="md" mb={3}>

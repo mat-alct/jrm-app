@@ -6,9 +6,11 @@ import {
   FaClock,
   FaHammer,
   FaHome,
+  FaMoneyBillWave,
   FaPencilRuler,
   FaPlusCircle,
   FaSignOutAlt,
+  FaToolbox,
   FaTruck,
   FaUserCog,
   FaUserFriends,
@@ -25,6 +27,7 @@ export const SidebarNav: React.FC = () => {
   const { signOut } = useAuth();
   const { data: appUser } = useAppUser();
   const isDesigner = hasRole(appUser?.roles, 'designer');
+  const isAssembler = hasRole(appUser?.roles, 'assembler');
   const admin = isAdmin(appUser?.roles);
 
   return (
@@ -124,6 +127,16 @@ export const SidebarNav: React.FC = () => {
             </NavLink>
           )}
         </NavSection>
+        {isAssembler && (
+          <NavSection title="Montador">
+            <NavLink icon={FaToolbox} href="/montador">
+              Meus itens
+            </NavLink>
+            <NavLink icon={FaMoneyBillWave} href="/montador/financeiro">
+              Financeiro
+            </NavLink>
+          </NavSection>
+        )}
         <NavSection title="Administração">
           <NavLink icon={FaUserFriends} href="/administracao/vendedores">
             Vendedores
@@ -137,6 +150,14 @@ export const SidebarNav: React.FC = () => {
           <NavLink icon={FaClock} href="/administracao/configuracoes-prazos">
             Configurações de prazos
           </NavLink>
+          {admin && (
+            <NavLink
+              icon={FaMoneyBillWave}
+              href="/administracao/financeiro-montadores"
+            >
+              Financeiro dos montadores
+            </NavLink>
+          )}
         </NavSection>
         <NavSection title="Conta">
           <NavLink icon={FaSignOutAlt} href="/login" onClick={() => signOut()}>

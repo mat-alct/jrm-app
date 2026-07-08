@@ -1,14 +1,23 @@
 import { Box, Button, Heading, HStack, Stack, Text } from '@chakra-ui/react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import React from 'react';
 
+import { AssemblerAssignmentsPanel } from '@/components/assembler/AssemblerAssignmentsPanel';
+import { AssignAssemblerModal } from '@/components/assembler/AssignAssemblerModal';
 import { DesignerUploadPanel } from '@/components/designer/DesignerUploadPanel';
 import { AssignDesignerModal } from '@/components/projects/AssignDesignerModal';
 import { AttachmentList } from '@/components/projects/AttachmentList';
 import { AttachmentUploader } from '@/components/projects/AttachmentUploader';
 import { ProjectItemStatusBadge } from '@/components/projects/ProjectItemStatusBadge';
 import { ProjectItemTimeline } from '@/components/projects/ProjectItemTimeline';
+import { useUsersByRole } from '@/services/projects/adminUsers';
+import {
+  assignAssemblers,
+  AssignAssemblerInput,
+  listItemAssemblerAssignments,
+} from '@/services/projects/assembler.service';
 import { useAttachments } from '@/services/projects/attachmentHooks';
 import { useItemVersions } from '@/services/projects/designer.service';
 import {
@@ -19,6 +28,7 @@ import {
 import { useAppUser } from '@/services/projects/users.service';
 import { ProjectItemStatus, UserRole } from '@/types/projects';
 import {
+  canAssignAssembler,
   canAssignDesigner,
   canEditItemStatus,
   hasRole,
@@ -76,6 +86,37 @@ const ProjectItemDetail = () => {
   const { data: versions } = useItemVersions(projectId, itemId);
   const updateStatus = useUpdateItemStatus(projectId, itemId);
   const [isAssignDesignerOpen, setIsAssignDesignerOpen] = React.useState(false);
+  const [isAssignAssemblerOpen, setIsAssignAssemblerOpen] = React.useState(false);
+
+  const queryClient = useQueryClient();
+  const { data: assemblers } = useUsersByRole('assembler');
+  const { data: assignments } = useQuery({
+    queryKey: ['projects', projectId, 'items', itemId, 'assemblerAssignments'],
+    queryFn: () => listItemAssemblerAssignments(projectId, itemId),
+    enabled: !!projectId && !!itemId,
+  });
+  const assignAssemblersMutation = useMutation({
+    mutationFn: (rows: AssignAssemblerInput[]) => {
+      if (!appUser) throw new Error('Usuário não carregado.');
+      return assignAssemblers(projectId, itemId, rows, {
+        id: appUser.id,
+        roles: appUser.roles,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ['projects', projectId, 'items', itemId, 'assemblerAssignments'],
+      });
+      toaster.create({ type: 'success', description: 'Montadores atribuídos.' });
+      setIsAssignAssemblerOpen(false);
+    },
+    onError: (error: Error) => {
+      toaster.create({
+        type: 'error',
+        description: error.message || 'Erro ao atribuir montadores.',
+      });
+    },
+  });
 
   const handleTransition = async (next: ProjectItemStatus) => {
     if (!user || !appUser) return;
@@ -227,7 +268,36 @@ const ProjectItemDetail = () => {
             </Box>
           )}
 
-          {/* Reservado para AssignAssemblerModal / painel de assignments (Via B) — integração no CP2 */}
+          <Box bg="white" borderWidth="1px" borderColor="gray.200" borderRadius="md" p={4}>
+            <HStack justify="space-between" mb={3}>
+              <Heading size="md">Montadores</Heading>
+              {canAssignAssembler(appUser?.roles) && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  colorScheme="orange"
+                  onClick={() => setIsAssignAssemblerOpen(open => !open)}
+                >
+                  {isAssignAssemblerOpen ? 'Fechar' : 'Atribuir montador'}
+                </Button>
+              )}
+            </HStack>
+            {isAssignAssemblerOpen && (
+              <Box mb={4}>
+                <AssignAssemblerModal
+                  assemblers={assemblers ?? []}
+                  isSubmitting={assignAssemblersMutation.isPending}
+                  onSubmit={async rows => {
+                    await assignAssemblersMutation.mutateAsync(rows);
+                  }}
+                />
+              </Box>
+            )}
+            <AssemblerAssignmentsPanel
+              assignments={assignments ?? []}
+              canViewValues={admin}
+            />
+          </Box>
 
           <Box bg="white" borderWidth="1px" borderColor="gray.200" borderRadius="md" p={4}>
             <Heading size="md" mb={3}>
