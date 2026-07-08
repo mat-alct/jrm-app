@@ -18,7 +18,12 @@ import {
 } from '@/services/projects/projectHooks';
 import { useAppUser } from '@/services/projects/users.service';
 import { ProjectItemStatus, UserRole } from '@/types/projects';
-import { canAssignDesigner, isAdmin } from '@/utils/projects/permissions';
+import {
+  canAssignDesigner,
+  canEditItemStatus,
+  hasRole,
+  isAdmin,
+} from '@/utils/projects/permissions';
 import { canTransition } from '@/utils/projects/status';
 
 import { Dashboard } from '../../../../components/Dashboard';
@@ -104,9 +109,14 @@ const ProjectItemDetail = () => {
   }
 
   const admin = isAdmin(appUser?.roles);
-  const availableTransitions = ALL_STATUSES.filter(status =>
-    canTransition(item.status, status, { isAdmin: admin }),
-  );
+  // Desenhistas comuns nao veem valores financeiros (spec secao 4).
+  const canSeePrice = admin || !hasRole(appUser?.roles, 'designer');
+  // Vendedor acompanha status, mas quem edita e admin/desenhista/montador (spec secao 4).
+  const availableTransitions = canEditItemStatus(appUser?.roles)
+    ? ALL_STATUSES.filter(status =>
+        canTransition(item.status, status, { isAdmin: admin }),
+      )
+    : [];
 
   return (
     <>
@@ -129,7 +139,7 @@ const ProjectItemDetail = () => {
               {item.measurements && <Text><b>Medidas:</b> {item.measurements}</Text>}
               {item.description && <Text><b>Descrição:</b> {item.description}</Text>}
               {item.notes && <Text><b>Observações:</b> {item.notes}</Text>}
-              <Text><b>Preço:</b> {item.customerPrice}</Text>
+              {canSeePrice && <Text><b>Preço:</b> {item.customerPrice}</Text>}
             </Stack>
 
             {availableTransitions.length > 0 && (
