@@ -44,7 +44,7 @@ export function Pagination({
       marginTop="8"
       justify="space-between"
       align="center"
-      spacing="6"
+      gap="6"
     >
       <Box>
         <strong>{(currentPage - 1) * registersPerPage}</strong> -{' '}
@@ -55,7 +55,7 @@ export function Pagination({
         </strong>{' '}
         de <strong>{totalCountOfRegisters}</strong>
       </Box>
-      <Stack direction="row" spacing="2">
+      <Stack direction="row" gap="2">
         {currentPage > 1 + siblingsCount && (
           <>
             <PaginationItem onPageChange={onPageChange} number={1} />

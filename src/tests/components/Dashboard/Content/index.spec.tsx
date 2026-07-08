@@ -1,6 +1,5 @@
-import { render, screen } from '@testing-library/react';
-
 import { Content } from '../../../../components/Dashboard/Content';
+import { render, screen } from '../../../testUtils';
 
 describe('Component: Content', () => {
   it('render the component', () => {

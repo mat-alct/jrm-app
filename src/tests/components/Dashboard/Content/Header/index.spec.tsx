@@ -1,6 +1,5 @@
-import { render, screen } from '@testing-library/react';
-
 import { Header } from '../../../../../components/Dashboard/Content/Header';
+import { render, screen } from '../../../../testUtils';
 
 describe('Component: Header', () => {
   it('render the component', () => {
@@ -10,8 +9,10 @@ describe('Component: Header', () => {
   });
 
   it('render spinner if loading is true', () => {
-    render(<Header pageTitle="Página de testes" isLoading />);
+    const { container } = render(
+      <Header pageTitle="Página de testes" isLoading />,
+    );
 
-    expect(screen.getByText(/loading\.\.\./i)).toBeInTheDocument();
+    expect(container.querySelector('.chakra-spinner')).toBeInTheDocument();
   });
 });
