@@ -18,6 +18,10 @@ import { itemVersionsPath } from './paths';
 import { updateProjectItem } from './projectItem.service';
 import { StatusActor, updateItemStatus } from './status.service';
 
+// Collection group query em `items` filtrada por designerId — Firestore pede
+// um indice de collection group para o campo `designerId` na primeira
+// execucao; o link para criar aparece no erro do console (Firestore >
+// Indexes > Add collection group index em `items`, campo `designerId`).
 export async function getDesignerQueue(
   designerId: string,
 ): Promise<ProjectItem[]> {
