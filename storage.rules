@@ -28,27 +28,46 @@ service firebase.storage {
       return hasRole('admin');
     }
 
-    function isInternal() {
-      return isAdmin() || hasRole('seller') || hasRole('designer') || hasRole('assembler');
+    function isSeller() {
+      return hasRole('seller');
+    }
+
+    function isDesigner() {
+      return hasRole('designer');
+    }
+
+    function isAssembler() {
+      return hasRole('assembler');
+    }
+
+    function isAssignedAssembler(projectId, itemId) {
+      return isAssembler()
+        && firestore.exists(/databases/(default)/documents/projects/$(projectId)/items/$(itemId)/assemblerAssignments/$(request.auth.uid));
+    }
+
+    function ownsPayment(paymentId) {
+      return isAssembler()
+        && firestore.get(/databases/(default)/documents/payments/$(paymentId)).data.assemblerId == request.auth.uid;
     }
 
     // === VIA A ===
-    // Uploads de anexos de projeto/item: qualquer interno autenticado le e escreve;
-    // exclusao restrita ao admin (revisao final na etapa A7/B6).
+    // Cliente nunca le Storage diretamente. Arquivos de cliente saem somente por signed URL.
     match /projects/{projectId}/general/{fileName} {
-      allow read: if isInternal();
-      allow write: if isInternal();
+      allow read: if isAdmin() || isSeller() || isDesigner();
+      allow write: if isAdmin() || isSeller();
       allow delete: if isAdmin();
     }
 
     match /projects/{projectId}/items/{itemId}/{category}/{fileName} {
-      allow read: if isInternal();
-      allow write: if isInternal();
+      allow read: if isAdmin() || isSeller() || isDesigner()
+        || isAssignedAssembler(projectId, itemId);
+      allow write: if isAdmin() || isSeller() || isDesigner()
+        || isAssignedAssembler(projectId, itemId);
       allow delete: if isAdmin();
     }
 
     match /projects/{projectId}/items/{itemId}/versions/{versionId}/{fileName} {
-      allow read: if isInternal();
+      allow read: if isAdmin() || isSeller() || isDesigner();
       allow write: if isAdmin() || hasRole('designer');
       allow delete: if isAdmin();
     }
@@ -59,7 +78,7 @@ service firebase.storage {
     // O cliente nunca le o Storage diretamente — arquivos liberados a ele saem via signed URL
     // de curta duracao gerada pelo adminStorage nas API routes (spec secao 20).
     match /payments/{paymentId}/{fileName} {
-      allow read: if isAdmin() || hasRole('assembler');
+      allow read: if isAdmin() || ownsPayment(paymentId);
       allow write: if isAdmin();
       allow delete: if isAdmin();
     }

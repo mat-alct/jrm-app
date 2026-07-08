@@ -186,6 +186,13 @@ export interface AssemblerAssignment {
   assemblerId: string;
   assemblerName?: string;
 
+  customerName?: string;
+  customerPhone?: string;
+  customerAddress?: string;
+  itemName?: string;
+  itemEnvironment?: string;
+  itemStatus?: ProjectItemStatus;
+
   amountToReceive: number;
   paymentStatus: AssemblerPaymentStatus;
 

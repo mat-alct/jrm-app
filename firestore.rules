@@ -43,6 +43,25 @@ service cloud.firestore {
       return hasRole('assembler');
     }
 
+    function isAssignedAssembler(projectId, itemId) {
+      return isAssembler()
+        && exists(/databases/$(database)/documents/projects/$(projectId)/items/$(itemId)/assemblerAssignments/$(request.auth.uid));
+    }
+
+    function assemblerConfirmsOwnPaymentOnly() {
+      return isAssembler()
+        && resource.data.assemblerId == request.auth.uid
+        && resource.data.status == 'pago'
+        && request.resource.data.assemblerId == resource.data.assemblerId
+        && request.resource.data.amount == resource.data.amount
+        && request.resource.data.projectId == resource.data.projectId
+        && request.resource.data.itemId == resource.data.itemId
+        && request.resource.data.assignmentId == resource.data.assignmentId
+        && request.resource.data.paidAt == resource.data.paidAt
+        && request.resource.data.paidBy == resource.data.paidBy
+        && request.resource.data.status == 'confirmado_pelo_montador';
+    }
+
     match /users/{userId} {
       allow read: if signedIn();
       allow create, update, delete: if isAdmin();
@@ -72,8 +91,14 @@ service cloud.firestore {
         allow delete: if isAdmin();
 
         match /attachments/{attachmentId} {
-          allow read: if isAdmin() || isSeller();
-          allow create: if isAdmin() || isSeller();
+          allow read: if isAdmin() || isSeller()
+            || (isAssignedAssembler(projectId, itemId)
+                && resource.data.visibility == 'assembler');
+          allow create: if isAdmin() || isSeller()
+            || (isAssignedAssembler(projectId, itemId)
+                && request.resource.data.visibility == 'assembler'
+                && request.resource.data.uploadedBy == request.auth.uid
+                && request.resource.data.uploadedByRole == 'assembler');
           allow update, delete: if isAdmin();
         }
 
@@ -98,12 +123,11 @@ service cloud.firestore {
         // Montador le apenas as proprias atribuicoes; nunca edita amountToReceive (so o admin).
         match /assemblerAssignments/{assignmentId} {
           allow read: if isAdmin()
-            || (isAssembler() && resource.data.assemblerId == request.auth.uid);
-          allow create, delete: if isAdmin();
-          allow update: if isAdmin()
             || (isAssembler()
-                && resource.data.assemblerId == request.auth.uid
-                && request.resource.data.amountToReceive == resource.data.amountToReceive);
+                && assignmentId == request.auth.uid
+                && resource.data.assemblerId == request.auth.uid);
+          allow create, delete: if isAdmin();
+          allow update: if isAdmin();
         }
         // === FIM VIA B ===
       }
@@ -115,8 +139,7 @@ service cloud.firestore {
       allow read: if isAdmin()
         || (isAssembler() && resource.data.assemblerId == request.auth.uid);
       allow create, delete: if isAdmin();
-      allow update: if isAdmin()
-        || (isAssembler() && resource.data.assemblerId == request.auth.uid);
+      allow update: if isAdmin() || assemblerConfirmsOwnPaymentOnly();
     }
     // === FIM VIA B ===
 

@@ -1,0 +1,105 @@
+import { Timestamp as AdminTimestamp } from 'firebase-admin/firestore';
+import { NextApiRequest, NextApiResponse } from 'next';
+
+import {
+  isClientAccessLocked,
+  isLinkExpired,
+  registerFailedClientAccessAttempt,
+  resetClientAccessAttempts,
+  verifyAccessCode,
+} from '@/services/projects/clientAccess.service';
+import {
+  issueClientSession,
+  serializeClientSessionCookie,
+} from '@/services/projects/clientSession';
+import { adminDb } from '@/services/firebaseAdmin';
+import { Project } from '@/types/projects';
+
+function normalizeAttemptUpdate(
+  update: ReturnType<typeof registerFailedClientAccessAttempt>,
+) {
+  return {
+    clientAccessAttempts: update.clientAccessAttempts,
+    clientAccessLockUntil: update.clientAccessLockUntil
+      ? AdminTimestamp.fromDate(update.clientAccessLockUntil.toDate())
+      : null,
+  };
+}
+
+async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method Not Allowed' });
+  }
+
+  const { publicId, accessCode } = req.body as {
+    publicId?: string;
+    accessCode?: string;
+  };
+
+  if (!publicId || !accessCode) {
+    return res
+      .status(400)
+      .json({ error: 'publicId e accessCode obrigatorios.' });
+  }
+
+  try {
+    const projectQuery = await adminDb
+      .collection('projects')
+      .where('clientAccessPublicId', '==', publicId)
+      .limit(1)
+      .get();
+
+    if (projectQuery.empty) {
+      console.warn('Client access verify failed: publicId not found', {
+        publicId,
+      });
+      return res.status(401).json({ error: 'Credenciais invalidas.' });
+    }
+
+    const projectSnap = projectQuery.docs[0];
+    const project = { id: projectSnap.id, ...projectSnap.data() } as Project;
+
+    if (isLinkExpired(project)) {
+      console.warn('Client access verify blocked: expired link', {
+        projectId: project.id,
+        publicId,
+      });
+      return res.status(410).json({ error: 'Link expirado.' });
+    }
+
+    if (isClientAccessLocked(project)) {
+      console.warn('Client access verify blocked: lockout active', {
+        projectId: project.id,
+        publicId,
+      });
+      return res.status(429).json({ error: 'Acesso temporariamente bloqueado.' });
+    }
+
+    if (!verifyAccessCode(accessCode, project.clientAccessCodeHash)) {
+      const attemptUpdate = registerFailedClientAccessAttempt(project);
+      await projectSnap.ref.update(normalizeAttemptUpdate(attemptUpdate));
+      console.warn('Client access verify failed: invalid code', {
+        projectId: project.id,
+        publicId,
+        attempts: attemptUpdate.clientAccessAttempts,
+        locked: Boolean(attemptUpdate.clientAccessLockUntil),
+      });
+      return res.status(401).json({ error: 'Credenciais invalidas.' });
+    }
+
+    await projectSnap.ref.update({ ...resetClientAccessAttempts() });
+
+    const session = issueClientSession(publicId);
+    res.setHeader(
+      'Set-Cookie',
+      serializeClientSessionCookie(session.token, session.expiresAt),
+    );
+
+    return res.status(200).json({ status: true });
+  } catch (error) {
+    console.error('Client access verify error:', error);
+    return res.status(500).json({ error: 'Erro inesperado.' });
+  }
+}
+
+export default handler;
