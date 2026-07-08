@@ -1,13 +1,21 @@
 import { Box, Flex, Image, Text } from '@chakra-ui/react';
 import {
   FaBoxes,
+  FaChartLine,
   FaClipboardList,
+  FaClock,
+  FaHammer,
   FaHome,
+  FaPencilRuler,
   FaPlusCircle,
   FaSignOutAlt,
   FaTruck,
+  FaUserCog,
   FaUserFriends,
 } from 'react-icons/fa';
+
+import { useAppUser } from '@/services/projects/users.service';
+import { hasRole, isAdmin } from '@/utils/projects/permissions';
 
 import { useAuth } from '../../../hooks/authContext';
 import { NavLink } from './NavLink';
@@ -15,6 +23,9 @@ import { NavSection } from './NavSection';
 
 export const SidebarNav: React.FC = () => {
   const { signOut } = useAuth();
+  const { data: appUser } = useAppUser();
+  const isDesigner = hasRole(appUser?.roles, 'designer');
+  const admin = isAdmin(appUser?.roles);
 
   return (
     <Flex
@@ -95,12 +106,36 @@ export const SidebarNav: React.FC = () => {
             Materiais
           </NavLink>
         </NavSection>
+        <NavSection title="Projetos">
+          <NavLink icon={FaHammer} href="/projetos/novo">
+            Novo projeto
+          </NavLink>
+          <NavLink icon={FaClipboardList} href="/projetos">
+            Listar projetos
+          </NavLink>
+          {admin && (
+            <NavLink icon={FaChartLine} href="/projetos/dashboard">
+              Dashboard
+            </NavLink>
+          )}
+          {isDesigner && (
+            <NavLink icon={FaPencilRuler} href="/desenhista">
+              Minha fila
+            </NavLink>
+          )}
+        </NavSection>
         <NavSection title="Administração">
           <NavLink icon={FaUserFriends} href="/administracao/vendedores">
             Vendedores
           </NavLink>
           <NavLink icon={FaTruck} href="/administracao/fretes">
             Fretes
+          </NavLink>
+          <NavLink icon={FaUserCog} href="/administracao/usuarios">
+            Usuários
+          </NavLink>
+          <NavLink icon={FaClock} href="/administracao/configuracoes-prazos">
+            Configurações de prazos
           </NavLink>
         </NavSection>
         <NavSection title="Conta">
