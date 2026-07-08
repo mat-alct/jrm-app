@@ -7,7 +7,14 @@ export const createUserSchema = Yup.object().shape({
   email: Yup.string()
     .email('Digite um e-mail válido')
     .required('E-mail é obrigatório'),
-  phone: Yup.string().optional(),
+  phone: Yup.string()
+    .optional()
+    .test(
+      'phone-digits',
+      'Telefone inválido',
+      value =>
+        !value || /^\d{10,11}$/.test(value.replace(/\D/g, '')),
+    ),
   password: Yup.string()
     .min(6, 'A senha deve ter ao menos 6 caracteres')
     .required('Senha inicial é obrigatória'),

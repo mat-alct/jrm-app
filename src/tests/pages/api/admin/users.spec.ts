@@ -7,6 +7,7 @@ jest.mock('@/services/firebaseAdmin', () => ({
   adminAuth: {
     verifySessionCookie: jest.fn(),
     createUser: jest.fn(),
+    updateUser: jest.fn(),
   },
   adminDb: {
     doc: jest.fn(),
@@ -15,6 +16,7 @@ jest.mock('@/services/firebaseAdmin', () => ({
 
 const mockedVerifySessionCookie = adminAuth.verifySessionCookie as jest.Mock;
 const mockedCreateUser = adminAuth.createUser as jest.Mock;
+const mockedUpdateUser = adminAuth.updateUser as jest.Mock;
 const mockedDoc = adminDb.doc as jest.Mock;
 
 function mockRes(): NextApiResponse {
@@ -138,6 +140,37 @@ describe('pages/api/admin/users', () => {
       expect(res.json).toHaveBeenCalledWith({ id: 'new-uid' });
     });
 
+    it('creates the user with a masked phone converted to E.164 in Firestore', async () => {
+      const adminDoc = mockAdminDoc({ roles: ['admin'] });
+      const newUserDoc = mockAdminDoc(undefined);
+      mockedDoc
+        .mockReturnValueOnce(adminDoc)
+        .mockReturnValueOnce(newUserDoc);
+      mockedCreateUser.mockResolvedValue({ uid: 'new-uid' });
+
+      const req = mockReq({
+        cookies: { session: 'valid' },
+        body: {
+          name: 'Fulano',
+          email: 'fulano@example.com',
+          phone: '(11) 99999-9999',
+          password: 'segredo123',
+          roles: ['seller'],
+        },
+      });
+      const res = mockRes();
+
+      await handler(req, res);
+
+      expect(mockedCreateUser).toHaveBeenCalledWith(
+        expect.not.objectContaining({ phoneNumber: expect.anything() }),
+      );
+      expect(newUserDoc.set).toHaveBeenCalledWith(
+        expect.objectContaining({ phone: '+5511999999999' }),
+      );
+      expect(res.status).toHaveBeenCalledWith(201);
+    });
+
     it('returns 409 when the e-mail already exists', async () => {
       mockedDoc.mockReturnValue(mockAdminDoc({ roles: ['admin'] }));
       mockedCreateUser.mockRejectedValue({ code: 'auth/email-already-exists' });
@@ -156,6 +189,46 @@ describe('pages/api/admin/users', () => {
       await handler(req, res);
 
       expect(res.status).toHaveBeenCalledWith(409);
+    });
+
+    it('returns 400 when the e-mail is invalid', async () => {
+      mockedDoc.mockReturnValue(mockAdminDoc({ roles: ['admin'] }));
+      mockedCreateUser.mockRejectedValue({ code: 'auth/invalid-email' });
+
+      const req = mockReq({
+        cookies: { session: 'valid' },
+        body: {
+          name: 'Fulano',
+          email: 'invalido',
+          password: 'segredo123',
+          roles: ['seller'],
+        },
+      });
+      const res = mockRes();
+
+      await handler(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+    });
+
+    it('returns 400 when the password is invalid', async () => {
+      mockedDoc.mockReturnValue(mockAdminDoc({ roles: ['admin'] }));
+      mockedCreateUser.mockRejectedValue({ code: 'auth/invalid-password' });
+
+      const req = mockReq({
+        cookies: { session: 'valid' },
+        body: {
+          name: 'Fulano',
+          email: 'fulano@example.com',
+          password: '123',
+          roles: ['seller'],
+        },
+      });
+      const res = mockRes();
+
+      await handler(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
     });
   });
 
@@ -194,6 +267,37 @@ describe('pages/api/admin/users', () => {
 
       expect(targetDoc.update).toHaveBeenCalledWith(
         expect.objectContaining({ roles: ['designer'], active: false }),
+      );
+      expect(res.status).toHaveBeenCalledWith(200);
+    });
+
+    it('syncs displayName in Auth and converts phone to E.164 when name/phone change', async () => {
+      const adminDoc = mockAdminDoc({ roles: ['admin'] });
+      const targetDoc = mockAdminDoc(undefined);
+      mockedDoc.mockReturnValueOnce(adminDoc).mockReturnValueOnce(targetDoc);
+      mockedUpdateUser.mockResolvedValue(undefined);
+
+      const req = mockReq({
+        method: 'PATCH',
+        cookies: { session: 'valid' },
+        body: {
+          id: 'target-uid',
+          name: 'Novo Nome',
+          phone: '(11) 98888-7777',
+        },
+      });
+      const res = mockRes();
+
+      await handler(req, res);
+
+      expect(mockedUpdateUser).toHaveBeenCalledWith('target-uid', {
+        displayName: 'Novo Nome',
+      });
+      expect(targetDoc.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'Novo Nome',
+          phone: '+5511988887777',
+        }),
       );
       expect(res.status).toHaveBeenCalledWith(200);
     });

@@ -4,6 +4,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { adminAuth, adminDb } from '@/services/firebaseAdmin';
 import { userPath } from '@/services/projects/paths';
 import { AppUser, UserRole } from '@/types/projects';
+import { toE164BR } from '@/utils/phone';
 
 const ALL_ROLES: UserRole[] = ['admin', 'seller', 'designer', 'assembler'];
 
@@ -47,7 +48,6 @@ async function handleCreate(req: NextApiRequest, res: NextApiResponse) {
       email,
       password,
       displayName: name,
-      ...(phone ? { phoneNumber: phone } : {}),
     });
 
     const now = Timestamp.now();
@@ -56,7 +56,7 @@ async function handleCreate(req: NextApiRequest, res: NextApiResponse) {
       .set({
         name,
         email,
-        ...(phone ? { phone } : {}),
+        ...(phone ? { phone: toE164BR(phone) ?? phone.trim() } : {}),
         roles,
         active: true,
         createdAt: now,
@@ -71,6 +71,14 @@ async function handleCreate(req: NextApiRequest, res: NextApiResponse) {
         .status(409)
         .json({ error: 'Já existe um usuário com esse e-mail.' });
     }
+    if (code === 'auth/invalid-email') {
+      return res.status(400).json({ error: 'E-mail inválido.' });
+    }
+    if (code === 'auth/invalid-password') {
+      return res
+        .status(400)
+        .json({ error: 'Senha inválida. Use ao menos 6 caracteres.' });
+    }
 
     console.error('admin/users POST error', error);
     return res.status(500).json({ error: 'Erro ao criar usuário.' });
@@ -78,7 +86,7 @@ async function handleCreate(req: NextApiRequest, res: NextApiResponse) {
 }
 
 async function handleUpdate(req: NextApiRequest, res: NextApiResponse) {
-  const { id, name, roles, active } = req.body ?? {};
+  const { id, name, phone, roles, active } = req.body ?? {};
 
   if (!id) {
     return res.status(400).json({ error: 'id é obrigatório.' });
@@ -90,10 +98,14 @@ async function handleUpdate(req: NextApiRequest, res: NextApiResponse) {
 
   const update: Record<string, unknown> = { updatedAt: Timestamp.now() };
   if (name !== undefined) update.name = name;
+  if (phone !== undefined) update.phone = toE164BR(phone) ?? phone.trim();
   if (roles !== undefined) update.roles = roles;
   if (active !== undefined) update.active = !!active;
 
   try {
+    if (name !== undefined) {
+      await adminAuth.updateUser(id, { displayName: name });
+    }
     await adminDb.doc(userPath(id)).update(update);
     return res.status(200).json({ id });
   } catch (error) {
