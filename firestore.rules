@@ -66,9 +66,12 @@ service cloud.firestore {
       }
 
       match /items/{itemId} {
-        allow read: if isAdmin() || isSeller();
+        // Leitura/edicao do desenhista restrita aos proprios itens (fila em /desenhista) — VIA A.
+        allow read: if isAdmin() || isSeller()
+          || (isDesigner() && resource.data.designerId == request.auth.uid);
         allow create: if isAdmin() || isSeller();
-        allow update: if isAdmin() || isSeller();
+        allow update: if isAdmin() || isSeller()
+          || (isDesigner() && resource.data.designerId == request.auth.uid);
         allow delete: if isAdmin();
 
         match /attachments/{attachmentId} {
