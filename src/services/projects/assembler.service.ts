@@ -4,7 +4,6 @@ import {
   doc,
   getDoc,
   getDocs,
-  orderBy,
   query,
   setDoc,
   Timestamp,
@@ -166,7 +165,6 @@ export async function getAssemblerAssignments(
     query(
       collectionGroup(db, ASSEMBLER_ASSIGNMENTS_SUBCOLLECTION),
       where('assemblerId', '==', assemblerId),
-      orderBy('dueAt', 'asc'),
     ),
   );
 

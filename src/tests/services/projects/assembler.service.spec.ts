@@ -1,6 +1,7 @@
 import {
   doc,
   getDoc,
+  getDocs,
   setDoc,
   Timestamp,
   updateDoc,
@@ -9,6 +10,7 @@ import {
 import {
   assignAssemblers,
   canAssemblerTransition,
+  getAssemblerAssignments,
   mapAddressLink,
   mapTelLink,
   sortAssignmentsByDueDate,
@@ -37,6 +39,7 @@ jest.mock('@/services/firebase', () => ({ db: {} }));
 
 const mockedDoc = doc as jest.Mock;
 const mockedGetDoc = getDoc as jest.Mock;
+const mockedGetDocs = getDocs as jest.Mock;
 const mockedSetDoc = setDoc as jest.Mock;
 const mockedUpdateDoc = updateDoc as jest.Mock;
 
@@ -132,6 +135,25 @@ describe('services/projects/assembler.service', () => {
         assignedBy: 'admin-1',
       }),
     );
+  });
+
+  it('lists assignments without dueAt (regression: no orderBy on the query)', async () => {
+    mockedGetDocs.mockResolvedValueOnce({
+      docs: [
+        { id: 'no-date', data: () => ({ assemblerId: 'assembler-1' }) },
+        {
+          id: 'with-date',
+          data: () => ({
+            assemblerId: 'assembler-1',
+            dueAt: Timestamp.fromDate(new Date('2026-01-01T12:00:00Z')),
+          }),
+        },
+      ],
+    });
+
+    const result = await getAssemblerAssignments('assembler-1');
+
+    expect(result.map(item => item.id)).toEqual(['with-date', 'no-date']);
   });
 
   it('rejects non-admin assignment updates before writing', async () => {
