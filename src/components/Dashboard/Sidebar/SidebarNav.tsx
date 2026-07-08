@@ -1,7 +1,9 @@
 import { Box, Flex, Image, Text } from '@chakra-ui/react';
 import {
   FaBoxes,
+  FaChartLine,
   FaClipboardList,
+  FaClock,
   FaHammer,
   FaHome,
   FaPencilRuler,
@@ -13,7 +15,7 @@ import {
 } from 'react-icons/fa';
 
 import { useAppUser } from '@/services/projects/users.service';
-import { hasRole } from '@/utils/projects/permissions';
+import { hasRole, isAdmin } from '@/utils/projects/permissions';
 
 import { useAuth } from '../../../hooks/authContext';
 import { NavLink } from './NavLink';
@@ -23,6 +25,7 @@ export const SidebarNav: React.FC = () => {
   const { signOut } = useAuth();
   const { data: appUser } = useAppUser();
   const isDesigner = hasRole(appUser?.roles, 'designer');
+  const admin = isAdmin(appUser?.roles);
 
   return (
     <Flex
@@ -110,6 +113,11 @@ export const SidebarNav: React.FC = () => {
           <NavLink icon={FaClipboardList} href="/projetos">
             Listar projetos
           </NavLink>
+          {admin && (
+            <NavLink icon={FaChartLine} href="/projetos/dashboard">
+              Dashboard
+            </NavLink>
+          )}
           {isDesigner && (
             <NavLink icon={FaPencilRuler} href="/desenhista">
               Minha fila
@@ -125,6 +133,9 @@ export const SidebarNav: React.FC = () => {
           </NavLink>
           <NavLink icon={FaUserCog} href="/administracao/usuarios">
             Usuários
+          </NavLink>
+          <NavLink icon={FaClock} href="/administracao/configuracoes-prazos">
+            Configurações de prazos
           </NavLink>
         </NavSection>
         <NavSection title="Conta">
