@@ -1,0 +1,126 @@
+rules_version = '2';
+
+// Regras do modulo de Gestao de Projetos de Marcenaria.
+// Estrutura por secao, conforme docs/gestao-projetos/PLANO.md (secao 3.2):
+// - FUNDACAO: mexida apenas na branch base `feat/gestao-projetos`, seguida de merge imediato nas duas vias.
+// - VIA A / VIA B: cada via edita apenas a sua secao demarcada, sempre depois de dar merge da base.
+//
+// Deploy: firebase deploy --only firestore:rules (requer firebase.json e login no projeto correto).
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // =========================================================
+    // FUNDACAO
+    // =========================================================
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function userDoc() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    function hasRole(role) {
+      return signedIn()
+        && userDoc().data.active == true
+        && role in userDoc().data.roles;
+    }
+
+    function isAdmin() {
+      return hasRole('admin');
+    }
+
+    function isSeller() {
+      return hasRole('seller');
+    }
+
+    function isDesigner() {
+      return hasRole('designer');
+    }
+
+    function isAssembler() {
+      return hasRole('assembler');
+    }
+
+    match /users/{userId} {
+      allow read: if signedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /settings/{settingId} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+
+    match /projects/{projectId} {
+      allow read: if isAdmin() || isSeller();
+      allow create: if isAdmin() || isSeller();
+      allow update: if isAdmin() || isSeller();
+      allow delete: if isAdmin();
+
+      match /attachments/{attachmentId} {
+        allow read: if isAdmin() || isSeller();
+        allow create: if isAdmin() || isSeller();
+        allow update, delete: if isAdmin();
+      }
+
+      match /items/{itemId} {
+        allow read: if isAdmin() || isSeller();
+        allow create: if isAdmin() || isSeller();
+        allow update: if isAdmin() || isSeller();
+        allow delete: if isAdmin();
+
+        match /attachments/{attachmentId} {
+          allow read: if isAdmin() || isSeller();
+          allow create: if isAdmin() || isSeller();
+          allow update, delete: if isAdmin();
+        }
+
+        match /statusHistory/{historyId} {
+          allow read: if isAdmin() || isSeller();
+          allow create: if signedIn();
+          allow update, delete: if false;
+        }
+
+        // === VIA A ===
+        // Desenhista le/atualiza apenas itens atribuidos a ele; cria as proprias versoes.
+        match /versions/{versionId} {
+          allow read: if isAdmin() || isSeller()
+            || (isDesigner() && get(/databases/$(database)/documents/projects/$(projectId)/items/$(itemId)).data.designerId == request.auth.uid);
+          allow create: if isAdmin()
+            || (isDesigner() && get(/databases/$(database)/documents/projects/$(projectId)/items/$(itemId)).data.designerId == request.auth.uid);
+          allow update, delete: if isAdmin();
+        }
+        // === FIM VIA A ===
+
+        // === VIA B ===
+        // Montador le apenas as proprias atribuicoes; nunca edita amountToReceive (so o admin).
+        match /assemblerAssignments/{assignmentId} {
+          allow read: if isAdmin()
+            || (isAssembler() && resource.data.assemblerId == request.auth.uid);
+          allow create, delete: if isAdmin();
+          allow update: if isAdmin()
+            || (isAssembler()
+                && resource.data.assemblerId == request.auth.uid
+                && request.resource.data.amountToReceive == resource.data.amountToReceive);
+        }
+        // === FIM VIA B ===
+      }
+    }
+
+    // === VIA B ===
+    // Pagamentos: admin ve tudo; montador ve e confirma apenas os proprios.
+    match /payments/{paymentId} {
+      allow read: if isAdmin()
+        || (isAssembler() && resource.data.assemblerId == request.auth.uid);
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin()
+        || (isAssembler() && resource.data.assemblerId == request.auth.uid);
+    }
+    // === FIM VIA B ===
+
+    // O cliente (nao autenticado) nunca le o Firestore diretamente — todo acesso
+    // do portal do cliente passa pelas API routes server-side (spec secao 20).
+  }
+}

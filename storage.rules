@@ -1,0 +1,68 @@
+rules_version = '2';
+
+// Regras do modulo de Gestao de Projetos de Marcenaria.
+// Mesma estrutura de secoes do firestore.rules — ver docs/gestao-projetos/PLANO.md (secao 3.2).
+// Deploy: firebase deploy --only storage.
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    // =========================================================
+    // FUNDACAO
+    // =========================================================
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function userDoc() {
+      return firestore.get(/databases/(default)/documents/users/$(request.auth.uid));
+    }
+
+    function hasRole(role) {
+      return signedIn()
+        && userDoc().data.active == true
+        && role in userDoc().data.roles;
+    }
+
+    function isAdmin() {
+      return hasRole('admin');
+    }
+
+    function isInternal() {
+      return isAdmin() || hasRole('seller') || hasRole('designer') || hasRole('assembler');
+    }
+
+    // === VIA A ===
+    // Uploads de anexos de projeto/item: qualquer interno autenticado le e escreve;
+    // exclusao restrita ao admin (revisao final na etapa A7/B6).
+    match /projects/{projectId}/general/{fileName} {
+      allow read: if isInternal();
+      allow write: if isInternal();
+      allow delete: if isAdmin();
+    }
+
+    match /projects/{projectId}/items/{itemId}/{category}/{fileName} {
+      allow read: if isInternal();
+      allow write: if isInternal();
+      allow delete: if isAdmin();
+    }
+
+    match /projects/{projectId}/items/{itemId}/versions/{versionId}/{fileName} {
+      allow read: if isInternal();
+      allow write: if isAdmin() || hasRole('designer');
+      allow delete: if isAdmin();
+    }
+    // === FIM VIA A ===
+
+    // === VIA B ===
+    // Comprovantes de pagamento: legiveis apenas por admin e pelo montador dono do pagamento.
+    // O cliente nunca le o Storage diretamente — arquivos liberados a ele saem via signed URL
+    // de curta duracao gerada pelo adminStorage nas API routes (spec secao 20).
+    match /payments/{paymentId}/{fileName} {
+      allow read: if isAdmin() || hasRole('assembler');
+      allow write: if isAdmin();
+      allow delete: if isAdmin();
+    }
+    // === FIM VIA B ===
+  }
+}

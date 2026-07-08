@@ -8,6 +8,7 @@ import {
   persistentLocalCache,
   persistentMultipleTabManager,
 } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage';
 
 // Suas credenciais do Firebase, guardadas em variáveis de ambiente
 const firebaseConfig = {
@@ -35,5 +36,7 @@ const db =
       })
     : getFirestore(app);
 
+const storage = getStorage(app);
+
 // Exporte os serviços que você precisa
-export { app, auth, db };
+export { app, auth, db, storage };
