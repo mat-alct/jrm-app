@@ -6,6 +6,7 @@ import {
   FaPlusCircle,
   FaSignOutAlt,
   FaTruck,
+  FaUserCog,
   FaUserFriends,
 } from 'react-icons/fa';
 
@@ -101,6 +102,9 @@ export const SidebarNav: React.FC = () => {
           </NavLink>
           <NavLink icon={FaTruck} href="/administracao/fretes">
             Fretes
+          </NavLink>
+          <NavLink icon={FaUserCog} href="/administracao/usuarios">
+            Usuários
           </NavLink>
         </NavSection>
         <NavSection title="Conta">
