@@ -2,6 +2,7 @@ import { Box, Flex, Image, Text } from '@chakra-ui/react';
 import {
   FaBoxes,
   FaClipboardList,
+  FaHammer,
   FaHome,
   FaPlusCircle,
   FaSignOutAlt,
@@ -94,6 +95,14 @@ export const SidebarNav: React.FC = () => {
           </NavLink>
           <NavLink icon={FaBoxes} href="/cortes/materiais">
             Materiais
+          </NavLink>
+        </NavSection>
+        <NavSection title="Projetos">
+          <NavLink icon={FaHammer} href="/projetos/novo">
+            Novo projeto
+          </NavLink>
+          <NavLink icon={FaClipboardList} href="/projetos">
+            Listar projetos
           </NavLink>
         </NavSection>
         <NavSection title="Administração">
