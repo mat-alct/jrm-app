@@ -3,9 +3,14 @@ import Head from 'next/head';
 import { useRouter } from 'next/router';
 import React from 'react';
 
+import { AttachmentList } from '@/components/projects/AttachmentList';
+import { AttachmentUploader } from '@/components/projects/AttachmentUploader';
 import { ProjectItemCard } from '@/components/projects/ProjectItemCard';
 import { ProjectSummaryCards } from '@/components/projects/ProjectSummaryCards';
+import { useAttachments } from '@/services/projects/attachmentHooks';
 import { useProject, useProjectItems } from '@/services/projects/projectHooks';
+import { useAppUser } from '@/services/projects/users.service';
+import { isAdmin } from '@/utils/projects/permissions';
 
 import { Dashboard } from '../../../components/Dashboard';
 import { Header } from '../../../components/Dashboard/Content/Header';
@@ -21,8 +26,10 @@ const ProjectDetail = () => {
     if (user === null) router.push('/login');
   }, [user, router]);
 
+  const { data: appUser } = useAppUser();
   const { data: project, isLoading: isLoadingProject } = useProject(projectId);
   const { data: items, isLoading: isLoadingItems } = useProjectItems(projectId);
+  const { data: attachments } = useAttachments(projectId);
 
   if (!user || isLoadingProject) {
     return <Loader />;
@@ -75,6 +82,33 @@ const ProjectDetail = () => {
               {!isLoadingItems && items?.length === 0 && (
                 <Text color="gray.500">Nenhum item cadastrado.</Text>
               )}
+            </Stack>
+          </Box>
+
+          <Box bg="white" borderWidth="1px" borderColor="gray.200" borderRadius="md" p={4}>
+            <Heading size="md" mb={3}>
+              Anexos do projeto
+            </Heading>
+            <Stack gap={4}>
+              {user && (
+                <AttachmentUploader
+                  projectId={projectId}
+                  uploadedBy={user.uid}
+                  uploadedByRole={
+                    appUser?.roles && isAdmin(appUser.roles)
+                      ? 'admin'
+                      : appUser?.roles?.[0] ?? 'seller'
+                  }
+                  categorySuggestions={Array.from(
+                    new Set((attachments ?? []).map(a => a.category)),
+                  )}
+                />
+              )}
+              <AttachmentList
+                projectId={projectId}
+                attachments={attachments ?? []}
+                viewerRoles={appUser?.roles}
+              />
             </Stack>
           </Box>
         </Stack>

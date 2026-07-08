@@ -3,8 +3,11 @@ import Head from 'next/head';
 import { useRouter } from 'next/router';
 import React from 'react';
 
+import { AttachmentList } from '@/components/projects/AttachmentList';
+import { AttachmentUploader } from '@/components/projects/AttachmentUploader';
 import { ProjectItemStatusBadge } from '@/components/projects/ProjectItemStatusBadge';
 import { ProjectItemTimeline } from '@/components/projects/ProjectItemTimeline';
+import { useAttachments } from '@/services/projects/attachmentHooks';
 import {
   useItemStatusHistory,
   useProjectItem,
@@ -61,6 +64,7 @@ const ProjectItemDetail = () => {
     itemId,
   );
   const { data: history } = useItemStatusHistory(projectId, itemId);
+  const { data: attachments } = useAttachments(projectId, itemId);
   const updateStatus = useUpdateItemStatus(projectId, itemId);
 
   const handleTransition = async (next: ProjectItemStatus) => {
@@ -153,6 +157,31 @@ const ProjectItemDetail = () => {
               Histórico
             </Heading>
             <ProjectItemTimeline history={history ?? []} />
+          </Box>
+
+          <Box bg="white" borderWidth="1px" borderColor="gray.200" borderRadius="md" p={4}>
+            <Heading size="md" mb={3}>
+              Anexos do item
+            </Heading>
+            <Stack gap={4}>
+              {user && (
+                <AttachmentUploader
+                  projectId={projectId}
+                  itemId={itemId}
+                  uploadedBy={user.uid}
+                  uploadedByRole={admin ? 'admin' : appUser?.roles?.[0] ?? 'seller'}
+                  categorySuggestions={Array.from(
+                    new Set((attachments ?? []).map(a => a.category)),
+                  )}
+                />
+              )}
+              <AttachmentList
+                projectId={projectId}
+                itemId={itemId}
+                attachments={attachments ?? []}
+                viewerRoles={appUser?.roles}
+              />
+            </Stack>
           </Box>
         </Stack>
       </Dashboard>
