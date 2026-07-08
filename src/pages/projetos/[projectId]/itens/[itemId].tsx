@@ -3,11 +3,14 @@ import Head from 'next/head';
 import { useRouter } from 'next/router';
 import React from 'react';
 
+import { DesignerUploadPanel } from '@/components/designer/DesignerUploadPanel';
+import { AssignDesignerModal } from '@/components/projects/AssignDesignerModal';
 import { AttachmentList } from '@/components/projects/AttachmentList';
 import { AttachmentUploader } from '@/components/projects/AttachmentUploader';
 import { ProjectItemStatusBadge } from '@/components/projects/ProjectItemStatusBadge';
 import { ProjectItemTimeline } from '@/components/projects/ProjectItemTimeline';
 import { useAttachments } from '@/services/projects/attachmentHooks';
+import { useItemVersions } from '@/services/projects/designer.service';
 import {
   useItemStatusHistory,
   useProjectItem,
@@ -15,7 +18,7 @@ import {
 } from '@/services/projects/projectHooks';
 import { useAppUser } from '@/services/projects/users.service';
 import { ProjectItemStatus, UserRole } from '@/types/projects';
-import { isAdmin } from '@/utils/projects/permissions';
+import { canAssignDesigner, isAdmin } from '@/utils/projects/permissions';
 import { canTransition } from '@/utils/projects/status';
 
 import { Dashboard } from '../../../../components/Dashboard';
@@ -65,7 +68,9 @@ const ProjectItemDetail = () => {
   );
   const { data: history } = useItemStatusHistory(projectId, itemId);
   const { data: attachments } = useAttachments(projectId, itemId);
+  const { data: versions } = useItemVersions(projectId, itemId);
   const updateStatus = useUpdateItemStatus(projectId, itemId);
+  const [isAssignDesignerOpen, setIsAssignDesignerOpen] = React.useState(false);
 
   const handleTransition = async (next: ProjectItemStatus) => {
     if (!user || !appUser) return;
@@ -150,6 +155,68 @@ const ProjectItemDetail = () => {
             )}
           </Box>
 
+          {item.requiresDesigner && (
+            <Box bg="white" borderWidth="1px" borderColor="gray.200" borderRadius="md" p={4}>
+              <HStack justify="space-between" mb={3}>
+                <Heading size="md">Desenho</Heading>
+                {canAssignDesigner(appUser?.roles) && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    colorScheme="orange"
+                    onClick={() => setIsAssignDesignerOpen(true)}
+                  >
+                    {item.designerId ? 'Reatribuir desenhista' : 'Atribuir desenhista'}
+                  </Button>
+                )}
+              </HStack>
+              <Stack gap={1} fontSize="sm" mb={3}>
+                <Text><b>Desenhista:</b> {item.designerName ?? '—'}</Text>
+                <Text>
+                  <b>Prazo:</b>{' '}
+                  {item.deadlineCurrent
+                    ? item.deadlineCurrent.toDate().toLocaleDateString('pt-BR')
+                    : '—'}
+                </Text>
+              </Stack>
+
+              {user &&
+                appUser &&
+                item.designerId === user.uid &&
+                item.status === 'aguardando_desenho' && (
+                  <DesignerUploadPanel
+                    projectId={projectId}
+                    itemId={itemId}
+                    actor={{ uid: user.uid, role: 'designer' }}
+                  />
+                )}
+
+              {versions && versions.length > 0 && (
+                <Stack gap={2} mt={4}>
+                  <Text fontWeight="semibold" fontSize="sm">
+                    Versões
+                  </Text>
+                  {versions.map(version => (
+                    <Box
+                      key={version.id}
+                      borderWidth="1px"
+                      borderColor="gray.200"
+                      borderRadius="md"
+                      p={2}
+                      fontSize="sm"
+                    >
+                      <Text fontWeight="medium">Versão {version.versionNumber}</Text>
+                      {version.description && <Text>{version.description}</Text>}
+                      <Text color="gray.500" fontSize="xs">
+                        {version.attachmentIds.length} arquivo(s)
+                      </Text>
+                    </Box>
+                  ))}
+                </Stack>
+              )}
+            </Box>
+          )}
+
           {/* Reservado para AssignAssemblerModal / painel de assignments (Via B) — integração no CP2 */}
 
           <Box bg="white" borderWidth="1px" borderColor="gray.200" borderRadius="md" p={4}>
@@ -184,6 +251,16 @@ const ProjectItemDetail = () => {
             </Stack>
           </Box>
         </Stack>
+
+        {user && (
+          <AssignDesignerModal
+            isOpen={isAssignDesignerOpen}
+            onClose={() => setIsAssignDesignerOpen(false)}
+            projectId={projectId}
+            itemId={itemId}
+            actor={{ uid: user.uid, role: actorRole(appUser?.roles) }}
+          />
+        )}
       </Dashboard>
     </>
   );

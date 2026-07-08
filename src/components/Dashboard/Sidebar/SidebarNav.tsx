@@ -4,6 +4,7 @@ import {
   FaClipboardList,
   FaHammer,
   FaHome,
+  FaPencilRuler,
   FaPlusCircle,
   FaSignOutAlt,
   FaTruck,
@@ -11,12 +12,17 @@ import {
   FaUserFriends,
 } from 'react-icons/fa';
 
+import { useAppUser } from '@/services/projects/users.service';
+import { hasRole } from '@/utils/projects/permissions';
+
 import { useAuth } from '../../../hooks/authContext';
 import { NavLink } from './NavLink';
 import { NavSection } from './NavSection';
 
 export const SidebarNav: React.FC = () => {
   const { signOut } = useAuth();
+  const { data: appUser } = useAppUser();
+  const isDesigner = hasRole(appUser?.roles, 'designer');
 
   return (
     <Flex
@@ -104,6 +110,11 @@ export const SidebarNav: React.FC = () => {
           <NavLink icon={FaClipboardList} href="/projetos">
             Listar projetos
           </NavLink>
+          {isDesigner && (
+            <NavLink icon={FaPencilRuler} href="/desenhista">
+              Minha fila
+            </NavLink>
+          )}
         </NavSection>
         <NavSection title="Administração">
           <NavLink icon={FaUserFriends} href="/administracao/vendedores">
