@@ -12,6 +12,7 @@ import {
 import {
   createProjectItem,
   getProjectItem,
+  listItemStatusHistory,
   listProjectItems,
   updateProjectItem,
 } from '@/services/projects/projectItem.service';
@@ -138,6 +139,18 @@ describe('services/projects/projectItem.service', () => {
       const result = await listProjectItems('p1');
 
       expect(result).toEqual([{ id: 'i1', name: 'Cozinha' }]);
+    });
+  });
+
+  describe('listItemStatusHistory', () => {
+    it('maps history documents with id', async () => {
+      mockedGetDocs.mockResolvedValue({
+        docs: [{ id: 'h1', data: () => ({ toStatus: 'aprovado' }) }],
+      });
+
+      const result = await listItemStatusHistory('p1', 'i1');
+
+      expect(result).toEqual([{ id: 'h1', toStatus: 'aprovado' }]);
     });
   });
 });

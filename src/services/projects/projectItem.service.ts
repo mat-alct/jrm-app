@@ -10,10 +10,14 @@ import {
   updateDoc,
 } from 'firebase/firestore';
 
-import { ProjectItem } from '@/types/projects';
+import { ProjectItem, StatusHistory } from '@/types/projects';
 
 import { db } from '../firebase';
-import { projectItemPath, projectItemsPath } from './paths';
+import {
+  itemStatusHistoryPath,
+  projectItemPath,
+  projectItemsPath,
+} from './paths';
 import { recalculateProjectSummary } from './summary';
 
 export interface CreateProjectItemInput {
@@ -116,4 +120,14 @@ export async function listProjectItems(
     query(collection(db, projectItemsPath(projectId)), orderBy('createdAt')),
   );
   return snap.docs.map(d => ({ id: d.id, ...d.data() }) as ProjectItem);
+}
+
+export async function listItemStatusHistory(
+  projectId: string,
+  itemId: string,
+): Promise<StatusHistory[]> {
+  const snap = await getDocs(
+    collection(db, itemStatusHistoryPath(projectId, itemId)),
+  );
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }) as StatusHistory);
 }
