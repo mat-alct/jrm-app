@@ -12,7 +12,7 @@ describe('ClientTrackingTimeline', () => {
         itemId: 'item-1',
         name: 'Armario',
         environment: 'Quarto',
-        customerPrice: 1200,
+        customerAmount: 1200,
         approvalStatus: 'aprovado',
         clientStatusLabel: 'Em produção',
         estimatedDeliveryDate: '2026-08-10T12:00:00.000Z',

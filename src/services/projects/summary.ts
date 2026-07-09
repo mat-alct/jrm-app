@@ -51,9 +51,12 @@ export function computeItemSummary(
 }
 
 export function computeTotalCustomerValue(
-  items: Pick<ProjectItem, 'customerPrice'>[],
+  items: Pick<ProjectItem, 'budget'>[],
 ): number {
-  return items.reduce((total, item) => total + (item.customerPrice || 0), 0);
+  return items.reduce(
+    (total, item) => total + (item.budget?.customerAmount || 0),
+    0,
+  );
 }
 
 export async function recalculateProjectSummary(

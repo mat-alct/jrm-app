@@ -33,7 +33,7 @@ export function ClientProjectView({
   onRejectItem,
   onRequestChange,
 }: ClientProjectViewProps) {
-  const total = project.items.reduce((sum, item) => sum + item.customerPrice, 0);
+  const total = project.items.reduce((sum, item) => sum + (item.customerAmount ?? 0), 0);
   const hasPendingItems = project.items.some(
     item => item.approvalStatus === 'aguardando',
   );

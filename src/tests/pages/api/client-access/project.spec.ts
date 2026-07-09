@@ -96,7 +96,12 @@ describe('pages/api/client-access/project', () => {
                 data: {
                   name: 'Armario',
                   environment: 'Quarto',
-                  customerPrice: 1200,
+                  budget: {
+                    lines: [{ id: '0', description: 'Material', amount: 800 }],
+                    totalCost: 800,
+                    customerAmount: 1200,
+                    suggestedAssemblerAmount: 400,
+                  },
                   amountToReceive: 400,
                   assemblerAssignments: [{ amountToReceive: 400 }],
                   payments: [{ amount: 400 }],
@@ -165,7 +170,7 @@ describe('pages/api/client-access/project', () => {
           itemId: 'item-1',
           name: 'Armario',
           environment: 'Quarto',
-          customerPrice: 1200,
+          customerAmount: 1200,
           approvalStatus: 'aguardando',
           clientStatusLabel: 'Aguardando sua aprovação',
           estimatedDeliveryDate: undefined,
@@ -187,5 +192,9 @@ describe('pages/api/client-access/project', () => {
     expect(serialized).not.toContain('version-old');
     expect(serialized).not.toContain('version-new');
     expect(serialized).not.toContain('interno.pdf');
+    expect(serialized).not.toContain('totalCost');
+    expect(serialized).not.toContain('suggestedAssemblerAmount');
+    expect(serialized).not.toContain('"lines"');
+    expect(serialized).not.toContain('Material');
   });
 });

@@ -82,14 +82,17 @@ describe('services/projects/summary', () => {
   });
 
   describe('computeTotalCustomerValue', () => {
-    it('sums the customer price of every item', () => {
+    it('sums the customer amount of every item budget', () => {
       const items = [
-        { customerPrice: 100 },
-        { customerPrice: 250.5 },
-        { customerPrice: 0 },
+        { budget: { customerAmount: 100 } },
+        { budget: { customerAmount: 250.5 } },
+        { budget: { customerAmount: 0 } },
+        {},
       ];
 
-      expect(computeTotalCustomerValue(items)).toBe(350.5);
+      expect(
+        computeTotalCustomerValue(items as Parameters<typeof computeTotalCustomerValue>[0]),
+      ).toBe(350.5);
     });
 
     it('returns 0 for an empty list', () => {

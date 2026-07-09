@@ -111,6 +111,8 @@ export interface ProjectItem {
 
   currentVersionId?: string;
 
+  budget?: ItemBudget;
+
   approvedAt?: Timestamp;
   rejectedAt?: Timestamp;
   changeRequestedAt?: Timestamp;
@@ -120,6 +122,23 @@ export interface ProjectItem {
   updatedAt: Timestamp;
   createdBy: string;
   updatedBy: string;
+}
+
+export interface ItemBudgetLine {
+  id: string;
+  description: string;
+  amount: number;
+}
+
+export interface ItemBudget {
+  lines: ItemBudgetLine[];
+  totalCost: number;
+  customerAmount: number;
+  suggestedAssemblerAmount: number;
+  createdBy: string;
+  createdByName: string;
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
 }
 
 export interface Attachment {
@@ -256,7 +275,7 @@ export interface ClientProjectItemDTO {
   itemId: string;
   name: string;
   environment: string;
-  customerPrice: number;
+  customerAmount?: number;
   approvalStatus: ClientApprovalStatus;
   clientStatusLabel: string;
   estimatedDeliveryDate?: string;

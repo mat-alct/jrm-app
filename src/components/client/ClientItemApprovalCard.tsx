@@ -70,7 +70,7 @@ export function ClientItemApprovalCard({
 
         <Flex justify="space-between" gap={3} wrap="wrap">
           <Text color="gray.600">Valor</Text>
-          <Text fontWeight="800">{formatCurrency(item.customerPrice)}</Text>
+          <Text fontWeight="800">{formatCurrency((item.customerAmount ?? 0))}</Text>
         </Flex>
 
         {item.estimatedDeliveryDate ? (

@@ -10,7 +10,7 @@ function item(
     itemId: 'item-1',
     name: 'Armario',
     environment: 'Quarto',
-    customerPrice: 1200,
+    customerAmount: 1200,
     approvalStatus,
     clientStatusLabel: 'Aguardando sua aprovação',
     attachments: [],

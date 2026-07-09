@@ -17,6 +17,7 @@ import { AppUser } from '@/types/projects';
 
 interface AssignAssemblerModalProps {
   assemblers: AppUser[];
+  suggestedAmount?: number;
   isSubmitting?: boolean;
   onSubmit: (assignments: AssignAssemblerInput[]) => Promise<void> | void;
 }
@@ -28,11 +29,15 @@ interface DraftAssignment {
 
 export function AssignAssemblerModal({
   assemblers,
+  suggestedAmount,
   isSubmitting = false,
   onSubmit,
 }: AssignAssemblerModalProps) {
   const [rows, setRows] = React.useState<DraftAssignment[]>([
-    { assemblerId: assemblers[0]?.id ?? '', amountToReceive: '' },
+    {
+      assemblerId: assemblers[0]?.id ?? '',
+      amountToReceive: suggestedAmount ? String(suggestedAmount) : '',
+    },
   ]);
   const [error, setError] = React.useState<string | null>(null);
 

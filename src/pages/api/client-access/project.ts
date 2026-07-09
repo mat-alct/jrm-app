@@ -68,7 +68,7 @@ async function buildClientProjectDTO(
         itemId: item.id,
         name: item.name,
         environment: item.environment,
-        customerPrice: item.customerPrice,
+        customerAmount: item.budget?.customerAmount,
         approvalStatus: item.clientApprovalStatus,
         clientStatusLabel: getClientStatusLabel(item.status),
         estimatedDeliveryDate: toIsoString(item.estimatedDeliveryDate),

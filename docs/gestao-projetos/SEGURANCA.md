@@ -59,6 +59,7 @@ Roteiro manual para validar a matriz de permissões da Via B antes de mergear.
    - `assemblerAssignments`
    - `payments`
    - `designerId`
+   - `budget.lines`, `budget.totalCost`, `budget.suggestedAssemblerAmount`
    - versoes antigas
    - anexos internos
 5. Aprovar item pendente.

@@ -10,6 +10,7 @@ import { DesignerUploadPanel } from '@/components/designer/DesignerUploadPanel';
 import { AssignDesignerModal } from '@/components/projects/AssignDesignerModal';
 import { AttachmentList } from '@/components/projects/AttachmentList';
 import { AttachmentUploader } from '@/components/projects/AttachmentUploader';
+import { ItemBudgetForm } from '@/components/projects/ItemBudgetForm';
 import { ProjectItemStatusBadge } from '@/components/projects/ProjectItemStatusBadge';
 import { ProjectItemTimeline } from '@/components/projects/ProjectItemTimeline';
 import { useUsersByRole } from '@/services/projects/adminUsers';
@@ -19,6 +20,7 @@ import {
   listItemAssemblerAssignments,
 } from '@/services/projects/assembler.service';
 import { useAttachments } from '@/services/projects/attachmentHooks';
+import { saveItemBudget, sendBudgetToClient } from '@/services/projects/budget.service';
 import { useItemVersions } from '@/services/projects/designer.service';
 import {
   useItemStatusHistory,
@@ -116,6 +118,59 @@ const ProjectItemDetail = () => {
     },
   });
 
+  const saveBudgetMutation = useMutation({
+    mutationFn: (values: {
+      lines: { description: string; amount: number }[];
+      customerAmount: number;
+      suggestedAssemblerAmount: number;
+    }) => {
+      if (!appUser) throw new Error('Usuário não carregado.');
+      return saveItemBudget(projectId, itemId, values, {
+        id: appUser.id,
+        name: appUser.name,
+        roles: appUser.roles,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ['projects', projectId, 'items', itemId],
+      });
+      toaster.create({ type: 'success', description: 'Orçamento salvo.' });
+    },
+    onError: (error: Error) => {
+      toaster.create({
+        type: 'error',
+        description: error.message || 'Erro ao salvar orçamento.',
+      });
+    },
+  });
+
+  const sendBudgetMutation = useMutation({
+    mutationFn: () => {
+      if (!user || !appUser) throw new Error('Usuário não carregado.');
+      return sendBudgetToClient(projectId, itemId, {
+        id: appUser.id,
+        roles: appUser.roles,
+        role: actorRole(appUser.roles),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ['projects', projectId, 'items', itemId],
+      });
+      toaster.create({
+        type: 'success',
+        description: 'Orçamento enviado ao cliente.',
+      });
+    },
+    onError: (error: Error) => {
+      toaster.create({
+        type: 'error',
+        description: error.message || 'Erro ao enviar orçamento.',
+      });
+    },
+  });
+
   const handleTransition = async (next: ProjectItemStatus) => {
     if (!user || !appUser) return;
 
@@ -204,6 +259,47 @@ const ProjectItemDetail = () => {
             )}
           </Box>
 
+          {canSeePrice && !hasRole(appUser?.roles, 'assembler') && (
+            <Box bg="white" borderWidth="1px" borderColor="gray.200" borderRadius="md" p={4}>
+              <Heading size="md" mb={3}>
+                Orçamento
+              </Heading>
+              {item.status === 'aguardando_orcamento' ? (
+                <ItemBudgetForm
+                  initialBudget={item.budget}
+                  isSubmitting={saveBudgetMutation.isPending}
+                  onSubmit={async values => {
+                    await saveBudgetMutation.mutateAsync(values);
+                  }}
+                />
+              ) : item.budget ? (
+                <Stack gap={1} fontSize="sm">
+                  <Text><b>Valor ao cliente:</b> {item.budget.customerAmount}</Text>
+                  <Text><b>Custo interno:</b> {item.budget.totalCost}</Text>
+                  <Text>
+                    <b>Sugestão para o montador:</b>{' '}
+                    {item.budget.suggestedAssemblerAmount}
+                  </Text>
+                </Stack>
+              ) : (
+                <Text color="gray.500" fontSize="sm">
+                  Orçamento ainda não preenchido.
+                </Text>
+              )}
+              {item.budget && item.status === 'aguardando_orcamento' && (
+                <Button
+                  mt={3}
+                  size="sm"
+                  colorScheme="orange"
+                  loading={sendBudgetMutation.isPending}
+                  onClick={() => sendBudgetMutation.mutate()}
+                >
+                  Enviar orçamento ao cliente
+                </Button>
+              )}
+            </Box>
+          )}
+
           {item.requiresDesigner && (
             <Box bg="white" borderWidth="1px" borderColor="gray.200" borderRadius="md" p={4}>
               <HStack justify="space-between" mb={3}>
@@ -284,6 +380,7 @@ const ProjectItemDetail = () => {
               <Box mb={4}>
                 <AssignAssemblerModal
                   assemblers={assemblers ?? []}
+                  suggestedAmount={item.budget?.suggestedAssemblerAmount}
                   isSubmitting={assignAssemblersMutation.isPending}
                   onSubmit={async rows => {
                     await assignAssemblersMutation.mutateAsync(rows);
