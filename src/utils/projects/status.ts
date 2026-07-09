@@ -1,4 +1,4 @@
-import { ProjectItemStatus, UserRole } from '@/types/projects';
+import { AssemblerPaymentStatus, ProjectItemStatus, UserRole } from '@/types/projects';
 
 const TRANSITIONS: Record<ProjectItemStatus, ProjectItemStatus[]> = {
   projeto_criado: ['aguardando_desenho'],
@@ -98,10 +98,25 @@ export const INTERNAL_STATUS_COLORS: Record<ProjectItemStatus, string> = {
   cancelado: 'red',
 };
 
+export const PAYMENT_STATUS_LABELS: Record<AssemblerPaymentStatus, string> = {
+  nao_liberado: 'Não liberado',
+  pendente: 'Pendente',
+  pago: 'Pago',
+  confirmado_pelo_montador: 'Confirmado pelo montador',
+};
+
+export const PAYMENT_STATUS_COLORS: Record<AssemblerPaymentStatus, string> = {
+  nao_liberado: 'gray',
+  pendente: 'yellow',
+  pago: 'blue',
+  confirmado_pelo_montador: 'green',
+};
+
 export const INTERNAL_ROLE_LABELS: Record<UserRole | 'client', string> = {
   admin: 'Administrador',
   seller: 'Vendedor',
   designer: 'Desenhista',
   assembler: 'Montador',
+  woodworker: 'Marceneiro',
   client: 'Cliente',
 };
