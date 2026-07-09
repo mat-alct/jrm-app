@@ -17,6 +17,7 @@ interface AttachmentUploaderProps {
   projectId: string;
   itemId?: string;
   uploadedBy: string;
+  uploadedByName?: string;
   uploadedByRole: UserRole;
   categorySuggestions?: string[];
 }
@@ -25,6 +26,7 @@ export const AttachmentUploader: React.FC<AttachmentUploaderProps> = ({
   projectId,
   itemId,
   uploadedBy,
+  uploadedByName,
   uploadedByRole,
   categorySuggestions = [],
 }) => {
@@ -52,6 +54,7 @@ export const AttachmentUploader: React.FC<AttachmentUploaderProps> = ({
           category: category.trim(),
           visibility,
           uploadedBy,
+          uploadedByName,
           uploadedByRole,
         });
       }

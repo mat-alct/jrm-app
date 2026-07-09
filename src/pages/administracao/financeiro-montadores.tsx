@@ -53,7 +53,14 @@ export default function AdminAssemblerFinancePage() {
     setError(null);
     try {
       await createAssemblerPayment(
-        { projectId, itemId, assignmentId, proofFile, paidBy: appUser.id },
+        {
+          projectId,
+          itemId,
+          assignmentId,
+          proofFile,
+          paidBy: appUser.id,
+          paidByName: appUser.name,
+        },
         { id: appUser.id, roles: appUser.roles },
       );
       await load();

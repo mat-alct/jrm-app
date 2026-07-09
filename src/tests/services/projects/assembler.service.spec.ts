@@ -120,7 +120,7 @@ describe('services/projects/assembler.service', () => {
           amountToReceive: 500,
         },
       ],
-      { id: 'admin-1', roles: ['admin'] },
+      { id: 'admin-1', name: 'Admin', roles: ['admin'] },
     );
 
     expect(result).toHaveLength(1);

@@ -100,7 +100,7 @@ export async function assignAssemblers(
   projectId: string,
   itemId: string,
   assignments: AssignAssemblerInput[],
-  actor: Pick<AppUser, 'id' | 'roles'>,
+  actor: Pick<AppUser, 'id' | 'name' | 'roles'>,
 ): Promise<AssemblerAssignment[]> {
   assertAdmin(actor.roles);
   if (assignments.length === 0) {
@@ -135,6 +135,7 @@ export async function assignAssemblers(
       paymentStatus: 'nao_liberado',
       assignedAt: now,
       assignedBy: actor.id,
+      ...(actor.name ? { assignedByName: actor.name } : {}),
       dueAt: input.dueAt ?? item.deadlineCurrent,
       createdAt: now,
       updatedAt: now,

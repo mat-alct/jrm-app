@@ -136,6 +136,7 @@ export default function AssemblerItemPage() {
             category: 'montagem',
             visibility: 'assembler',
             uploadedBy: user.uid,
+            uploadedByName: appUser?.name,
             uploadedByRole: 'assembler',
           }),
         ),

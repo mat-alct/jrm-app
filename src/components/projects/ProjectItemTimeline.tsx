@@ -4,7 +4,7 @@ import { ptBR } from 'date-fns/locale';
 import React from 'react';
 
 import { StatusHistory } from '@/types/projects';
-import { INTERNAL_STATUS_LABELS } from '@/utils/projects/status';
+import { INTERNAL_ROLE_LABELS, INTERNAL_STATUS_LABELS } from '@/utils/projects/status';
 
 interface ProjectItemTimelineProps {
   history: StatusHistory[];
@@ -42,7 +42,9 @@ export const ProjectItemTimeline: React.FC<ProjectItemTimelineProps> = ({
               locale: ptBR,
             })}
             {' · '}
-            {entry.changedByRole}
+            {entry.changedByName
+              ? `${entry.changedByName} · ${INTERNAL_ROLE_LABELS[entry.changedByRole]}`
+              : INTERNAL_ROLE_LABELS[entry.changedByRole]}
           </Text>
           {entry.note && (
             <Text fontSize="sm" mt={1}>

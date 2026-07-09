@@ -89,6 +89,7 @@ export async function submitDesignerVersion(
       category: `versao-${versionNumber}`,
       visibility: 'client',
       uploadedBy: actor.uid,
+      uploadedByName: actor.name,
       uploadedByRole: 'designer',
     });
     attachmentIds.push(attachment.id);

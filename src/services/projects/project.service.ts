@@ -86,6 +86,7 @@ export async function createProject(
     createdAt: now,
     updatedAt: now,
     createdBy,
+    ...(actor.name ? { createdByName: actor.name } : {}),
     updatedBy: createdBy,
   };
 

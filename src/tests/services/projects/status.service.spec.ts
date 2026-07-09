@@ -103,6 +103,39 @@ describe('services/projects/status.service', () => {
     expect(mockedRecalculate).toHaveBeenCalledWith('p1');
   });
 
+  it('records the actor name in history when provided', async () => {
+    mockedGetDoc.mockResolvedValue({
+      exists: () => true,
+      data: () => ({ status: 'aguardando_desenho' }),
+    });
+
+    await updateItemStatus('p1', 'i1', 'aguardando_orcamento', {
+      uid: 'designer1',
+      name: 'Fulano Desenhista',
+      role: 'designer',
+    });
+
+    expect(mockedSetDoc).toHaveBeenCalledWith(
+      'doc-ref',
+      expect.objectContaining({ changedByName: 'Fulano Desenhista' }),
+    );
+  });
+
+  it('omits changedByName from history when the actor has no name', async () => {
+    mockedGetDoc.mockResolvedValue({
+      exists: () => true,
+      data: () => ({ status: 'aguardando_desenho' }),
+    });
+
+    await updateItemStatus('p1', 'i1', 'aguardando_orcamento', {
+      uid: 'designer1',
+      role: 'designer',
+    });
+
+    const [, payload] = mockedSetDoc.mock.calls[0];
+    expect(payload).not.toHaveProperty('changedByName');
+  });
+
   it('releases pending assembler assignments when the item reaches aguardando_pagamento_montador', async () => {
     mockedGetDoc.mockResolvedValue({
       exists: () => true,

@@ -100,6 +100,7 @@ const ProjectItemDetail = () => {
       if (!appUser) throw new Error('Usuário não carregado.');
       return assignAssemblers(projectId, itemId, rows, {
         id: appUser.id,
+        name: appUser.name,
         roles: appUser.roles,
       });
     },
@@ -150,6 +151,7 @@ const ProjectItemDetail = () => {
       if (!user || !appUser) throw new Error('Usuário não carregado.');
       return sendBudgetToClient(projectId, itemId, {
         id: appUser.id,
+        name: appUser.name,
         roles: appUser.roles,
         role: actorRole(appUser.roles),
       });
@@ -177,7 +179,7 @@ const ProjectItemDetail = () => {
     try {
       await updateStatus.mutateAsync({
         next,
-        actor: { uid: user.uid, role: actorRole(appUser.roles) },
+        actor: { uid: user.uid, name: appUser.name, role: actorRole(appUser.roles) },
       });
       toaster.create({ type: 'success', description: 'Status atualizado.' });
     } catch (error) {
@@ -331,7 +333,7 @@ const ProjectItemDetail = () => {
                   <DesignerUploadPanel
                     projectId={projectId}
                     itemId={itemId}
-                    actor={{ uid: user.uid, role: 'designer' }}
+                    actor={{ uid: user.uid, name: appUser?.name, role: 'designer' }}
                   />
                 )}
 
@@ -409,6 +411,7 @@ const ProjectItemDetail = () => {
                   projectId={projectId}
                   itemId={itemId}
                   uploadedBy={user.uid}
+                  uploadedByName={appUser?.name}
                   uploadedByRole={admin ? 'admin' : appUser?.roles?.[0] ?? 'seller'}
                   categorySuggestions={Array.from(
                     new Set((attachments ?? []).map(a => a.category)),
@@ -431,7 +434,7 @@ const ProjectItemDetail = () => {
             onClose={() => setIsAssignDesignerOpen(false)}
             projectId={projectId}
             itemId={itemId}
-            actor={{ uid: user.uid, role: actorRole(appUser?.roles) }}
+            actor={{ uid: user.uid, name: appUser?.name, role: actorRole(appUser?.roles) }}
           />
         )}
       </Dashboard>

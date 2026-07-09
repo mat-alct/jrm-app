@@ -45,4 +45,22 @@ describe('Component: ProjectItemTimeline', () => {
     expect(labels[0]).toHaveTextContent('Aguardando orçamento');
     expect(labels[1]).toHaveTextContent('Aguardando desenho');
   });
+
+  it('shows the author name alongside the role label when present', () => {
+    render(
+      <ProjectItemTimeline
+        history={[history({ changedByName: 'Mateus', changedByRole: 'admin' })]}
+      />,
+    );
+
+    expect(screen.getByText(/Mateus · Administrador/)).toBeInTheDocument();
+  });
+
+  it('falls back to the role label when the author name is missing', () => {
+    render(
+      <ProjectItemTimeline history={[history({ changedByRole: 'designer' })]} />,
+    );
+
+    expect(screen.getByText(/Desenhista/)).toBeInTheDocument();
+  });
 });

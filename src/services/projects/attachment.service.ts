@@ -58,6 +58,7 @@ interface UploadAttachmentParams {
   category: string;
   visibility: AttachmentVisibility;
   uploadedBy: string;
+  uploadedByName?: string;
   uploadedByRole: UserRole;
 }
 
@@ -68,6 +69,7 @@ export async function uploadAttachment({
   category,
   visibility,
   uploadedBy,
+  uploadedByName,
   uploadedByRole,
 }: UploadAttachmentParams): Promise<Attachment> {
   const attachmentId = v4();
@@ -94,6 +96,7 @@ export async function uploadAttachment({
     category,
     visibility,
     uploadedBy,
+    ...(uploadedByName ? { uploadedByName } : {}),
     uploadedByRole,
     clientVisible: visibility === 'client',
     createdAt: Timestamp.now(),

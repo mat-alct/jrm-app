@@ -91,12 +91,16 @@ export async function saveItemBudget(
 export async function sendBudgetToClient(
   projectId: string,
   itemId: string,
-  actor: Pick<AppUser, 'id' | 'roles'> & { role: AppUser['roles'][number] },
+  actor: Pick<AppUser, 'id' | 'roles'> & {
+    name?: string;
+    role: AppUser['roles'][number];
+  },
 ): Promise<void> {
   assertCanManageBudget(actor.roles);
 
   await updateItemStatus(projectId, itemId, 'aguardando_aprovacao_cliente', {
     uid: actor.id,
+    name: actor.name,
     role: actor.role,
   });
 }

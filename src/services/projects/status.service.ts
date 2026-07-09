@@ -27,6 +27,7 @@ import { recalculateProjectSummary } from './summary';
 
 export interface StatusActor {
   uid: string;
+  name?: string;
   role: UserRole | 'client';
 }
 
@@ -137,6 +138,7 @@ export async function updateItemStatus(
     fromStatus: current.status,
     toStatus: next,
     changedBy: actor.uid,
+    ...(actor.name ? { changedByName: actor.name } : {}),
     changedByRole: actor.role,
     note: note ?? null,
     createdAt: now,

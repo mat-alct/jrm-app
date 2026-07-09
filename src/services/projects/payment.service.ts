@@ -42,6 +42,7 @@ export interface CreateAssemblerPaymentParams {
   assignmentId: string;
   proofFile: File;
   paidBy: string;
+  paidByName?: string;
 }
 
 export class PaymentServiceError extends Error {
@@ -174,6 +175,7 @@ export async function createAssemblerPayment(
     proofStoragePath,
     paidAt: now,
     paidBy: params.paidBy,
+    ...(params.paidByName ? { paidByName: params.paidByName } : {}),
     createdAt: now,
     updatedAt: now,
   };

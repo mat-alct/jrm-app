@@ -82,6 +82,7 @@ export interface Project {
   createdAt: Timestamp;
   updatedAt: Timestamp;
   createdBy: string;
+  createdByName?: string;
   updatedBy: string;
 }
 
@@ -152,6 +153,7 @@ export interface Attachment {
   visibility: AttachmentVisibility;
 
   uploadedBy: string;
+  uploadedByName?: string;
   uploadedByRole: UserRole;
 
   clientVisible: boolean;
@@ -170,6 +172,7 @@ export interface ProjectItemVersion {
   attachmentIds: string[];
 
   createdBy: string;
+  createdByName?: string;
   createdAt: Timestamp;
 
   visibleToClient: boolean;
@@ -184,6 +187,7 @@ export interface StatusHistory {
   toStatus: ProjectItemStatus;
 
   changedBy: string;
+  changedByName?: string;
   changedByRole: UserRole | 'client';
 
   note?: string;
@@ -210,6 +214,7 @@ export interface AssemblerAssignment {
 
   assignedAt: Timestamp;
   assignedBy: string;
+  assignedByName?: string;
 
   dueAt?: Timestamp;
   completedAt?: Timestamp;
@@ -242,6 +247,7 @@ export interface AssemblerPayment {
 
   paidAt: Timestamp;
   paidBy: string;
+  paidByName?: string;
 
   confirmedAt?: Timestamp;
 
