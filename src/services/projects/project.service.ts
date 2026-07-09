@@ -15,6 +15,13 @@ import {
 import { Project } from '@/types/projects';
 
 import { db } from '../firebase';
+import {
+  createE2EProject,
+  E2E_MOCKS_ENABLED,
+  getE2EProject,
+  listE2EProjects,
+  updateE2EProject,
+} from './e2eMockStore';
 import { PROJECTS_COLLECTION, projectPath } from './paths';
 
 export interface CreateProjectInput {
@@ -57,6 +64,9 @@ export async function createProject(
   actor: CreateProjectActor,
 ): Promise<string> {
   assertCreateProjectInput(input);
+  if (E2E_MOCKS_ENABLED) {
+    return createE2EProject(input);
+  }
 
   const createdBy = actor.uid;
   const now = Timestamp.now();
@@ -99,6 +109,11 @@ export async function updateProject(
   updates: UpdateProjectInput,
   updatedBy: string,
 ): Promise<void> {
+  if (E2E_MOCKS_ENABLED) {
+    await updateE2EProject(projectId, updates);
+    return;
+  }
+
   await updateDoc(doc(db, projectPath(projectId)), {
     ...updates,
     updatedAt: Timestamp.now(),
@@ -107,6 +122,10 @@ export async function updateProject(
 }
 
 export async function getProject(projectId: string): Promise<Project | null> {
+  if (E2E_MOCKS_ENABLED) {
+    return getE2EProject(projectId);
+  }
+
   const snap = await getDoc(doc(db, projectPath(projectId)));
   if (!snap.exists()) return null;
 
@@ -116,6 +135,10 @@ export async function getProject(projectId: string): Promise<Project | null> {
 export async function listProjects(
   filters: ListProjectsFilters = {},
 ): Promise<Project[]> {
+  if (E2E_MOCKS_ENABLED) {
+    return listE2EProjects(filters);
+  }
+
   const constraints: QueryConstraint[] = [orderBy('createdAt', 'desc')];
   if (filters.sellerId) {
     constraints.push(where('sellerId', '==', filters.sellerId));

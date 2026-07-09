@@ -1,6 +1,4 @@
 import {
-  Badge,
-  Box,
   Button,
   Flex,
   HStack,
@@ -11,7 +9,11 @@ import {
 } from '@chakra-ui/react';
 import React from 'react';
 
+import { ModelViewerPreview } from '@/components/projects/ModelViewerPreview';
+import { AppCard } from '@/components/ui/card';
+import { StatusPill } from '@/components/ui/status-pill';
 import { ClientProjectItemDTO } from '@/types/projects';
+import { inferAttachmentFileKind } from '@/utils/projects/attachments';
 
 interface ClientItemApprovalCardProps {
   item: ClientProjectItemDTO;
@@ -39,6 +41,17 @@ export function ClientItemApprovalCard({
     isBusy ||
     item.approvalStatus === 'aprovado' ||
     item.approvalStatus === 'recusado';
+  const modelAttachments = item.attachments.filter(
+    attachment =>
+      attachment.fileKind === 'model_3d' ||
+      inferAttachmentFileKind({
+        name: attachment.fileName,
+        type: attachment.mimeType,
+      }) === 'model_3d',
+  );
+  const documentAttachments = item.attachments.filter(
+    attachment => !modelAttachments.includes(attachment),
+  );
 
   async function confirmAction(message: string, action: () => Promise<void> | void) {
     if (window.confirm(message)) {
@@ -46,56 +59,71 @@ export function ClientItemApprovalCard({
     }
   }
 
+  const statusPalette =
+    item.approvalStatus === 'aprovado'
+      ? 'green'
+      : item.approvalStatus === 'recusado'
+        ? 'red'
+        : item.approvalStatus === 'alteracao_solicitada'
+          ? 'orange'
+          : 'yellow';
+
   return (
-    <Box
-      bg="white"
-      border="1px solid"
-      borderColor="gray.100"
-      borderRadius="8px"
-      p={{ base: 4, md: 5 }}
-      boxShadow="sm"
-    >
+    <AppCard>
       <VStack align="stretch" gap={4}>
         <Flex justify="space-between" align="flex-start" gap={3}>
-          <Box>
-            <Text fontWeight="800" fontSize="lg">
+          <VStack align="stretch" gap={1}>
+            <Text fontWeight="600" fontSize="lg" color="app.text">
               {item.name}
             </Text>
-            <Text color="gray.600">{item.environment}</Text>
-          </Box>
-          <Badge colorPalette={item.approvalStatus === 'aprovado' ? 'green' : 'yellow'}>
-            {item.clientStatusLabel}
-          </Badge>
+            <Text color="app.textSecondary">{item.environment}</Text>
+          </VStack>
+          <StatusPill palette={statusPalette} label={item.clientStatusLabel} />
         </Flex>
 
         <Flex justify="space-between" gap={3} wrap="wrap">
-          <Text color="gray.600">Valor</Text>
-          <Text fontWeight="800">{formatCurrency((item.customerAmount ?? 0))}</Text>
+          <Text color="app.textSecondary">Valor</Text>
+          <Text fontWeight="600" color="app.text" style={{ fontVariantNumeric: 'tabular-nums' }}>
+            {formatCurrency(item.customerAmount ?? 0)}
+          </Text>
         </Flex>
 
         {item.estimatedDeliveryDate ? (
           <Flex justify="space-between" gap={3} wrap="wrap">
-            <Text color="gray.600">Previsão</Text>
-            <Text fontWeight="700">
+            <Text color="app.textSecondary">Previsão</Text>
+            <Text fontWeight="600" color="app.text" style={{ fontVariantNumeric: 'tabular-nums' }}>
               {new Date(item.estimatedDeliveryDate).toLocaleDateString('pt-BR')}
             </Text>
           </Flex>
         ) : null}
 
-        {item.attachments.length > 0 ? (
+        {modelAttachments.length > 0 ? (
+          <Stack gap={3}>
+            {modelAttachments.map(attachment => (
+              <ModelViewerPreview
+                key={attachment.url}
+                compact
+                src={attachment.url}
+                fileName={attachment.fileName}
+              />
+            ))}
+          </Stack>
+        ) : null}
+
+        {documentAttachments.length > 0 ? (
           <Stack gap={2}>
-            <Text color="gray.600" fontSize="sm" fontWeight="700">
+            <Text color="app.textSecondary" fontSize="sm" fontWeight="600">
               Arquivos liberados
             </Text>
             <HStack gap={2} wrap="wrap">
-              {item.attachments.map(attachment => (
+              {documentAttachments.map(attachment => (
                 <Link
                   key={attachment.url}
                   href={attachment.url}
                   target="_blank"
                   rel="noreferrer"
-                  color="orange.500"
-                  fontWeight="700"
+                  color="app.accentEmphasis"
+                  fontWeight="600"
                 >
                   {attachment.fileName}
                 </Link>
@@ -106,44 +134,60 @@ export function ClientItemApprovalCard({
 
         <Stack direction={{ base: 'column', md: 'row' }} gap={2}>
           <Button
-            bgColor="orange.500"
+            flex="1"
+            bg="app.ink"
             color="white"
-            _hover={{ bgColor: 'orange.400' }}
+            rounded="lg"
+            fontWeight="600"
+            _hover={{ bg: 'app.inkHover' }}
+            _focusVisible={{ shadow: 'focus', outline: 'none' }}
             disabled={actionDisabled}
             loading={isBusy}
-            onClick={() =>
-              confirmAction('Confirmar aprovação deste item?', () =>
+            onClick={() => {
+              void confirmAction('Confirmar aprovação deste item?', () =>
                 onApprove(item.itemId),
-              )
-            }
+              );
+            }}
           >
             Aprovar item
           </Button>
           <Button
             variant="outline"
+            flex="1"
+            borderColor="app.borderStrong"
+            color="app.text"
+            rounded="lg"
+            _hover={{ bg: 'app.sunken' }}
+            _focusVisible={{ shadow: 'focus', outline: 'none' }}
             disabled={actionDisabled}
-            onClick={() =>
-              confirmAction('Confirmar recusa deste item?', () =>
+            onClick={() => {
+              void confirmAction('Confirmar recusa deste item?', () =>
                 onReject(item.itemId),
-              )
-            }
+              );
+            }}
           >
             Recusar
           </Button>
           <Button
             variant="outline"
+            flex="1"
+            borderColor="app.borderStrong"
+            color="app.text"
+            rounded="lg"
+            _hover={{ bg: 'app.sunken' }}
+            _focusVisible={{ shadow: 'focus', outline: 'none' }}
             disabled={actionDisabled}
-            onClick={() =>
-              confirmAction('Solicitar alteração deste item?', () =>
+            onClick={() => {
+              void confirmAction('Solicitar alteração deste item?', () =>
                 onRequestChange(item.itemId),
-              )
-            }
+              );
+            }}
           >
             Pedir alteração
           </Button>
         </Stack>
       </VStack>
-    </Box>
+    </AppCard>
   );
 }
 

@@ -17,7 +17,10 @@ import {
 } from 'react-icons/fa';
 
 import { useAppUser } from '@/services/projects/users.service';
-import { hasRole, isAdmin } from '@/utils/projects/permissions';
+import {
+  ROLE_LABELS,
+  canAccessPage,
+} from '@/utils/projects/permissions';
 
 import { useAuth } from '../../../hooks/authContext';
 import { NavLink } from './NavLink';
@@ -26,9 +29,9 @@ import { NavSection } from './NavSection';
 export const SidebarNav: React.FC = () => {
   const { signOut } = useAuth();
   const { data: appUser } = useAppUser();
-  const isDesigner = hasRole(appUser?.roles, 'designer');
-  const isAssembler = hasRole(appUser?.roles, 'assembler');
-  const admin = isAdmin(appUser?.roles);
+  const canAccess = (path: string) => canAccessPage(path, appUser?.roles);
+  const roleDescription =
+    appUser?.roles.map(role => ROLE_LABELS[role]).join(', ') ?? '';
 
   return (
     <Flex
@@ -80,7 +83,7 @@ export const SidebarNav: React.FC = () => {
             JRM Compensados
           </Text>
           <Text color="whiteAlpha.600" fontSize="xs" truncate>
-            Administrador
+            {roleDescription}
           </Text>
         </Flex>
       </Flex>
@@ -93,72 +96,111 @@ export const SidebarNav: React.FC = () => {
         overflowY="auto"
         gap="0.5"
       >
-        <NavSection title="Geral">
-          <NavLink icon={FaHome} href="/">
-            Início
-          </NavLink>
-        </NavSection>
-        <NavSection title="Cortes">
-          <NavLink icon={FaPlusCircle} href="/cortes/novoservico">
-            Novo serviço
-          </NavLink>
-          <NavLink icon={FaClipboardList} href="/cortes/listadecortes">
-            Listar serviços
-          </NavLink>
-          <NavLink icon={FaBoxes} href="/cortes/materiais">
-            Materiais
-          </NavLink>
-        </NavSection>
-        <NavSection title="Projetos">
-          <NavLink icon={FaHammer} href="/projetos/novo">
-            Novo projeto
-          </NavLink>
-          <NavLink icon={FaClipboardList} href="/projetos">
-            Listar projetos
-          </NavLink>
-          {admin && (
-            <NavLink icon={FaChartLine} href="/projetos/dashboard">
-              Dashboard
-            </NavLink>
-          )}
-          {isDesigner && (
-            <NavLink icon={FaPencilRuler} href="/desenhista">
-              Minha fila
-            </NavLink>
-          )}
-        </NavSection>
-        {isAssembler && (
-          <NavSection title="Montador">
-            <NavLink icon={FaToolbox} href="/montador">
-              Meus itens
-            </NavLink>
-            <NavLink icon={FaMoneyBillWave} href="/montador/financeiro">
-              Financeiro
+        {canAccess('/') && (
+          <NavSection title="Geral">
+            <NavLink icon={FaHome} href="/">
+              Início
             </NavLink>
           </NavSection>
         )}
-        <NavSection title="Administração">
-          <NavLink icon={FaUserFriends} href="/administracao/vendedores">
-            Vendedores
-          </NavLink>
-          <NavLink icon={FaTruck} href="/administracao/fretes">
-            Fretes
-          </NavLink>
-          <NavLink icon={FaUserCog} href="/administracao/usuarios">
-            Usuários
-          </NavLink>
-          <NavLink icon={FaClock} href="/administracao/configuracoes-prazos">
-            Configurações de prazos
-          </NavLink>
-          {admin && (
-            <NavLink
-              icon={FaMoneyBillWave}
-              href="/administracao/financeiro-montadores"
-            >
-              Financeiro dos montadores
-            </NavLink>
-          )}
-        </NavSection>
+        {(canAccess('/cortes/novoservico') ||
+          canAccess('/cortes/listadecortes') ||
+          canAccess('/cortes/materiais')) && (
+          <NavSection title="Cortes">
+            {canAccess('/cortes/novoservico') && (
+              <NavLink icon={FaPlusCircle} href="/cortes/novoservico">
+                Novo serviço
+              </NavLink>
+            )}
+            {canAccess('/cortes/listadecortes') && (
+              <NavLink icon={FaClipboardList} href="/cortes/listadecortes">
+                Listar serviços
+              </NavLink>
+            )}
+            {canAccess('/cortes/materiais') && (
+              <NavLink icon={FaBoxes} href="/cortes/materiais">
+                Materiais
+              </NavLink>
+            )}
+          </NavSection>
+        )}
+        {(canAccess('/projetos/novo') ||
+          canAccess('/projetos') ||
+          canAccess('/projetos/dashboard') ||
+          canAccess('/desenhista')) && (
+          <NavSection title="Projetos">
+            {canAccess('/projetos/novo') && (
+              <NavLink icon={FaHammer} href="/projetos/novo">
+                Novo projeto
+              </NavLink>
+            )}
+            {canAccess('/projetos') && (
+              <NavLink icon={FaClipboardList} href="/projetos">
+                Listar projetos
+              </NavLink>
+            )}
+            {canAccess('/projetos/dashboard') && (
+              <NavLink icon={FaChartLine} href="/projetos/dashboard">
+                Dashboard
+              </NavLink>
+            )}
+            {canAccess('/desenhista') && (
+              <NavLink icon={FaPencilRuler} href="/desenhista">
+                Minha fila
+              </NavLink>
+            )}
+          </NavSection>
+        )}
+        {(canAccess('/montador') || canAccess('/montador/financeiro')) && (
+          <NavSection title="Montador">
+            {canAccess('/montador') && (
+              <NavLink icon={FaToolbox} href="/montador">
+                Meus itens
+              </NavLink>
+            )}
+            {canAccess('/montador/financeiro') && (
+              <NavLink icon={FaMoneyBillWave} href="/montador/financeiro">
+                Financeiro
+              </NavLink>
+            )}
+          </NavSection>
+        )}
+        {(canAccess('/administracao/vendedores') ||
+          canAccess('/administracao/fretes') ||
+          canAccess('/administracao/usuarios') ||
+          canAccess('/administracao/configuracoes-prazos') ||
+          canAccess('/administracao/financeiro-montadores')) && (
+          <NavSection title="Administração">
+            {canAccess('/administracao/vendedores') && (
+              <NavLink icon={FaUserFriends} href="/administracao/vendedores">
+                Vendedores
+              </NavLink>
+            )}
+            {canAccess('/administracao/fretes') && (
+              <NavLink icon={FaTruck} href="/administracao/fretes">
+                Fretes
+              </NavLink>
+            )}
+            {canAccess('/administracao/usuarios') && (
+              <NavLink icon={FaUserCog} href="/administracao/usuarios">
+                Usuários
+              </NavLink>
+            )}
+            {canAccess('/administracao/configuracoes-prazos') && (
+              <NavLink icon={FaClock} href="/administracao/configuracoes-prazos">
+                Configurações de prazos
+              </NavLink>
+            )}
+            {canAccess('/administracao/financeiro-montadores') && (
+              <NavLink
+                icon={FaMoneyBillWave}
+                href="/administracao/financeiro-montadores"
+              >
+                Financeiro dos montadores
+              </NavLink>
+            )}
+          </NavSection>
+        )}
         <NavSection title="Conta">
           <NavLink icon={FaSignOutAlt} href="/login" onClick={() => signOut()}>
             Sair

@@ -63,7 +63,7 @@ describe('pages/api/client-access/project', () => {
   it('returns a safe client DTO with signed URLs only for client-visible attachments', async () => {
     const session = issueClientSession('public-1', {
       secret: 'test-client-secret',
-      now: new Date('2026-07-08T10:00:00Z'),
+      now: new Date(Date.now() - 60 * 60 * 1000),
     });
 
     const getProjects = jest.fn().mockResolvedValue(

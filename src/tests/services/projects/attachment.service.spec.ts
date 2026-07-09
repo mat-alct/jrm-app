@@ -4,6 +4,10 @@ import {
   sanitizeFileName,
 } from '@/services/projects/attachment.service';
 import { Attachment } from '@/types/projects';
+import {
+  inferAttachmentFileKind,
+  isModel3DAttachment,
+} from '@/utils/projects/attachments';
 
 function attachment(
   visibility: Attachment['visibility'],
@@ -35,6 +39,36 @@ describe('services/projects/attachment.service', () => {
 
     it('formats megabytes', () => {
       expect(formatFileSize(5 * 1024 * 1024)).toBe('5.0 MB');
+    });
+  });
+
+  describe('3D model detection', () => {
+    it('marks GLB files as 3D models even with generic MIME type', () => {
+      expect(
+        inferAttachmentFileKind({
+          name: 'armario.glb',
+          type: 'application/octet-stream',
+        }),
+      ).toBe('model_3d');
+    });
+
+    it('recognizes existing model attachments by metadata or extension', () => {
+      expect(
+        isModel3DAttachment({
+          fileName: 'armario.glb',
+          originalFileName: 'armario.glb',
+          mimeType: 'model/gltf-binary',
+          fileKind: undefined,
+        }),
+      ).toBe(true);
+      expect(
+        isModel3DAttachment({
+          fileName: 'render.png',
+          originalFileName: 'render.png',
+          mimeType: 'image/png',
+          fileKind: 'model_3d',
+        }),
+      ).toBe(true);
     });
   });
 

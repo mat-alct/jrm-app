@@ -1,6 +1,11 @@
 import { Timestamp } from 'firebase/firestore';
 
-export type UserRole = 'admin' | 'seller' | 'designer' | 'assembler';
+export type UserRole =
+  | 'admin'
+  | 'seller'
+  | 'designer'
+  | 'assembler'
+  | 'woodworker';
 
 export interface AppUser {
   id: string;
@@ -45,6 +50,8 @@ export type AttachmentVisibility =
   | 'client'
   | 'designer'
   | 'assembler';
+
+export type AttachmentFileKind = 'document' | 'image' | 'model_3d';
 
 export interface ProjectItemSummary {
   total: number;
@@ -148,6 +155,7 @@ export interface Attachment {
   downloadUrl?: string;
   mimeType: string;
   sizeBytes: number;
+  fileKind?: AttachmentFileKind;
 
   category: string;
   visibility: AttachmentVisibility;
@@ -270,6 +278,7 @@ export interface ClientAttachmentDTO {
   fileName: string;
   url: string;
   mimeType: string;
+  fileKind?: AttachmentFileKind;
 }
 
 export interface ClientProjectItemDTO {

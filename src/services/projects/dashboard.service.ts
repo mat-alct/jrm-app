@@ -9,13 +9,29 @@ import { Project, ProjectItem, ProjectItemStatus } from '@/types/projects';
 import { isDelayed } from '@/utils/projects/delay';
 
 import { db } from '../firebase';
+import {
+  E2E_MOCKS_ENABLED,
+  listE2EAllProjectItems,
+  listE2EAssemblerAssignments,
+} from './e2eMockStore';
 
 export async function listAllProjectItems(): Promise<ProjectItem[]> {
+  if (E2E_MOCKS_ENABLED) {
+    return listE2EAllProjectItems();
+  }
+
   const snap = await getDocs(collectionGroup(db, 'items'));
   return snap.docs.map(d => ({ id: d.id, ...d.data() }) as ProjectItem);
 }
 
 export async function countPendingAssemblerPayments(): Promise<number> {
+  if (E2E_MOCKS_ENABLED) {
+    const assignments = await listE2EAssemblerAssignments();
+    return assignments.filter(
+      assignment => assignment.paymentStatus === 'pendente',
+    ).length;
+  }
+
   const snap = await getDocs(
     query(
       collectionGroup(db, 'assemblerAssignments'),

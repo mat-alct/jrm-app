@@ -2,7 +2,7 @@
 //
 // Cria, no projeto Firebase apontado pelas variaveis de ambiente:
 // - um usuario Auth + doc em users/{uid} para cada papel (admin, vendedor,
-//   desenhista, montador);
+//   desenhista, montador, marceneiro);
 // - settings/deadlineDefaults;
 // - 2 projetos com itens cobrindo os 13 status do fluxo real (desenho,
 //   orcamento, aprovacao do cliente, atribuicao de montador, producao,
@@ -50,6 +50,7 @@ const SEED_USERS = [
   { name: 'Vendedor Seed', email: 'vendedor@seed.jrm', roles: ['seller'] },
   { name: 'Desenhista Seed', email: 'desenhista@seed.jrm', roles: ['designer'] },
   { name: 'Montador Seed', email: 'montador@seed.jrm', roles: ['assembler'] },
+  { name: 'Marceneiro Seed', email: 'marceneiro@seed.jrm', roles: ['woodworker'] },
 ];
 const SEED_USER_PASSWORD = 'Seed@12345';
 

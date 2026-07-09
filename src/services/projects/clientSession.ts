@@ -2,6 +2,8 @@ import { createHmac, timingSafeEqual } from 'node:crypto';
 
 import { serialize } from 'cookie';
 
+import { requireServerEnv } from '../env.server';
+
 const SESSION_TTL_MS = 24 * 60 * 60 * 1000;
 const COOKIE_NAME = 'client_session';
 
@@ -21,11 +23,7 @@ export interface IssuedClientSession {
 }
 
 function getSecret(secret?: string): string {
-  const resolved = secret ?? process.env.CLIENT_ACCESS_SECRET;
-  if (!resolved) {
-    throw new Error('CLIENT_ACCESS_SECRET nao configurado');
-  }
-  return resolved;
+  return secret ?? requireServerEnv('CLIENT_ACCESS_SECRET');
 }
 
 function encodePayload(payload: ClientSessionPayload): string {

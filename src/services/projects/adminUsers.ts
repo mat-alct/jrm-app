@@ -4,6 +4,7 @@ import { collection, getDocs, query, where } from 'firebase/firestore';
 import { AppUser, UserRole } from '@/types/projects';
 
 import { db } from '../firebase';
+import { E2E_MOCKS_ENABLED, listE2EUsersByRole } from './e2eMockStore';
 import { USERS_COLLECTION } from './paths';
 
 export interface CreateUserInput {
@@ -49,11 +50,19 @@ export function updateAdminUser(input: UpdateUserInput) {
 }
 
 export async function listUsers(): Promise<AppUser[]> {
+  if (E2E_MOCKS_ENABLED) {
+    return listE2EUsersByRole('admin');
+  }
+
   const snap = await getDocs(collection(db, USERS_COLLECTION));
   return snap.docs.map(d => ({ id: d.id, ...d.data() }) as AppUser);
 }
 
 export async function listUsersByRole(role: UserRole): Promise<AppUser[]> {
+  if (E2E_MOCKS_ENABLED) {
+    return listE2EUsersByRole(role);
+  }
+
   const q = query(
     collection(db, USERS_COLLECTION),
     where('roles', 'array-contains', role),

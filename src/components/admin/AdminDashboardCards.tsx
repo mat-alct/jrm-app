@@ -1,6 +1,7 @@
-import { Box, SimpleGrid, Text } from '@chakra-ui/react';
+import { SimpleGrid } from '@chakra-ui/react';
 import React from 'react';
 
+import { StatCard } from '@/components/ui/stat-card';
 import { DashboardCounts } from '@/services/projects/dashboard.service';
 
 interface AdminDashboardCardsProps {
@@ -37,22 +38,12 @@ export const AdminDashboardCards: React.FC<AdminDashboardCardsProps> = ({
   return (
     <SimpleGrid columns={[2, 2, 3, 4]} gap={4}>
       {cards.map(card => (
-        <Box
+        <StatCard
           key={card.label}
-          bg="white"
-          borderWidth="1px"
-          borderColor="gray.200"
-          borderRadius="md"
-          p={4}
-          textAlign="center"
-        >
-          <Text fontSize="2xl" fontWeight="bold">
-            {card.value}
-          </Text>
-          <Text fontSize="xs" color="gray.500">
-            {card.label}
-          </Text>
-        </Box>
+          label={card.label}
+          value={card.value}
+          palette={card.label === 'Itens atrasados' ? 'red' : 'brand'}
+        />
       ))}
     </SimpleGrid>
   );

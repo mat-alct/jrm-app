@@ -13,6 +13,7 @@ import {
   Project,
   ProjectItem,
 } from '@/types/projects';
+import { inferAttachmentFileKind } from '@/utils/projects/attachments';
 import { getClientStatusLabel } from '@/utils/projects/status';
 
 const SIGNED_URL_TTL_MS = 15 * 60 * 1000;
@@ -49,11 +50,19 @@ async function clientAttachmentsForItem(
     );
 
   return Promise.all(
-    attachments.map(async attachment => ({
-      fileName: attachment.originalFileName || attachment.fileName,
-      mimeType: attachment.mimeType,
-      url: await signedAttachmentUrl(attachment.storagePath),
-    })),
+    attachments.map(async attachment => {
+      const fileName = attachment.originalFileName || attachment.fileName;
+      const fileKind =
+        attachment.fileKind ??
+        inferAttachmentFileKind({ name: fileName, type: attachment.mimeType });
+
+      return {
+        fileName,
+        mimeType: attachment.mimeType,
+        ...(fileKind === 'model_3d' ? { fileKind } : {}),
+        url: await signedAttachmentUrl(attachment.storagePath),
+      };
+    }),
   );
 }
 

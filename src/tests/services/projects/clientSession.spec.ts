@@ -78,4 +78,62 @@ describe('services/projects/clientSession', () => {
       'Expires=Thu, 01 Jan 1970 00:00:00 GMT',
     );
   });
+
+  // Sem override de `secret`, e o process.env que manda — o caminho que roda
+  // em producao e que nenhum teste cobria.
+  describe('without an explicit secret override', () => {
+    const originalSecret = process.env.CLIENT_ACCESS_SECRET;
+
+    afterEach(() => {
+      if (originalSecret === undefined) {
+        delete process.env.CLIENT_ACCESS_SECRET;
+      } else {
+        process.env.CLIENT_ACCESS_SECRET = originalSecret;
+      }
+    });
+
+    it('falls back to CLIENT_ACCESS_SECRET from the environment', () => {
+      process.env.CLIENT_ACCESS_SECRET = 'secret-from-env';
+
+      const session = issueClientSession('public-123', { now });
+
+      expect(verifyClientSession(session.token, { now })).toEqual({
+        publicId: 'public-123',
+        expiresAt: session.expiresAt.getTime(),
+      });
+    });
+
+    it('rejects a token signed with a different environment secret', () => {
+      process.env.CLIENT_ACCESS_SECRET = 'secret-from-env';
+      const session = issueClientSession('public-123', { now });
+
+      process.env.CLIENT_ACCESS_SECRET = 'outro-secret';
+
+      expect(verifyClientSession(session.token, { now })).toBeNull();
+    });
+
+    it('throws naming CLIENT_ACCESS_SECRET when it is not configured', () => {
+      delete process.env.CLIENT_ACCESS_SECRET;
+
+      expect(() => issueClientSession('public-123', { now })).toThrow(
+        /CLIENT_ACCESS_SECRET/,
+      );
+    });
+
+    it('throws on verify when CLIENT_ACCESS_SECRET is not configured', () => {
+      delete process.env.CLIENT_ACCESS_SECRET;
+
+      expect(() => verifyClientSession('payload.signature', { now })).toThrow(
+        /CLIENT_ACCESS_SECRET/,
+      );
+    });
+
+    it('treats a blank CLIENT_ACCESS_SECRET as not configured', () => {
+      process.env.CLIENT_ACCESS_SECRET = '';
+
+      expect(() => issueClientSession('public-123', { now })).toThrow(
+        /CLIENT_ACCESS_SECRET/,
+      );
+    });
+  });
 });

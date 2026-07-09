@@ -1,16 +1,19 @@
 import { Box, Heading, Text, VStack } from '@chakra-ui/react';
 import Head from 'next/head';
 import React from 'react';
+import { FiClock } from 'react-icons/fi';
 
 import { AssemblerPaymentsTable } from '@/components/admin/AssemblerPaymentsTable';
 import { Loader } from '@/components/Loader';
-import { useAppUser } from '@/services/projects/users.service';
+import { AppCard } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/empty-state';
 import {
   aggregatePendingByAssembler,
   createAssemblerPayment,
   listAssemblerPayments,
   listPendingAssemblerAssignments,
 } from '@/services/projects/payment.service';
+import { useAppUser } from '@/services/projects/users.service';
 import { AssemblerAssignment, AssemblerPayment } from '@/types/projects';
 
 export default function AdminAssemblerFinancePage() {
@@ -39,7 +42,7 @@ export default function AdminAssemblerFinancePage() {
   }
 
   React.useEffect(() => {
-    load();
+    void load();
   }, []);
 
   async function payAssignment(
@@ -77,7 +80,7 @@ export default function AdminAssemblerFinancePage() {
 
   if (!appUser?.roles.includes('admin')) {
     return (
-      <Box minH="100vh" bg="gray.50" p={6}>
+      <Box minH="100vh" bg="app.canvas" p={6}>
         <Text fontWeight="700">Acesso restrito a administradores.</Text>
       </Box>
     );
@@ -88,17 +91,23 @@ export default function AdminAssemblerFinancePage() {
       <Head>
         <title>Financeiro Montadores | JRM Compensados</title>
       </Head>
-      <Box minH="100vh" bg="gray.50" p={{ base: 4, md: 8 }}>
+      <Box minH="100vh" bg="app.canvas" p={{ base: 4, md: 8 }}>
         <VStack align="stretch" gap={5} maxW="1100px" mx="auto">
           <Box>
-            <Heading as="h1" fontSize={{ base: '2xl', md: '3xl' }}>
+            <Heading as="h1" fontSize={{ base: '2xl', md: '3xl' }} fontWeight="600">
               Financeiro dos montadores
             </Heading>
-            <Text color="gray.600">Pendências liberadas e histórico.</Text>
+            <Text color="app.textSecondary">Pendências liberadas e histórico.</Text>
           </Box>
 
           {error ? (
-            <Box bg="red.50" borderRadius="8px" p={4}>
+            <Box
+              bg="red.50"
+              borderRadius="12px"
+              border="1px solid"
+              borderColor="red.200"
+              p={4}
+            >
               <Text color="red.700">{error}</Text>
             </Box>
           ) : null}
@@ -109,23 +118,28 @@ export default function AdminAssemblerFinancePage() {
             onPay={payAssignment}
           />
 
-          <Box bg="white" borderRadius="8px" boxShadow="sm" p={4}>
-            <Text fontSize="lg" fontWeight="800" mb={3}>
-              Histórico
-            </Text>
+          <AppCard title="Histórico">
             {payments.length === 0 ? (
-              <Text color="gray.600">Nenhum pagamento registrado.</Text>
+              <EmptyState
+                icon={FiClock}
+                title="Nenhum pagamento registrado"
+                description="Os pagamentos efetuados para montadores aparecem aqui."
+              />
             ) : (
               <VStack align="stretch" gap={2}>
                 {payments.map(payment => (
-                  <Text key={payment.id}>
+                  <Text
+                    key={payment.id}
+                    color="app.textSecondary"
+                    style={{ fontVariantNumeric: 'tabular-nums' }}
+                  >
                     {payment.assemblerName ?? payment.assemblerId} · R${' '}
                     {payment.amount.toFixed(2)} · {payment.status}
                   </Text>
                 ))}
               </VStack>
             )}
-          </Box>
+          </AppCard>
         </VStack>
       </Box>
     </>

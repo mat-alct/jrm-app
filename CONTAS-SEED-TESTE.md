@@ -10,6 +10,7 @@ Geradas por `scripts/seed-projetos.mjs`. Válidas apenas no banco de testes.
 | Vendedor   | vendedor@seed.jrm      | Seed@12345   |
 | Desenhista | desenhista@seed.jrm    | Seed@12345   |
 | Montador   | montador@seed.jrm      | Seed@12345   |
+| Marceneiro | marceneiro@seed.jrm    | Seed@12345   |
 
 ## Acesso do cliente (portal externo)
 

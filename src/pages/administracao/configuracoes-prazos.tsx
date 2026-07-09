@@ -1,4 +1,4 @@
-import { Box, Button, Heading } from '@chakra-ui/react';
+import { Button, chakra, Heading, SimpleGrid, Text, VStack } from '@chakra-ui/react';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import Head from 'next/head';
@@ -17,6 +17,7 @@ import { Dashboard } from '../../components/Dashboard';
 import { Header } from '../../components/Dashboard/Content/Header';
 import { FormInput } from '../../components/Form/Input';
 import { Loader } from '../../components/Loader';
+import { AppCard } from '../../components/ui/card';
 import { toaster } from '../../components/ui/toaster';
 import { useAuth } from '../../hooks/authContext';
 
@@ -42,12 +43,14 @@ const ConfiguracoesPrazos = () => {
   });
 
   React.useEffect(() => {
-    if (user === null) router.push('/login');
+    if (user === null) {
+      void router.push('/login');
+    }
   }, [user, router]);
 
   React.useEffect(() => {
     if (!isLoadingAppUser && appUser && !isAdmin(appUser.roles)) {
-      router.push('/');
+      void router.push('/');
     }
   }, [appUser, isLoadingAppUser, router]);
 
@@ -90,39 +93,56 @@ const ConfiguracoesPrazos = () => {
       <Dashboard>
         <Header pageTitle="Configurações de Prazos" />
 
-        <Box
-          as="form"
-          onSubmit={handleSubmit(onSubmit)}
-          bg="white"
-          borderWidth="1px"
-          borderColor="gray.200"
-          borderRadius="md"
-          p={4}
-          display="flex"
-          flexDirection="column"
-          gap={4}
-          maxW="480px"
+        <chakra.form
+          onSubmit={event => {
+            void handleSubmit(onSubmit)(event);
+          }}
         >
-          <Heading size="md">Prazos padrão por etapa</Heading>
-          {FIELDS.map(field => (
-            <FormInput
-              key={field.name}
-              {...register(field.name, { valueAsNumber: true })}
-              name={field.name}
-              label={field.label}
-              type="number"
-              error={errors[field.name]}
-            />
-          ))}
-          <Button
-            type="submit"
-            colorScheme="orange"
-            alignSelf="flex-start"
-            loading={isSubmitting}
-          >
-            Salvar
-          </Button>
-        </Box>
+          <AppCard title="Prazos padrão">
+            <VStack align="stretch" gap={4} maxW="760px">
+              <Heading size="md" fontWeight="600" color="app.text">
+                Prazos padrão por etapa
+              </Heading>
+              <SimpleGrid columns={{ base: 1, md: 2 }} gap={4}>
+                {FIELDS.map(field => (
+                  <VStack key={field.name} align="stretch" gap={2}>
+                    <FormInput
+                      {...register(field.name, { valueAsNumber: true })}
+                      name={field.name}
+                      label={field.label}
+                      type="number"
+                      error={errors[field.name]}
+                      bg="app.surface"
+                      borderColor="app.borderStrong"
+                      rounded="lg"
+                      _focusVisible={{
+                        borderColor: 'app.accent',
+                        shadow: 'focus',
+                        outline: 'none',
+                      }}
+                    />
+                    <Text fontSize="xs" color="app.textMuted">
+                      dias
+                    </Text>
+                  </VStack>
+                ))}
+              </SimpleGrid>
+              <Button
+                type="submit"
+                alignSelf="flex-start"
+                loading={isSubmitting}
+                bg="app.ink"
+                color="white"
+                rounded="lg"
+                fontWeight="600"
+                _hover={{ bg: 'app.inkHover' }}
+                _focusVisible={{ shadow: 'focus', outline: 'none' }}
+              >
+                Salvar
+              </Button>
+            </VStack>
+          </AppCard>
+        </chakra.form>
       </Dashboard>
     </>
   );

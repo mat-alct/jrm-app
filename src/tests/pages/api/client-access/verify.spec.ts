@@ -40,6 +40,7 @@ function mockProjectQuery(projectData: Record<string, unknown>) {
 
 describe('pages/api/client-access/verify', () => {
   let warnSpy: jest.SpyInstance;
+  const originalSecret = process.env.CLIENT_ACCESS_SECRET;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -49,6 +50,11 @@ describe('pages/api/client-access/verify', () => {
 
   afterEach(() => {
     warnSpy.mockRestore();
+    if (originalSecret === undefined) {
+      delete process.env.CLIENT_ACCESS_SECRET;
+    } else {
+      process.env.CLIENT_ACCESS_SECRET = originalSecret;
+    }
   });
 
   it('rejects methods other than POST', async () => {
@@ -136,5 +142,48 @@ describe('pages/api/client-access/verify', () => {
       expect.stringContaining('client_session='),
     );
     expect(res.status).toHaveBeenCalledWith(200);
+  });
+
+  // Regressao: com CLIENT_ACCESS_SECRET ausente, uma senha correta derrubava o
+  // request com 500 depois de ja ter zerado as tentativas do projeto.
+  describe('when CLIENT_ACCESS_SECRET is not configured', () => {
+    let errorSpy: jest.SpyInstance;
+
+    beforeEach(() => {
+      delete process.env.CLIENT_ACCESS_SECRET;
+      errorSpy = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => undefined);
+    });
+
+    afterEach(() => {
+      errorSpy.mockRestore();
+    });
+
+    it('fails with 500, issues no cookie and leaves the project untouched', async () => {
+      const { update } = mockProjectQuery({
+        clientAccessPublicId: 'public-1',
+        clientAccessCodeHash: hashAccessCode('ABC234'),
+        clientAccessAttempts: 2,
+      });
+      const res = createResponse();
+
+      await handler(
+        {
+          method: 'POST',
+          headers: {},
+          body: { publicId: 'public-1', accessCode: 'ABC234' },
+        } as never,
+        res as never,
+      );
+
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.setHeader).not.toHaveBeenCalled();
+      expect(update).not.toHaveBeenCalled();
+
+      const [label, logged] = errorSpy.mock.calls[0] as [string, Error];
+      expect(label).toBe('Client access verify error:');
+      expect(logged.message).toContain('CLIENT_ACCESS_SECRET');
+    });
   });
 });

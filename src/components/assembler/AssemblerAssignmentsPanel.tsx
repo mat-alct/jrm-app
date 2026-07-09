@@ -1,6 +1,10 @@
 import { Box, Flex, Text, VStack } from '@chakra-ui/react';
 import React from 'react';
+import { FiUsers } from 'react-icons/fi';
 
+import { AppCard } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/empty-state';
+import { StatusPill } from '@/components/ui/status-pill';
 import { AssemblerAssignment } from '@/types/projects';
 
 interface AssemblerAssignmentsPanelProps {
@@ -20,39 +24,37 @@ export function AssemblerAssignmentsPanel({
   canViewValues,
 }: AssemblerAssignmentsPanelProps) {
   return (
-    <Box
-      bg="white"
-      border="1px solid"
-      borderColor="gray.100"
-      borderRadius="8px"
-      p={4}
-    >
+    <AppCard>
       <VStack align="stretch" gap={3}>
-        <Text fontSize="lg" fontWeight="800">
+        <Text fontSize="lg" fontWeight="600" color="app.text">
           Montadores atribuídos
         </Text>
         {assignments.length === 0 ? (
-          <Text color="gray.600">Nenhum montador atribuído.</Text>
+          <EmptyState
+            icon={FiUsers}
+            title="Nenhum montador atribuído"
+            description="As atribuições deste item aparecem aqui depois do vínculo com a equipe."
+          />
         ) : (
           assignments.map(assignment => (
             <Flex
               key={assignment.id}
               borderTop="1px solid"
-              borderColor="gray.100"
+              borderColor="app.border"
               gap={3}
               justify="space-between"
+              align={{ base: 'stretch', md: 'center' }}
               pt={3}
+              wrap="wrap"
             >
               <Box>
-                <Text fontWeight="700">
+                <Text fontWeight="600" color="app.text">
                   {assignment.assemblerName ?? assignment.assemblerId}
                 </Text>
-                <Text color="gray.600" fontSize="sm">
-                  {assignment.paymentStatus}
-                </Text>
+                <StatusPill mt={2} palette="gray" label={assignment.paymentStatus} />
               </Box>
               {canViewValues ? (
-                <Text fontWeight="800">
+                <Text fontWeight="600" color="app.text" style={{ fontVariantNumeric: 'tabular-nums' }}>
                   {formatCurrency(assignment.amountToReceive)}
                 </Text>
               ) : null}
@@ -60,6 +62,6 @@ export function AssemblerAssignmentsPanel({
           ))
         )}
       </VStack>
-    </Box>
+    </AppCard>
   );
 }

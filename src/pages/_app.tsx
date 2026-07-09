@@ -8,6 +8,7 @@ import { Providers } from '../hooks';
 import { queryClient } from '../services/queryClient';
 import { theme } from '../styles/theme';
 import { Toaster } from '@/components/ui/toaster';
+import { AccessGate } from '@/components/auth/AccessGate';
 import '../styles/reactPrintStyles.css';
 
 function MyApp({ Component, pageProps }: AppProps) {
@@ -16,7 +17,9 @@ function MyApp({ Component, pageProps }: AppProps) {
       <QueryClientProvider client={queryClient}>
         <Providers>
           <AuthProvider>
-            <Component {...pageProps} />
+            <AccessGate>
+              <Component {...pageProps} />
+            </AccessGate>
           </AuthProvider>
         </Providers>
         <Toaster />

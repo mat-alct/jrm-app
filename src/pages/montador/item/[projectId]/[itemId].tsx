@@ -12,22 +12,37 @@ import {
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import React from 'react';
+import { FiFileText } from 'react-icons/fi';
 
 import { Loader } from '@/components/Loader';
+import { ModelViewerPreview } from '@/components/projects/ModelViewerPreview';
+import { AppCard } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/empty-state';
+import { StatusPill } from '@/components/ui/status-pill';
 import { useAuth } from '@/hooks/authContext';
-import { uploadAttachment, listAttachments } from '@/services/projects/attachment.service';
 import {
   canAssemblerTransition,
   getAssemblerAssignments,
+  listItemAssemblerAssignments,
   mapAddressLink,
   mapTelLink,
 } from '@/services/projects/assembler.service';
+import {
+  filterAttachmentsByRole,
+  listAttachments,
+  uploadAttachment,
+} from '@/services/projects/attachment.service';
 import { useAppUser } from '@/services/projects/users.service';
 import {
   AssemblerAssignment,
   Attachment,
   ProjectItemStatus,
 } from '@/types/projects';
+import { isModel3DAttachment } from '@/utils/projects/attachments';
+import {
+  canAccessRoles,
+  isAdmin,
+} from '@/utils/projects/permissions';
 
 const ASSEMBLER_FLOW: ProjectItemStatus[] = [
   'em_producao',
@@ -60,26 +75,31 @@ export default function AssemblerItemPage() {
   const [error, setError] = React.useState<string | null>(null);
 
   async function load() {
-    if (!user?.uid || !projectId || !itemId) return;
+    if (!user?.uid || !appUser || !projectId || !itemId) return;
     setIsLoading(true);
     setError(null);
     try {
-      const assignments = await getAssemblerAssignments(user.uid);
+      const assignments = isAdmin(appUser.roles)
+        ? await listItemAssemblerAssignments(projectId, itemId)
+        : await getAssemblerAssignments(user.uid);
       const current = assignments.find(
-        item => item.projectId === projectId && item.itemId === itemId,
+        item =>
+          item.projectId === projectId &&
+          item.itemId === itemId &&
+          (isAdmin(appUser.roles) || item.assemblerId === user.uid),
       );
       if (!current) {
         setAssignment(null);
-        setError('Item nao atribuido a este montador.');
+        setError(
+          isAdmin(appUser.roles)
+            ? 'Nenhum montador atribuido a este item.'
+            : 'Item nao atribuido a este montador.',
+        );
         return;
       }
       setAssignment(current);
       const itemAttachments = await listAttachments(projectId, itemId);
-      setAttachments(
-        itemAttachments.filter(
-          attachment => attachment.visibility === 'assembler',
-        ),
-      );
+      setAttachments(filterAttachmentsByRole(itemAttachments, appUser.roles));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro ao carregar item.');
     } finally {
@@ -89,11 +109,11 @@ export default function AssemblerItemPage() {
 
   React.useEffect(() => {
     if (user === null) {
-      router.push('/login');
+      void router.push('/login');
       return;
     }
-    load();
-  }, [user, projectId, itemId]);
+    void load();
+  }, [appUser, user, projectId, itemId]);
 
   async function advanceStatus() {
     if (!assignment?.itemStatus || !user?.uid) return;
@@ -108,7 +128,7 @@ export default function AssemblerItemPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ projectId, itemId, nextStatus: next }),
       });
-      const data = await response.json();
+      const data = (await response.json()) as { error?: string };
       if (!response.ok) {
         throw new Error(data.error ?? 'Erro ao atualizar etapa.');
       }
@@ -153,53 +173,91 @@ export default function AssemblerItemPage() {
     return <Loader />;
   }
 
-  if (!appUser?.roles.includes('assembler')) {
+  if (!appUser || !canAccessRoles(appUser.roles, ['assembler'])) {
     return (
-      <Flex minH="100vh" align="center" justify="center" bg="gray.50" p={4}>
+      <Flex minH="100vh" align="center" justify="center" bg="app.canvas" p={4}>
         <Text fontWeight="700">Acesso restrito a montadores.</Text>
       </Flex>
     );
   }
 
+  const admin = isAdmin(appUser.roles);
   const phoneLink = mapTelLink(assignment?.customerPhone);
   const addressLink = mapAddressLink(assignment?.customerAddress);
   const next = nextAssemblerStatus(assignment?.itemStatus);
+  const modelAttachments = attachments.filter(isModel3DAttachment);
+  const documentAttachments = attachments.filter(
+    attachment => !modelAttachments.includes(attachment),
+  );
 
   return (
     <>
       <Head>
         <title>Item do Montador | JRM Compensados</title>
       </Head>
-      <Box minH="100vh" bg="gray.50" p={{ base: 4, md: 8 }}>
+      <Box minH="100vh" bg="app.canvas" p={{ base: 4, md: 8 }}>
         <VStack align="stretch" gap={4} maxW="760px" mx="auto">
-          <Button alignSelf="flex-start" variant="outline" onClick={() => router.push('/montador')}>
+          <Button
+            alignSelf="flex-start"
+            variant="outline"
+            borderColor="app.borderStrong"
+            color="app.text"
+            rounded="lg"
+            _hover={{ bg: 'app.sunken' }}
+            _focusVisible={{ shadow: 'focus', outline: 'none' }}
+            onClick={() => {
+              void router.push('/montador');
+            }}
+          >
             Voltar
           </Button>
 
           {error ? (
-            <Box bg="red.50" borderRadius="8px" p={4}>
+            <Box
+              bg="red.50"
+              borderRadius="12px"
+              border="1px solid"
+              borderColor="red.200"
+              p={4}
+            >
               <Text color="red.700">{error}</Text>
             </Box>
           ) : null}
 
           {assignment ? (
-            <Box bg="white" borderRadius="8px" boxShadow="sm" p={5}>
+            <AppCard>
               <VStack align="stretch" gap={4}>
                 <Box>
-                  <Heading as="h1" fontSize={{ base: '2xl', md: '3xl' }}>
+                  <Heading as="h1" fontSize={{ base: '2xl', md: '3xl' }} fontWeight="600">
                     {assignment.itemName ?? 'Item de montagem'}
                   </Heading>
-                  <Text color="gray.600">{assignment.customerName}</Text>
+                  <Text color="app.textSecondary">{assignment.customerName}</Text>
                 </Box>
 
                 <Stack direction={{ base: 'column', md: 'row' }} gap={3}>
                   {phoneLink ? (
-                    <Button asChild bgColor="orange.500" color="white">
+                    <Button
+                      asChild
+                      bg="app.ink"
+                      color="white"
+                      rounded="lg"
+                      fontWeight="600"
+                      _hover={{ bg: 'app.inkHover' }}
+                      _focusVisible={{ shadow: 'focus', outline: 'none' }}
+                    >
                       <Link href={phoneLink}>Ligar para cliente</Link>
                     </Button>
                   ) : null}
                   {addressLink ? (
-                    <Button asChild variant="outline">
+                    <Button
+                      asChild
+                      variant="outline"
+                      borderColor="app.borderStrong"
+                      color="app.text"
+                      rounded="lg"
+                      _hover={{ bg: 'app.sunken' }}
+                      _focusVisible={{ shadow: 'focus', outline: 'none' }}
+                    >
                       <Link href={addressLink} target="_blank" rel="noreferrer">
                         Abrir mapa
                       </Link>
@@ -208,46 +266,71 @@ export default function AssemblerItemPage() {
                 </Stack>
 
                 <Box>
-                  <Text color="gray.600">Endereço</Text>
-                  <Text fontWeight="700">
+                  <Text color="app.textSecondary">Endereço</Text>
+                  <Text fontWeight="600" color="app.text">
                     {assignment.customerAddress ?? 'Nao informado'}
                   </Text>
                 </Box>
 
                 <Box>
-                  <Text color="gray.600">Etapa atual</Text>
-                  <Text fontSize="xl" fontWeight="900">
-                    {assignment.itemStatus}
+                  <Text color="app.textSecondary" mb={2}>
+                    Etapa atual
                   </Text>
+                  <StatusPill
+                    palette="blue"
+                    label={assignment.itemStatus ?? 'Status indisponível'}
+                  />
                 </Box>
 
-                <Button
-                  size="lg"
-                  bgColor="orange.500"
-                  color="white"
-                  _hover={{ bgColor: 'orange.400' }}
-                  disabled={!next || isSaving}
-                  loading={isSaving}
-                  onClick={advanceStatus}
-                >
-                  {next ? `Atualizar etapa para ${next}` : 'Sem próxima etapa'}
-                </Button>
+                {!admin && (
+                  <Button
+                    size="lg"
+                    bg="app.ink"
+                    color="white"
+                    rounded="lg"
+                    fontWeight="600"
+                    _hover={{ bg: 'app.inkHover' }}
+                    _focusVisible={{ shadow: 'focus', outline: 'none' }}
+                    disabled={!next || isSaving}
+                    loading={isSaving}
+                    onClick={() => {
+                      void advanceStatus();
+                    }}
+                  >
+                    {next ? `Atualizar etapa para ${next}` : 'Sem próxima etapa'}
+                  </Button>
+                )}
 
                 <Box>
-                  <Text fontWeight="800" mb={2}>
+                  <Text fontWeight="600" color="app.text" mb={2}>
                     Arquivos técnicos
                   </Text>
                   {attachments.length === 0 ? (
-                    <Text color="gray.600">Nenhum arquivo técnico liberado.</Text>
+                    <EmptyState
+                      icon={FiFileText}
+                      title="Nenhum arquivo técnico liberado"
+                      description="Quando a equipe disponibilizar arquivos deste item, eles aparecem aqui."
+                    />
                   ) : (
-                    <VStack align="stretch" gap={2}>
-                      {attachments.map(attachment => (
+                    <VStack align="stretch" gap={3}>
+                      {modelAttachments.map(attachment =>
+                        attachment.downloadUrl ? (
+                          <ModelViewerPreview
+                            key={attachment.id}
+                            compact
+                            src={attachment.downloadUrl}
+                            fileName={attachment.originalFileName}
+                          />
+                        ) : null,
+                      )}
+                      {documentAttachments.map(attachment => (
                         <Link
                           key={attachment.id}
                           href={attachment.downloadUrl}
-                          color="orange.500"
+                          color="app.accentEmphasis"
                           target="_blank"
                           rel="noreferrer"
+                          fontWeight="600"
                         >
                           {attachment.originalFileName}
                         </Link>
@@ -256,20 +339,32 @@ export default function AssemblerItemPage() {
                   )}
                 </Box>
 
-                <Box>
-                  <Text fontWeight="800" mb={2}>
-                    Fotos da montagem
-                  </Text>
-                  <Input
-                    type="file"
-                    accept="image/*"
-                    capture="environment"
-                    multiple
-                    onChange={uploadPhotos}
-                  />
-                </Box>
+                {!admin && (
+                  <Box>
+                    <Text fontWeight="600" color="app.text" mb={2}>
+                      Fotos da montagem
+                    </Text>
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      multiple
+                      bg="app.surface"
+                      borderColor="app.borderStrong"
+                      rounded="lg"
+                      _focusVisible={{
+                        borderColor: 'app.accent',
+                        shadow: 'focus',
+                        outline: 'none',
+                      }}
+                      onChange={event => {
+                        void uploadPhotos(event);
+                      }}
+                    />
+                  </Box>
+                )}
               </VStack>
-            </Box>
+            </AppCard>
           ) : null}
         </VStack>
       </Box>

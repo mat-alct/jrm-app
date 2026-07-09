@@ -9,6 +9,8 @@
     "start": "next start",
     "lint": "next lint",
     "test": "jest",
+    "test:e2e": "playwright test",
+    "test:all": "npm test -- --runInBand && npm run test:e2e",
     "firebase:indexes": "firebase deploy --only firestore:indexes"
   },
   "dependencies": {
@@ -16,6 +18,7 @@
     "@chakra-ui/react": "^3.21.1",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
+    "@google/model-viewer": "^4.3.1",
     "@hookform/resolvers": "^5.1.1",
     "@tanstack/react-query": "^5.81.5",
     "@types/cookie": "^0.6.0",
@@ -39,6 +42,7 @@
   },
   "devDependencies": {
     "@next/bundle-analyzer": "^16.2.4",
+    "@playwright/test": "^1.61.1",
     "@tanstack/react-query-devtools": "^5.81.5",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",

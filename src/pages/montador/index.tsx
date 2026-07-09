@@ -1,6 +1,4 @@
 import {
-  Badge,
-  Box,
   Button,
   Flex,
   Heading,
@@ -11,15 +9,22 @@ import {
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import React from 'react';
+import { FiClipboard } from 'react-icons/fi';
 
+import { Dashboard } from '@/components/Dashboard';
+import { Header } from '@/components/Dashboard/Content/Header';
 import { Loader } from '@/components/Loader';
+import { AppCard } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/empty-state';
+import { StatusPill } from '@/components/ui/status-pill';
 import { useAuth } from '@/hooks/authContext';
-import { useAppUser } from '@/services/projects/users.service';
 import {
   getAssemblerAssignments,
   sortAssignmentsByDueDate,
 } from '@/services/projects/assembler.service';
+import { useAppUser } from '@/services/projects/users.service';
 import { AssemblerAssignment } from '@/types/projects';
+import { canAccessRoles } from '@/utils/projects/permissions';
 
 function formatCurrency(value: number): string {
   return new Intl.NumberFormat('pt-BR', {
@@ -44,7 +49,7 @@ export default function AssemblerHomePage() {
 
   React.useEffect(() => {
     if (user === null) {
-      router.push('/login');
+      void router.push('/login');
       return;
     }
     if (!user?.uid) return;
@@ -59,16 +64,16 @@ export default function AssemblerHomePage() {
         setIsLoading(false);
       }
     }
-    load();
+    void load();
   }, [router, user]);
 
   if (user === undefined || isUserLoading || isLoading) {
     return <Loader />;
   }
 
-  if (!appUser?.roles.includes('assembler')) {
+  if (!canAccessRoles(appUser?.roles, ['assembler'])) {
     return (
-      <Flex minH="100vh" align="center" justify="center" bg="gray.50" p={4}>
+      <Flex minH="100vh" align="center" justify="center" bg="app.canvas" p={4}>
         <Text fontWeight="700">Acesso restrito a montadores.</Text>
       </Flex>
     );
@@ -81,88 +86,99 @@ export default function AssemblerHomePage() {
       <Head>
         <title>Montador | JRM Compensados</title>
       </Head>
-      <Box minH="100vh" bg="gray.50" p={{ base: 4, md: 8 }}>
+      <Dashboard>
+        <Header pageTitle="Minha montagem" />
         <VStack align="stretch" gap={5} maxW="980px" mx="auto">
-          <Box>
-            <Heading as="h1" fontSize={{ base: '2xl', md: '3xl' }}>
+          <VStack align="stretch" gap={1}>
+            <Heading as="h1" fontSize={{ base: '2xl', md: '3xl' }} fontWeight="600">
               Minha montagem
             </Heading>
-            <Text color="gray.600">Itens atribuídos para execução.</Text>
-          </Box>
+            <Text color="app.textSecondary">Itens atribuídos para execução.</Text>
+          </VStack>
 
           {error ? (
-            <Box bg="red.50" borderRadius="8px" p={4}>
+            <AppCard bg="red.50" borderColor="red.200">
               <Text color="red.700">{error}</Text>
-            </Box>
+            </AppCard>
           ) : null}
 
-          <SimpleGrid columns={{ base: 1, md: 2 }} gap={4}>
-            {orderedAssignments.map(assignment => (
-              <Box
-                key={assignment.id}
-                bg="white"
-                border="1px solid"
-                borderColor="gray.100"
-                borderRadius="8px"
-                boxShadow="sm"
-                p={4}
-              >
+          {orderedAssignments.length === 0 ? (
+            <AppCard>
+              <EmptyState
+                icon={FiClipboard}
+                title="Nenhum item atribuído"
+                description="Os itens liberados para montagem aparecem aqui, ordenados por prazo."
+              />
+            </AppCard>
+          ) : (
+            <SimpleGrid columns={{ base: 1, md: 2 }} gap={4}>
+              {orderedAssignments.map(assignment => (
+                <AppCard key={assignment.id} interactive>
                 <VStack align="stretch" gap={3}>
                   <Flex justify="space-between" gap={3}>
-                    <Box>
-                      <Text fontSize="lg" fontWeight="900">
+                    <VStack align="stretch" gap={1}>
+                      <Text fontSize="lg" fontWeight="600" color="app.text">
                         {assignment.customerName ?? 'Cliente'}
                       </Text>
-                      <Text color="gray.600">
+                      <Text color="app.textSecondary">
                         {assignment.itemEnvironment ?? 'Ambiente'}
                       </Text>
-                    </Box>
-                    {isLate(assignment) ? (
-                      <Badge colorPalette="red">Atrasado</Badge>
-                    ) : (
-                      <Badge colorPalette="green">No prazo</Badge>
-                    )}
+                    </VStack>
+                    <StatusPill
+                      palette={isLate(assignment) ? 'red' : 'green'}
+                      label={isLate(assignment) ? 'Atrasado' : 'No prazo'}
+                    />
                   </Flex>
 
-                  <Text fontWeight="700">
+                  <Text fontWeight="600" color="app.text">
                     {assignment.itemName ?? 'Item de montagem'}
                   </Text>
                   <Flex justify="space-between" gap={3}>
-                    <Text color="gray.600">Status</Text>
-                    <Text fontWeight="700">{assignment.itemStatus}</Text>
+                    <Text color="app.textSecondary">Status</Text>
+                    <Text fontWeight="600" color="app.text">
+                      {assignment.itemStatus}
+                    </Text>
                   </Flex>
                   <Flex justify="space-between" gap={3}>
-                    <Text color="gray.600">Prazo</Text>
-                    <Text fontWeight="700">
+                    <Text color="app.textSecondary">Prazo</Text>
+                    <Text fontWeight="600" color="app.text" style={{ fontVariantNumeric: 'tabular-nums' }}>
                       {assignment.dueAt
                         ? assignment.dueAt.toDate().toLocaleDateString('pt-BR')
                         : 'Sem prazo'}
                     </Text>
                   </Flex>
                   <Flex justify="space-between" gap={3}>
-                    <Text color="gray.600">A receber</Text>
-                    <Text fontWeight="900">
+                    <Text color="app.textSecondary">A receber</Text>
+                    <Text
+                      fontWeight="600"
+                      color="app.text"
+                      style={{ fontVariantNumeric: 'tabular-nums' }}
+                    >
                       {formatCurrency(assignment.amountToReceive)}
                     </Text>
                   </Flex>
                   <Button
-                    bgColor="orange.500"
+                    bg="app.ink"
                     color="white"
-                    _hover={{ bgColor: 'orange.400' }}
-                    onClick={() =>
-                      router.push(
+                    rounded="lg"
+                    fontWeight="600"
+                    _hover={{ bg: 'app.inkHover' }}
+                    _focusVisible={{ shadow: 'focus', outline: 'none' }}
+                    onClick={() => {
+                      void router.push(
                         `/montador/item/${assignment.projectId}/${assignment.itemId}`,
-                      )
-                    }
+                      );
+                    }}
                   >
                     Abrir item
                   </Button>
                 </VStack>
-              </Box>
-            ))}
-          </SimpleGrid>
+                </AppCard>
+              ))}
+            </SimpleGrid>
+          )}
         </VStack>
-      </Box>
+      </Dashboard>
     </>
   );
 }

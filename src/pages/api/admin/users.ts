@@ -6,7 +6,13 @@ import { userPath } from '@/services/projects/paths';
 import { AppUser, UserRole } from '@/types/projects';
 import { toE164BR } from '@/utils/phone';
 
-const ALL_ROLES: UserRole[] = ['admin', 'seller', 'designer', 'assembler'];
+const ALL_ROLES: UserRole[] = [
+  'admin',
+  'seller',
+  'designer',
+  'assembler',
+  'woodworker',
+];
 
 function isValidRoles(roles: unknown): roles is UserRole[] {
   return (

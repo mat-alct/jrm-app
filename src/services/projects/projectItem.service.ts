@@ -18,6 +18,14 @@ import {
   projectItemPath,
   projectItemsPath,
 } from './paths';
+import {
+  createE2EProjectItem,
+  E2E_MOCKS_ENABLED,
+  getE2EProjectItem,
+  listE2EItemStatusHistory,
+  listE2EProjectItems,
+  updateE2EProjectItem,
+} from './e2eMockStore';
 import { recalculateProjectSummary } from './summary';
 
 export interface CreateProjectItemInput {
@@ -52,6 +60,9 @@ export async function createProjectItem(
   createdBy: string,
 ): Promise<string> {
   assertCreateProjectItemInput(input);
+  if (E2E_MOCKS_ENABLED) {
+    return createE2EProjectItem(projectId, input);
+  }
 
   const now = Timestamp.now();
   const itemRef = doc(collection(db, projectItemsPath(projectId)));
@@ -83,6 +94,11 @@ export async function updateProjectItem(
   updates: UpdateProjectItemInput,
   updatedBy: string,
 ): Promise<void> {
+  if (E2E_MOCKS_ENABLED) {
+    await updateE2EProjectItem(projectId, itemId, updates, updatedBy);
+    return;
+  }
+
   await updateDoc(doc(db, projectItemPath(projectId, itemId)), {
     ...updates,
     updatedAt: Timestamp.now(),
@@ -96,6 +112,10 @@ export async function getProjectItem(
   projectId: string,
   itemId: string,
 ): Promise<ProjectItem | null> {
+  if (E2E_MOCKS_ENABLED) {
+    return getE2EProjectItem(projectId, itemId);
+  }
+
   const snap = await getDoc(doc(db, projectItemPath(projectId, itemId)));
   if (!snap.exists()) return null;
 
@@ -105,6 +125,10 @@ export async function getProjectItem(
 export async function listProjectItems(
   projectId: string,
 ): Promise<ProjectItem[]> {
+  if (E2E_MOCKS_ENABLED) {
+    return listE2EProjectItems(projectId);
+  }
+
   const snap = await getDocs(
     query(collection(db, projectItemsPath(projectId)), orderBy('createdAt')),
   );
@@ -115,6 +139,10 @@ export async function listItemStatusHistory(
   projectId: string,
   itemId: string,
 ): Promise<StatusHistory[]> {
+  if (E2E_MOCKS_ENABLED) {
+    return listE2EItemStatusHistory(projectId, itemId);
+  }
+
   const snap = await getDocs(
     collection(db, itemStatusHistoryPath(projectId, itemId)),
   );

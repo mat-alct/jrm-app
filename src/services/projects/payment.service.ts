@@ -21,6 +21,7 @@ import {
 } from '@/types/projects';
 
 import { db, storage } from '../firebase';
+import { E2E_MOCKS_ENABLED, listE2EAssemblerPayments } from './e2eMockStore';
 import {
   ASSEMBLER_ASSIGNMENTS_SUBCOLLECTION,
   itemAssemblerAssignmentPath,
@@ -151,6 +152,10 @@ export async function listPendingAssemblerAssignments(): Promise<
 export async function listAssemblerPayments(
   assemblerId?: string,
 ): Promise<AssemblerPayment[]> {
+  if (E2E_MOCKS_ENABLED) {
+    return listE2EAssemblerPayments(assemblerId);
+  }
+
   const paymentsQuery = assemblerId
     ? query(
         collection(db, PAYMENTS_COLLECTION),

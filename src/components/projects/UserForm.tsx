@@ -33,6 +33,7 @@ const ROLE_OPTIONS: { value: UserRole; label: string }[] = [
   { value: 'seller', label: 'Vendedor' },
   { value: 'designer', label: 'Desenhista' },
   { value: 'assembler', label: 'Montador' },
+  { value: 'woodworker', label: 'Marceneiro' },
 ];
 
 export const UserForm: React.FC<UserFormProps> = ({

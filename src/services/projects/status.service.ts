@@ -24,6 +24,7 @@ import {
   projectPath,
 } from './paths';
 import { recalculateProjectSummary } from './summary';
+import { E2E_MOCKS_ENABLED, updateE2EItemStatus } from './e2eMockStore';
 
 export interface StatusActor {
   uid: string;
@@ -105,6 +106,11 @@ export async function updateItemStatus(
   actor: StatusActor,
   note?: string,
 ): Promise<void> {
+  if (E2E_MOCKS_ENABLED) {
+    await updateE2EItemStatus(projectId, itemId, next, actor);
+    return;
+  }
+
   const itemRef = doc(db, projectItemPath(projectId, itemId));
   const itemSnap = await getDoc(itemRef);
   if (!itemSnap.exists()) {

@@ -87,9 +87,12 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       return res.status(401).json({ error: 'Credenciais invalidas.' });
     }
 
+    // Emitida antes da escrita: se o segredo de sessao estiver ausente, o
+    // request falha sem ter zerado as tentativas do projeto.
+    const session = issueClientSession(publicId);
+
     await projectSnap.ref.update({ ...resetClientAccessAttempts() });
 
-    const session = issueClientSession(publicId);
     res.setHeader(
       'Set-Cookie',
       serializeClientSessionCookie(session.token, session.expiresAt),

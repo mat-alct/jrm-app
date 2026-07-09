@@ -9,7 +9,7 @@ import { ClientProjectDTO } from '@/types/projects';
 
 async function fetchClientProject(): Promise<ClientProjectDTO> {
   const response = await fetch('/api/client-access/project');
-  const data = await response.json();
+  const data = (await response.json()) as ClientProjectDTO & { error?: string };
   if (!response.ok) {
     throw new Error(data.error ?? 'Nao foi possivel carregar o projeto.');
   }
@@ -40,7 +40,7 @@ export default function ClientPortalPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ publicId, accessCode }),
       });
-      const data = await response.json();
+      const data = (await response.json()) as { error?: string };
       if (!response.ok) {
         throw new Error(data.error ?? 'Senha incorreta.');
       }
@@ -63,7 +63,7 @@ export default function ClientPortalPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body ?? {}),
       });
-      const data = await response.json();
+      const data = (await response.json()) as { error?: string };
       if (!response.ok) {
         throw new Error(data.error ?? 'Nao foi possivel executar a acao.');
       }
@@ -95,7 +95,14 @@ export default function ClientPortalPage() {
           <HStack justify="space-between" gap={3} wrap="wrap">
             <Button
               variant="outline"
-              onClick={() => router.push(`/cliente/${publicId}/acompanhar`)}
+              borderColor="app.borderStrong"
+              color="app.text"
+              rounded="lg"
+              _hover={{ bg: 'app.sunken' }}
+              _focusVisible={{ shadow: 'focus', outline: 'none' }}
+              onClick={() => {
+                void router.push(`/cliente/${publicId}/acompanhar`);
+              }}
             >
               Acompanhar andamento
             </Button>
@@ -141,7 +148,7 @@ export default function ClientPortalPage() {
               runAction('/api/client-access/request-change', { itemId })
             }
           />
-          <Text color="gray.600" fontSize="sm">
+          <Text color="app.textSecondary" fontSize="sm">
             Após aprovar um item, recusas e alterações passam a ser tratadas pela
             equipe interna.
           </Text>

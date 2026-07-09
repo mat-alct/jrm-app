@@ -14,6 +14,7 @@ import {
   UserRole,
 } from '@/types/projects';
 
+import { inferAttachmentFileKind } from '../../utils/projects/attachments';
 import { canViewAttachment } from '../../utils/projects/permissions';
 import { db, storage } from '../firebase';
 import {
@@ -22,6 +23,11 @@ import {
   projectAttachmentsPath,
   projectAttachmentStoragePath,
 } from './paths';
+import {
+  E2E_MOCKS_ENABLED,
+  listE2EAttachments,
+  uploadE2EAttachment,
+} from './e2eMockStore';
 
 export function sanitizeFileName(fileName: string): string {
   return fileName
@@ -72,15 +78,29 @@ export async function uploadAttachment({
   uploadedByName,
   uploadedByRole,
 }: UploadAttachmentParams): Promise<Attachment> {
+  if (E2E_MOCKS_ENABLED) {
+    return uploadE2EAttachment({
+      projectId,
+      itemId,
+      file,
+      category,
+      visibility,
+      uploadedBy,
+      uploadedByName,
+      uploadedByRole,
+    });
+  }
+
   const attachmentId = v4();
   const fileName = sanitizeFileName(file.name);
+  const mimeType = file.type || 'application/octet-stream';
 
   const storagePath = itemId
     ? itemAttachmentStoragePath(projectId, itemId, category, attachmentId, fileName)
     : projectAttachmentStoragePath(projectId, attachmentId, fileName);
 
   const storageRef = ref(storage, storagePath);
-  await uploadBytes(storageRef, file, { contentType: file.type });
+  await uploadBytes(storageRef, file, { contentType: mimeType });
   const downloadUrl = await getDownloadURL(storageRef);
 
   const attachment: Attachment = {
@@ -91,8 +111,9 @@ export async function uploadAttachment({
     originalFileName: file.name,
     storagePath,
     downloadUrl,
-    mimeType: file.type,
+    mimeType,
     sizeBytes: file.size,
+    fileKind: inferAttachmentFileKind(file),
     category,
     visibility,
     uploadedBy,
@@ -115,6 +136,10 @@ export async function listAttachments(
   projectId: string,
   itemId?: string,
 ): Promise<Attachment[]> {
+  if (E2E_MOCKS_ENABLED) {
+    return listE2EAttachments(projectId, itemId);
+  }
+
   const collectionPath = itemId
     ? itemAttachmentsPath(projectId, itemId)
     : projectAttachmentsPath(projectId);

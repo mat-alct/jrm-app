@@ -1,7 +1,11 @@
-import { Badge, Box, HStack, Text, VStack } from '@chakra-ui/react';
+import { HStack, Text, VStack } from '@chakra-ui/react';
 import Link from 'next/link';
 import React from 'react';
+import { FiPenTool } from 'react-icons/fi';
 
+import { AppCard } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/empty-state';
+import { StatusPill } from '@/components/ui/status-pill';
 import { ProjectItem } from '@/types/projects';
 import { isDelayed } from '@/utils/projects/delay';
 
@@ -23,9 +27,13 @@ export const DesignerQueue: React.FC<DesignerQueueProps> = ({ items }) => {
 
   if (sorted.length === 0) {
     return (
-      <Text color="gray.500" fontSize="sm">
-        Nenhum item na sua fila no momento.
-      </Text>
+      <AppCard>
+        <EmptyState
+          icon={FiPenTool}
+          title="Nenhum item na sua fila no momento."
+          description="Quando um item entrar em desenho, ele aparece aqui."
+        />
+      </AppCard>
     );
   }
 
@@ -36,31 +44,26 @@ export const DesignerQueue: React.FC<DesignerQueueProps> = ({ items }) => {
           key={item.id}
           href={`/projetos/${item.projectId}/itens/${item.id}`}
         >
-          <Box
-            borderWidth="1px"
-            borderColor={
-              item.status === 'alteracao_solicitada' ? 'orange.400' : 'gray.200'
-            }
-            bg={item.status === 'alteracao_solicitada' ? 'orange.50' : 'white'}
-            borderRadius="md"
-            p={4}
-            _hover={{ borderColor: 'orange.300' }}
+          <AppCard
+            interactive
+            borderColor={item.status === 'alteracao_solicitada' ? 'brand.200' : 'app.border'}
+            bg={item.status === 'alteracao_solicitada' ? 'app.accentSubtle' : 'app.surface'}
           >
             <HStack justify="space-between" wrap="wrap" gap={2}>
-              <Box>
-                <Text fontWeight="semibold">{item.name}</Text>
-                <Text fontSize="sm" color="gray.500">
+              <VStack align="stretch" gap={1}>
+                <Text fontWeight="600" color="app.text">{item.name}</Text>
+                <Text fontSize="sm" color="app.textMuted">
                   {item.environment}
                 </Text>
-              </Box>
+              </VStack>
               <HStack gap={2}>
                 {item.status === 'alteracao_solicitada' && (
-                  <Badge colorScheme="orange">Alteração solicitada</Badge>
+                  <StatusPill palette="orange" label="Alteração solicitada" />
                 )}
-                {isDelayed(item) && <Badge colorScheme="red">Atrasado</Badge>}
+                {isDelayed(item) && <StatusPill palette="red" label="Atrasado" />}
               </HStack>
             </HStack>
-          </Box>
+          </AppCard>
         </Link>
       ))}
     </VStack>

@@ -1,7 +1,10 @@
 import { Box, Table, Text } from '@chakra-ui/react';
 import Link from 'next/link';
 import React from 'react';
+import { FiClock } from 'react-icons/fi';
 
+import { AppCard } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/empty-state';
 import { Project, ProjectItem } from '@/types/projects';
 import { INTERNAL_STATUS_LABELS } from '@/utils/projects/status';
 
@@ -16,45 +19,91 @@ export const DelayedItemsTable: React.FC<DelayedItemsTableProps> = ({
 }) => {
   if (items.length === 0) {
     return (
-      <Text color="gray.500" fontSize="sm">
-        Nenhum item atrasado.
-      </Text>
+      <AppCard>
+        <EmptyState
+          icon={FiClock}
+          title="Nenhum item atrasado."
+          description="Os itens fora do prazo aparecem nesta lista."
+        />
+      </AppCard>
     );
   }
 
   return (
-    <Box overflowX="auto">
-      <Table.Root variant="outline" colorScheme="orange" whiteSpace="nowrap">
-        <Table.Header>
-          <Table.Row>
-            <Table.ColumnHeader>Cliente</Table.ColumnHeader>
-            <Table.ColumnHeader>Item</Table.ColumnHeader>
-            <Table.ColumnHeader>Status</Table.ColumnHeader>
-            <Table.ColumnHeader>Prazo</Table.ColumnHeader>
-          </Table.Row>
-        </Table.Header>
-        <Table.Body>
-          {items.map(item => {
-            const project = projectsById[item.projectId];
-            return (
-              <Table.Row key={item.id}>
-                <Table.Cell>
-                  <Link href={`/projetos/${item.projectId}/itens/${item.id}`}>
-                    {project?.customerName ?? '—'}
-                  </Link>
-                </Table.Cell>
-                <Table.Cell>{item.name}</Table.Cell>
-                <Table.Cell>{INTERNAL_STATUS_LABELS[item.status]}</Table.Cell>
-                <Table.Cell>
-                  {item.deadlineCurrent
-                    ? item.deadlineCurrent.toDate().toLocaleDateString('pt-BR')
-                    : '—'}
-                </Table.Cell>
-              </Table.Row>
-            );
-          })}
-        </Table.Body>
-      </Table.Root>
-    </Box>
+    <AppCard>
+      <Box overflowX="auto">
+        <Table.Root whiteSpace="nowrap">
+          <Table.Header>
+            <Table.Row>
+              <Table.ColumnHeader
+                bg="app.sunken"
+                color="app.textMuted"
+                fontSize="11px"
+                fontWeight="600"
+                textTransform="uppercase"
+                letterSpacing="0.05em"
+              >
+                Cliente
+              </Table.ColumnHeader>
+              <Table.ColumnHeader
+                bg="app.sunken"
+                color="app.textMuted"
+                fontSize="11px"
+                fontWeight="600"
+                textTransform="uppercase"
+                letterSpacing="0.05em"
+              >
+                Item
+              </Table.ColumnHeader>
+              <Table.ColumnHeader
+                bg="app.sunken"
+                color="app.textMuted"
+                fontSize="11px"
+                fontWeight="600"
+                textTransform="uppercase"
+                letterSpacing="0.05em"
+              >
+                Status
+              </Table.ColumnHeader>
+              <Table.ColumnHeader
+                bg="app.sunken"
+                color="app.textMuted"
+                fontSize="11px"
+                fontWeight="600"
+                textTransform="uppercase"
+                letterSpacing="0.05em"
+              >
+                Prazo
+              </Table.ColumnHeader>
+            </Table.Row>
+          </Table.Header>
+          <Table.Body>
+            {items.map(item => {
+              const project = projectsById[item.projectId];
+              return (
+                <Table.Row key={item.id} borderColor="app.border">
+                  <Table.Cell>
+                    <Link href={`/projetos/${item.projectId}/itens/${item.id}`}>
+                      <Text color="app.text" fontWeight="500">
+                        {project?.customerName ?? '—'}
+                      </Text>
+                    </Link>
+                  </Table.Cell>
+                  <Table.Cell color="app.textSecondary">{item.name}</Table.Cell>
+                  <Table.Cell color="app.textSecondary">
+                    {INTERNAL_STATUS_LABELS[item.status]}
+                  </Table.Cell>
+                  <Table.Cell color="red.600" fontWeight="600">
+                    {item.deadlineCurrent
+                      ? item.deadlineCurrent.toDate().toLocaleDateString('pt-BR')
+                      : '—'}
+                  </Table.Cell>
+                </Table.Row>
+              );
+            })}
+          </Table.Body>
+        </Table.Root>
+      </Box>
+    </AppCard>
   );
 };

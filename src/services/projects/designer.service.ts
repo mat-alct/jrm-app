@@ -14,6 +14,11 @@ import { ProjectItem, ProjectItemVersion } from '@/types/projects';
 
 import { uploadAttachment } from './attachment.service';
 import { db } from '../firebase';
+import {
+  E2E_MOCKS_ENABLED,
+  listE2EDesignerQueue,
+  listE2EItemVersions,
+} from './e2eMockStore';
 import { itemVersionsPath } from './paths';
 import { updateProjectItem } from './projectItem.service';
 import { StatusActor, updateItemStatus } from './status.service';
@@ -21,6 +26,10 @@ import { StatusActor, updateItemStatus } from './status.service';
 export async function getDesignerQueue(
   designerId: string,
 ): Promise<ProjectItem[]> {
+  if (E2E_MOCKS_ENABLED) {
+    return listE2EDesignerQueue(designerId);
+  }
+
   const snap = await getDocs(
     query(collectionGroup(db, 'items'), where('designerId', '==', designerId)),
   );
@@ -45,6 +54,10 @@ export async function listItemVersions(
   projectId: string,
   itemId: string,
 ): Promise<ProjectItemVersion[]> {
+  if (E2E_MOCKS_ENABLED) {
+    return listE2EItemVersions();
+  }
+
   const snap = await getDocs(
     collection(db, itemVersionsPath(projectId, itemId)),
   );

@@ -30,6 +30,12 @@ import {
   projectPath,
 } from './paths';
 import { updateItemStatus } from './status.service';
+import {
+  assignE2EAssemblers,
+  E2E_MOCKS_ENABLED,
+  listE2EAssemblerAssignments,
+  listE2EItemAssemblerAssignments,
+} from './e2eMockStore';
 
 export interface AssignAssemblerInput {
   assemblerId: string;
@@ -103,6 +109,10 @@ export async function assignAssemblers(
   assignments: AssignAssemblerInput[],
   actor: Pick<AppUser, 'id' | 'name' | 'roles'>,
 ): Promise<AssemblerAssignment[]> {
+  if (E2E_MOCKS_ENABLED) {
+    return assignE2EAssemblers(projectId, itemId, assignments, actor);
+  }
+
   assertAdmin(actor.roles);
   if (assignments.length === 0) {
     throw new AssemblerServiceError('Informe ao menos um montador.');
@@ -169,6 +179,14 @@ export async function assignAssemblers(
 export async function getAssemblerAssignments(
   assemblerId: string,
 ): Promise<AssemblerAssignment[]> {
+  if (E2E_MOCKS_ENABLED) {
+    return sortAssignmentsByDueDate(
+      (await listE2EAssemblerAssignments()).filter(
+        assignment => assignment.assemblerId === assemblerId,
+      ),
+    );
+  }
+
   const snap = await getDocs(
     query(
       collectionGroup(db, ASSEMBLER_ASSIGNMENTS_SUBCOLLECTION),
@@ -224,6 +242,10 @@ export async function listItemAssemblerAssignments(
   projectId: string,
   itemId: string,
 ): Promise<AssemblerAssignment[]> {
+  if (E2E_MOCKS_ENABLED) {
+    return listE2EItemAssemblerAssignments(projectId, itemId);
+  }
+
   const snap = await getDocs(collection(db, itemAssemblerAssignmentsPath(projectId, itemId)));
   return snap.docs.map(d => ({ id: d.id, ...d.data() }) as AssemblerAssignment);
 }

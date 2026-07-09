@@ -5,7 +5,7 @@ import React from 'react';
 import { DesignerQueue } from '@/components/designer/DesignerQueue';
 import { useDesignerQueue } from '@/services/projects/designer.service';
 import { useAppUser } from '@/services/projects/users.service';
-import { hasRole } from '@/utils/projects/permissions';
+import { canAccessRoles } from '@/utils/projects/permissions';
 
 import { Dashboard } from '../../components/Dashboard';
 import { Header } from '../../components/Dashboard/Content/Header';
@@ -19,12 +19,14 @@ const DesenhistaFila = () => {
   const { data: items, isLoading, isFetching } = useDesignerQueue(user?.uid);
 
   React.useEffect(() => {
-    if (user === null) router.push('/login');
+    if (user === null) {
+      void router.push('/login');
+    }
   }, [user, router]);
 
   React.useEffect(() => {
-    if (!isLoadingAppUser && appUser && !hasRole(appUser.roles, 'designer')) {
-      router.push('/');
+    if (!isLoadingAppUser && appUser && !canAccessRoles(appUser.roles, ['designer'])) {
+      void router.push('/');
     }
   }, [appUser, isLoadingAppUser, router]);
 

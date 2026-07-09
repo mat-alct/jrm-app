@@ -1,6 +1,12 @@
 import * as Yup from 'yup';
 
-const ROLE_VALUES = ['admin', 'seller', 'designer', 'assembler'] as const;
+const ROLE_VALUES = [
+  'admin',
+  'seller',
+  'designer',
+  'assembler',
+  'woodworker',
+] as const;
 
 export const createUserSchema = Yup.object().shape({
   name: Yup.string().required('Nome é obrigatório'),

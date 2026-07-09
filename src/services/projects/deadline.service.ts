@@ -4,6 +4,7 @@ import { doc, getDoc, Timestamp } from 'firebase/firestore';
 import { DeadlineDefaults, ProjectItemStatus } from '@/types/projects';
 
 import { db } from '../firebase';
+import { E2E_MOCKS_ENABLED } from './e2eMockStore';
 import { deadlineDefaultsPath } from './paths';
 
 export const FALLBACK_DEADLINE_DEFAULTS: Omit<
@@ -43,6 +44,8 @@ export function computeDeadline(
 export async function getDeadlineDefaults(): Promise<
   Omit<DeadlineDefaults, 'updatedAt' | 'updatedBy'>
 > {
+  if (E2E_MOCKS_ENABLED) return FALLBACK_DEADLINE_DEFAULTS;
+
   const snap = await getDoc(doc(db, deadlineDefaultsPath()));
   if (!snap.exists()) return FALLBACK_DEADLINE_DEFAULTS;
 
