@@ -29,6 +29,7 @@ import {
   projectItemPath,
   projectPath,
 } from './paths';
+import { updateItemStatus } from './status.service';
 
 export interface AssignAssemblerInput {
   assemblerId: string;
@@ -153,6 +154,14 @@ export async function assignAssemblers(
       ),
     ),
   );
+
+  if (item.status === 'aguardando_atribuicao_montador') {
+    await updateItemStatus(projectId, itemId, 'em_producao', {
+      uid: actor.id,
+      name: actor.name,
+      role: 'admin',
+    });
+  }
 
   return createdAssignments;
 }

@@ -23,7 +23,9 @@ export const AdminDashboardCards: React.FC<AdminDashboardCardsProps> = ({
     { label: 'Projetos em aberto', value: counts.projetosEmAberto },
     { label: 'Itens atrasados', value: counts.atrasados },
     { label: 'Aguardando desenho', value: counts.aguardandoDesenho },
+    { label: 'Aguardando orçamento', value: counts.aguardandoOrcamento },
     { label: 'Aguardando aprovação', value: counts.aguardandoAprovacao },
+    { label: 'Aguardando montador', value: counts.aguardandoMontador },
     { label: 'Em produção', value: counts.emProducao },
     { label: 'Em montagem', value: counts.emMontagem },
     ...(pendingAssemblerPayments !== undefined

@@ -77,7 +77,9 @@ export interface DashboardCounts {
   projetosEmAberto: number;
   atrasados: number;
   aguardandoDesenho: number;
+  aguardandoOrcamento: number;
   aguardandoAprovacao: number;
+  aguardandoMontador: number;
   emProducao: number;
   emMontagem: number;
   totalVendidoNoMes: number;
@@ -103,8 +105,14 @@ export function computeDashboardCounts(
     atrasados: items.filter(item => isDelayed(item, now)).length,
     aguardandoDesenho: items.filter(item => item.status === 'aguardando_desenho')
       .length,
+    aguardandoOrcamento: items.filter(
+      item => item.status === 'aguardando_orcamento',
+    ).length,
     aguardandoAprovacao: items.filter(
       item => item.status === 'aguardando_aprovacao_cliente',
+    ).length,
+    aguardandoMontador: items.filter(
+      item => item.status === 'aguardando_atribuicao_montador',
     ).length,
     emProducao: items.filter(
       item => item.status === 'em_producao' || item.status === 'pronto_para_montagem',

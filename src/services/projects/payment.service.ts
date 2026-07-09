@@ -24,10 +24,13 @@ import { db, storage } from '../firebase';
 import {
   ASSEMBLER_ASSIGNMENTS_SUBCOLLECTION,
   itemAssemblerAssignmentPath,
+  itemAssemblerAssignmentsPath,
   paymentPath,
   paymentProofStoragePath,
   PAYMENTS_COLLECTION,
+  projectItemPath,
 } from './paths';
+import { updateItemStatus } from './status.service';
 
 export interface PendingByAssembler {
   assemblerId: string;
@@ -50,6 +53,42 @@ export class PaymentServiceError extends Error {
     super(message);
     this.name = 'PaymentServiceError';
   }
+}
+
+const RECEIVED_PAYMENT_STATUSES: AssemblerPaymentStatus[] = [
+  'pago',
+  'confirmado_pelo_montador',
+];
+
+async function finalizeItemIfFullyPaid(
+  projectId: string,
+  itemId: string,
+  actor: { uid: string; name?: string; role: 'admin' | 'assembler' },
+): Promise<void> {
+  const itemSnap = await getDoc(doc(db, projectItemPath(projectId, itemId)));
+  if (!itemSnap.exists()) return;
+  if (itemSnap.data()?.status !== 'aguardando_pagamento_montador') return;
+
+  const assignmentsSnap = await getDocs(
+    collection(db, itemAssemblerAssignmentsPath(projectId, itemId)),
+  );
+  const assignments = assignmentsSnap.docs.map(
+    d => d.data() as AssemblerAssignment,
+  );
+  if (
+    assignments.length === 0 ||
+    !assignments.every(assignment =>
+      RECEIVED_PAYMENT_STATUSES.includes(assignment.paymentStatus),
+    )
+  ) {
+    return;
+  }
+
+  await updateItemStatus(projectId, itemId, 'finalizado', {
+    uid: actor.uid,
+    name: actor.name,
+    role: actor.role,
+  });
 }
 
 function assertAdmin(actorRoles: AppUser['roles'] | undefined): void {
@@ -189,6 +228,12 @@ export async function createAssemblerPayment(
     updatedAt: now,
   });
 
+  await finalizeItemIfFullyPaid(params.projectId, params.itemId, {
+    uid: params.paidBy,
+    name: params.paidByName,
+    role: 'admin',
+  });
+
   return payment;
 }
 
@@ -232,4 +277,9 @@ export async function confirmAssemblerPayment(
       updatedAt: now,
     },
   );
+
+  await finalizeItemIfFullyPaid(payment.projectId, payment.itemId, {
+    uid: actor.id,
+    role: 'assembler',
+  });
 }

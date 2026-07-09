@@ -46,7 +46,9 @@ const mockedUpdateDoc = updateDoc as jest.Mock;
 describe('services/projects/assembler.service', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockedDoc.mockImplementation((_, path: string) => path);
+    mockedDoc.mockImplementation((_, path?: string) =>
+      path ? path : { id: 'generated-id' },
+    );
     mockedSetDoc.mockResolvedValue(undefined);
     mockedUpdateDoc.mockResolvedValue(undefined);
   });
@@ -105,7 +107,7 @@ describe('services/projects/assembler.service', () => {
         data: () => ({
           name: 'Armario',
           environment: 'Quarto',
-          status: 'aguardando_separacao_materiais',
+          status: 'em_producao',
           deadlineCurrent: Timestamp.fromDate(new Date('2026-02-01T12:00:00Z')),
         }),
       });
@@ -128,12 +130,53 @@ describe('services/projects/assembler.service', () => {
       'projects/project-1/items/item-1/assemblerAssignments/assembler-1',
       expect.objectContaining({
         assemblerId: 'assembler-1',
+        assignedByName: 'Admin',
         customerName: 'Cliente Teste',
         itemName: 'Armario',
         amountToReceive: 500,
         paymentStatus: 'nao_liberado',
         assignedBy: 'admin-1',
       }),
+    );
+  });
+
+  it('moves the item from aguardando_atribuicao_montador to em_producao when assigning', async () => {
+    mockedGetDoc
+      .mockResolvedValueOnce({
+        id: 'project-1',
+        exists: () => true,
+        data: () => ({
+          customerName: 'Cliente Teste',
+          customerPhone: '11999999999',
+          customerAddress: 'Rua Teste, 123',
+        }),
+      })
+      .mockResolvedValueOnce({
+        id: 'item-1',
+        exists: () => true,
+        data: () => ({
+          name: 'Armario',
+          environment: 'Quarto',
+          status: 'aguardando_atribuicao_montador',
+        }),
+      })
+      .mockResolvedValueOnce({
+        id: 'item-1',
+        exists: () => true,
+        data: () => ({ status: 'aguardando_atribuicao_montador' }),
+      });
+    mockedGetDocs.mockResolvedValue({ empty: true, docs: [] });
+
+    await assignAssemblers(
+      'project-1',
+      'item-1',
+      [{ assemblerId: 'assembler-1', amountToReceive: 500 }],
+      { id: 'admin-1', name: 'Admin', roles: ['admin'] },
+    );
+
+    expect(mockedUpdateDoc).toHaveBeenCalledWith(
+      'projects/project-1/items/item-1',
+      expect.objectContaining({ status: 'em_producao' }),
     );
   });
 

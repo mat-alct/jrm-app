@@ -6,29 +6,11 @@ import { canAssemblerTransition } from '@/services/projects/assembler.service';
 import { ApiAuthError, requireInternalUser } from '@/services/projects/internalAuth.server';
 import {
   itemAssemblerAssignmentPath,
-  itemAssemblerAssignmentsPath,
   itemStatusHistoryPath,
   projectItemPath,
 } from '@/services/projects/paths';
 import { recalculateProjectSummaryAdmin } from '@/services/projects/statusAdmin.service';
 import { ProjectItem, ProjectItemStatus } from '@/types/projects';
-
-async function releasePendingAssignments(
-  projectId: string,
-  itemId: string,
-  now: AdminTimestamp,
-) {
-  const assignmentsSnap = await adminDb
-    .collection(itemAssemblerAssignmentsPath(projectId, itemId))
-    .where('paymentStatus', '==', 'nao_liberado')
-    .get();
-
-  await Promise.all(
-    assignmentsSnap.docs.map(doc =>
-      doc.ref.update({ paymentStatus: 'pendente', updatedAt: now }),
-    ),
-  );
-}
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -89,14 +71,11 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       fromStatus: item.status,
       toStatus: nextStatus,
       changedBy: user.uid,
+      ...(user.name ? { changedByName: user.name } : {}),
       changedByRole: 'assembler',
       note: null,
       createdAt: now,
     });
-
-    if (nextStatus === 'montagem_concluida') {
-      await releasePendingAssignments(projectId, itemId, now);
-    }
 
     await recalculateProjectSummaryAdmin(projectId);
     return res.status(200).json({ status: true });

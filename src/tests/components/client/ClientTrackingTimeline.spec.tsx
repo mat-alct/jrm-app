@@ -26,13 +26,13 @@ describe('ClientTrackingTimeline', () => {
 
     const budget = screen.getByText('Orçamento em preparação');
     const production = screen.getByText('Em produção');
-    const transport = screen.getByText('Pronto para transporte');
+    const finished = screen.getByText('Finalizado');
 
     expect(
       budget.compareDocumentPosition(production) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
     expect(
-      production.compareDocumentPosition(transport) &
+      production.compareDocumentPosition(finished) &
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
     expect(screen.getByLabelText('Etapa atual')).toBeInTheDocument();

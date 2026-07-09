@@ -209,10 +209,14 @@ const ProjectItemDetail = () => {
   const canSeePrice = admin || !hasRole(appUser?.roles, 'designer');
   // Vendedor acompanha status, mas quem edita e admin/desenhista/montador (spec secao 4).
   const availableTransitions = canEditItemStatus(appUser?.roles)
-    ? ALL_STATUSES.filter(status =>
-        canTransition(item.status, status, { isAdmin: admin }),
+    ? ALL_STATUSES.filter(
+        status =>
+          status !== 'aguardando_pagamento_montador' &&
+          canTransition(item.status, status, { isAdmin: admin }),
       )
     : [];
+  const canApproveAssembly =
+    admin && item.status === 'montagem_concluida';
 
   return (
     <>
@@ -257,6 +261,19 @@ const ProjectItemDetail = () => {
                     </Button>
                   ))}
                 </HStack>
+              </Box>
+            )}
+
+            {canApproveAssembly && (
+              <Box mt={4}>
+                <Button
+                  size="sm"
+                  colorScheme="orange"
+                  loading={updateStatus.isPending}
+                  onClick={() => handleTransition('aguardando_pagamento_montador')}
+                >
+                  Aprovar montagem
+                </Button>
               </Box>
             )}
           </Box>

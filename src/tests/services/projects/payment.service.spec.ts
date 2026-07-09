@@ -1,6 +1,7 @@
 import {
   doc,
   getDoc,
+  getDocs,
   setDoc,
   Timestamp,
   updateDoc,
@@ -48,6 +49,7 @@ jest.mock('@/services/firebase', () => ({ db: {}, storage: {} }));
 
 const mockedDoc = doc as jest.Mock;
 const mockedGetDoc = getDoc as jest.Mock;
+const mockedGetDocs = getDocs as jest.Mock;
 const mockedSetDoc = setDoc as jest.Mock;
 const mockedUpdateDoc = updateDoc as jest.Mock;
 const mockedRef = ref as jest.Mock;
@@ -56,7 +58,9 @@ const mockedUploadBytes = uploadBytes as jest.Mock;
 describe('services/projects/payment.service', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockedDoc.mockImplementation((_, path: string) => path);
+    mockedDoc.mockImplementation((_, path?: string) =>
+      path ? path : { id: 'generated-id' },
+    );
     mockedRef.mockImplementation((_, path: string) => `storage:${path}`);
     mockedSetDoc.mockResolvedValue(undefined);
     mockedUpdateDoc.mockResolvedValue(undefined);
@@ -207,6 +211,94 @@ describe('services/projects/payment.service', () => {
       expect.objectContaining({
         paymentStatus: 'confirmado_pelo_montador',
       }),
+    );
+  });
+
+  it('finalizes the item once every assignment is paid', async () => {
+    const now = Timestamp.now();
+    mockedGetDoc
+      .mockResolvedValueOnce({
+        id: 'payment-1',
+        exists: () => true,
+        data: () => ({
+          projectId: 'project-1',
+          itemId: 'item-1',
+          assignmentId: 'assembler-1',
+          assemblerId: 'assembler-1',
+          amount: 700,
+          status: 'pago',
+          paidAt: now,
+          paidBy: 'admin-1',
+          createdAt: now,
+          updatedAt: now,
+        }),
+      })
+      .mockResolvedValueOnce({
+        exists: () => true,
+        data: () => ({ status: 'aguardando_pagamento_montador' }),
+      })
+      .mockResolvedValueOnce({
+        exists: () => true,
+        data: () => ({ status: 'aguardando_pagamento_montador' }),
+      });
+    mockedGetDocs
+      .mockResolvedValueOnce({
+        docs: [
+          { data: () => ({ paymentStatus: 'confirmado_pelo_montador' }) },
+          { data: () => ({ paymentStatus: 'pago' }) },
+        ],
+      })
+      .mockResolvedValue({ empty: true, docs: [] });
+
+    await confirmAssemblerPayment('payment-1', {
+      id: 'assembler-1',
+      roles: ['assembler'],
+    });
+
+    expect(mockedUpdateDoc).toHaveBeenCalledWith(
+      'projects/project-1/items/item-1',
+      expect.objectContaining({ status: 'finalizado' }),
+    );
+  });
+
+  it('does not finalize the item while some assignment is unpaid', async () => {
+    const now = Timestamp.now();
+    mockedGetDoc
+      .mockResolvedValueOnce({
+        id: 'payment-1',
+        exists: () => true,
+        data: () => ({
+          projectId: 'project-1',
+          itemId: 'item-1',
+          assignmentId: 'assembler-1',
+          assemblerId: 'assembler-1',
+          amount: 700,
+          status: 'pago',
+          paidAt: now,
+          paidBy: 'admin-1',
+          createdAt: now,
+          updatedAt: now,
+        }),
+      })
+      .mockResolvedValueOnce({
+        exists: () => true,
+        data: () => ({ status: 'aguardando_pagamento_montador' }),
+      });
+    mockedGetDocs.mockResolvedValueOnce({
+      docs: [
+        { data: () => ({ paymentStatus: 'confirmado_pelo_montador' }) },
+        { data: () => ({ paymentStatus: 'pendente' }) },
+      ],
+    });
+
+    await confirmAssemblerPayment('payment-1', {
+      id: 'assembler-1',
+      roles: ['assembler'],
+    });
+
+    expect(mockedUpdateDoc).not.toHaveBeenCalledWith(
+      'projects/project-1/items/item-1',
+      expect.objectContaining({ status: 'finalizado' }),
     );
   });
 });

@@ -8,15 +8,12 @@ interface ClientTrackingTimelineProps {
 }
 
 const STEPS = [
-  'Orçamento em preparação',
+  'Projeto em preparação',
   'Projeto em desenvolvimento',
+  'Orçamento em preparação',
   'Aguardando sua aprovação',
   'Projeto aprovado',
-  'Separação de materiais',
   'Em produção',
-  'Pronto para transporte',
-  'Em transporte',
-  'Em montagem',
   'Montagem concluída',
   'Finalizado',
 ];
