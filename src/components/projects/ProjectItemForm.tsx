@@ -1,4 +1,4 @@
-import { Box, Button, Checkbox, Heading, HStack } from '@chakra-ui/react';
+import { Box, Button, Heading, HStack } from '@chakra-ui/react';
 import React from 'react';
 import { FieldError, UseFormRegister } from 'react-hook-form';
 
@@ -8,12 +8,8 @@ export interface ProjectItemFormValues {
   name: string;
   environment: string;
   material?: string;
-  finish?: string;
-  measurements?: string;
   description?: string;
   notes?: string;
-  customerPrice: number;
-  requiresDesigner: boolean;
 }
 
 export interface ProjectItemFormParentValues {
@@ -80,18 +76,6 @@ export function ProjectItemForm({
         error={itemErrors?.material}
       />
       <FormInput
-        {...register(field('finish'))}
-        name={`items.${index}.finish`}
-        label="Acabamento"
-        error={itemErrors?.finish}
-      />
-      <FormInput
-        {...register(field('measurements'))}
-        name={`items.${index}.measurements`}
-        label="Medidas"
-        error={itemErrors?.measurements}
-      />
-      <FormInput
         {...register(field('description'))}
         name={`items.${index}.description`}
         label="Descrição"
@@ -103,21 +87,6 @@ export function ProjectItemForm({
         label="Observações"
         error={itemErrors?.notes}
       />
-      <FormInput
-        {...register(field('customerPrice'), { valueAsNumber: true })}
-        name={`items.${index}.customerPrice`}
-        label="Preço"
-        type="number"
-        step="0.01"
-        error={itemErrors?.customerPrice}
-      />
-      <Checkbox.Root>
-        <Checkbox.HiddenInput
-          {...register(field('requiresDesigner'))}
-        />
-        <Checkbox.Control />
-        <Checkbox.Label>Requer desenhista</Checkbox.Label>
-      </Checkbox.Root>
     </Box>
   );
 }

@@ -25,11 +25,7 @@ export interface CreateProjectItemInput {
   environment: string;
   description?: string;
   material?: string;
-  finish?: string;
-  measurements?: string;
   notes?: string;
-  customerPrice: number;
-  requiresDesigner: boolean;
 }
 
 export type UpdateProjectItemInput = Partial<
@@ -47,9 +43,6 @@ export type UpdateProjectItemInput = Partial<
 function assertCreateProjectItemInput(input: CreateProjectItemInput): void {
   if (!input.name?.trim() || !input.environment?.trim()) {
     throw new Error('Nome e ambiente do item são obrigatórios.');
-  }
-  if (!Number.isFinite(input.customerPrice) || input.customerPrice < 0) {
-    throw new Error('Preço do item inválido.');
   }
 }
 
@@ -69,13 +62,9 @@ export async function createProjectItem(
     environment: input.environment.trim(),
     ...(input.description ? { description: input.description } : {}),
     ...(input.material ? { material: input.material } : {}),
-    ...(input.finish ? { finish: input.finish } : {}),
-    ...(input.measurements ? { measurements: input.measurements } : {}),
     ...(input.notes ? { notes: input.notes } : {}),
-    customerPrice: input.customerPrice,
     status: 'projeto_criado',
     clientApprovalStatus: 'aguardando',
-    requiresDesigner: input.requiresDesigner,
     createdAt: now,
     updatedAt: now,
     createdBy,

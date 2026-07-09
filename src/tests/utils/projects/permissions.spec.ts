@@ -37,9 +37,10 @@ describe('utils/projects/permissions', () => {
   });
 
   describe('management permissions', () => {
-    it('only admins can assign designers, assemblers, manage users', () => {
+    it('admins and sellers can assign designers; only admins assign assemblers or manage users', () => {
       expect(canAssignDesigner(['admin'])).toBe(true);
-      expect(canAssignDesigner(['seller'])).toBe(false);
+      expect(canAssignDesigner(['seller'])).toBe(true);
+      expect(canAssignDesigner(['designer'])).toBe(false);
       expect(canAssignAssembler(['admin'])).toBe(true);
       expect(canAssignAssembler(['seller'])).toBe(false);
       expect(canManageUsers(['admin'])).toBe(true);

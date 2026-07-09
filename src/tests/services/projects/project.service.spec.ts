@@ -63,25 +63,25 @@ describe('services/projects/project.service', () => {
       customerPhone: '82999999999',
       customerEmail: 'fulano@example.com',
       customerAddress: 'Rua Um, 123',
-      sellerId: 'seller-1',
     };
+    const actor = { uid: 'admin-1' };
 
     it('rejects missing required fields', async () => {
       await expect(
-        createProject({ ...validInput, customerName: '' }, 'admin-1'),
+        createProject({ ...validInput, customerName: '' }, actor),
       ).rejects.toThrow();
       expect(mockedSetDoc).not.toHaveBeenCalled();
     });
 
-    it('creates the project with zeroed summary and no client credentials yet', async () => {
-      const id = await createProject(validInput, 'admin-1');
+    it('creates the project deriving seller from the actor', async () => {
+      const id = await createProject(validInput, actor);
 
       expect(id).toBe('new-project-id');
       expect(mockedSetDoc).toHaveBeenCalledWith(
         { id: 'new-project-id' },
         expect.objectContaining({
           customerName: 'Fulano',
-          sellerId: 'seller-1',
+          sellerId: 'admin-1',
           clientAccessCodeHash: '',
           clientAccessPublicId: '',
           totalCustomerValue: 0,
@@ -92,11 +92,18 @@ describe('services/projects/project.service', () => {
       );
     });
 
-    it('omits sellerName when not provided', async () => {
-      await createProject(validInput, 'admin-1');
+    it('omits sellerName when the actor has no name', async () => {
+      await createProject(validInput, actor);
 
       const [, payload] = mockedSetDoc.mock.calls[0];
       expect(payload).not.toHaveProperty('sellerName');
+    });
+
+    it('sets sellerName from the actor name when provided', async () => {
+      await createProject(validInput, { uid: 'admin-1', name: 'Fulano Vendedor' });
+
+      const [, payload] = mockedSetDoc.mock.calls[0];
+      expect(payload).toHaveProperty('sellerName', 'Fulano Vendedor');
     });
   });
 

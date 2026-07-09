@@ -229,11 +229,11 @@ const ProjectItemDetail = () => {
             <Stack gap={1} fontSize="sm">
               <Text><b>Ambiente:</b> {item.environment}</Text>
               {item.material && <Text><b>Material:</b> {item.material}</Text>}
-              {item.finish && <Text><b>Acabamento:</b> {item.finish}</Text>}
-              {item.measurements && <Text><b>Medidas:</b> {item.measurements}</Text>}
               {item.description && <Text><b>Descrição:</b> {item.description}</Text>}
               {item.notes && <Text><b>Observações:</b> {item.notes}</Text>}
-              {canSeePrice && <Text><b>Preço:</b> {item.customerPrice}</Text>}
+              <Text color="gray.500">
+                Acabamento, medidas e preço ficam nos anexos e no orçamento do item.
+              </Text>
             </Stack>
 
             {availableTransitions.length > 0 && (
@@ -300,8 +300,7 @@ const ProjectItemDetail = () => {
             </Box>
           )}
 
-          {item.requiresDesigner && (
-            <Box bg="white" borderWidth="1px" borderColor="gray.200" borderRadius="md" p={4}>
+          <Box bg="white" borderWidth="1px" borderColor="gray.200" borderRadius="md" p={4}>
               <HStack justify="space-between" mb={3}>
                 <Heading size="md">Desenho</Heading>
                 {canAssignDesigner(appUser?.roles) && (
@@ -359,8 +358,7 @@ const ProjectItemDetail = () => {
                   ))}
                 </Stack>
               )}
-            </Box>
-          )}
+          </Box>
 
           <Box bg="white" borderWidth="1px" borderColor="gray.200" borderRadius="md" p={4}>
             <HStack justify="space-between" mb={3}>

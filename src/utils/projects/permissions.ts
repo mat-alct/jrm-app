@@ -18,7 +18,7 @@ export function canSeeAssemblerFinance(
 }
 
 export function canAssignDesigner(userRoles: UserRole[] | undefined): boolean {
-  return isAdmin(userRoles);
+  return isAdmin(userRoles) || hasRole(userRoles, 'seller');
 }
 
 export function canAssignAssembler(

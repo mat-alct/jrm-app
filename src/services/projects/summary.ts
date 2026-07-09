@@ -7,7 +7,7 @@ import { db } from '../firebase';
 import { projectItemsPath, projectPath } from './paths';
 
 export function computeItemSummary(
-  items: Pick<ProjectItem, 'status' | 'deadlineCurrent' | 'customerPrice'>[],
+  items: Pick<ProjectItem, 'status' | 'deadlineCurrent'>[],
   now: Date = new Date(),
 ): ProjectItemSummary {
   return items.reduce<ProjectItemSummary>(

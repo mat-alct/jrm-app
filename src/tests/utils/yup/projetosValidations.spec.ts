@@ -3,8 +3,6 @@ import { createProjectSchema } from '@/utils/yup/projetosValidations';
 const validItem = {
   name: 'Cozinha',
   environment: 'Cozinha',
-  customerPrice: 1000,
-  requiresDesigner: false,
 };
 
 const validProject = {
@@ -12,7 +10,6 @@ const validProject = {
   customerPhone: '82999999999',
   customerEmail: 'fulano@example.com',
   customerAddress: 'Rua Um, 123',
-  sellerId: 'seller-1',
   items: [validItem],
 };
 
@@ -44,11 +41,11 @@ describe('utils/yup/projetosValidations', () => {
     ).rejects.toThrow();
   });
 
-  it('rejects an item with a negative price', async () => {
+  it('rejects an item missing name or environment', async () => {
     await expect(
       createProjectSchema.validate({
         ...validProject,
-        items: [{ ...validItem, customerPrice: -1 }],
+        items: [{ ...validItem, name: '' }],
       }),
     ).rejects.toThrow();
   });

@@ -10,11 +10,9 @@ import {
   ProjectItemForm,
   ProjectItemFormValues,
 } from '@/components/projects/ProjectItemForm';
-import { useUsersByRole } from '@/services/projects/adminUsers';
 import { createProjectItem } from '@/services/projects/projectItem.service';
 import { useCreateProject } from '@/services/projects/projectHooks';
 import { useAppUser } from '@/services/projects/users.service';
-import { isAdmin } from '@/utils/projects/permissions';
 import { createProjectSchema } from '@/utils/yup/projetosValidations';
 
 import { Dashboard } from '../../components/Dashboard';
@@ -31,19 +29,14 @@ const EMPTY_ITEM: ProjectItemFormValues = {
   name: '',
   environment: '',
   material: '',
-  finish: '',
-  measurements: '',
   description: '',
   notes: '',
-  customerPrice: 0,
-  requiresDesigner: false,
 };
 
 const NovoProjeto = () => {
   const { user } = useAuth();
   const router = useRouter();
   const { data: appUser, isLoading: isLoadingAppUser } = useAppUser();
-  const { data: sellers } = useUsersByRole('seller');
   const createProject = useCreateProject();
 
   React.useEffect(() => {
@@ -62,7 +55,6 @@ const NovoProjeto = () => {
       customerPhone: '',
       customerEmail: '',
       customerAddress: '',
-      sellerId: appUser && !isAdmin(appUser.roles) ? appUser.id : '',
       items: [EMPTY_ITEM],
     },
   });
@@ -70,7 +62,7 @@ const NovoProjeto = () => {
   const { fields, append, remove } = useFieldArray({ control, name: 'items' });
 
   const onSubmit = async (values: NovoProjetoFormValues) => {
-    if (!user) return;
+    if (!user || !appUser) return;
 
     try {
       const projectId = await createProject.mutateAsync({
@@ -79,10 +71,8 @@ const NovoProjeto = () => {
           customerPhone: values.customerPhone,
           customerEmail: values.customerEmail,
           customerAddress: values.customerAddress,
-          sellerId: values.sellerId,
-          sellerName: sellers?.find(s => s.id === values.sellerId)?.name,
         },
-        createdBy: user.uid,
+        actor: { uid: user.uid, name: appUser.name },
       });
 
       for (const item of values.items) {
@@ -93,12 +83,8 @@ const NovoProjeto = () => {
             name: item.name,
             environment: item.environment,
             material: item.material,
-            finish: item.finish,
-            measurements: item.measurements,
             description: item.description,
             notes: item.notes,
-            customerPrice: Number(item.customerPrice),
-            requiresDesigner: item.requiresDesigner,
           },
           user.uid,
         );
@@ -138,12 +124,7 @@ const NovoProjeto = () => {
             <Heading size="md" mb={4}>
               Dados do cliente
             </Heading>
-            <ProjectForm
-              register={register}
-              control={control}
-              errors={errors}
-              sellers={sellers ?? []}
-            />
+            <ProjectForm register={register} errors={errors} />
           </Box>
 
           <Box>

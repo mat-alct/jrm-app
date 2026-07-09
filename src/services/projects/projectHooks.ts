@@ -9,6 +9,7 @@ import {
 import { Project, ProjectItem, StatusHistory } from '@/types/projects';
 
 import {
+  CreateProjectActor,
   CreateProjectInput,
   createProject,
   getProject,
@@ -80,12 +81,12 @@ export function useItemStatusHistory(
 export function useCreateProject(): UseMutationResult<
   string,
   Error,
-  { input: CreateProjectInput; createdBy: string }
+  { input: CreateProjectInput; actor: CreateProjectActor }
 > {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ input, createdBy }) => createProject(input, createdBy),
+    mutationFn: ({ input, actor }) => createProject(input, actor),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects'] });
     },

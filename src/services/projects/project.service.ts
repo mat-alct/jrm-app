@@ -22,8 +22,11 @@ export interface CreateProjectInput {
   customerPhone: string;
   customerEmail: string;
   customerAddress: string;
-  sellerId: string;
-  sellerName?: string;
+}
+
+export interface CreateProjectActor {
+  uid: string;
+  name?: string;
 }
 
 export type UpdateProjectInput = Partial<
@@ -43,21 +46,19 @@ function assertCreateProjectInput(input: CreateProjectInput): void {
     !input.customerName?.trim() ||
     !input.customerPhone?.trim() ||
     !input.customerEmail?.trim() ||
-    !input.customerAddress?.trim() ||
-    !input.sellerId?.trim()
+    !input.customerAddress?.trim()
   ) {
-    throw new Error(
-      'Nome, telefone, e-mail, endereço e vendedor são obrigatórios.',
-    );
+    throw new Error('Nome, telefone, e-mail e endereço são obrigatórios.');
   }
 }
 
 export async function createProject(
   input: CreateProjectInput,
-  createdBy: string,
+  actor: CreateProjectActor,
 ): Promise<string> {
   assertCreateProjectInput(input);
 
+  const createdBy = actor.uid;
   const now = Timestamp.now();
   const projectRef = doc(collection(db, PROJECTS_COLLECTION));
 
@@ -66,8 +67,8 @@ export async function createProject(
     customerPhone: input.customerPhone.trim(),
     customerEmail: input.customerEmail.trim(),
     customerAddress: input.customerAddress.trim(),
-    sellerId: input.sellerId,
-    ...(input.sellerName ? { sellerName: input.sellerName } : {}),
+    sellerId: actor.uid,
+    ...(actor.name ? { sellerName: actor.name } : {}),
     // Credenciais do cliente sao geradas pela rota `provision` da Via B
     // (hash scrypt so roda em Node) e integradas no CP1.
     clientAccessCodeHash: '',

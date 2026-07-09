@@ -93,16 +93,11 @@ export interface ProjectItem {
   environment: string;
   description?: string;
   material?: string;
-  finish?: string;
-  measurements?: string;
   notes?: string;
-
-  customerPrice: number;
 
   status: ProjectItemStatus;
   clientApprovalStatus: ClientApprovalStatus;
 
-  requiresDesigner: boolean;
   designerId?: string;
   designerName?: string;
 

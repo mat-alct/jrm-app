@@ -65,8 +65,6 @@ describe('services/projects/projectItem.service', () => {
     const validInput = {
       name: 'Cozinha',
       environment: 'Cozinha',
-      customerPrice: 1500,
-      requiresDesigner: true,
     };
 
     it('rejects missing name/environment', async () => {
@@ -74,16 +72,6 @@ describe('services/projects/projectItem.service', () => {
         createProjectItem('p1', { ...validInput, name: '' }, 'admin-1'),
       ).rejects.toThrow();
       expect(mockedSetDoc).not.toHaveBeenCalled();
-    });
-
-    it('rejects an invalid price', async () => {
-      await expect(
-        createProjectItem(
-          'p1',
-          { ...validInput, customerPrice: -10 },
-          'admin-1',
-        ),
-      ).rejects.toThrow();
     });
 
     it('creates the item with initial status and recalculates the summary', async () => {
@@ -108,13 +96,13 @@ describe('services/projects/projectItem.service', () => {
       await updateProjectItem(
         'p1',
         'i1',
-        { customerPrice: 2000 },
+        { material: 'MDF' },
         'admin-1',
       );
 
       expect(mockedUpdateDoc).toHaveBeenCalledWith(
         { id: 'new-item-id' },
-        expect.objectContaining({ customerPrice: 2000, updatedBy: 'admin-1' }),
+        expect.objectContaining({ material: 'MDF', updatedBy: 'admin-1' }),
       );
       expect(mockedRecalculate).toHaveBeenCalledWith('p1');
     });
