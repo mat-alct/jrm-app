@@ -106,8 +106,14 @@ export function computeDashboardCounts(
     aguardandoAprovacao: items.filter(
       item => item.status === 'aguardando_aprovacao_cliente',
     ).length,
-    emProducao: items.filter(item => item.status === 'em_producao').length,
-    emMontagem: items.filter(item => item.status === 'em_montagem').length,
+    emProducao: items.filter(
+      item => item.status === 'em_producao' || item.status === 'pronto_para_montagem',
+    ).length,
+    emMontagem: items.filter(
+      item =>
+        item.status === 'montagem_concluida' ||
+        item.status === 'aguardando_pagamento_montador',
+    ).length,
     totalVendidoNoMes,
   };
 }

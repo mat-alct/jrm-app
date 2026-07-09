@@ -35,19 +35,21 @@ describe('services/projects/summary', () => {
     it('counts each status bucket independently', () => {
       const items = [
         item('aguardando_aprovacao_cliente'),
-        item('aprovado'),
+        item('aguardando_atribuicao_montador'),
         item('em_producao'),
-        item('em_montagem'),
+        item('pronto_para_montagem'),
+        item('montagem_concluida'),
+        item('aguardando_pagamento_montador'),
         item('finalizado'),
-        item('orcamento_criado'),
+        item('projeto_criado'),
       ];
 
       expect(computeItemSummary(items, now)).toEqual({
-        total: 6,
+        total: 8,
         aguardandoAprovacao: 1,
         aprovados: 1,
-        emProducao: 1,
-        emMontagem: 1,
+        emProducao: 2,
+        emMontagem: 2,
         finalizados: 1,
         atrasados: 0,
       });
@@ -66,7 +68,7 @@ describe('services/projects/summary', () => {
     it('handles a mixed batch of statuses and delays', () => {
       const items = [
         item('aguardando_aprovacao_cliente', past),
-        item('aprovado', future),
+        item('aguardando_atribuicao_montador', future),
         item('cancelado', past),
       ];
 

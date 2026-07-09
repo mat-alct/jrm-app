@@ -9,9 +9,9 @@ const positiveInt = (label: string) =>
 
 export const deadlineDefaultsSchema = Yup.object().shape({
   desenhoDias: positiveInt('Dias de desenho'),
+  orcamentoDias: positiveInt('Dias de orçamento'),
   aprovacaoClienteDias: positiveInt('Dias de aprovação do cliente'),
-  separacaoMateriaisDias: positiveInt('Dias de separação de materiais'),
+  atribuicaoMontadorDias: positiveInt('Dias de atribuição de montador'),
   producaoDias: positiveInt('Dias de produção'),
-  transporteDias: positiveInt('Dias de transporte'),
   montagemDias: positiveInt('Dias de montagem'),
 });

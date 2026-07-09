@@ -2,10 +2,10 @@ import { deadlineDefaultsSchema } from '@/utils/yup/deadlineDefaultsValidations'
 
 const valid = {
   desenhoDias: 5,
+  orcamentoDias: 2,
   aprovacaoClienteDias: 3,
-  separacaoMateriaisDias: 2,
+  atribuicaoMontadorDias: 2,
   producaoDias: 10,
-  transporteDias: 2,
   montagemDias: 2,
 };
 

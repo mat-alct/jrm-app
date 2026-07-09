@@ -59,7 +59,7 @@ describe('services/projects/status.service', () => {
   it('rejects an invalid transition without writing anything', async () => {
     mockedGetDoc.mockResolvedValue({
       exists: () => true,
-      data: () => ({ status: 'orcamento_criado' }),
+      data: () => ({ status: 'projeto_criado' }),
     });
 
     await expect(
@@ -79,7 +79,7 @@ describe('services/projects/status.service', () => {
       data: () => ({ status: 'aguardando_desenho' }),
     });
 
-    await updateItemStatus('p1', 'i1', 'projeto_desenhado', {
+    await updateItemStatus('p1', 'i1', 'aguardando_orcamento', {
       uid: 'designer1',
       role: 'designer',
     });
@@ -87,7 +87,7 @@ describe('services/projects/status.service', () => {
     expect(mockedUpdateDoc).toHaveBeenCalledWith(
       'doc-ref',
       expect.objectContaining({
-        status: 'projeto_desenhado',
+        status: 'aguardando_orcamento',
         updatedBy: 'designer1',
       }),
     );
@@ -95,7 +95,7 @@ describe('services/projects/status.service', () => {
       'doc-ref',
       expect.objectContaining({
         fromStatus: 'aguardando_desenho',
-        toStatus: 'projeto_desenhado',
+        toStatus: 'aguardando_orcamento',
         changedBy: 'designer1',
         changedByRole: 'designer',
       }),
@@ -103,10 +103,10 @@ describe('services/projects/status.service', () => {
     expect(mockedRecalculate).toHaveBeenCalledWith('p1');
   });
 
-  it('releases pending assembler assignments when the item reaches montagem_concluida', async () => {
+  it('releases pending assembler assignments when the item reaches aguardando_pagamento_montador', async () => {
     mockedGetDoc.mockResolvedValue({
       exists: () => true,
-      data: () => ({ status: 'em_montagem' }),
+      data: () => ({ status: 'montagem_concluida' }),
     });
 
     const batchUpdate = jest.fn();
@@ -121,9 +121,9 @@ describe('services/projects/status.service', () => {
       docs: [{ ref: 'assignment-ref-1' }, { ref: 'assignment-ref-2' }],
     });
 
-    await updateItemStatus('p1', 'i1', 'montagem_concluida', {
-      uid: 'assembler1',
-      role: 'assembler',
+    await updateItemStatus('p1', 'i1', 'aguardando_pagamento_montador', {
+      uid: 'admin1',
+      role: 'admin',
     });
 
     expect(batchUpdate).toHaveBeenCalledTimes(2);
@@ -137,13 +137,13 @@ describe('services/projects/status.service', () => {
   it('does not touch assignments when there are none pending', async () => {
     mockedGetDoc.mockResolvedValue({
       exists: () => true,
-      data: () => ({ status: 'em_montagem' }),
+      data: () => ({ status: 'montagem_concluida' }),
     });
     mockedGetDocs.mockResolvedValueOnce({ empty: true, docs: [] });
 
-    await updateItemStatus('p1', 'i1', 'montagem_concluida', {
-      uid: 'assembler1',
-      role: 'assembler',
+    await updateItemStatus('p1', 'i1', 'aguardando_pagamento_montador', {
+      uid: 'admin1',
+      role: 'admin',
     });
 
     expect(mockedWriteBatch).not.toHaveBeenCalled();
@@ -152,7 +152,7 @@ describe('services/projects/status.service', () => {
   it('sets project completedAt and clientLinkExpiresAt when every item becomes final', async () => {
     mockedGetDoc.mockResolvedValue({
       exists: () => true,
-      data: () => ({ status: 'montagem_concluida' }),
+      data: () => ({ status: 'aguardando_pagamento_montador' }),
     });
     mockedGetDocs.mockResolvedValueOnce({
       empty: true,
@@ -176,7 +176,7 @@ describe('services/projects/status.service', () => {
   it('does not complete the project while some item is not final yet', async () => {
     mockedGetDoc.mockResolvedValue({
       exists: () => true,
-      data: () => ({ status: 'montagem_concluida' }),
+      data: () => ({ status: 'aguardando_pagamento_montador' }),
     });
     mockedGetDocs.mockResolvedValueOnce({
       empty: true,
@@ -200,7 +200,7 @@ describe('services/projects/status.service', () => {
   it('lets an admin force an otherwise invalid transition', async () => {
     mockedGetDoc.mockResolvedValue({
       exists: () => true,
-      data: () => ({ status: 'orcamento_criado' }),
+      data: () => ({ status: 'projeto_criado' }),
     });
 
     await expect(
@@ -220,7 +220,7 @@ describe('services/projects/status.service', () => {
     mockedGetDoc.mockResolvedValue({ exists: () => false });
 
     await expect(
-      updateItemStatus('p1', 'missing', 'aprovado', {
+      updateItemStatus('p1', 'missing', 'aguardando_atribuicao_montador', {
         uid: 'admin1',
         role: 'admin',
       }),

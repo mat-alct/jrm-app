@@ -23,10 +23,10 @@ describe('services/projects/deadlineAdmin', () => {
     await saveDeadlineDefaults(
       {
         desenhoDias: 3,
+        orcamentoDias: 1,
         aprovacaoClienteDias: 2,
-        separacaoMateriaisDias: 1,
+        atribuicaoMontadorDias: 1,
         producaoDias: 7,
-        transporteDias: 2,
         montagemDias: 1,
       },
       'admin-1',

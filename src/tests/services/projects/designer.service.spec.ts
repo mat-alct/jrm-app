@@ -143,7 +143,7 @@ describe('services/projects/designer.service', () => {
       );
     });
 
-    it('sets currentVersionId and advances status to aguardando_aprovacao_cliente', async () => {
+    it('sets currentVersionId and advances status to aguardando_orcamento', async () => {
       mockedGetDocs.mockResolvedValue({ docs: [] });
 
       await submitDesignerVersion('p1', 'i1', [], undefined, actor);
@@ -154,18 +154,10 @@ describe('services/projects/designer.service', () => {
         { currentVersionId: 'new-version-id' },
         'designer-1',
       );
-      expect(mockedUpdateItemStatus).toHaveBeenNthCalledWith(
-        1,
+      expect(mockedUpdateItemStatus).toHaveBeenCalledWith(
         'p1',
         'i1',
-        'projeto_desenhado',
-        actor,
-      );
-      expect(mockedUpdateItemStatus).toHaveBeenNthCalledWith(
-        2,
-        'p1',
-        'i1',
-        'aguardando_aprovacao_cliente',
+        'aguardando_orcamento',
         actor,
       );
     });

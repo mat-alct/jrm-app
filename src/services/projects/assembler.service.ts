@@ -68,9 +68,7 @@ export function canAssemblerTransition(
 ): boolean {
   const allowedTargets: ProjectItemStatus[] = [
     'em_producao',
-    'pronto_para_transporte',
-    'em_transporte',
-    'em_montagem',
+    'pronto_para_montagem',
     'montagem_concluida',
   ];
   return allowedTargets.includes(to) && canTransition(from, to);

@@ -65,7 +65,7 @@ describe('services/projects/dashboard.service', () => {
         item({ status: 'aguardando_desenho' }),
         item({ status: 'aguardando_aprovacao_cliente' }),
         item({ status: 'em_producao' }),
-        item({ status: 'em_montagem' }),
+        item({ status: 'montagem_concluida' }),
       ];
 
       const counts = computeDashboardCounts(projects, items, now);

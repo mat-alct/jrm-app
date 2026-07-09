@@ -1,23 +1,21 @@
-import { ProjectItemStatus } from '@/types/projects';
+import { ProjectItemStatus, UserRole } from '@/types/projects';
 
 const TRANSITIONS: Record<ProjectItemStatus, ProjectItemStatus[]> = {
-  orcamento_criado: ['aguardando_desenho', 'aguardando_aprovacao_cliente'],
-  aguardando_desenho: ['projeto_desenhado'],
-  projeto_desenhado: ['aguardando_aprovacao_cliente'],
+  projeto_criado: ['aguardando_desenho'],
+  aguardando_desenho: ['aguardando_orcamento'],
+  aguardando_orcamento: ['aguardando_aprovacao_cliente'],
   aguardando_aprovacao_cliente: [
-    'aprovado',
+    'aguardando_atribuicao_montador',
     'recusado_pelo_cliente',
     'alteracao_solicitada',
   ],
   alteracao_solicitada: ['aguardando_desenho'],
   recusado_pelo_cliente: [],
-  aprovado: ['aguardando_separacao_materiais'],
-  aguardando_separacao_materiais: ['em_producao'],
-  em_producao: ['pronto_para_transporte'],
-  pronto_para_transporte: ['em_transporte'],
-  em_transporte: ['em_montagem'],
-  em_montagem: ['montagem_concluida'],
-  montagem_concluida: ['finalizado'],
+  aguardando_atribuicao_montador: ['em_producao'],
+  em_producao: ['pronto_para_montagem'],
+  pronto_para_montagem: ['montagem_concluida'],
+  montagem_concluida: ['aguardando_pagamento_montador'],
+  aguardando_pagamento_montador: ['finalizado'],
   finalizado: [],
   cancelado: [],
 };
@@ -49,19 +47,17 @@ export function isFinalStatus(status: ProjectItemStatus): boolean {
 }
 
 export const CLIENT_STATUS_LABELS: Record<ProjectItemStatus, string> = {
-  orcamento_criado: 'Orçamento em preparação',
+  projeto_criado: 'Projeto em preparação',
   aguardando_desenho: 'Projeto em desenvolvimento',
-  projeto_desenhado: 'Projeto pronto para análise',
+  aguardando_orcamento: 'Orçamento em preparação',
   aguardando_aprovacao_cliente: 'Aguardando sua aprovação',
   alteracao_solicitada: 'Alteração solicitada',
   recusado_pelo_cliente: 'Item recusado',
-  aprovado: 'Projeto aprovado',
-  aguardando_separacao_materiais: 'Separação de materiais',
+  aguardando_atribuicao_montador: 'Projeto aprovado',
   em_producao: 'Em produção',
-  pronto_para_transporte: 'Pronto para transporte',
-  em_transporte: 'Em transporte',
-  em_montagem: 'Em montagem',
+  pronto_para_montagem: 'Em produção',
   montagem_concluida: 'Montagem concluída',
+  aguardando_pagamento_montador: 'Montagem concluída',
   finalizado: 'Finalizado',
   cancelado: 'Cancelado',
 };
@@ -71,37 +67,41 @@ export function getClientStatusLabel(status: ProjectItemStatus): string {
 }
 
 export const INTERNAL_STATUS_LABELS: Record<ProjectItemStatus, string> = {
-  orcamento_criado: 'Orçamento criado',
+  projeto_criado: 'Projeto criado',
   aguardando_desenho: 'Aguardando desenho',
-  projeto_desenhado: 'Projeto desenhado',
+  aguardando_orcamento: 'Aguardando orçamento',
   aguardando_aprovacao_cliente: 'Aguardando aprovação do cliente',
   alteracao_solicitada: 'Alteração solicitada pelo cliente',
   recusado_pelo_cliente: 'Recusado pelo cliente',
-  aprovado: 'Aprovado',
-  aguardando_separacao_materiais: 'Aguardando separação de materiais',
+  aguardando_atribuicao_montador: 'Aguardando atribuição de montador',
   em_producao: 'Em produção',
-  pronto_para_transporte: 'Pronto para transporte',
-  em_transporte: 'Em transporte',
-  em_montagem: 'Em montagem',
+  pronto_para_montagem: 'Pronto para montagem',
   montagem_concluida: 'Montagem concluída',
+  aguardando_pagamento_montador: 'Aguardando pagamento do montador',
   finalizado: 'Finalizado',
   cancelado: 'Cancelado',
 };
 
 export const INTERNAL_STATUS_COLORS: Record<ProjectItemStatus, string> = {
-  orcamento_criado: 'gray',
+  projeto_criado: 'gray',
   aguardando_desenho: 'purple',
-  projeto_desenhado: 'purple',
+  aguardando_orcamento: 'purple',
   aguardando_aprovacao_cliente: 'yellow',
   alteracao_solicitada: 'orange',
   recusado_pelo_cliente: 'red',
-  aprovado: 'green',
-  aguardando_separacao_materiais: 'blue',
+  aguardando_atribuicao_montador: 'green',
   em_producao: 'blue',
-  pronto_para_transporte: 'blue',
-  em_transporte: 'blue',
-  em_montagem: 'blue',
+  pronto_para_montagem: 'blue',
   montagem_concluida: 'teal',
+  aguardando_pagamento_montador: 'teal',
   finalizado: 'green',
   cancelado: 'red',
+};
+
+export const INTERNAL_ROLE_LABELS: Record<UserRole | 'client', string> = {
+  admin: 'Administrador',
+  seller: 'Vendedor',
+  designer: 'Desenhista',
+  assembler: 'Montador',
+  client: 'Cliente',
 };

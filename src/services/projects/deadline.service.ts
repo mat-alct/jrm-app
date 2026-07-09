@@ -11,10 +11,10 @@ export const FALLBACK_DEADLINE_DEFAULTS: Omit<
   'updatedAt' | 'updatedBy'
 > = {
   desenhoDias: 5,
+  orcamentoDias: 2,
   aprovacaoClienteDias: 3,
-  separacaoMateriaisDias: 2,
+  atribuicaoMontadorDias: 2,
   producaoDias: 10,
-  transporteDias: 2,
   montagemDias: 2,
 };
 
@@ -22,11 +22,11 @@ const STATUS_TO_DEFAULTS_KEY: Partial<
   Record<ProjectItemStatus, keyof typeof FALLBACK_DEADLINE_DEFAULTS>
 > = {
   aguardando_desenho: 'desenhoDias',
+  aguardando_orcamento: 'orcamentoDias',
   aguardando_aprovacao_cliente: 'aprovacaoClienteDias',
-  aguardando_separacao_materiais: 'separacaoMateriaisDias',
+  aguardando_atribuicao_montador: 'atribuicaoMontadorDias',
   em_producao: 'producaoDias',
-  em_transporte: 'transporteDias',
-  em_montagem: 'montagemDias',
+  pronto_para_montagem: 'montagemDias',
 };
 
 export function computeDeadline(
@@ -49,15 +49,15 @@ export async function getDeadlineDefaults(): Promise<
   const data = snap.data() as DeadlineDefaults;
   return {
     desenhoDias: data.desenhoDias ?? FALLBACK_DEADLINE_DEFAULTS.desenhoDias,
+    orcamentoDias:
+      data.orcamentoDias ?? FALLBACK_DEADLINE_DEFAULTS.orcamentoDias,
     aprovacaoClienteDias:
       data.aprovacaoClienteDias ??
       FALLBACK_DEADLINE_DEFAULTS.aprovacaoClienteDias,
-    separacaoMateriaisDias:
-      data.separacaoMateriaisDias ??
-      FALLBACK_DEADLINE_DEFAULTS.separacaoMateriaisDias,
+    atribuicaoMontadorDias:
+      data.atribuicaoMontadorDias ??
+      FALLBACK_DEADLINE_DEFAULTS.atribuicaoMontadorDias,
     producaoDias: data.producaoDias ?? FALLBACK_DEADLINE_DEFAULTS.producaoDias,
-    transporteDias:
-      data.transporteDias ?? FALLBACK_DEADLINE_DEFAULTS.transporteDias,
     montagemDias: data.montagemDias ?? FALLBACK_DEADLINE_DEFAULTS.montagemDias,
   };
 }

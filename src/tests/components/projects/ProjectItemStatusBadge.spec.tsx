@@ -10,8 +10,10 @@ describe('Component: ProjectItemStatusBadge', () => {
   });
 
   it('renders a different label for a different status', () => {
-    render(<ProjectItemStatusBadge status="aprovado" />);
+    render(<ProjectItemStatusBadge status="aguardando_atribuicao_montador" />);
 
-    expect(screen.getByText('Aprovado')).toBeInTheDocument();
+    expect(
+      screen.getByText('Aguardando atribuição de montador'),
+    ).toBeInTheDocument();
   });
 });

@@ -73,7 +73,7 @@ export async function createProjectItem(
     ...(input.measurements ? { measurements: input.measurements } : {}),
     ...(input.notes ? { notes: input.notes } : {}),
     customerPrice: input.customerPrice,
-    status: 'orcamento_criado',
+    status: 'projeto_criado',
     clientApprovalStatus: 'aguardando',
     requiresDesigner: input.requiresDesigner,
     createdAt: now,

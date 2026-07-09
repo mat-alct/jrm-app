@@ -35,14 +35,14 @@ describe('Component: ProjectItemTimeline', () => {
     });
     const newer = history({
       id: 'h-newer',
-      toStatus: 'projeto_desenhado',
+      toStatus: 'aguardando_orcamento',
       createdAt: Timestamp.fromMillis(2000),
     });
 
     render(<ProjectItemTimeline history={[older, newer]} />);
 
-    const labels = screen.getAllByText(/Aguardando desenho|Projeto desenhado/);
-    expect(labels[0]).toHaveTextContent('Projeto desenhado');
+    const labels = screen.getAllByText(/Aguardando desenho|Aguardando orçamento/);
+    expect(labels[0]).toHaveTextContent('Aguardando orçamento');
     expect(labels[1]).toHaveTextContent('Aguardando desenho');
   });
 });

@@ -30,7 +30,7 @@ function approvalStatusFor(
   status: ProjectItemStatus,
 ): ClientApprovalStatus | undefined {
   switch (status) {
-    case 'aprovado':
+    case 'aguardando_atribuicao_montador':
       return 'aprovado';
     case 'recusado_pelo_cliente':
       return 'recusado';
@@ -43,7 +43,7 @@ function approvalStatusFor(
 
 function timestampFieldFor(status: ProjectItemStatus): string | undefined {
   switch (status) {
-    case 'aprovado':
+    case 'aguardando_atribuicao_montador':
       return 'approvedAt';
     case 'recusado_pelo_cliente':
       return 'rejectedAt';
@@ -77,9 +77,16 @@ export async function recalculateProjectSummaryAdmin(
     if (item.status === 'aguardando_aprovacao_cliente') {
       acc.aguardandoAprovacao += 1;
     }
-    if (item.status === 'aprovado') acc.aprovados += 1;
-    if (item.status === 'em_producao') acc.emProducao += 1;
-    if (item.status === 'em_montagem') acc.emMontagem += 1;
+    if (item.status === 'aguardando_atribuicao_montador') acc.aprovados += 1;
+    if (item.status === 'em_producao' || item.status === 'pronto_para_montagem') {
+      acc.emProducao += 1;
+    }
+    if (
+      item.status === 'montagem_concluida' ||
+      item.status === 'aguardando_pagamento_montador'
+    ) {
+      acc.emMontagem += 1;
+    }
     if (isFinalStatus(item.status)) acc.finalizados += 1;
     if (
       item.deadlineCurrent &&
@@ -107,7 +114,10 @@ export async function applyClientItemTransition(
   }
 
   const item = { id: itemSnap.id, ...itemSnap.data() } as ProjectItem;
-  if (item.status === 'aprovado' && nextStatus !== 'aprovado') {
+  if (
+    item.status === 'aguardando_atribuicao_montador' &&
+    nextStatus !== 'aguardando_atribuicao_montador'
+  ) {
     throw new ClientStatusTransitionError(
       409,
       'Item aprovado nao pode ser recusado ou alterado pelo link.',
@@ -152,7 +162,11 @@ export async function approveAllClientItems(projectId: string): Promise<number> 
     .filter(item => item.status === 'aguardando_aprovacao_cliente');
 
   for (const item of pendingItems) {
-    await applyClientItemTransition(projectId, item.id, 'aprovado');
+    await applyClientItemTransition(
+      projectId,
+      item.id,
+      'aguardando_atribuicao_montador',
+    );
   }
 
   return pendingItems.length;

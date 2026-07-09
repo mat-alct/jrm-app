@@ -94,7 +94,7 @@ describe('services/projects/projectItem.service', () => {
         { id: 'new-item-id' },
         expect.objectContaining({
           projectId: 'p1',
-          status: 'orcamento_criado',
+          status: 'projeto_criado',
           clientApprovalStatus: 'aguardando',
           createdBy: 'admin-1',
         }),

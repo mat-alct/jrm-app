@@ -54,7 +54,7 @@ describe('pages/api/assembler/update-status', () => {
           get: jest.fn().mockResolvedValue({
             id: 'item-1',
             exists: true,
-            data: () => ({ status: 'aguardando_separacao_materiais' }),
+            data: () => ({ status: 'aguardando_atribuicao_montador' }),
           }),
           update: itemUpdate,
         } as never;
@@ -184,7 +184,7 @@ describe('pages/api/assembler/update-status', () => {
     );
     expect(historySet).toHaveBeenCalledWith(
       expect.objectContaining({
-        fromStatus: 'aguardando_separacao_materiais',
+        fromStatus: 'aguardando_atribuicao_montador',
         toStatus: 'em_producao',
         changedByRole: 'assembler',
       }),

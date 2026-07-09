@@ -17,13 +17,16 @@ export function computeItemSummary(
       if (item.status === 'aguardando_aprovacao_cliente') {
         summary.aguardandoAprovacao += 1;
       }
-      if (item.status === 'aprovado') {
+      if (item.status === 'aguardando_atribuicao_montador') {
         summary.aprovados += 1;
       }
-      if (item.status === 'em_producao') {
+      if (item.status === 'em_producao' || item.status === 'pronto_para_montagem') {
         summary.emProducao += 1;
       }
-      if (item.status === 'em_montagem') {
+      if (
+        item.status === 'montagem_concluida' ||
+        item.status === 'aguardando_pagamento_montador'
+      ) {
         summary.emMontagem += 1;
       }
       if (item.status === 'finalizado') {

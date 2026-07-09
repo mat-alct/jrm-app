@@ -44,7 +44,7 @@ function itemTimestampFieldFor(
   'approvedAt' | 'rejectedAt' | 'changeRequestedAt' | 'completedAt'
 > | null {
   switch (next) {
-    case 'aprovado':
+    case 'aguardando_atribuicao_montador':
       return 'approvedAt';
     case 'recusado_pelo_cliente':
       return 'rejectedAt';
@@ -142,7 +142,7 @@ export async function updateItemStatus(
     createdAt: now,
   });
 
-  if (next === 'montagem_concluida') {
+  if (next === 'aguardando_pagamento_montador') {
     await releasePendingAssignments(projectId, itemId, now);
   }
 

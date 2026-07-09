@@ -24,10 +24,10 @@ type FormValues = Omit<DeadlineDefaults, 'updatedAt' | 'updatedBy'>;
 
 const FIELDS: { name: keyof FormValues; label: string }[] = [
   { name: 'desenhoDias', label: 'Dias para desenho' },
+  { name: 'orcamentoDias', label: 'Dias para orçamento' },
   { name: 'aprovacaoClienteDias', label: 'Dias para aprovação do cliente' },
-  { name: 'separacaoMateriaisDias', label: 'Dias para separação de materiais' },
+  { name: 'atribuicaoMontadorDias', label: 'Dias para atribuição de montador' },
   { name: 'producaoDias', label: 'Dias para produção' },
-  { name: 'transporteDias', label: 'Dias para transporte' },
   { name: 'montagemDias', label: 'Dias para montagem' },
 ];
 

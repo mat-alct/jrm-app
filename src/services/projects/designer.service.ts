@@ -115,13 +115,7 @@ export async function submitDesignerVersion(
     actor.uid,
   );
 
-  await updateItemStatus(projectId, itemId, 'projeto_desenhado', actor);
-  await updateItemStatus(
-    projectId,
-    itemId,
-    'aguardando_aprovacao_cliente',
-    actor,
-  );
+  await updateItemStatus(projectId, itemId, 'aguardando_orcamento', actor);
 
   return versionRef.id;
 }

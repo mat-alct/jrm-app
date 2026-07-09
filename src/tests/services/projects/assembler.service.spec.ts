@@ -53,12 +53,12 @@ describe('services/projects/assembler.service', () => {
 
   it('allows only forward assembler transitions and blocks finalizado', () => {
     expect(
-      canAssemblerTransition('aguardando_separacao_materiais', 'em_producao'),
+      canAssemblerTransition('aguardando_atribuicao_montador', 'em_producao'),
     ).toBe(true);
-    expect(canAssemblerTransition('em_montagem', 'montagem_concluida')).toBe(
+    expect(canAssemblerTransition('em_producao', 'pronto_para_montagem')).toBe(
       true,
     );
-    expect(canAssemblerTransition('em_producao', 'aguardando_separacao_materiais')).toBe(
+    expect(canAssemblerTransition('pronto_para_montagem', 'em_producao')).toBe(
       false,
     );
     expect(canAssemblerTransition('montagem_concluida', 'finalizado')).toBe(

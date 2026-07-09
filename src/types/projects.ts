@@ -14,19 +14,17 @@ export interface AppUser {
 }
 
 export type ProjectItemStatus =
-  | 'orcamento_criado'
+  | 'projeto_criado'
   | 'aguardando_desenho'
-  | 'projeto_desenhado'
+  | 'aguardando_orcamento'
   | 'aguardando_aprovacao_cliente'
   | 'alteracao_solicitada'
   | 'recusado_pelo_cliente'
-  | 'aprovado'
-  | 'aguardando_separacao_materiais'
+  | 'aguardando_atribuicao_montador'
   | 'em_producao'
-  | 'pronto_para_transporte'
-  | 'em_transporte'
-  | 'em_montagem'
+  | 'pronto_para_montagem'
   | 'montagem_concluida'
+  | 'aguardando_pagamento_montador'
   | 'finalizado'
   | 'cancelado';
 
@@ -239,10 +237,10 @@ export interface AssemblerPayment {
 
 export interface DeadlineDefaults {
   desenhoDias: number;
+  orcamentoDias: number;
   aprovacaoClienteDias: number;
-  separacaoMateriaisDias: number;
+  atribuicaoMontadorDias: number;
   producaoDias: number;
-  transporteDias: number;
   montagemDias: number;
   updatedAt: Timestamp;
   updatedBy: string;

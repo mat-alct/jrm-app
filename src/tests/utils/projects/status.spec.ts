@@ -8,42 +8,36 @@ import { ProjectItemStatus } from '@/types/projects';
 
 describe('utils/projects/status', () => {
   describe('canTransition', () => {
-    it('allows the happy-path flow with a designer', () => {
-      expect(canTransition('orcamento_criado', 'aguardando_desenho')).toBe(
-        true,
-      );
-      expect(canTransition('aguardando_desenho', 'projeto_desenhado')).toBe(
+    it('allows the happy-path flow of the carpentry operation', () => {
+      expect(canTransition('projeto_criado', 'aguardando_desenho')).toBe(
         true,
       );
       expect(
-        canTransition('projeto_desenhado', 'aguardando_aprovacao_cliente'),
+        canTransition('aguardando_desenho', 'aguardando_orcamento'),
       ).toBe(true);
       expect(
-        canTransition('aguardando_aprovacao_cliente', 'aprovado'),
-      ).toBe(true);
-      expect(
-        canTransition('aprovado', 'aguardando_separacao_materiais'),
+        canTransition('aguardando_orcamento', 'aguardando_aprovacao_cliente'),
       ).toBe(true);
       expect(
         canTransition(
-          'aguardando_separacao_materiais',
-          'em_producao',
+          'aguardando_aprovacao_cliente',
+          'aguardando_atribuicao_montador',
         ),
       ).toBe(true);
-      expect(canTransition('em_producao', 'pronto_para_transporte')).toBe(
-        true,
-      );
-      expect(canTransition('pronto_para_transporte', 'em_transporte')).toBe(
-        true,
-      );
-      expect(canTransition('em_transporte', 'em_montagem')).toBe(true);
-      expect(canTransition('em_montagem', 'montagem_concluida')).toBe(true);
-      expect(canTransition('montagem_concluida', 'finalizado')).toBe(true);
-    });
-
-    it('allows the direct flow without a designer', () => {
       expect(
-        canTransition('orcamento_criado', 'aguardando_aprovacao_cliente'),
+        canTransition('aguardando_atribuicao_montador', 'em_producao'),
+      ).toBe(true);
+      expect(
+        canTransition('em_producao', 'pronto_para_montagem'),
+      ).toBe(true);
+      expect(
+        canTransition('pronto_para_montagem', 'montagem_concluida'),
+      ).toBe(true);
+      expect(
+        canTransition('montagem_concluida', 'aguardando_pagamento_montador'),
+      ).toBe(true);
+      expect(
+        canTransition('aguardando_pagamento_montador', 'finalizado'),
       ).toBe(true);
     });
 
@@ -69,9 +63,11 @@ describe('utils/projects/status', () => {
     });
 
     it('blocks transitions outside the allowed flow for non-admins', () => {
-      expect(canTransition('orcamento_criado', 'finalizado')).toBe(false);
-      expect(canTransition('em_producao', 'em_montagem')).toBe(false);
-      expect(canTransition('finalizado', 'aprovado')).toBe(false);
+      expect(canTransition('projeto_criado', 'finalizado')).toBe(false);
+      expect(canTransition('em_producao', 'montagem_concluida')).toBe(false);
+      expect(
+        canTransition('finalizado', 'aguardando_atribuicao_montador'),
+      ).toBe(false);
     });
 
     it('blocks non-admins from cancelling', () => {
@@ -87,7 +83,7 @@ describe('utils/projects/status', () => {
 
     it('lets admins override the flow and force any transition', () => {
       expect(
-        canTransition('orcamento_criado', 'finalizado', { isAdmin: true }),
+        canTransition('projeto_criado', 'finalizado', { isAdmin: true }),
       ).toBe(true);
       expect(
         canTransition('em_producao', 'aguardando_desenho', {
@@ -120,19 +116,17 @@ describe('utils/projects/status', () => {
 
     it('treats every other status as non-final', () => {
       const nonFinal: ProjectItemStatus[] = [
-        'orcamento_criado',
+        'projeto_criado',
         'aguardando_desenho',
-        'projeto_desenhado',
+        'aguardando_orcamento',
         'aguardando_aprovacao_cliente',
         'alteracao_solicitada',
         'recusado_pelo_cliente',
-        'aprovado',
-        'aguardando_separacao_materiais',
+        'aguardando_atribuicao_montador',
         'em_producao',
-        'pronto_para_transporte',
-        'em_transporte',
-        'em_montagem',
+        'pronto_para_montagem',
         'montagem_concluida',
+        'aguardando_pagamento_montador',
       ];
 
       nonFinal.forEach(status => expect(isFinalStatus(status)).toBe(false));
@@ -145,7 +139,7 @@ describe('utils/projects/status', () => {
         CLIENT_STATUS_LABELS,
       ) as ProjectItemStatus[];
 
-      expect(statuses).toHaveLength(15);
+      expect(statuses).toHaveLength(13);
       statuses.forEach(status => {
         expect(getClientStatusLabel(status)).toEqual(
           expect.any(String),
@@ -158,6 +152,19 @@ describe('utils/projects/status', () => {
       expect(getClientStatusLabel('aguardando_aprovacao_cliente')).toBe(
         'Aguardando sua aprovação',
       );
+      expect(getClientStatusLabel('aguardando_orcamento')).toBe(
+        'Orçamento em preparação',
+      );
+    });
+
+    it('does not leak internal-only operation labels to the client', () => {
+      expect(
+        getClientStatusLabel('aguardando_atribuicao_montador'),
+      ).not.toMatch(/montador/i);
+      expect(
+        getClientStatusLabel('aguardando_pagamento_montador'),
+      ).not.toMatch(/pagamento|montador/i);
+      expect(getClientStatusLabel('em_producao')).not.toMatch(/montador/i);
     });
   });
 });

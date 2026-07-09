@@ -30,11 +30,8 @@ import {
 } from '@/types/projects';
 
 const ASSEMBLER_FLOW: ProjectItemStatus[] = [
-  'aguardando_separacao_materiais',
   'em_producao',
-  'pronto_para_transporte',
-  'em_transporte',
-  'em_montagem',
+  'pronto_para_montagem',
   'montagem_concluida',
 ];
 

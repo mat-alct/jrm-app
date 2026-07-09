@@ -33,7 +33,11 @@ describe('services/projects/deadline.service', () => {
 
     it('returns undefined for a status without a configured deadline', () => {
       expect(
-        computeDeadline('aprovado', FALLBACK_DEADLINE_DEFAULTS, from),
+        computeDeadline(
+          'recusado_pelo_cliente',
+          FALLBACK_DEADLINE_DEFAULTS,
+          from,
+        ),
       ).toBeUndefined();
       expect(
         computeDeadline('finalizado', FALLBACK_DEADLINE_DEFAULTS, from),

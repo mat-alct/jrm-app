@@ -61,7 +61,7 @@ describe('services/projects/statusAdmin.service', () => {
             docs: [
               {
                 id: 'item-1',
-                data: () => ({ status: 'aprovado' }),
+                data: () => ({ status: 'aguardando_atribuicao_montador' }),
               },
             ],
           }),
@@ -72,11 +72,11 @@ describe('services/projects/statusAdmin.service', () => {
   });
 
   it('applies a client approval, records history and recalculates summary', async () => {
-    await applyClientItemTransition('project-1', 'item-1', 'aprovado');
+    await applyClientItemTransition('project-1', 'item-1', 'aguardando_atribuicao_montador');
 
     expect(itemUpdate).toHaveBeenCalledWith(
       expect.objectContaining({
-        status: 'aprovado',
+        status: 'aguardando_atribuicao_montador',
         clientApprovalStatus: 'aprovado',
         updatedBy: 'client',
         approvedAt: expect.anything(),
@@ -85,7 +85,7 @@ describe('services/projects/statusAdmin.service', () => {
     expect(historySet).toHaveBeenCalledWith(
       expect.objectContaining({
         fromStatus: 'aguardando_aprovacao_cliente',
-        toStatus: 'aprovado',
+        toStatus: 'aguardando_atribuicao_montador',
         changedByRole: 'client',
       }),
     );
@@ -100,7 +100,7 @@ describe('services/projects/statusAdmin.service', () => {
         return {
           get: jest.fn().mockResolvedValue(
             itemSnap({
-              status: 'aprovado',
+              status: 'aguardando_atribuicao_montador',
               clientApprovalStatus: 'aprovado',
             }),
           ),
