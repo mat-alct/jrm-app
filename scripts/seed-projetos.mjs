@@ -4,8 +4,10 @@
 // - um usuario Auth + doc em users/{uid} para cada papel (admin, vendedor,
 //   desenhista, montador);
 // - settings/deadlineDefaults;
-// - 2 projetos com itens em status variados (cobrindo o fluxo com e sem
-//   desenhista, aprovacao, producao, montagem e finalizado);
+// - 2 projetos com itens cobrindo os 13 status do fluxo real (desenho,
+//   orcamento, aprovacao do cliente, atribuicao de montador, producao,
+//   montagem e pagamento);
+// - orcamento (ItemBudget) nos itens que ja passaram do desenho;
 // - assemblerAssignments de exemplo (um pendente, um pago);
 // - um anexo fake por projeto (metadados no Firestore; nao sobe arquivo
 //   real ao Storage).
@@ -100,10 +102,10 @@ async function ensureDeadlineDefaults(adminUid) {
     .doc('deadlineDefaults')
     .set({
       desenhoDias: 5,
+      orcamentoDias: 2,
       aprovacaoClienteDias: 3,
-      separacaoMateriaisDias: 2,
+      atribuicaoMontadorDias: 2,
       producaoDias: 10,
-      transporteDias: 2,
       montagemDias: 2,
       updatedAt: Timestamp.now(),
       updatedBy: adminUid,
@@ -115,9 +117,50 @@ function futureTimestamp(daysFromNow) {
   return Timestamp.fromMillis(Date.now() + daysFromNow * 86400000);
 }
 
+// Status que ja tem orcamento preenchido no fluxo real (tudo a partir de
+// aguardando_aprovacao_cliente, inclusive).
+const STATUSES_WITH_BUDGET = new Set([
+  'aguardando_aprovacao_cliente',
+  'alteracao_solicitada',
+  'recusado_pelo_cliente',
+  'aguardando_atribuicao_montador',
+  'em_producao',
+  'pronto_para_montagem',
+  'montagem_concluida',
+  'aguardando_pagamento_montador',
+  'finalizado',
+]);
+
+function buildBudget({ users, totalCost, customerAmount, suggestedAssemblerAmount }) {
+  const now = Timestamp.now();
+  return {
+    lines: [
+      { id: '0', description: 'Material e ferragens', amount: totalCost },
+    ],
+    totalCost,
+    customerAmount,
+    suggestedAssemblerAmount,
+    createdBy: users.seller.uid,
+    createdByName: users.seller.name,
+    createdAt: now,
+    updatedAt: now,
+  };
+}
+
 async function seedProject({ users, index, itemsSpec }) {
   const projectRef = db.collection('projects').doc();
   const publicId = `seed-${index}-${projectRef.id.slice(0, 6)}`;
+
+  const itemBudgets = itemsSpec.map(item =>
+    STATUSES_WITH_BUDGET.has(item.status)
+      ? buildBudget({
+          users,
+          totalCost: item.totalCost,
+          customerAmount: item.customerAmount,
+          suggestedAssemblerAmount: item.suggestedAssemblerAmount,
+        })
+      : undefined,
+  );
 
   await projectRef.set({
     customerName: `Cliente Seed ${index}`,
@@ -133,16 +176,28 @@ async function seedProject({ users, index, itemsSpec }) {
       aguardandoAprovacao: itemsSpec.filter(
         i => i.status === 'aguardando_aprovacao_cliente',
       ).length,
-      aprovados: itemsSpec.filter(i => i.status === 'aprovado').length,
-      emProducao: itemsSpec.filter(i => i.status === 'em_producao').length,
-      emMontagem: itemsSpec.filter(i => i.status === 'em_montagem').length,
+      aprovados: itemsSpec.filter(
+        i => i.status === 'aguardando_atribuicao_montador',
+      ).length,
+      emProducao: itemsSpec.filter(
+        i => i.status === 'em_producao' || i.status === 'pronto_para_montagem',
+      ).length,
+      emMontagem: itemsSpec.filter(
+        i =>
+          i.status === 'montagem_concluida' ||
+          i.status === 'aguardando_pagamento_montador',
+      ).length,
       finalizados: itemsSpec.filter(i => i.status === 'finalizado').length,
       atrasados: 0,
     },
-    totalCustomerValue: itemsSpec.reduce((sum, i) => sum + i.customerPrice, 0),
+    totalCustomerValue: itemBudgets.reduce(
+      (sum, budget) => sum + (budget?.customerAmount ?? 0),
+      0,
+    ),
     createdAt: Timestamp.now(),
     updatedAt: Timestamp.now(),
     createdBy: users.seller.uid,
+    createdByName: users.seller.name,
     updatedBy: users.seller.uid,
   });
 
@@ -152,23 +207,25 @@ async function seedProject({ users, index, itemsSpec }) {
 
   for (const [itemIndex, itemSpec] of itemsSpec.entries()) {
     const itemRef = projectRef.collection('items').doc();
+    const budget = itemBudgets[itemIndex];
+    const hasDesigner = itemSpec.status !== 'projeto_criado';
 
     await itemRef.set({
       projectId: projectRef.id,
       name: itemSpec.name,
       environment: itemSpec.environment,
       description: 'Item de seed para teste manual das duas vias.',
-      customerPrice: itemSpec.customerPrice,
       status: itemSpec.status,
       clientApprovalStatus: itemSpec.clientApprovalStatus,
-      requiresDesigner: itemSpec.requiresDesigner,
-      ...(itemSpec.requiresDesigner
+      ...(hasDesigner
         ? { designerId: users.designer.uid, designerName: users.designer.name }
         : {}),
+      ...(budget ? { budget } : {}),
       deadlineCurrent: futureTimestamp(itemSpec.deadlineDays),
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
       createdBy: users.seller.uid,
+      createdByName: users.seller.name,
       updatedBy: users.seller.uid,
     });
 
@@ -181,10 +238,11 @@ async function seedProject({ users, index, itemsSpec }) {
           itemId: itemRef.id,
           assemblerId: users.assembler.uid,
           assemblerName: users.assembler.name,
-          amountToReceive: 150,
+          amountToReceive: budget?.suggestedAssemblerAmount ?? 150,
           paymentStatus: itemSpec.assignAssembler,
           assignedAt: Timestamp.now(),
           assignedBy: users.admin.uid,
+          assignedByName: users.admin.name,
           createdAt: Timestamp.now(),
           updatedAt: Timestamp.now(),
         });
@@ -207,20 +265,29 @@ async function main() {
       {
         name: 'Cozinha planejada',
         environment: 'Cozinha',
-        customerPrice: 8500,
         status: 'aguardando_aprovacao_cliente',
         clientApprovalStatus: 'aguardando',
-        requiresDesigner: true,
+        totalCost: 6000,
+        customerAmount: 8500,
+        suggestedAssemblerAmount: 600,
         deadlineDays: 5,
       },
       {
         name: 'Armario de quarto',
         environment: 'Quarto',
-        customerPrice: 3200,
         status: 'em_producao',
         clientApprovalStatus: 'aprovado',
-        requiresDesigner: true,
+        totalCost: 2200,
+        customerAmount: 3200,
+        suggestedAssemblerAmount: 300,
         deadlineDays: 10,
+      },
+      {
+        name: 'Painel de TV',
+        environment: 'Sala',
+        status: 'projeto_criado',
+        clientApprovalStatus: 'aguardando',
+        deadlineDays: 3,
       },
     ],
   });
@@ -232,22 +299,35 @@ async function main() {
       {
         name: 'Rack de sala',
         environment: 'Sala',
-        customerPrice: 2100,
-        status: 'em_montagem',
+        status: 'pronto_para_montagem',
         clientApprovalStatus: 'aprovado',
-        requiresDesigner: false,
+        totalCost: 1400,
+        customerAmount: 2100,
+        suggestedAssemblerAmount: 200,
         deadlineDays: 2,
         assignAssembler: 'pendente',
       },
       {
         name: 'Bancada de lavanderia',
         environment: 'Lavanderia',
-        customerPrice: 1400,
+        status: 'aguardando_pagamento_montador',
+        clientApprovalStatus: 'aprovado',
+        totalCost: 900,
+        customerAmount: 1400,
+        suggestedAssemblerAmount: 150,
+        deadlineDays: -1,
+        assignAssembler: 'pendente',
+      },
+      {
+        name: 'Guarda-roupa planejado',
+        environment: 'Quarto',
         status: 'finalizado',
         clientApprovalStatus: 'aprovado',
-        requiresDesigner: false,
-        deadlineDays: -1,
-        assignAssembler: 'pago',
+        totalCost: 3000,
+        customerAmount: 4500,
+        suggestedAssemblerAmount: 400,
+        deadlineDays: -5,
+        assignAssembler: 'confirmado_pelo_montador',
       },
     ],
   });

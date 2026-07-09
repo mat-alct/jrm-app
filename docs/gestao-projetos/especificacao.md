@@ -140,23 +140,23 @@ Usado quando não há necessidade de projetista.
 
 ## 6. Status internos dos itens
 
+> Atualizado na Fase 2 (2026-07-08) para o fluxo real da marcenaria — ver `docs/gestao-projetos/PLANO.md`, seção 10.2, para a máquina de transições completa.
+
 O status principal deve ser por item, não por projeto.
 
 ```ts
 type ProjectItemStatus =
-  | "orcamento_criado"
+  | "projeto_criado"
   | "aguardando_desenho"
-  | "projeto_desenhado"
+  | "aguardando_orcamento"
   | "aguardando_aprovacao_cliente"
   | "alteracao_solicitada"
   | "recusado_pelo_cliente"
-  | "aprovado"
-  | "aguardando_separacao_materiais"
+  | "aguardando_atribuicao_montador"
   | "em_producao"
-  | "pronto_para_transporte"
-  | "em_transporte"
-  | "em_montagem"
+  | "pronto_para_montagem"
   | "montagem_concluida"
+  | "aguardando_pagamento_montador"
   | "finalizado"
   | "cancelado";
 ```
@@ -186,10 +186,10 @@ type AssemblerPaymentStatus =
 
 ### Regra
 
-O pagamento só entra como **pendente** quando o item chega em:
+O pagamento só entra como **pendente** quando o admin aprova a montagem e o item chega em:
 
 ```txt
-montagem_concluida
+aguardando_pagamento_montador
 ```
 
 O administrador pode alterar o valor manualmente a qualquer momento.
@@ -204,21 +204,21 @@ Mapeamento sugerido:
 
 | Status interno | Status para cliente |
 |---|---|
-| orcamento_criado | Orçamento em preparação |
+| projeto_criado | Projeto em preparação |
 | aguardando_desenho | Projeto em desenvolvimento |
-| projeto_desenhado | Projeto pronto para análise |
+| aguardando_orcamento | Orçamento em preparação |
 | aguardando_aprovacao_cliente | Aguardando sua aprovação |
 | alteracao_solicitada | Alteração solicitada |
 | recusado_pelo_cliente | Item recusado |
-| aprovado | Projeto aprovado |
-| aguardando_separacao_materiais | Separação de materiais |
+| aguardando_atribuicao_montador | Projeto aprovado |
 | em_producao | Em produção |
-| pronto_para_transporte | Pronto para transporte |
-| em_transporte | Em transporte |
-| em_montagem | Em montagem |
+| pronto_para_montagem | Em produção |
 | montagem_concluida | Montagem concluída |
+| aguardando_pagamento_montador | Montagem concluída |
 | finalizado | Finalizado |
 | cancelado | Cancelado |
+
+Os status ligados à operação interna do montador (`aguardando_atribuicao_montador`, `aguardando_pagamento_montador`, `em_producao`/`pronto_para_montagem`) colapsam em rótulos que não expõem a operação interna.
 
 O cliente deve ver também a **previsão atualizada**, mas não precisa ver alerta de atraso.
 

@@ -36,7 +36,7 @@ Toda etapa termina com: testes novos passando (`npm test`), `npx tsc --noEmit` l
 
 **Entregas**
 - `src/services/projects/project.service.ts`: `createProject` (valida obrigatórios), `updateProject`, `listProjects` (filtros básicos: vendedor, busca por nome), `getProject`. **Não gera credenciais do cliente** — hash scrypt só roda em Node; a geração é a rota `provision` da Via B, integrada no CP1.
-- `src/services/projects/projectItem.service.ts`: `createProjectItem` (status inicial `orcamento_criado`, `clientApprovalStatus: 'aguardando'`), `updateProjectItem`, `listProjectItems`; toda escrita dispara `recalculateProjectSummary` (fundação).
+- `src/services/projects/projectItem.service.ts`: `createProjectItem` (status inicial `projeto_criado` (Fase 2), `clientApprovalStatus: 'aguardando'`), `updateProjectItem`, `listProjectItems`; toda escrita dispara `recalculateProjectSummary` (fundação).
 - Hooks React Query: `useProjects`, `useProject`, `useProjectItems` (+ mutations com invalidação por queryKey `['projects']`, `['projects', id, 'items']`).
 
 **Testes**
@@ -98,7 +98,7 @@ Toda etapa termina com: testes novos passando (`npm test`), `npx tsc --noEmit` l
 
 **Entregas**
 - `src/components/projects/AssignDesignerModal.tsx`: admin escolhe desenhista (`useUsersByRole('designer')`), prazo automático via `deadline.service` (editável); grava `designerId`/`designerName`/`deadlineCurrent`, status → `aguardando_desenho`.
-- `src/services/projects/designer.service.ts`: `getDesignerQueue(designerId)` (collectionGroup `items` where `designerId ==`, spec seção 22), `submitDesignerVersion(projectId, itemId, files, description)` — cria doc em `versions` (número incremental), sobe arquivos, atualiza `currentVersionId`, status → `projeto_desenhado` → `aguardando_aprovacao_cliente`.
+- `src/services/projects/designer.service.ts`: `getDesignerQueue(designerId)` (collectionGroup `items` where `designerId ==`, spec seção 22), `submitDesignerVersion(projectId, itemId, files, description)` — cria doc em `versions` (número incremental), sobe arquivos, atualiza `currentVersionId`, status → `aguardando_orcamento` (Fase 2; o envio ao cliente passa pelo orçamento, não é automático).
 - `src/pages/desenhista/index.tsx`: fila com prazo, badge de atraso e destaque para `alteracao_solicitada`; sem nenhum dado financeiro.
 - `src/components/designer/{DesignerQueue,DesignerUploadPanel}.tsx`.
 - Detalhe do item (A3): seção de versões (histórico interno, visível para admin; desenhista vê as próprias).

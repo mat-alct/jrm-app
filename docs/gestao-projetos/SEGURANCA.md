@@ -33,6 +33,7 @@ Roteiro manual para validar a matriz de permissões da Via B antes de mergear.
 2. Confirmar que acessa apenas itens/versoes atribuidos a ele.
 3. Confirmar que nao ve valores de montadores, pagamentos ou comprovantes.
 4. Confirmar que nao consegue alterar atribuições de montadores.
+5. **Limitação conhecida:** `firestore.rules` permite ao desenhista ler o documento inteiro do item (`items/{itemId}`), incluindo `item.budget`, porque o Firestore não faz segurança em nível de campo. A UI esconde o painel de orçamento para esse papel (`canSeePrice` em `[itemId].tsx`), mas um desenhista consultando o Firestore diretamente (SDK/console) consegue ler o custo interno. Mitigação futura: mover `budget` para uma subcoleção com regras próprias.
 
 ## Montador
 
