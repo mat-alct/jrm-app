@@ -54,21 +54,21 @@ service firebase.storage {
     // Cliente nunca le Storage diretamente. Arquivos de cliente saem somente por signed URL.
     match /projects/{projectId}/general/{fileName} {
       allow read: if isAdmin() || isSeller() || isDesigner();
-      allow write: if isAdmin() || isSeller();
+      allow create, update: if isAdmin() || isSeller();
       allow delete: if isAdmin();
     }
 
     match /projects/{projectId}/items/{itemId}/{category}/{fileName} {
       allow read: if isAdmin() || isSeller() || isDesigner()
         || isAssignedAssembler(projectId, itemId);
-      allow write: if isAdmin() || isSeller() || isDesigner()
+      allow create, update: if isAdmin() || isSeller() || isDesigner()
         || isAssignedAssembler(projectId, itemId);
       allow delete: if isAdmin();
     }
 
     match /projects/{projectId}/items/{itemId}/versions/{versionId}/{fileName} {
       allow read: if isAdmin() || isSeller() || isDesigner();
-      allow write: if isAdmin() || hasRole('designer');
+      allow create, update: if isAdmin() || hasRole('designer');
       allow delete: if isAdmin();
     }
     // === FIM VIA A ===
@@ -79,7 +79,7 @@ service firebase.storage {
     // de curta duracao gerada pelo adminStorage nas API routes (spec secao 20).
     match /payments/{paymentId}/{fileName} {
       allow read: if isAdmin() || ownsPayment(paymentId);
-      allow write: if isAdmin();
+      allow create, update: if isAdmin();
       allow delete: if isAdmin();
     }
     // === FIM VIA B ===

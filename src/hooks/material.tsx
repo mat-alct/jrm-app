@@ -13,22 +13,16 @@ import React, {
   useContext,
   useMemo,
 } from 'react';
-// Importa funções modulares do Firebase v9+ para interagir com o banco de dados Firestore.
-import {
-  addDoc,
-  collection,
-  deleteDoc,
-  doc,
-  getDocs,
-  query,
-  Timestamp,
-  updateDoc,
-  where,
-} from 'firebase/firestore';
 
 // --- Bloco de Importações Internas do Projeto ---
 // Importa a instância do banco de dados e o cliente do React Query dos seus arquivos de serviço.
-import { db } from '../services/firebase';
+import {
+  createMaterial as createMaterialService,
+  getAllMaterials as getAllMaterialsService,
+  getMaterials as getMaterialsService,
+  removeMaterial as removeMaterialService,
+  updateMaterialPrice as updateMaterialPriceService,
+} from '../services/materials.service';
 import { queryClient } from '../services/queryClient';
 // Importa o tipo 'Material' que define a estrutura de dados de um material.
 import { Material } from '../types';
@@ -66,10 +60,7 @@ export const MaterialProvider = ({ children }: MaterialProviderProps) => {
   // 'useMutation' para CRIAR um novo material.
   const createMaterialMutation = useMutation({
     // 'mutationFn' é a função assíncrona que executa a tarefa principal: adicionar um documento no Firestore.
-    mutationFn: async (materialData: Material) => {
-      const materialsCollection = collection(db, 'materials');
-      await addDoc(materialsCollection, materialData);
-    },
+    mutationFn: createMaterialService,
     // 'onSuccess' é chamado automaticamente se a 'mutationFn' for bem-sucedida.
     onSuccess: () => {
       // Invalida o cache da query 'materials', forçando o React Query a buscar os dados novamente na próxima vez.
@@ -87,10 +78,7 @@ export const MaterialProvider = ({ children }: MaterialProviderProps) => {
 
   // 'useMutation' para REMOVER um material.
   const removeMaterialMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const materialRef = doc(db, 'materials', id);
-      await deleteDoc(materialRef);
-    },
+    mutationFn: removeMaterialService,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['materials'] });
     },
@@ -104,14 +92,7 @@ export const MaterialProvider = ({ children }: MaterialProviderProps) => {
 
   // 'useMutation' para ATUALIZAR o preço de um material.
   const updateMaterialPriceMutation = useMutation({
-    mutationFn: async ({ id, newPrice }: { id: string; newPrice: number }) => {
-      const materialRef = doc(db, 'materials', id);
-      // Atualiza apenas os campos 'price' e 'updatedAt' do documento.
-      await updateDoc(materialRef, {
-        price: newPrice,
-        updatedAt: Timestamp.fromDate(new Date()),
-      });
-    },
+    mutationFn: updateMaterialPriceService,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['materials'] });
     },
@@ -153,25 +134,9 @@ export const MaterialProvider = ({ children }: MaterialProviderProps) => {
 
   // --- Bloco de Funções de Busca de Dados ---
 
-  const getMaterials = useCallback(async (materialFilter: string) => {
-    const materialsCollection = collection(db, 'materials');
-    const q = query(
-      materialsCollection,
-      where('materialType', '==', materialFilter),
-    );
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(
-      d => ({ ...d.data(), id: d.id }) as unknown as Material,
-    );
-  }, []);
+  const getMaterials = useCallback(getMaterialsService, []);
 
-  const getAllMaterials = useCallback(async (): Promise<Material[]> => {
-    const materialsCollection = collection(db, 'materials');
-    const querySnapshot = await getDocs(materialsCollection);
-    return querySnapshot.docs.map(
-      doc => ({ ...doc.data(), id: doc.id }) as Material,
-    );
-  }, []);
+  const getAllMaterials = useCallback(getAllMaterialsService, []);
 
   const value = useMemo<MaterialContext>(
     () => ({

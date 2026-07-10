@@ -1,14 +1,15 @@
 // src/services/firebase.ts
 
 import { getApp, getApps, initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
+import { connectAuthEmulator, getAuth } from 'firebase/auth';
 import {
+  connectFirestoreEmulator,
   getFirestore,
   initializeFirestore,
   persistentLocalCache,
   persistentMultipleTabManager,
 } from 'firebase/firestore';
-import { getStorage } from 'firebase/storage';
+import { connectStorageEmulator, getStorage } from 'firebase/storage';
 
 // Suas credenciais do Firebase, guardadas em variáveis de ambiente
 const firebaseConfig = {
@@ -25,10 +26,13 @@ const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
 const auth = getAuth(app);
 
+const useFirebaseEmulators =
+  process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATORS === '1';
+
 // persistentLocalCache usa IndexedDB — só funciona no browser.
 // No server (build/SSR), cai no getFirestore padrão.
 const db =
-  typeof window !== 'undefined'
+  typeof window !== 'undefined' && !useFirebaseEmulators
     ? initializeFirestore(app, {
         localCache: persistentLocalCache({
           tabManager: persistentMultipleTabManager(),
@@ -37,6 +41,20 @@ const db =
     : getFirestore(app);
 
 const storage = getStorage(app);
+
+declare global {
+  // eslint-disable-next-line no-var
+  var __JRM_FIREBASE_EMULATORS_CONNECTED__: boolean | undefined;
+}
+
+if (useFirebaseEmulators && !globalThis.__JRM_FIREBASE_EMULATORS_CONNECTED__) {
+  connectAuthEmulator(auth, 'http://127.0.0.1:9099', {
+    disableWarnings: true,
+  });
+  connectFirestoreEmulator(db, '127.0.0.1', 8080);
+  connectStorageEmulator(storage, '127.0.0.1', 9199);
+  globalThis.__JRM_FIREBASE_EMULATORS_CONNECTED__ = true;
+}
 
 // Exporte os serviços que você precisa
 export { app, auth, db, storage };

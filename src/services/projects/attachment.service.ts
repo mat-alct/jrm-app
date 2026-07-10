@@ -23,11 +23,6 @@ import {
   projectAttachmentsPath,
   projectAttachmentStoragePath,
 } from './paths';
-import {
-  E2E_MOCKS_ENABLED,
-  listE2EAttachments,
-  uploadE2EAttachment,
-} from './e2eMockStore';
 
 export function sanitizeFileName(fileName: string): string {
   return fileName
@@ -78,19 +73,6 @@ export async function uploadAttachment({
   uploadedByName,
   uploadedByRole,
 }: UploadAttachmentParams): Promise<Attachment> {
-  if (E2E_MOCKS_ENABLED) {
-    return uploadE2EAttachment({
-      projectId,
-      itemId,
-      file,
-      category,
-      visibility,
-      uploadedBy,
-      uploadedByName,
-      uploadedByRole,
-    });
-  }
-
   const attachmentId = v4();
   const fileName = sanitizeFileName(file.name);
   const mimeType = file.type || 'application/octet-stream';
@@ -106,7 +88,7 @@ export async function uploadAttachment({
   const attachment: Attachment = {
     id: attachmentId,
     projectId,
-    itemId,
+    ...(itemId ? { itemId } : {}),
     fileName,
     originalFileName: file.name,
     storagePath,
@@ -136,10 +118,6 @@ export async function listAttachments(
   projectId: string,
   itemId?: string,
 ): Promise<Attachment[]> {
-  if (E2E_MOCKS_ENABLED) {
-    return listE2EAttachments(projectId, itemId);
-  }
-
   const collectionPath = itemId
     ? itemAttachmentsPath(projectId, itemId)
     : projectAttachmentsPath(projectId);

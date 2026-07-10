@@ -17,36 +17,27 @@ import React, {
 
 // Importamos a instância 'auth' do nosso novo arquivo de serviço
 import { auth } from '../services/firebase';
-import {
-  E2E_MOCKS_ENABLED,
-  getE2EAuthUser,
-} from '../services/projects/e2eMockStore';
 
 // Interface que define o que nosso contexto fornecerá
-interface AuthContextData {
+export interface AuthContextData {
   user: User | null | undefined; // undefined = carregando, null = deslogado, User = logado
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextData>({} as AuthContextData);
+// Exportado para que os testes possam prover um valor controlado sem mockar o hook.
+export const AuthContext = createContext<AuthContextData>({} as AuthContextData);
 
 interface AuthProviderProps {
   children: ReactNode;
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  const [user, setUser] = useState<User | null | undefined>(
-    E2E_MOCKS_ENABLED ? (getE2EAuthUser() as User) : undefined,
-  );
+  const [user, setUser] = useState<User | null | undefined>(undefined);
   const router = useRouter();
 
   // Função de login que será usada na página de login
   const signIn = async (email: string, password: string) => {
-    if (E2E_MOCKS_ENABLED) {
-      setUser(getE2EAuthUser() as User);
-      return;
-    }
     // 1. Primeiro, autentica no lado do cliente como você já faz
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
 
@@ -64,10 +55,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
 };
 
   const signOut = async () => {
-    if (E2E_MOCKS_ENABLED) {
-      setUser(null);
-      return;
-    }
     // 1. PEÇA-CHAVE FALTANTE: Informa o backend para remover o cookie de sessão
     await fetch('/api/logout', {
       method: 'POST',
@@ -82,8 +69,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Efeito que monitora o estado de autenticação em tempo real
   useEffect(() => {
-    if (E2E_MOCKS_ENABLED) return undefined;
-
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       // Quando o estado muda (login/logout), atualizamos nosso estado 'user'
       setUser(currentUser);

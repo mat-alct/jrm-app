@@ -5,7 +5,8 @@ import {
   requireClientProject,
 } from '@/services/projects/clientPortal.server';
 import { itemAttachmentsPath, projectItemsPath } from '@/services/projects/paths';
-import { adminDb, adminStorage } from '@/services/firebaseAdmin';
+import { getSignedReadUrl } from '@/services/projects/storageSignedUrl.server';
+import { adminDb } from '@/services/firebaseAdmin';
 import {
   Attachment,
   ClientAttachmentDTO,
@@ -27,14 +28,7 @@ function toIsoString(
 }
 
 async function signedAttachmentUrl(storagePath: string): Promise<string> {
-  const [url] = await adminStorage
-    .bucket()
-    .file(storagePath)
-    .getSignedUrl({
-      action: 'read',
-      expires: Date.now() + SIGNED_URL_TTL_MS,
-    });
-  return url;
+  return getSignedReadUrl(storagePath, Date.now() + SIGNED_URL_TTL_MS);
 }
 
 async function clientAttachmentsForItem(

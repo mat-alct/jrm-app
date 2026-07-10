@@ -21,9 +21,12 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/users/$(request.auth.uid));
     }
 
+    function activeUser() {
+      return signedIn() && userDoc().data.active == true;
+    }
+
     function hasRole(role) {
-      return signedIn()
-        && userDoc().data.active == true
+      return activeUser()
         && role in userDoc().data.roles;
     }
 
@@ -48,6 +51,15 @@ service cloud.firestore {
         && exists(/databases/$(database)/documents/projects/$(projectId)/items/$(itemId)/assemblerAssignments/$(request.auth.uid));
     }
 
+    function isAssignedDesigner(projectId, itemId) {
+      return isDesigner()
+        && get(/databases/$(database)/documents/projects/$(projectId)/items/$(itemId)).data.designerId == request.auth.uid;
+    }
+
+    function updatesOnly(keys) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys);
+    }
+
     function assemblerConfirmsOwnPaymentOnly() {
       return isAssembler()
         && resource.data.assemblerId == request.auth.uid
@@ -62,20 +74,77 @@ service cloud.firestore {
         && request.resource.data.status == 'confirmado_pelo_montador';
     }
 
+    function assemblerConfirmsOwnAssignmentOnly(assignmentId) {
+      return isAssembler()
+        && assignmentId == request.auth.uid
+        && resource.data.assemblerId == request.auth.uid
+        && resource.data.paymentStatus == 'pago'
+        && request.resource.data.paymentStatus == 'confirmado_pelo_montador'
+        && request.resource.data.assemblerId == resource.data.assemblerId
+        && request.resource.data.amountToReceive == resource.data.amountToReceive
+        && request.resource.data.projectId == resource.data.projectId
+        && request.resource.data.itemId == resource.data.itemId
+        && request.resource.data.assignedBy == resource.data.assignedBy
+        && request.resource.data.paymentId == resource.data.paymentId;
+    }
+
     match /users/{userId} {
-      allow read: if signedIn();
+      allow read: if activeUser();
       allow create, update, delete: if isAdmin();
     }
 
     match /settings/{settingId} {
-      allow read: if signedIn();
+      allow read: if activeUser();
+      allow write: if isAdmin();
+    }
+
+    match /{path=**}/items/{itemId} {
+      allow list: if isAdmin() || isSeller()
+        || (isDesigner() && resource.data.get('designerId', '') == request.auth.uid);
+    }
+
+    match /{path=**}/assemblerAssignments/{assignmentId} {
+      allow list: if isAdmin() || isAssembler();
+    }
+
+    // Colecoes legadas usadas pela area de cortes e pela home.
+    match /orders/{orderId} {
+      allow read: if activeUser();
+      allow create, update: if isAdmin() || isSeller();
+      allow delete: if isAdmin();
+    }
+
+    match /estimates/{estimateId} {
+      allow read: if activeUser();
+      allow create, update: if isAdmin() || isSeller();
+      allow delete: if isAdmin();
+    }
+
+    match /materials/{materialId} {
+      allow read: if activeUser();
+      allow create, update, delete: if isAdmin() || isSeller();
+    }
+
+    match /sellers/{sellerId} {
+      allow read: if activeUser();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /counters/{counterId} {
+      allow read: if activeUser();
+      allow write: if isAdmin() || isSeller();
+    }
+
+    match /config/{configId} {
+      allow read: if activeUser();
       allow write: if isAdmin();
     }
 
     match /projects/{projectId} {
       allow read: if isAdmin() || isSeller();
       allow create: if isAdmin() || isSeller();
-      allow update: if isAdmin() || isSeller();
+      allow update: if isAdmin() || isSeller()
+        || (activeUser() && updatesOnly(['itemSummary', 'totalCustomerValue']));
       allow delete: if isAdmin();
 
       match /attachments/{attachmentId} {
@@ -86,18 +155,26 @@ service cloud.firestore {
 
       match /items/{itemId} {
         // Leitura/edicao do desenhista restrita aos proprios itens (fila em /desenhista) — VIA A.
-        allow read: if isAdmin() || isSeller()
-          || (isDesigner() && resource.data.designerId == request.auth.uid);
+        allow get: if isAdmin() || isSeller()
+          || isAssignedDesigner(projectId, itemId)
+          || isAssignedAssembler(projectId, itemId);
+        allow list: if isAdmin() || isSeller() || isDesigner();
         allow create: if isAdmin() || isSeller();
         allow update: if isAdmin() || isSeller()
-          || (isDesigner() && resource.data.designerId == request.auth.uid);
+          || isAssignedDesigner(projectId, itemId);
         allow delete: if isAdmin();
 
         match /attachments/{attachmentId} {
           allow read: if isAdmin() || isSeller()
+            || (isAssignedDesigner(projectId, itemId)
+                && resource.data.visibility in ['internal', 'client', 'designer'])
             || (isAssignedAssembler(projectId, itemId)
                 && resource.data.visibility == 'assembler');
           allow create: if isAdmin() || isSeller()
+            || (isAssignedDesigner(projectId, itemId)
+                && request.resource.data.visibility in ['client', 'designer']
+                && request.resource.data.uploadedBy == request.auth.uid
+                && request.resource.data.uploadedByRole == 'designer')
             || (isAssignedAssembler(projectId, itemId)
                 && request.resource.data.visibility == 'assembler'
                 && request.resource.data.uploadedBy == request.auth.uid
@@ -107,7 +184,7 @@ service cloud.firestore {
 
         match /statusHistory/{historyId} {
           allow read: if isAdmin() || isSeller();
-          allow create: if signedIn();
+          allow create: if activeUser();
           allow update, delete: if false;
         }
 
@@ -130,7 +207,8 @@ service cloud.firestore {
                 && assignmentId == request.auth.uid
                 && resource.data.assemblerId == request.auth.uid);
           allow create, delete: if isAdmin();
-          allow update: if isAdmin();
+          allow update: if isAdmin()
+            || assemblerConfirmsOwnAssignmentOnly(assignmentId);
         }
         // === FIM VIA B ===
       }

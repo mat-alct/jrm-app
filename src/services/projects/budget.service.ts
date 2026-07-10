@@ -4,7 +4,6 @@ import { AppUser, ItemBudget, ItemBudgetLine, ProjectItem } from '@/types/projec
 import { isAdmin } from '@/utils/projects/permissions';
 
 import { db } from '../firebase';
-import { E2E_MOCKS_ENABLED, saveE2EItemBudget } from './e2eMockStore';
 import { projectItemPath } from './paths';
 import { updateItemStatus } from './status.service';
 
@@ -43,10 +42,6 @@ export async function saveItemBudget(
   input: SaveItemBudgetInput,
   actor: Pick<AppUser, 'id' | 'name' | 'roles'>,
 ): Promise<ItemBudget> {
-  if (E2E_MOCKS_ENABLED) {
-    return saveE2EItemBudget(projectId, itemId, input, actor);
-  }
-
   assertCanManageBudget(actor.roles);
 
   const itemRef = doc(db, projectItemPath(projectId, itemId));
