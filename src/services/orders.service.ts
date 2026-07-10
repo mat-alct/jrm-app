@@ -19,6 +19,12 @@ import {
   QueryDocumentSnapshot,
 } from 'firebase/firestore';
 
+import {
+  cuttingPlanMatchesPieces,
+  cutlistToCuttingPlanPieces,
+  markCuttingPlanOutdated,
+} from '@/domain/cutting-plan';
+import type { CuttingPlan } from '@/domain/cutting-plan';
 import { Cutlist, Estimate, Order, OrderEdit } from '@/types';
 import { removeUndefinedAndEmptyFields } from '@/utils/removeUndefinedAndEmpty';
 
@@ -74,8 +80,12 @@ async function writeEstimate(
 }
 
 async function writeOrder(orderData: OrderPropsWithOrderCode): Promise<void> {
-  const orderRef = doc(db, 'orders', v4());
-  await setDoc(orderRef, stripUndefined(orderData));
+  const orderId = v4();
+  const orderRef = doc(db, 'orders', orderId);
+  const cuttingPlan = orderData.cuttingPlan
+    ? { ...orderData.cuttingPlan, orderId }
+    : undefined;
+  await setDoc(orderRef, stripUndefined({ ...orderData, cuttingPlan }));
 }
 
 export async function createEstimate(estimateData: Estimate): Promise<void> {
@@ -106,7 +116,10 @@ export async function createOrder(orderData: Order): Promise<void> {
   const counterRef = doc(db, 'counters', 'orders');
   const counterSnap = await getDoc(counterRef);
   const orderCode = counterSnap.exists() ? counterSnap.data()?.code : 1;
-  const orderPrice = sumCutlistPrice(orderData.cutlist);
+  const orderPrice =
+    orderData.cuttingPlan && orderData.cuttingPlan.status !== 'outdated'
+      ? orderData.cuttingPlan.pricing.totalCost
+      : sumCutlistPrice(orderData.cutlist);
 
   await writeOrder({
     ...orderData,
@@ -216,6 +229,7 @@ export async function updateOrderCutlist(
   newCutlist: Cutlist[],
   sellerPassword: string,
   shouldCharge: boolean,
+  cuttingPlan?: CuttingPlan,
 ): Promise<UpdateOrderCutlistResult> {
   try {
     const sellerRecord = await getSellerByPassword(sellerPassword);
@@ -228,11 +242,28 @@ export async function updateOrderCutlist(
     const order = orderSnap.data() as Order & { orderPrice?: number };
     const previousCutlist = order.cutlist ?? [];
     const previousOrderPrice = order.orderPrice ?? sumCutlistPrice(previousCutlist);
-    const newOrderPrice = sumCutlistPrice(newCutlist);
+    const now = Timestamp.fromDate(new Date());
+    let nextCuttingPlan = cuttingPlan
+      ? { ...cuttingPlan, orderId: id, updatedAt: now }
+      : order.cuttingPlan;
+    if (
+      !cuttingPlan &&
+      nextCuttingPlan &&
+      !cuttingPlanMatchesPieces(
+        nextCuttingPlan,
+        cutlistToCuttingPlanPieces(newCutlist),
+      )
+    ) {
+      nextCuttingPlan = markCuttingPlanOutdated(nextCuttingPlan, now);
+    }
+    const newOrderPrice =
+      nextCuttingPlan && nextCuttingPlan.status !== 'outdated'
+        ? nextCuttingPlan.pricing.totalCost
+        : sumCutlistPrice(newCutlist);
     const priceDifference = newOrderPrice - previousOrderPrice;
 
     const edit: OrderEdit = stripUndefined({
-      editedAt: Timestamp.fromDate(new Date()),
+      editedAt: now,
       editedBy: sellerRecord.name,
       previousCutlist,
       previousOrderPrice,
@@ -240,12 +271,17 @@ export async function updateOrderCutlist(
       shouldCharge: priceDifference === 0 ? false : shouldCharge,
     });
 
-    await updateDoc(orderRef, {
+    const updatePayload: DocumentData = {
       cutlist: stripUndefined(newCutlist),
       orderPrice: newOrderPrice,
-      updatedAt: Timestamp.fromDate(new Date()),
+      updatedAt: now,
       edits: arrayUnion(edit),
-    });
+    };
+    if (nextCuttingPlan) {
+      updatePayload.cuttingPlan = stripUndefined(nextCuttingPlan);
+      updatePayload.serviceType = 'cutting_plan';
+    }
+    await updateDoc(orderRef, updatePayload);
 
     return {
       success: true,

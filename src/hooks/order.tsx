@@ -1,5 +1,5 @@
-import { toaster } from '@/components/ui/toaster';
 import { useMutation } from '@tanstack/react-query';
+import { DocumentData, QueryDocumentSnapshot } from 'firebase/firestore';
 import React, {
   createContext,
   ReactNode,
@@ -7,8 +7,10 @@ import React, {
   useContext,
   useMemo,
 } from 'react';
-import { DocumentData, QueryDocumentSnapshot } from 'firebase/firestore';
 
+import { toaster } from '@/components/ui/toaster';
+
+import type { CuttingPlan } from '../domain/cutting-plan';
 import {
   createEstimate as createEstimateService,
   createOrder as createOrderService,
@@ -38,6 +40,7 @@ interface OrderContext {
     newCutlist: Cutlist[],
     sellerPassword: string,
     shouldCharge: boolean,
+    cuttingPlan?: CuttingPlan,
   ) => Promise<UpdateOrderCutlistResult>;
 }
 
@@ -52,15 +55,15 @@ export const OrderProvider = ({ children }: OrderProviderProps) => {
   const createEstimateMutation = useMutation({
     mutationFn: createEstimateService,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['orders'] });
-      queryClient.invalidateQueries({ queryKey: ['estimates'] });
+      void queryClient.invalidateQueries({ queryKey: ['orders'] });
+      void queryClient.invalidateQueries({ queryKey: ['estimates'] });
     },
   });
 
   const createOrderMutation = useMutation({
     mutationFn: createOrderService,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      void queryClient.invalidateQueries({ queryKey: ['orders'] });
     },
   });
 
@@ -117,15 +120,17 @@ export const OrderProvider = ({ children }: OrderProviderProps) => {
     newCutlist: Cutlist[],
     sellerPassword: string,
     shouldCharge: boolean,
+    cuttingPlan?: CuttingPlan,
   ): Promise<UpdateOrderCutlistResult> => {
     const result = await updateOrderCutlistService(
       id,
       newCutlist,
       sellerPassword,
       shouldCharge,
+      cuttingPlan,
     );
     if (result.success) {
-      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      void queryClient.invalidateQueries({ queryKey: ['orders'] });
     }
     return result;
   }, []);
