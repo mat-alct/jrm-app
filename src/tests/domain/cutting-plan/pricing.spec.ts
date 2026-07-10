@@ -1,10 +1,10 @@
-import {
-  calculateCuttingPlanPricing,
-  DEFAULT_CUTTING_PLAN_SETTINGS,
-} from '@/domain/cutting-plan';
 import type {
   CuttingPlanPiece,
   CuttingPlanSheet,
+} from '@/domain/cutting-plan';
+import {
+  calculateCuttingPlanPricing,
+  DEFAULT_CUTTING_PLAN_SETTINGS,
 } from '@/domain/cutting-plan';
 
 const material = {

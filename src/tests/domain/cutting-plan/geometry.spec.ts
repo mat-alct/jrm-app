@@ -1,3 +1,7 @@
+import type {
+  CuttingPlanPiece,
+  CuttingPlanPlacement,
+} from '@/domain/cutting-plan';
 import {
   calculateEdgeBandLengthMeters,
   DEFAULT_CUTTING_PLAN_SETTINGS,
@@ -5,10 +9,6 @@ import {
   getUsableSheetArea,
   hasOverlappingPlacements,
   isReusableRegion,
-} from '@/domain/cutting-plan';
-import type {
-  CuttingPlanPiece,
-  CuttingPlanPlacement,
 } from '@/domain/cutting-plan';
 
 const piece = (
