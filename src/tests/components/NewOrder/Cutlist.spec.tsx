@@ -131,6 +131,36 @@ describe('NewOrder/Cutlist', () => {
     expect(expectedPrice).toBe(700);
   });
 
+  it('salva identificação, espessura, veio e bloqueia rotação incompatível', async () => {
+    const { updateCutlist } = renderCutlist();
+
+    await chooseMaterial();
+    fillPiece();
+    fireEvent.change(screen.getByLabelText('Identificação da peça'), {
+      target: { value: 'Porta esquerda' },
+    });
+    fireEvent.change(screen.getByLabelText('Espessura (mm)'), {
+      target: { value: '15' },
+    });
+    const grain = document.querySelector('#grainDirection') as HTMLInputElement;
+    fireEvent.focus(grain);
+    fireEvent.keyDown(grain, { key: 'ArrowDown' });
+    fireEvent.click(await screen.findByText('No comprimento'));
+
+    expect(
+      screen.getByRole('checkbox', { name: 'Permitir rotação da peça' }),
+    ).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: /ADD/i }));
+
+    await waitFor(() => expect(updateCutlist).toHaveBeenCalled());
+    expect(updateCutlist.mock.calls[0][0][0]).toMatchObject({
+      description: 'Porta esquerda',
+      thicknessMm: 15,
+      grainDirection: 'along_length',
+      canRotate: false,
+    });
+  });
+
   it('recalcula os precos da lista ao trocar a porcentagem', async () => {
     const { updateCutlist } = renderCutlist([existingPiece()]);
     await screen.findByText('MDF Branco');
@@ -155,7 +185,9 @@ describe('NewOrder/Cutlist', () => {
     fireEvent.click(screen.getByRole('button', { name: /Rasgo/ }));
     fireEvent.click(screen.getByRole('button', { name: /ADD/i }));
 
-    expect(await screen.findByText('Qtd deve ser par para rasgo')).toBeInTheDocument();
+    expect(
+      await screen.findByText('Qtd deve ser par para rasgo'),
+    ).toBeInTheDocument();
     expect(updateCutlist).not.toHaveBeenCalled();
   });
 

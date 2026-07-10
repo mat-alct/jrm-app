@@ -4,25 +4,26 @@ import {
   Box,
   Button,
   Flex,
+  Grid,
   Heading,
   HStack,
+  Icon,
+  SimpleGrid,
   Stack,
+  Switch,
   Text,
   Textarea,
-  SimpleGrid,
-  Grid,
-  Switch,
-  Icon,
 } from '@chakra-ui/react';
-import { toaster } from '@/components/ui/toaster';
 import { yupResolver } from '@hookform/resolvers/yup';
+import { deleteDoc, doc, Timestamp } from 'firebase/firestore';
 import { useRouter } from 'next/router';
 import React from 'react';
-import { useForm, SubmitHandler, Controller } from 'react-hook-form';
-import { FaExclamationTriangle, FaCheckCircle, FaLock } from 'react-icons/fa';
+import { Controller, Resolver, SubmitHandler, useForm } from 'react-hook-form';
+import { FaCheckCircle, FaExclamationTriangle, FaLock } from 'react-icons/fa';
 
-import { deleteDoc, doc, Timestamp } from 'firebase/firestore';
+import { toaster } from '@/components/ui/toaster';
 
+import type { CuttingPlan } from '../../domain/cutting-plan';
 import { useOrder } from '../../hooks/order';
 import { findAreaFreight, useAreas } from '../../hooks/useAreas';
 import { db } from '../../services/firebase';
@@ -31,8 +32,8 @@ import { Cutlist } from '../../types';
 import { capitalizeAndStrip } from '../../utils/capitalizeAndStripString';
 import { normalizeTelephoneInput } from '../../utils/normalizeTelephone';
 import {
-  createOrderSchema,
   createEstimateSchema,
+  createOrderSchema,
 } from '../../utils/yup/novoservicoValidations';
 import { FormDatePicker } from '../Form/DatePicker';
 import { FormInput } from '../Form/Input';
@@ -46,6 +47,8 @@ interface OrderDataProps {
   prefillArea?: string;
   onAreaChange?: (area: string | undefined) => void;
   onDeliveryTypeChange?: (deliveryType: string | undefined) => void;
+  cuttingPlan?: CuttingPlan;
+  requiresCuttingPlan?: boolean;
 }
 
 interface CreateOrderProps {
@@ -70,6 +73,8 @@ export const OrderData = ({
   prefillArea,
   onAreaChange,
   onDeliveryTypeChange,
+  cuttingPlan,
+  requiresCuttingPlan = false,
 }: OrderDataProps) => {
   const validationSchema =
     orderType === 'Orçamento' ? createEstimateSchema : createOrderSchema;
@@ -83,7 +88,9 @@ export const OrderData = ({
     watch,
     formState: { errors: createOrderErrors },
   } = useForm<CreateOrderProps>({
-    resolver: yupResolver(validationSchema as any),
+    resolver: yupResolver(
+      validationSchema as never,
+    ) as unknown as Resolver<CreateOrderProps>,
     defaultValues: { isUrgent: false },
   });
 
@@ -113,8 +120,11 @@ export const OrderData = ({
   }, [deliveryType, onDeliveryTypeChange]);
 
   const orderPrice = React.useMemo(
-    () => cutlist.reduce((acc, item) => acc + (item.price ?? 0), 0),
-    [cutlist],
+    () =>
+      requiresCuttingPlan && cuttingPlan && cuttingPlan.status !== 'outdated'
+        ? cuttingPlan.pricing.totalCost
+        : cutlist.reduce((acc, item) => acc + (item.price ?? 0), 0),
+    [cutlist, cuttingPlan, requiresCuttingPlan],
   );
   // Para orçamento o frete entra somente quando há bairro selecionado.
   // Para serviço, só quando 'Entrega'.
@@ -134,6 +144,17 @@ export const OrderData = ({
   const handleSubmitOrder: SubmitHandler<
     CreateOrderProps
   > = async orderData => {
+    if (
+      requiresCuttingPlan &&
+      (!cuttingPlan || cuttingPlan.status === 'outdated')
+    ) {
+      toaster.create({
+        type: 'error',
+        description: 'Gere um plano de corte atualizado antes de confirmar.',
+      });
+      return;
+    }
+
     const sellerRecord = await getSellerByPassword(orderData.sellerPassword);
 
     if (!sellerRecord) {
@@ -200,7 +221,7 @@ export const OrderData = ({
           updatedAt: now,
         });
         localStorage.removeItem('app@jrmcompensados:cutlist');
-        router.push('/cortes/listadecortes');
+        void router.push('/cortes/listadecortes');
       } catch (err) {
         console.error('Erro ao criar orçamento:', err);
         toaster.create({
@@ -219,6 +240,8 @@ export const OrderData = ({
     try {
       await createOrder({
         cutlist,
+        cuttingPlan: requiresCuttingPlan ? cuttingPlan : undefined,
+        serviceType: requiresCuttingPlan ? 'cutting_plan' : 'standard',
         customer,
         orderStatus: 'Em Produção',
         paymentType: orderData.paymentType,
@@ -234,7 +257,7 @@ export const OrderData = ({
       });
       localStorage.removeItem('app@jrmcompensados:cutlist');
       if (estimateId) await deleteDoc(doc(db, 'estimates', estimateId));
-      router.push('/cortes/listadecortes');
+      void router.push('/cortes/listadecortes');
     } catch (err) {
       console.error('Erro ao criar pedido:', err);
       toaster.create({
@@ -249,7 +272,7 @@ export const OrderData = ({
       gap={6}
       mt={3}
       as="form"
-      onSubmit={createOrderHandleSubmit(handleSubmitOrder)}
+      onSubmit={event => void createOrderHandleSubmit(handleSubmitOrder)(event)}
     >
       {/* 1. DADOS DO CLIENTE */}
       <Box
@@ -665,7 +688,11 @@ export const OrderData = ({
               fontSize="xl"
               width="100%"
               type="submit"
-              disabled={cutlist.length < 1}
+              disabled={
+                cutlist.length < 1 ||
+                (requiresCuttingPlan &&
+                  (!cuttingPlan || cuttingPlan.status === 'outdated'))
+              }
               display="flex"
               gap={3}
               _hover={{ bg: 'orange.400', transform: 'scale(1.02)' }}

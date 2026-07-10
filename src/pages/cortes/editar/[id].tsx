@@ -4,30 +4,30 @@ import {
   Button,
   Center,
   Flex,
-  HStack,
   Heading,
+  HStack,
   Icon,
   Spinner,
   Stack,
   Text,
 } from '@chakra-ui/react';
-import {
-  doc,
-  getDoc,
-  DocumentData,
-} from 'firebase/firestore';
+import { useQuery } from '@tanstack/react-query';
+import { doc, getDoc } from 'firebase/firestore';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import type { FieldError } from 'react-hook-form';
 import { FaCheckCircle, FaExclamationTriangle, FaLock } from 'react-icons/fa';
-import { useQuery } from '@tanstack/react-query';
 
+import { toaster } from '@/components/ui/toaster';
+
+import { CuttingPlanSection } from '../../../components/CuttingPlan';
 import { Dashboard } from '../../../components/Dashboard';
 import { Header } from '../../../components/Dashboard/Content/Header';
+import { FormInput } from '../../../components/Form/Input';
 import { Loader } from '../../../components/Loader';
 import { Cutlist as CutlistComponent } from '../../../components/NewOrder/Cutlist';
-import { FormInput } from '../../../components/Form/Input';
-import { toaster } from '@/components/ui/toaster';
+import type { CuttingPlan } from '../../../domain/cutting-plan';
 import { useAuth } from '../../../hooks/authContext';
 import { useOrder } from '../../../hooks/order';
 import { db } from '../../../services/firebase';
@@ -38,6 +38,21 @@ const draftKey = (id: string) => `app@jrmcompensados:editDraft:${id}`;
 const sumPrice = (items: CutlistType[]) =>
   items.reduce((acc, item) => acc + (item.price ?? 0), 0);
 
+type OrderDocument = Order & {
+  id: string;
+  orderCode?: number;
+  orderPrice?: number;
+};
+
+const parseCutlistDraft = (serialized: string): CutlistType[] | null => {
+  try {
+    const parsed: unknown = JSON.parse(serialized);
+    return Array.isArray(parsed) ? (parsed as CutlistType[]) : null;
+  } catch {
+    return null;
+  }
+};
+
 const EditarPedido = () => {
   const { user } = useAuth();
   const router = useRouter();
@@ -46,25 +61,26 @@ const EditarPedido = () => {
   const id = typeof router.query.id === 'string' ? router.query.id : undefined;
 
   useEffect(() => {
-    if (user === null) router.push('/login');
+    if (user === null) void router.push('/login');
   }, [user, router]);
 
   const {
     data: order,
     isLoading,
     isError,
-  } = useQuery({
+  } = useQuery<OrderDocument | null>({
     queryKey: ['order', id],
     queryFn: async () => {
       if (!id) return null;
       const snap = await getDoc(doc(db, 'orders', id));
       if (!snap.exists()) return null;
-      return { ...(snap.data() as Order & DocumentData), id: snap.id };
+      return { ...(snap.data() as Order), id: snap.id };
     },
     enabled: !!id && !!user,
   });
 
   const [cutlist, setCutlist] = useState<CutlistType[]>([]);
+  const [cuttingPlan, setCuttingPlan] = useState<CuttingPlan | undefined>();
   const [hydrated, setHydrated] = useState(false);
   const [shouldCharge, setShouldCharge] = useState<boolean | null>(null);
   const [sellerPassword, setSellerPassword] = useState('');
@@ -77,14 +93,11 @@ const EditarPedido = () => {
     if (!id || !order || hydrated) return;
     const draft = localStorage.getItem(draftKey(id));
     if (draft) {
-      try {
-        setCutlist(JSON.parse(draft));
-      } catch {
-        setCutlist(order.cutlist ?? []);
-      }
+      setCutlist(parseCutlistDraft(draft) ?? order.cutlist ?? []);
     } else {
       setCutlist(order.cutlist ?? []);
     }
+    setCuttingPlan(order.cuttingPlan);
     setHydrated(true);
   }, [id, order, hydrated]);
 
@@ -101,12 +114,18 @@ const EditarPedido = () => {
   );
 
   const previousOrderPrice = useMemo(
-    () =>
-      ((order as any)?.orderPrice as number | undefined) ??
-      sumPrice(order?.cutlist ?? []),
+    () => order?.orderPrice ?? sumPrice(order?.cutlist ?? []),
     [order],
   );
-  const newOrderPrice = useMemo(() => sumPrice(cutlist), [cutlist]);
+  const requiresCuttingPlan =
+    order?.serviceType === 'cutting_plan' || Boolean(cuttingPlan);
+  const newOrderPrice = useMemo(
+    () =>
+      cuttingPlan && cuttingPlan.status !== 'outdated'
+        ? cuttingPlan.pricing.totalCost
+        : sumPrice(cutlist),
+    [cutlist, cuttingPlan],
+  );
   const priceDifference = newOrderPrice - previousOrderPrice;
   const hasDiff = priceDifference !== 0;
 
@@ -125,6 +144,16 @@ const EditarPedido = () => {
       setPasswordError('Senha obrigatória');
       return;
     }
+    if (
+      requiresCuttingPlan &&
+      (!cuttingPlan || cuttingPlan.status === 'outdated')
+    ) {
+      toaster.create({
+        type: 'error',
+        description: 'Gere um plano de corte atualizado antes de confirmar.',
+      });
+      return;
+    }
     if (hasDiff && shouldCharge === null) {
       toaster.create({
         type: 'error',
@@ -139,6 +168,7 @@ const EditarPedido = () => {
       cutlist,
       sellerPassword,
       shouldCharge ?? false,
+      cuttingPlan,
     );
     setSubmitting(false);
 
@@ -164,7 +194,7 @@ const EditarPedido = () => {
       type: 'success',
       description: 'Pedido atualizado com sucesso.',
     });
-    router.push('/cortes/listadecortes');
+    void router.push('/cortes/listadecortes');
   };
 
   if (!user) return <Loader />;
@@ -216,12 +246,10 @@ const EditarPedido = () => {
   return (
     <>
       <Head>
-        <title>
-          Editar Pedido #{(order as any).orderCode} | JRM Compensados
-        </title>
+        <title>Editar Pedido #{order.orderCode ?? '—'} | JRM Compensados</title>
       </Head>
       <Dashboard>
-        <Header pageTitle={`Editar Pedido #${(order as any).orderCode}`} />
+        <Header pageTitle={`Editar Pedido #${order.orderCode ?? '—'}`} />
 
         {/* Resumo somente leitura */}
         <Box
@@ -244,28 +272,34 @@ const EditarPedido = () => {
             Vendedor original: {order.seller}
           </Text>
           {order.deliveryType === 'Entrega' && (
-            <Box
-              mt={3}
-              pt={3}
-              borderTopWidth="1px"
-              borderColor="gray.200"
-            >
+            <Box mt={3} pt={3} borderTopWidth="1px" borderColor="gray.200">
               <Text fontSize="sm" color="gray.600">
-                Entrega em{' '}
-                <strong>{order.customer?.area || '—'}</strong>
+                Entrega em <strong>{order.customer?.area || '—'}</strong>
               </Text>
               <Text fontSize="sm" color="gray.600" mt={1}>
                 Frete (fixo, não editável):{' '}
-                <strong>R$ {(order.freightPrice ?? 0)},00</strong>
+                <strong>R$ {order.freightPrice ?? 0},00</strong>
               </Text>
             </Box>
           )}
         </Box>
 
         {hydrated && (
-          <Box mt={8}>
-            <CutlistComponent cutlist={cutlist} updateCutlist={updateCutlist} />
-          </Box>
+          <>
+            <Box mt={8}>
+              <CutlistComponent
+                cutlist={cutlist}
+                updateCutlist={updateCutlist}
+              />
+            </Box>
+            <CuttingPlanSection
+              cutlist={cutlist}
+              plan={cuttingPlan}
+              onPlanChange={setCuttingPlan}
+              orderId={id}
+              required={requiresCuttingPlan}
+            />
+          </>
         )}
 
         {/* Barra de confirmação */}
@@ -318,18 +352,13 @@ const EditarPedido = () => {
                   {priceDifference > 0 ? '+' : ''}R$ {priceDifference},00
                 </Text>
               </Box>
-              {((order as any).freightPrice ?? 0) > 0 && (
+              {(order.freightPrice ?? 0) > 0 && (
                 <Box>
                   <Text fontSize="sm" color="gray.600">
                     Total novo (c/ frete)
                   </Text>
-                  <Text
-                    fontSize="xl"
-                    fontWeight="bold"
-                    color="orange.600"
-                  >
-                    R${' '}
-                    {newOrderPrice + ((order as any).freightPrice ?? 0)},00
+                  <Text fontSize="xl" fontWeight="bold" color="orange.600">
+                    R$ {newOrderPrice + (order.freightPrice ?? 0)},00
                   </Text>
                 </Box>
               )}
@@ -397,7 +426,10 @@ const EditarPedido = () => {
                     onChange={e => setSellerPassword(e.target.value)}
                     error={
                       passwordError
-                        ? ({ message: passwordError } as any)
+                        ? ({
+                            type: 'manual',
+                            message: passwordError,
+                          } as FieldError)
                         : undefined
                     }
                   />
@@ -415,9 +447,13 @@ const EditarPedido = () => {
                   fontWeight="bold"
                   width="100%"
                   shadow="md"
-                  onClick={handleSubmit}
+                  onClick={() => void handleSubmit()}
                   loading={submitting}
-                  disabled={cutlist.length < 1}
+                  disabled={
+                    cutlist.length < 1 ||
+                    (requiresCuttingPlan &&
+                      (!cuttingPlan || cuttingPlan.status === 'outdated'))
+                  }
                   display="flex"
                   gap={3}
                 >

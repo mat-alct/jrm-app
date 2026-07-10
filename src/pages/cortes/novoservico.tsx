@@ -8,6 +8,7 @@ import { useRouter } from 'next/router';
 // Importa hooks essenciais do React para gerenciar estado e efeitos colaterais.
 import React, { useCallback, useEffect, useState } from 'react';
 
+import { CuttingPlanSection } from '../../components/CuttingPlan';
 // --- Bloco de Importações Internas do Projeto ---
 // Importa componentes de layout customizados do seu projeto.
 import { Dashboard } from '../../components/Dashboard';
@@ -16,11 +17,20 @@ import { Loader } from '../../components/Loader';
 // Importa os componentes que formam a página de novo serviço.
 import { Cutlist } from '../../components/NewOrder/Cutlist';
 import { OrderData } from '../../components/NewOrder/OrderData';
-// Importa o tipo 'CutlistType' para garantir a segurança de tipos dos dados.
-import { Cutlist as CutlistType } from '../../types';
+import type { CuttingPlan } from '../../domain/cutting-plan';
 // Importa o hook de autenticação customizado para verificar o status do usuário.
 import { useAuth } from '../../hooks/authContext';
+// Importa o tipo 'CutlistType' para garantir a segurança de tipos dos dados.
+import { Cutlist as CutlistType } from '../../types';
 
+const parseCutlist = (serialized: string): CutlistType[] | null => {
+  try {
+    const parsed: unknown = JSON.parse(serialized);
+    return Array.isArray(parsed) ? (parsed as CutlistType[]) : null;
+  } catch {
+    return null;
+  }
+};
 // --- Componente Principal: NovoServiço ---
 // Esta é a página principal para a criação de um novo serviço ou orçamento.
 const NovoServiço = () => {
@@ -36,12 +46,13 @@ const NovoServiço = () => {
     // Se a verificação de autenticação terminou e o resultado é 'null', significa que o usuário não está logado.
     if (user === null) {
       // Redireciona o usuário para a página de login.
-      router.push('/login');
+      void router.push('/login');
     }
   }, [user, router]); // A lista de dependências garante que o efeito só rode quando necessário.
 
   // Estado para armazenar a lista de peças do plano de corte.
   const [cutlist, setCutlist] = useState<CutlistType[]>([]);
+  const [cuttingPlan, setCuttingPlan] = useState<CuttingPlan | undefined>();
 
   // Extrai o objeto 'query' do router, que contém os parâmetros da URL (ex: ?id=123).
   const { query } = router;
@@ -79,7 +90,8 @@ const NovoServiço = () => {
     // Verifica se a URL contém um parâmetro 'cutlist' (ex: ao editar um orçamento).
     if (query.cutlist && typeof query.cutlist === 'string') {
       // Se sim, usa os dados da URL para popular o estado e o localStorage.
-      const cutlistFromQuery = JSON.parse(query.cutlist);
+      const cutlistFromQuery = parseCutlist(query.cutlist);
+      if (!cutlistFromQuery) return;
       setCutlist(cutlistFromQuery);
       localStorage.setItem('app@jrmcompensados:cutlist', query.cutlist);
       // 'return' encerra a execução do efeito aqui.
@@ -93,7 +105,8 @@ const NovoServiço = () => {
 
     // Se encontrar dados no localStorage, usa-os para popular o estado.
     if (cutlistFromStorage) {
-      setCutlist(JSON.parse(cutlistFromStorage));
+      const parsed = parseCutlist(cutlistFromStorage);
+      if (parsed) setCutlist(parsed);
     }
   }, [query.cutlist]); // Depende do parâmetro 'cutlist' da URL.
 
@@ -146,9 +159,13 @@ const NovoServiço = () => {
       <Dashboard>
         {/* Cabeçalho da página, com título dinâmico e botões de ação. */}
         <Header
-          pageTitle={`Novo ${
-            orderType === 'Orçamento' ? 'Orçamento' : 'Serviço'
-          }`}
+          pageTitle={
+            orderType === 'Orçamento'
+              ? 'Novo Orçamento'
+              : orderType === 'Plano de corte'
+                ? 'Novo Plano de corte'
+                : 'Novo Serviço'
+          }
         >
           {/* Componente para selecionar entre "Pedido" e "Orçamento". */}
           <RadioGroup.Root
@@ -172,6 +189,11 @@ const NovoServiço = () => {
                 <RadioGroup.ItemIndicator />
                 <RadioGroup.ItemText>Orçamento</RadioGroup.ItemText>
               </RadioGroup.Item>
+              <RadioGroup.Item value="Plano de corte">
+                <RadioGroup.ItemHiddenInput />
+                <RadioGroup.ItemIndicator />
+                <RadioGroup.ItemText>Plano de corte</RadioGroup.ItemText>
+              </RadioGroup.Item>
             </HStack>
           </RadioGroup.Root>
         </Header>
@@ -185,6 +207,15 @@ const NovoServiço = () => {
           orderType={orderType}
         />
 
+        {orderType === 'Plano de corte' && (
+          <CuttingPlanSection
+            cutlist={cutlist}
+            plan={cuttingPlan}
+            onPlanChange={setCuttingPlan}
+            required
+          />
+        )}
+
         {/* Componente para preencher os dados do cliente e do pedido. */}
         <OrderData
           orderType={orderType}
@@ -193,6 +224,8 @@ const NovoServiço = () => {
           prefillArea={prefillArea}
           onAreaChange={setCurrentArea}
           onDeliveryTypeChange={setCurrentDeliveryType}
+          cuttingPlan={cuttingPlan}
+          requiresCuttingPlan={orderType === 'Plano de corte'}
         />
       </Dashboard>
     </>

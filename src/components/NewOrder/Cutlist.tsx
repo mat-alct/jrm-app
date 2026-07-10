@@ -1,47 +1,50 @@
 'use client';
 
 import {
+  Badge,
   Box,
   Button,
+  Checkbox,
   Flex,
+  Grid,
   Heading,
   HStack,
   IconButton,
   RadioGroup,
+  SimpleGrid,
   Stack,
   Table,
   TableCaption,
   Text,
   useBreakpointValue,
-  Grid,
   useDisclosure,
-  Badge,
 } from '@chakra-ui/react';
 import { yupResolver } from '@hookform/resolvers/yup';
+import { useQuery } from '@tanstack/react-query';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useForm, SubmitHandler } from 'react-hook-form';
+import { Controller, Resolver, SubmitHandler, useForm } from 'react-hook-form';
 import {
-  FaEdit,
-  FaTrash,
-  FaPlus,
-  FaCheckCircle,
-  FaTimesCircle,
   FaArrowsAltH,
   FaArrowsAltV,
+  FaCheckCircle,
   FaChevronDown,
+  FaEdit,
+  FaPlus,
+  FaTimesCircle,
+  FaTrash,
 } from 'react-icons/fa';
-import { useQuery } from '@tanstack/react-query';
 import { v4 } from 'uuid';
 
+import type { GrainDirection } from '../../domain/cutting-plan';
 import { useMaterial } from '../../hooks/material';
 import { findAreaFreight, useAreas } from '../../hooks/useAreas';
-import { RoundedCorners } from '../../types';
+import type { RoundedCorners } from '../../types';
 import { calculateCutlistPrice } from '../../utils/cutlist/calculatePrice';
 import { sortCutlistData } from '../../utils/cutlist/sortAndReturnTag';
 import { createCutlistSchema } from '../../utils/yup/novoservicoValidations';
 import { FormInput } from '../Form/Input';
 import { FormSelect } from '../Form/Select';
-import { TagSchemaSvg, countCorners, emptyCorners } from './TagSchemaSvg';
+import { countCorners, emptyCorners, TagSchemaSvg } from './TagSchemaSvg';
 
 interface CutlistMaterial {
   materialId: string;
@@ -67,6 +70,13 @@ interface Cutlist {
   drawerSlotSide?: 'Maior' | 'Menor';
   hasRoundedCorners?: boolean;
   roundedCorners?: RoundedCorners;
+  description?: string;
+  thicknessMm?: number;
+  finish?: string;
+  color?: string;
+  pattern?: string;
+  grainDirection?: GrainDirection;
+  canRotate?: boolean;
 }
 
 interface CreateCutlistProps {
@@ -76,7 +86,13 @@ interface CreateCutlistProps {
   sideB: number;
   borderA: number;
   borderB: number;
-  price: number;
+  description: string;
+  thicknessMm?: number | null;
+  finish: string;
+  color: string;
+  pattern: string;
+  grainDirection: GrainDirection;
+  canRotate: boolean;
 }
 
 const defaultCreateCutlistValues = {
@@ -86,7 +102,13 @@ const defaultCreateCutlistValues = {
   sideB: '',
   borderA: 0,
   borderB: 0,
-  price: 0,
+  description: '',
+  thicknessMm: undefined,
+  finish: '',
+  color: '',
+  pattern: '',
+  grainDirection: 'none',
+  canRotate: true,
 } as unknown as CreateCutlistProps;
 
 interface CutlistPageProps {
@@ -146,7 +168,17 @@ const CutlistRow = React.memo<CutlistRowProps>(({ cut, onEdit, onRemove }) => {
         )}
       </Table.Cell>
       <Table.Cell fontWeight="medium" color="gray.700">
-        {cut.material.name}
+        <Text>{cut.material.name}</Text>
+        {cut.description && (
+          <Text fontSize="xs" color="gray.500">
+            {cut.description}
+          </Text>
+        )}
+        {cut.grainDirection && cut.grainDirection !== 'none' && (
+          <Badge colorScheme="blue" variant="subtle" fontSize="0.65em">
+            Veio obrigatório
+          </Badge>
+        )}
       </Table.Cell>
       <Table.Cell fontWeight="bold">{cut.amount}</Table.Cell>
       <Table.Cell>
@@ -259,9 +291,12 @@ export const Cutlist = ({
     reset: createCutlistReset,
     setValue: createCutlistSetValue,
     setError: createCutlistSetError,
+    watch: createCutlistWatch,
     formState: { errors: createCutlistErrors },
   } = useForm<CreateCutlistProps>({
-    resolver: yupResolver(createCutlistSchema as any),
+    resolver: yupResolver(
+      createCutlistSchema,
+    ) as unknown as Resolver<CreateCutlistProps>,
     reValidateMode: 'onSubmit',
     defaultValues: defaultCreateCutlistValues,
   });
@@ -294,6 +329,7 @@ export const Cutlist = ({
   const [roundedCorners, setRoundedCorners] =
     useState<RoundedCorners>(emptyCorners());
   const [pricePercent, setPricePercent] = useState<number>(75);
+  const selectedGrainDirection = createCutlistWatch('grainDirection');
 
   const toggleCorner = useCallback((corner: keyof RoundedCorners) => {
     setRoundedCorners(prev => ({ ...prev, [corner]: !prev[corner] }));
@@ -411,6 +447,15 @@ export const Cutlist = ({
         },
         ...cutlistFormData,
         price,
+        description: cutlistFormData.description.trim() || undefined,
+        thicknessMm: cutlistFormData.thicknessMm || undefined,
+        finish: cutlistFormData.finish.trim() || undefined,
+        color: cutlistFormData.color.trim() || undefined,
+        pattern: cutlistFormData.pattern.trim() || undefined,
+        grainDirection: cutlistFormData.grainDirection,
+        canRotate:
+          cutlistFormData.grainDirection === 'none' &&
+          cutlistFormData.canRotate,
         hasHingeHoles: hasHinge,
         hingeHolesSide: hasHinge ? extraSide : undefined,
         hingeHolesQuantity: calculatedQty,
@@ -486,6 +531,16 @@ export const Cutlist = ({
       createCutlistSetValue('borderA', borderA);
       createCutlistSetValue('borderB', borderB);
       createCutlistSetValue('materialId', material.materialId);
+      createCutlistSetValue('description', cutToUpdate.description ?? '');
+      createCutlistSetValue('thicknessMm', cutToUpdate.thicknessMm);
+      createCutlistSetValue('finish', cutToUpdate.finish ?? '');
+      createCutlistSetValue('color', cutToUpdate.color ?? '');
+      createCutlistSetValue('pattern', cutToUpdate.pattern ?? '');
+      createCutlistSetValue(
+        'grainDirection',
+        cutToUpdate.grainDirection ?? 'none',
+      );
+      createCutlistSetValue('canRotate', cutToUpdate.canRotate !== false);
 
       if (cutToUpdate.hasHingeHoles) {
         setExtraType('hinge');
@@ -536,7 +591,7 @@ export const Cutlist = ({
   const focusFieldByIdx = useCallback((idx: number) => {
     const id = arrowNavFields[idx];
     if (!id) return;
-    const el = document.getElementById(id) as HTMLElement | null;
+    const el = document.getElementById(id);
     el?.focus();
   }, []);
 
@@ -618,7 +673,7 @@ export const Cutlist = ({
                 onValueChange={e => {
                   if (e.value) updatePricePercent(e.value);
                 }}
-                // @ts-ignore
+                // @ts-expect-error Chakra aceita o tamanho responsivo resolvido.
                 size={radioSize}
               >
                 <HStack gap={2} bg="gray.100" p={1} borderRadius="lg">
@@ -711,7 +766,9 @@ export const Cutlist = ({
         <Box
           p={6}
           as="form"
-          onSubmit={createCutlistHandleSubmit(handleCreateCutlist)}
+          onSubmit={event =>
+            void createCutlistHandleSubmit(handleCreateCutlist)(event)
+          }
           onKeyDownCapture={handleArrowNav}
         >
           <Grid
@@ -843,6 +900,75 @@ export const Cutlist = ({
               </Flex>
             </Box>
           </Grid>
+
+          <SimpleGrid
+            columns={[1, 2, 3, 6]}
+            gap={4}
+            mt={5}
+            pt={5}
+            borderTopWidth="1px"
+            borderColor="gray.100"
+            alignItems="flex-end"
+          >
+            <FormInput
+              {...createCutlistRegister('description')}
+              name="description"
+              label="Identificação da peça"
+              placeholder="Ex.: Porta esquerda"
+              size="md"
+            />
+            <FormInput
+              {...createCutlistRegister('thicknessMm')}
+              name="thicknessMm"
+              label="Espessura (mm)"
+              placeholder="Ex.: 15"
+              type="number"
+              min={1}
+              step={0.1}
+              size="md"
+            />
+            <FormInput
+              {...createCutlistRegister('finish')}
+              name="finish"
+              label="Acabamento"
+              placeholder="Ex.: Fosco"
+              size="md"
+            />
+            <FormInput
+              {...createCutlistRegister('color')}
+              name="color"
+              label="Cor / padrão"
+              placeholder="Ex.: Branco TX"
+              size="md"
+            />
+            <FormSelect
+              control={createCutlistControl}
+              name="grainDirection"
+              label="Sentido do veio"
+              options={[
+                { value: 'none', label: 'Sem veio obrigatório' },
+                { value: 'along_length', label: 'No comprimento' },
+                { value: 'along_width', label: 'Na largura' },
+              ]}
+              defaultValue="none"
+            />
+            <Controller
+              control={createCutlistControl}
+              name="canRotate"
+              render={({ field }) => (
+                <Checkbox.Root
+                  checked={selectedGrainDirection === 'none' && field.value}
+                  disabled={selectedGrainDirection !== 'none'}
+                  onCheckedChange={event => field.onChange(event.checked)}
+                  pb={3}
+                >
+                  <Checkbox.HiddenInput />
+                  <Checkbox.Control />
+                  <Checkbox.Label>Permitir rotação da peça</Checkbox.Label>
+                </Checkbox.Root>
+              )}
+            />
+          </SimpleGrid>
 
           {/* ÁREA DE DETALHE (Furação, Rasgo ou Boleado) */}
           {isOptionsOpen && (
@@ -1035,7 +1161,7 @@ export const Cutlist = ({
           <Table.Root
             variant="line"
             colorScheme="orange"
-            // @ts-ignore
+            // @ts-expect-error O tamanho resolvido é compatível em runtime.
             size={tableSize}
             whiteSpace="nowrap"
           >
