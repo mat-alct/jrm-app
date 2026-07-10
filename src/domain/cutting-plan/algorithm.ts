@@ -1,4 +1,7 @@
-import { CUTTING_PLAN_ALGORITHM_VERSION } from './defaults';
+import {
+  CUTTING_PLAN_ALGORITHM_VERSION,
+  MAX_GUILLOTINE_CUT_LEVELS,
+} from './defaults';
 import {
   getPieceOrientations,
   getUsableSheetArea,
@@ -47,7 +50,9 @@ interface ExpandedPiece {
 }
 
 interface FreeRegion {
-  depth: number;
+  // Direção e nível do corte que produziu esta região. A raiz não tem corte.
+  cutAxis?: CuttingPlanCut['orientation'];
+  cutLevel: number;
   region: CuttingPlanRegion;
 }
 
@@ -80,6 +85,23 @@ const otherOrientation = (
   orientation: CuttingPlanCut['orientation'],
 ): CuttingPlanCut['orientation'] =>
   orientation === 'vertical' ? 'horizontal' : 'vertical';
+
+// Cortes seguidos na mesma direção são executados na mesma fase da serra. O
+// nível só avança quando o corte inverte a direção do corte que criou a região.
+const cutLevelFor = (
+  parentAxis: CuttingPlanCut['orientation'] | undefined,
+  parentLevel: number,
+  orientation: CuttingPlanCut['orientation'],
+): number => (parentAxis === orientation ? parentLevel : parentLevel + 1);
+
+// O acerto interno limpa a borda de ataque do painel quando ele é virado para
+// ser cortado na direção perpendicular. Cortes seguidos na mesma direção
+// aproveitam a borda já acertada, e a chapa inteira já chega refilada pelo
+// `edgeTrimMm`, então a raiz nunca paga acerto.
+const needsInternalTrim = (
+  parentAxis: CuttingPlanCut['orientation'] | undefined,
+  orientation: CuttingPlanCut['orientation'],
+): boolean => parentAxis !== undefined && parentAxis !== orientation;
 
 const CANDIDATE_CONFIGURATIONS: CandidateConfiguration[] = [
   {
@@ -231,11 +253,14 @@ function sortExpandedPieces(
   return result;
 }
 
-function cutLossAtDepth(
-  depth: number,
+// A serra é cobrada em todo corte. O acerto entra uma única vez por painel e
+// por direção: só no corte que vira o painel, nunca nos cortes paralelos que
+// vêm depois dele.
+function cutLoss(
+  rotatesPanel: boolean,
   input: CuttingPlanInput,
 ): { internal: number; kerf: number; total: number } {
-  const internal = depth > 0 ? input.settings.internalEdgeTrimMm * 2 : 0;
+  const internal = rotatesPanel ? input.settings.internalEdgeTrimMm * 2 : 0;
   const kerf = input.settings.kerfMm;
   return { internal, kerf, total: internal + kerf };
 }
@@ -351,10 +376,17 @@ function simulatePlacement(input: {
   };
 
   const firstIsVertical = splitPreference === 'vertical_first';
+  const firstOrientation: CuttingPlanCut['orientation'] = firstIsVertical
+    ? 'vertical'
+    : 'horizontal';
+  const secondOrientation = otherOrientation(firstOrientation);
   const firstPieceSize = firstIsVertical ? pieceWidth : pieceHeight;
   const firstRegionSize = firstIsVertical ? region.widthMm : region.heightMm;
   const firstNeedsCut = firstRegionSize - firstPieceSize > EPSILON;
-  const firstLoss = cutLossAtDepth(freeRegion.depth, planInput);
+  const firstLoss = cutLoss(
+    needsInternalTrim(freeRegion.cutAxis, firstOrientation),
+    planInput,
+  );
   if (
     firstNeedsCut &&
     firstRegionSize - firstPieceSize + EPSILON < firstLoss.total
@@ -362,19 +394,40 @@ function simulatePlacement(input: {
     return null;
   }
 
+  const firstCutLevel = cutLevelFor(
+    freeRegion.cutAxis,
+    freeRegion.cutLevel,
+    firstOrientation,
+  );
+  if (firstNeedsCut && firstCutLevel > MAX_GUILLOTINE_CUT_LEVELS) return null;
+
+  // O segundo corte incide sobre a tira gerada pelo primeiro; sem o primeiro
+  // corte ele incide sobre a própria região recebida.
+  const secondPanelAxis = firstNeedsCut ? firstOrientation : freeRegion.cutAxis;
+  const secondPanelLevel = firstNeedsCut ? firstCutLevel : freeRegion.cutLevel;
+  const secondCutLevel = cutLevelFor(
+    secondPanelAxis,
+    secondPanelLevel,
+    secondOrientation,
+  );
+
   const firstStripId = `${region.id}-${firstIsVertical ? 'left' : 'top'}-strip`;
   const firstRemainderId = `${region.id}-${firstIsVertical ? 'right' : 'bottom'}`;
   const secondRegionSize = firstIsVertical ? region.heightMm : region.widthMm;
   const secondPieceSize = firstIsVertical ? pieceHeight : pieceWidth;
   const secondNeedsCut = secondRegionSize - secondPieceSize > EPSILON;
-  const secondDepth = freeRegion.depth + (firstNeedsCut ? 1 : 0);
-  const secondLoss = cutLossAtDepth(secondDepth, planInput);
+  const secondLoss = cutLoss(
+    needsInternalTrim(secondPanelAxis, secondOrientation),
+    planInput,
+  );
   if (
     secondNeedsCut &&
     secondRegionSize - secondPieceSize + EPSILON < secondLoss.total
   ) {
     return null;
   }
+
+  if (secondNeedsCut && secondCutLevel > MAX_GUILLOTINE_CUT_LEVELS) return null;
 
   const secondRemainderId = `${firstNeedsCut ? firstStripId : region.id}-${
     firstIsVertical ? 'bottom' : 'right'
@@ -403,7 +456,8 @@ function simulatePlacement(input: {
     if (regionArea(firstRemainder) > EPSILON) {
       freeRegions.push({
         region: firstRemainder,
-        depth: freeRegion.depth + 1,
+        cutAxis: firstOrientation,
+        cutLevel: firstCutLevel,
       });
     }
 
@@ -473,7 +527,8 @@ function simulatePlacement(input: {
     if (regionArea(secondRemainder) > EPSILON) {
       freeRegions.push({
         region: secondRemainder,
-        depth: secondDepth + 1,
+        cutAxis: secondOrientation,
+        cutLevel: secondCutLevel,
       });
     }
 
@@ -737,7 +792,7 @@ function createWorkingSheet(input: {
     placements: [],
     cuts: [],
     wasteRegions: [],
-    freeRegions: [{ region: usableArea, depth: 0 }],
+    freeRegions: [{ region: usableArea, cutLevel: 0 }],
   };
   return sheet;
 }

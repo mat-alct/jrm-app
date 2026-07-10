@@ -3,6 +3,7 @@ import {
   buildAcCut,
   buildAcHeader,
   buildCuttingPlan,
+  buildGibenCutTree,
   cutlistToCuttingPlanInput,
   exportCuttingPlanToGiben,
   generateCuttingPlan,
@@ -10,6 +11,7 @@ import {
   toTenths,
   buildGibenZipBytes,
 } from '@/domain/cutting-plan';
+import type { GibenCutGroup } from '@/domain/cutting-plan';
 import type { Cutlist } from '@/types';
 import JSZip from 'jszip';
 
@@ -246,5 +248,53 @@ describe('Giben AC/AD exporter', () => {
     expect(Buffer.from(zippedAd).equals(Buffer.from(pair.ad, 'ascii'))).toBe(
       true,
     );
+  });
+
+  it('mantém peças de medidas muito variadas dentro das quatro fases da Giben', () => {
+    const sizes: Array<[number, number]> = [
+      [1203, 741],
+      [917, 655],
+      [833, 431],
+      [611, 389],
+      [457, 277],
+      [341, 223],
+      [289, 167],
+      [211, 139],
+      [173, 101],
+      [137, 83],
+      [97, 61],
+      [1499, 313],
+      [719, 547],
+      [383, 199],
+      [263, 157],
+    ];
+    const plan = planFor(
+      sizes.map(([sideA, sideB], index) =>
+        cut({
+          id: `p${index}`,
+          materialId: 'db-white',
+          materialName: '340 - 00000000000730 - MDF Branco 15mm',
+          sideA,
+          sideB,
+        }),
+      ),
+    );
+
+    expect(() => exportCuttingPlanToGiben(plan, context)).not.toThrow();
+
+    const phaseOf = (group: GibenCutGroup): number =>
+      Math.max(
+        group.phase,
+        ...group.segments.map(segment =>
+          segment.childGroup ? phaseOf(segment.childGroup) : group.phase,
+        ),
+      );
+    plan.sheets.forEach(sheet => {
+      const { rootCutGroup } = buildGibenCutTree({
+        pieces: plan.inputSnapshot.pieces,
+        sheet,
+      });
+      expect(phaseOf(rootCutGroup)).toBeLessThanOrEqual(5);
+    });
   });
 });

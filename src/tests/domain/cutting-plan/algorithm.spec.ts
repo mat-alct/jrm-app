@@ -152,10 +152,12 @@ describe('guillotine cutting plan algorithm', () => {
       edgeTrimMm: 0,
       kerfMm: 2,
     };
+    // Rasgadas em duas tiras de 45 (45 + 2 + 45 = 92), as peças só cabem
+    // duas por tira se o acerto couber junto: 44 + 15 + 2 + 44 = 105 > 100.
     const pieces = [
       piece({
         widthMm: 45,
-        lengthMm: 40,
+        lengthMm: 44,
         quantity: 4,
         canRotate: false,
       }),
@@ -169,6 +171,33 @@ describe('guillotine cutting plan algorithm', () => {
 
     expect(withoutInternalLoss.metrics.sheetCount).toBe(1);
     expect(withInternalLoss.metrics.sheetCount).toBeGreaterThan(1);
+  });
+
+  it('cobra o acerto interno só no corte que vira o painel', () => {
+    const result = generateCuttingPlan(
+      input(
+        [
+          piece({ id: 'tira', widthMm: 2000, lengthMm: 300, quantity: 5 }),
+          piece({ id: 'painel', widthMm: 1600, lengthMm: 350, quantity: 2 }),
+        ],
+        'best_yield',
+        DEFAULT_CUTTING_PLAN_SETTINGS,
+      ),
+    );
+    const pieceCuts = result.cutSequence.filter(cut => cut.kind === 'piece');
+
+    // A serra entra em todo corte; o acerto entra uma vez por painel virado.
+    expect(pieceCuts.every(cut => cut.kerfLossMm === 3.2)).toBe(true);
+    expect(
+      pieceCuts.filter(cut => cut.internalCutLossMm === 15),
+    ).not.toHaveLength(0);
+    expect(
+      pieceCuts.filter(cut => cut.internalCutLossMm !== 0).length,
+    ).toBeLessThan(pieceCuts.length);
+
+    // As sete peças cabem numa chapa só quando o acerto não é cobrado em cada
+    // corte paralelo: 5 × 300 + 15 + 4 × 3,2 = 1527,8 ≤ 1830.
+    expect(result.metrics.sheetCount).toBe(1);
   });
 
   it('refina as bordas por direção e só vira as tiras depois dos cortes longitudinais', () => {

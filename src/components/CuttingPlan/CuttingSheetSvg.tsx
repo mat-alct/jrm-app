@@ -3,6 +3,7 @@ import React from 'react';
 import type {
   CuttingPlanPlacement,
   CuttingPlanSheet,
+  CuttingPlanWasteRegion,
   EdgeBandEdge,
 } from '@/domain/cutting-plan';
 
@@ -14,7 +15,32 @@ interface CuttingSheetSvgProps {
   sheet: CuttingPlanSheet;
 }
 
+// Uma sobra mais estreita que isto não volta para o estoque, então cotá-la só
+// suja o desenho. A medida continua disponível no tooltip da região.
+const OFFCUT_LABEL_MIN_SIDE_MM = 100;
+const OFFCUT_LABEL_MIN_FONT_SIZE = 11;
+const OFFCUT_LABEL_MAX_FONT_SIZE = 30;
+
 const safeSvgId = (value: string) => value.replace(/[^a-zA-Z0-9_-]/g, '-');
+
+// Cota a sobra ao longo do seu lado maior, encolhendo a fonte até o texto caber
+// dentro da região. Devolve `null` quando não há espaço legível.
+const offcutLabel = (region: CuttingPlanWasteRegion) => {
+  const shortSideMm = Math.min(region.widthMm, region.heightMm);
+  if (shortSideMm < OFFCUT_LABEL_MIN_SIDE_MM) return null;
+
+  const text = `Sobra · ${Math.round(region.widthMm)} × ${Math.round(region.heightMm)} mm`;
+  const vertical = region.heightMm > region.widthMm;
+  const alongMm = vertical ? region.heightMm : region.widthMm;
+  const fontSize = Math.min(
+    OFFCUT_LABEL_MAX_FONT_SIZE,
+    shortSideMm * 0.3,
+    (alongMm * 0.85) / (text.length * 0.55),
+  );
+  if (fontSize < OFFCUT_LABEL_MIN_FONT_SIZE) return null;
+
+  return { fontSize, text, vertical };
+};
 
 const shortLabel = (placement: CuttingPlanPlacement) => {
   const instance = placement.pieceInstanceId.split('-').at(-1);
@@ -247,6 +273,9 @@ export const CuttingSheetSvg = React.memo<CuttingSheetSvgProps>(
         {sheet.wasteRegions.map(region => {
           const isOffcut = region.reason === 'remainder';
           const isInternalTrim = region.reason === 'internal_trim';
+          const label = isOffcut ? offcutLabel(region) : null;
+          const labelX = region.xMm + region.widthMm / 2;
+          const labelY = region.yMm + region.heightMm / 2;
           const fill = isOffcut
             ? `url(#${offcutPatternId})`
             : isInternalTrim
@@ -271,22 +300,28 @@ export const CuttingSheetSvg = React.memo<CuttingSheetSvgProps>(
                 strokeDasharray={isOffcut ? '5 4' : undefined}
                 vectorEffect="non-scaling-stroke"
               />
-              {isOffcut && region.widthMm >= 260 && region.heightMm >= 130 && (
+              {label && (
                 <text
-                  x={region.xMm + region.widthMm / 2}
-                  y={region.yMm + region.heightMm / 2}
-                  fontSize="26"
+                  x={labelX}
+                  y={labelY}
+                  fontSize={label.fontSize}
                   fontWeight="600"
                   textAnchor="middle"
+                  dominantBaseline="middle"
                   fill="#374151"
+                  data-offcut-label="true"
+                  transform={
+                    label.vertical
+                      ? `rotate(-90 ${labelX} ${labelY})`
+                      : undefined
+                  }
                   style={{
                     paintOrder: 'stroke',
                     stroke: '#fff',
                     strokeWidth: 8,
                   }}
                 >
-                  Sobra · {Math.round(region.widthMm)} ×{' '}
-                  {Math.round(region.heightMm)}
+                  {label.text}
                 </text>
               )}
             </g>
