@@ -35,7 +35,7 @@ const cutlist = [
     id: 'cut-1',
     material: {
       materialId: 'mat-1',
-      name: 'MDF Branco',
+      name: 'MDF Branco 15mm',
       width: 2750,
       height: 1850,
       price: 220,
@@ -55,7 +55,7 @@ const cutlist = [
     id: 'cut-2',
     material: {
       materialId: 'mat-1',
-      name: 'MDF Branco',
+      name: 'MDF Branco 15mm',
       width: 2750,
       height: 1850,
       price: 220,
@@ -101,7 +101,12 @@ const cuttingPlan = buildCuttingPlan({
   ),
 });
 
-const orderWithPlan = { ...order, cuttingPlan };
+const orderWithPlan = {
+  ...order,
+  serviceType: 'cutting_plan',
+  orderPrice: cuttingPlan.pricing.totalCost,
+  cuttingPlan,
+};
 
 // O orcamento guarda nome/telefone na raiz (nao em `customer`, como o pedido).
 const estimate = {
@@ -130,7 +135,7 @@ describe('OrderResume', () => {
   it('lista as pecas da cutlist com material e medidas', () => {
     render(<OrderResume order={order} />);
 
-    expect(screen.getAllByText(/MDF Branco/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/MDF Branco 15mm/).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/1000/).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/800/).length).toBeGreaterThan(0);
   });
@@ -156,16 +161,27 @@ describe('OrderResume', () => {
     expect(print).not.toHaveBeenCalled();
   });
 
-  it('inclui o plano salvo antes do resumo do pedido', () => {
+  it('inclui o plano salvo depois do resumo do pedido', () => {
     render(<OrderResume order={orderWithPlan} />);
 
     const printablePlan = screen.getByTestId('printable-cutting-plan');
-    const customerName = screen.getByText('Pedro Silva');
+    const summary = screen.getByTestId('order-summary');
     expect(printablePlan).toBeInTheDocument();
     expect(
-      printablePlan.compareDocumentPosition(customerName) &
+      summary.compareDocumentPosition(printablePlan) &
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
+  });
+
+  it('não mostra preço por peça nem sequência de corte em pedido de plano', () => {
+    render(<OrderResume order={orderWithPlan} />);
+
+    const summary = screen.getByTestId('order-summary');
+    expect(summary).not.toHaveTextContent('VALOR');
+    expect(summary).not.toHaveTextContent('350');
+    expect(summary).not.toHaveTextContent('120');
+    expect(screen.queryByText(/Sequência de corte/i)).not.toBeInTheDocument();
+    expect(summary).toHaveTextContent('Plano de corte:');
   });
 
   it('mantem o resumo sem paginas de plano quando o pedido nao possui plano', () => {
@@ -207,7 +223,7 @@ describe('Tags', () => {
       <Tags order={null} onAfterPrint={jest.fn()} />,
     );
 
-    expect(container).not.toHaveTextContent('MDF Branco');
+    expect(container).not.toHaveTextContent('MDF Branco 15mm');
   });
 
   it('renderiza uma etiqueta por peca (multiplicada pela quantidade)', () => {
@@ -216,7 +232,7 @@ describe('Tags', () => {
     // Alem do resumo em tabela, ha uma etiqueta por unidade:
     // 2 pecas da primeira linha + 1 da segunda = 3 etiquetas.
     const tagLabels = screen
-      .getAllByText(/MDF Branco/)
+      .getAllByText(/MDF Branco 15mm/)
       .filter(node => node.tagName === 'P');
     expect(tagLabels).toHaveLength(3);
   });
@@ -234,18 +250,15 @@ describe('Tags', () => {
     expect(print).toHaveBeenCalled();
   });
 
-  it('coloca o plano de corte nas primeiras paginas antes das etiquetas', () => {
+  it('imprime apenas etiquetas mesmo quando o pedido possui plano', () => {
     render(<Tags order={orderWithPlan as never} onAfterPrint={jest.fn()} />);
 
-    const printablePlan = screen.getByTestId('printable-cutting-plan');
-    const firstTag = screen
-      .getAllByText(/MDF Branco/)
-      .find(node => node.tagName === 'P');
-    expect(firstTag).toBeDefined();
     expect(
-      printablePlan.compareDocumentPosition(firstTag!) &
-        Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
+      screen.queryByTestId('printable-cutting-plan'),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getAllByText(/MDF Branco 15mm/).some(node => node.tagName === 'P'),
+    ).toBe(true);
   });
 
   it('nao cria paginas vazias de plano para pedido sem plano', () => {

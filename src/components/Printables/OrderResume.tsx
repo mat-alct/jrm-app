@@ -133,6 +133,12 @@ export const OrderResume: React.FC<OrderResumeProps> = ({
     <Box w="100%" borderBottomWidth="2px" borderColor="black" my={1} />
   );
   const cuttingPlan = order.cuttingPlan as CuttingPlan | undefined;
+  const hasPrintablePlan = isPrintableCuttingPlan(cuttingPlan);
+  const isCuttingPlanOrder =
+    order.serviceType === 'cutting_plan' || hasPrintablePlan;
+  const orderSubtotal = hasPrintablePlan
+    ? cuttingPlan.pricing.totalCost
+    : (order.orderPrice ?? 0);
 
   return (
     <>
@@ -148,15 +154,9 @@ export const OrderResume: React.FC<OrderResumeProps> = ({
         }}
       >
         <div ref={componentRef} className="print-container">
-          {isPrintableCuttingPlan(cuttingPlan) && (
-            <CuttingPlanPrintable
-              plan={cuttingPlan}
-              orderCode={order.orderCode as number | string | undefined}
-              forcePageBreakAfter
-            />
-          )}
           <Box
             ref={summaryRef}
+            data-testid="order-summary"
             p={5}
             bg="white"
             color="black"
@@ -168,7 +168,10 @@ export const OrderResume: React.FC<OrderResumeProps> = ({
             flexDirection="column"
             minH="280mm" // Força a altura de uma página A4 (297mm - margens)
             boxSizing="border-box"
-            style={{ zoom }}
+            style={{
+              zoom,
+              pageBreakAfter: hasPrintablePlan ? 'always' : 'auto',
+            }}
           >
             {/* --- CABEÇALHO --- */}
             <Flex justify="space-between" align="center" mb={dp.headerMb}>
@@ -407,15 +410,17 @@ export const OrderResume: React.FC<OrderResumeProps> = ({
                     >
                       FITAS
                     </Table.ColumnHeader>
-                    <Table.ColumnHeader
-                      color="black"
-                      fontWeight="black"
-                      fontSize="2xs"
-                      textAlign="right"
-                      py={dp.rowPy}
-                    >
-                      VALOR
-                    </Table.ColumnHeader>
+                    {!isCuttingPlanOrder && (
+                      <Table.ColumnHeader
+                        color="black"
+                        fontWeight="black"
+                        fontSize="2xs"
+                        textAlign="right"
+                        py={dp.rowPy}
+                      >
+                        VALOR
+                      </Table.ColumnHeader>
+                    )}
                   </Table.Row>
                 </Table.Header>
                 <Table.Body>
@@ -492,14 +497,16 @@ export const OrderResume: React.FC<OrderResumeProps> = ({
                       >
                         {cut.borderA} | {cut.borderB}
                       </Table.Cell>
-                      <Table.Cell
-                        py={dp.rowPy}
-                        textAlign="right"
-                        fontWeight="medium"
-                        fontSize={dp.cellFs}
-                      >
-                        {cut.price}
-                      </Table.Cell>
+                      {!isCuttingPlanOrder && (
+                        <Table.Cell
+                          py={dp.rowPy}
+                          textAlign="right"
+                          fontWeight="medium"
+                          fontSize={dp.cellFs}
+                        >
+                          {cut.price}
+                        </Table.Cell>
+                      )}
                     </Table.Row>
                   ))}
                 </Table.Body>
@@ -512,9 +519,11 @@ export const OrderResume: React.FC<OrderResumeProps> = ({
                 {order.deliveryType === 'Entrega' && (
                   <>
                     <Flex justify="space-between" align="center" fontSize="xs">
-                      <Text color="gray.600">Pedido:</Text>
+                      <Text color="gray.600">
+                        {isCuttingPlanOrder ? 'Plano de corte:' : 'Pedido:'}
+                      </Text>
                       <Text fontWeight="medium">
-                        {formatBRL(order.orderPrice ?? 0)}
+                        {formatBRL(orderSubtotal)}
                       </Text>
                     </Flex>
                     <Flex
@@ -537,7 +546,7 @@ export const OrderResume: React.FC<OrderResumeProps> = ({
                   </Text>
                   <Text fontSize="xl" fontWeight="black">
                     {formatBRL(
-                      (order.orderPrice ?? 0) +
+                      orderSubtotal +
                         (order.deliveryType === 'Entrega'
                           ? (order.freightPrice ?? 0)
                           : 0),
@@ -658,6 +667,12 @@ export const OrderResume: React.FC<OrderResumeProps> = ({
               </Text>
             </Box>
           </Box>
+          {hasPrintablePlan && (
+            <CuttingPlanPrintable
+              plan={cuttingPlan}
+              orderCode={order.orderCode as number | string | undefined}
+            />
+          )}
         </div>
       </div>
 
