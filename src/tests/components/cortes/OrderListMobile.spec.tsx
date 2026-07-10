@@ -7,6 +7,7 @@ const callbacks: OrderListCallbacks = {
   onPrintResume: jest.fn(),
   onPrintLabels: jest.fn(),
   onPrintCuttingPlan: jest.fn(),
+  onDownloadMachineFiles: jest.fn(),
   onApproveEstimate: jest.fn(),
   onShowHistory: jest.fn(),
   onConfirmStatus: jest.fn(),
@@ -122,6 +123,10 @@ describe('OrderListMobile', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /Plano/ }));
     expect(callbacks.onPrintCuttingPlan).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'order-1' }),
+    );
+    fireEvent.click(screen.getByRole('button', { name: /Máquina/ }));
+    expect(callbacks.onDownloadMachineFiles).toHaveBeenCalledWith(
       expect.objectContaining({ id: 'order-1' }),
     );
   });

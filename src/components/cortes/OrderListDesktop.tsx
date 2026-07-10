@@ -17,6 +17,7 @@ import {
   FaCheck,
   FaEdit,
   FaExclamationTriangle,
+  FaFileArchive,
   FaHandshake,
   FaHistory,
   FaPrint,
@@ -97,6 +98,7 @@ type OrderRowProps = {
     | 'onPrintResume'
     | 'onPrintLabels'
     | 'onPrintCuttingPlan'
+    | 'onDownloadMachineFiles'
     | 'onShowHistory'
     | 'onConfirmStatus'
     | 'onEdit'
@@ -111,6 +113,7 @@ const OrderRow = React.memo<OrderRowProps>(
     onPrintResume,
     onPrintLabels,
     onPrintCuttingPlan,
+    onDownloadMachineFiles,
     onShowHistory,
     onConfirmStatus,
     onEdit,
@@ -210,6 +213,18 @@ const OrderRow = React.memo<OrderRowProps>(
                 <FaPrint />
               </IconButton>
             )}
+            {hasCuttingPlan && (
+              <IconButton
+                colorScheme="gray"
+                variant="outline"
+                size="sm"
+                aria-label="Baixar arquivos AC e AD"
+                title="Baixar ZIP para a seccionadora"
+                onClick={() => onDownloadMachineFiles(item)}
+              >
+                <FaFileArchive />
+              </IconButton>
+            )}
             {item.edits?.length > 0 && (
               <IconButton
                 aria-label="Histórico de edições"
@@ -289,6 +304,7 @@ const OrderListDesktopImpl: React.FC<OrderListProps> = ({
   onPrintResume,
   onPrintLabels,
   onPrintCuttingPlan,
+  onDownloadMachineFiles,
   onApproveEstimate,
   onShowHistory,
   onConfirmStatus,
@@ -371,6 +387,7 @@ const OrderListDesktopImpl: React.FC<OrderListProps> = ({
                   onPrintResume={onPrintResume}
                   onPrintLabels={onPrintLabels}
                   onPrintCuttingPlan={onPrintCuttingPlan}
+                  onDownloadMachineFiles={onDownloadMachineFiles}
                   onShowHistory={onShowHistory}
                   onConfirmStatus={onConfirmStatus}
                   onEdit={onEdit}

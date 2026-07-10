@@ -1,0 +1,31 @@
+{
+  "orderId": "PED-0042",
+  "customerName": "João da Silva",
+  "operatorName": "Érica Operadora",
+  "generatedDate": {
+    "year": 2026,
+    "month": 7,
+    "day": 3
+  },
+  "optimizationMode": "balanced",
+  "cutlist": [
+    {
+      "id": "porta-1",
+      "description": "Porta esquerda",
+      "material": {
+        "materialId": "mdf-branco-db",
+        "name": "340 - 00000000000730 - MDF Branco Texturizado 15mm",
+        "width": 2750,
+        "height": 1850,
+        "price": 220
+      },
+      "amount": 2,
+      "sideA": 500,
+      "sideB": 900,
+      "borderA": 1,
+      "borderB": 0,
+      "grainDirection": "none",
+      "price": 0
+    }
+  ]
+}

@@ -7,6 +7,7 @@ const callbacks: OrderListCallbacks = {
   onPrintResume: jest.fn(),
   onPrintLabels: jest.fn(),
   onPrintCuttingPlan: jest.fn(),
+  onDownloadMachineFiles: jest.fn(),
   onApproveEstimate: jest.fn(),
   onShowHistory: jest.fn(),
   onConfirmStatus: jest.fn(),
@@ -151,6 +152,12 @@ describe('OrderListDesktop', () => {
     expect(actions[0]).toHaveAccessibleName('Imprimir plano de corte');
     fireEvent.click(actions[0]);
     expect(callbacks.onPrintCuttingPlan).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'order-1' }),
+    );
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Baixar arquivos AC e AD' }),
+    );
+    expect(callbacks.onDownloadMachineFiles).toHaveBeenCalledWith(
       expect.objectContaining({ id: 'order-1' }),
     );
 

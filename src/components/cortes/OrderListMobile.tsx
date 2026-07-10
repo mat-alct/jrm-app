@@ -15,6 +15,7 @@ import {
   FaCheck,
   FaEdit,
   FaExclamationTriangle,
+  FaFileArchive,
   FaHandshake,
   FaHistory,
   FaPrint,
@@ -95,6 +96,7 @@ type OrderCardProps = {
   | 'onPrintResume'
   | 'onPrintLabels'
   | 'onPrintCuttingPlan'
+  | 'onDownloadMachineFiles'
   | 'onShowHistory'
   | 'onConfirmStatus'
   | 'onEdit'
@@ -107,6 +109,7 @@ const OrderCard = React.memo<OrderCardProps>(
     onPrintResume,
     onPrintLabels,
     onPrintCuttingPlan,
+    onDownloadMachineFiles,
     onShowHistory,
     onConfirmStatus,
     onEdit,
@@ -222,6 +225,18 @@ const OrderCard = React.memo<OrderCardProps>(
               <FaPrint /> Plano
             </Button>
           )}
+          {hasCuttingPlan && (
+            <Button
+              flex="1"
+              minW="100px"
+              size="md"
+              variant="outline"
+              colorScheme="gray"
+              onClick={() => onDownloadMachineFiles(item)}
+            >
+              <FaFileArchive /> Máquina
+            </Button>
+          )}
           {item.edits?.length > 0 && (
             <IconButton
               size="md"
@@ -302,6 +317,7 @@ const OrderListMobileImpl: React.FC<OrderListProps> = ({
   onPrintResume,
   onPrintLabels,
   onPrintCuttingPlan,
+  onDownloadMachineFiles,
   onApproveEstimate,
   onShowHistory,
   onConfirmStatus,
@@ -352,6 +368,7 @@ const OrderListMobileImpl: React.FC<OrderListProps> = ({
             onPrintResume={onPrintResume}
             onPrintLabels={onPrintLabels}
             onPrintCuttingPlan={onPrintCuttingPlan}
+            onDownloadMachineFiles={onDownloadMachineFiles}
             onShowHistory={onShowHistory}
             onConfirmStatus={onConfirmStatus}
             onEdit={onEdit}

@@ -93,6 +93,14 @@ const OrderListDesktop = dynamic(
   { ssr: false },
 );
 import { toaster } from '@/components/ui/toaster';
+import {
+  downloadGibenZip,
+  exportCuttingPlanToGiben,
+} from '@/domain/cutting-plan';
+import {
+  CUTTING_MACHINE_QUERY_KEY,
+  getCuttingMachineConfiguration,
+} from '@/services/cuttingMachine.service';
 import { useAuth } from '../../hooks/authContext';
 import { useOrder } from '../../hooks/order';
 import { queryClient } from '../../services/queryClient';
@@ -140,6 +148,11 @@ const Cortes: React.FC = () => {
   const { getOrders, getOrdersBySearch } = useOrder();
   const router = Router;
 
+  const { data: machineConfiguration } = useQuery({
+    queryKey: CUTTING_MACHINE_QUERY_KEY,
+    queryFn: getCuttingMachineConfiguration,
+  });
+
   const {
     data: pagedResult,
     isLoading: isInitialLoading,
@@ -181,6 +194,43 @@ const Cortes: React.FC = () => {
   const handlePrintCuttingPlan = useCallback((orderData: any) => {
     setPrintingPlanOrder(orderData);
   }, []);
+
+  const handleDownloadMachineFiles = useCallback(
+    async (orderData: any) => {
+      if (!machineConfiguration || !orderData.cuttingPlan) {
+        toast.create({
+          type: 'error',
+          description: 'Plano ou parâmetros da máquina indisponíveis.',
+        });
+        return;
+      }
+      try {
+        const orderIdentifier = String(orderData.orderCode ?? orderData.id);
+        const result = exportCuttingPlanToGiben(orderData.cuttingPlan, {
+          orderId: orderIdentifier,
+          customerName: orderData.customer?.name ?? 'CLIENTE',
+          operatorName:
+            user?.displayName ?? user?.email ?? orderData.seller ?? 'OPERADOR',
+          generatedAt: new Date(),
+          profile: machineConfiguration.exportProfile,
+        });
+        await downloadGibenZip(result, `${orderIdentifier}-arquivos-giben.zip`);
+        toast.create({
+          type: 'success',
+          description: `${result.pairs.length} par(es) AC/AD gerado(s). Valide na máquina antes de cortar.`,
+        });
+      } catch (downloadError) {
+        toast.create({
+          type: 'error',
+          description:
+            downloadError instanceof Error
+              ? downloadError.message
+              : 'Não foi possível gerar os arquivos da máquina.',
+        });
+      }
+    },
+    [machineConfiguration, toast, user],
+  );
 
   const handlePrintResume = useCallback(
     (data: any, type: 'order' | 'estimate') => {
@@ -525,6 +575,7 @@ const Cortes: React.FC = () => {
               onPrintResume={handlePrintResume}
               onPrintLabels={handlePrintLabels}
               onPrintCuttingPlan={handlePrintCuttingPlan}
+              onDownloadMachineFiles={handleDownloadMachineFiles}
               onApproveEstimate={approveEstimate}
               onShowHistory={setHistoryOrder}
               onConfirmStatus={setConfirmingStatusOrder}
@@ -540,6 +591,7 @@ const Cortes: React.FC = () => {
               onPrintResume={handlePrintResume}
               onPrintLabels={handlePrintLabels}
               onPrintCuttingPlan={handlePrintCuttingPlan}
+              onDownloadMachineFiles={handleDownloadMachineFiles}
               onApproveEstimate={approveEstimate}
               onShowHistory={setHistoryOrder}
               onConfirmStatus={setConfirmingStatusOrder}

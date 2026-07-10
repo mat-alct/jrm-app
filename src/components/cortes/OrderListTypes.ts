@@ -3,6 +3,7 @@ export type OrderListCallbacks = {
   onPrintResume: (data: any, type: 'order' | 'estimate') => void;
   onPrintLabels: (data: any) => void;
   onPrintCuttingPlan: (data: any) => void;
+  onDownloadMachineFiles: (data: any) => void;
   onApproveEstimate: (id: string) => void;
   onShowHistory: (item: any) => void;
   onConfirmStatus: (item: any) => void;
