@@ -3,6 +3,12 @@ import { Timestamp } from 'firebase/firestore';
 import { EstimateResume } from '@/components/Printables/EstimateResume';
 import { OrderResume } from '@/components/Printables/OrderResume';
 import { Tags } from '@/components/Printables/Tags';
+import {
+  buildCuttingPlan,
+  cutlistToCuttingPlanInput,
+  generateCuttingPlan,
+} from '@/domain/cutting-plan';
+import type { Cutlist } from '@/types';
 
 import { render, screen } from '../../testUtils';
 
@@ -27,7 +33,13 @@ const customer = {
 const cutlist = [
   {
     id: 'cut-1',
-    material: { materialId: 'mat-1', name: 'MDF Branco', width: 2750, height: 1850, price: 220 },
+    material: {
+      materialId: 'mat-1',
+      name: 'MDF Branco',
+      width: 2750,
+      height: 1850,
+      price: 220,
+    },
     amount: 2,
     sideA: 1000,
     sideB: 500,
@@ -41,7 +53,13 @@ const cutlist = [
   },
   {
     id: 'cut-2',
-    material: { materialId: 'mat-1', name: 'MDF Branco', width: 2750, height: 1850, price: 220 },
+    material: {
+      materialId: 'mat-1',
+      name: 'MDF Branco',
+      width: 2750,
+      height: 1850,
+      price: 220,
+    },
     amount: 1,
     sideA: 800,
     sideB: 400,
@@ -69,6 +87,21 @@ const order = {
   createdAt: ts('2026-01-15T12:00:00.000Z'),
   deliveryDate: ts('2026-01-25T12:00:00.000Z'),
 };
+
+const cuttingPlan = buildCuttingPlan({
+  id: 'plan-1',
+  orderId: 'order-1',
+  status: 'approved',
+  timestamp: ts('2026-01-15T12:00:00.000Z'),
+  result: generateCuttingPlan(
+    cutlistToCuttingPlanInput({
+      cutlist: cutlist as Cutlist[],
+      optimizationMode: 'balanced',
+    }),
+  ),
+});
+
+const orderWithPlan = { ...order, cuttingPlan };
 
 // O orcamento guarda nome/telefone na raiz (nao em `customer`, como o pedido).
 const estimate = {
@@ -122,6 +155,25 @@ describe('OrderResume', () => {
 
     expect(print).not.toHaveBeenCalled();
   });
+
+  it('inclui o plano salvo antes do resumo do pedido', () => {
+    render(<OrderResume order={orderWithPlan} />);
+
+    const printablePlan = screen.getByTestId('printable-cutting-plan');
+    const customerName = screen.getByText('Pedro Silva');
+    expect(printablePlan).toBeInTheDocument();
+    expect(
+      printablePlan.compareDocumentPosition(customerName) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it('mantem o resumo sem paginas de plano quando o pedido nao possui plano', () => {
+    render(<OrderResume order={order} />);
+    expect(
+      screen.queryByTestId('printable-cutting-plan'),
+    ).not.toBeInTheDocument();
+  });
 });
 
 describe('EstimateResume', () => {
@@ -151,7 +203,9 @@ describe('Tags', () => {
   beforeEach(() => jest.clearAllMocks());
 
   it('nao renderiza etiqueta sem pedido', () => {
-    const { container } = render(<Tags order={null} onAfterPrint={jest.fn()} />);
+    const { container } = render(
+      <Tags order={null} onAfterPrint={jest.fn()} />,
+    );
 
     expect(container).not.toHaveTextContent('MDF Branco');
   });
@@ -178,5 +232,26 @@ describe('Tags', () => {
     render(<Tags order={order as never} onAfterPrint={jest.fn()} />);
 
     expect(print).toHaveBeenCalled();
+  });
+
+  it('coloca o plano de corte nas primeiras paginas antes das etiquetas', () => {
+    render(<Tags order={orderWithPlan as never} onAfterPrint={jest.fn()} />);
+
+    const printablePlan = screen.getByTestId('printable-cutting-plan');
+    const firstTag = screen
+      .getAllByText(/MDF Branco/)
+      .find(node => node.tagName === 'P');
+    expect(firstTag).toBeDefined();
+    expect(
+      printablePlan.compareDocumentPosition(firstTag!) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it('nao cria paginas vazias de plano para pedido sem plano', () => {
+    render(<Tags order={order as never} onAfterPrint={jest.fn()} />);
+    expect(
+      screen.queryByTestId('printable-cutting-plan'),
+    ).not.toBeInTheDocument();
   });
 });

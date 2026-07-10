@@ -22,6 +22,10 @@ import {
 } from 'react-icons/fa';
 import { useReactToPrint } from 'react-to-print';
 
+import type { CuttingPlan } from '@/domain/cutting-plan';
+
+import { CuttingPlanPrintable, isPrintableCuttingPlan } from '../CuttingPlan';
+
 interface OrderResumeProps {
   order: DocumentData & {
     id: string;
@@ -85,6 +89,7 @@ export const OrderResume: React.FC<OrderResumeProps> = ({
   onAfterPrint,
 }) => {
   const componentRef = useRef<HTMLDivElement>(null);
+  const summaryRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState(1);
 
   const cutCount = order.cutlist?.length ?? 0;
@@ -101,7 +106,7 @@ export const OrderResume: React.FC<OrderResumeProps> = ({
   });
 
   useLayoutEffect(() => {
-    const el = componentRef.current;
+    const el = summaryRef.current;
     if (!el) return;
 
     const targetMm = 275;
@@ -126,6 +131,7 @@ export const OrderResume: React.FC<OrderResumeProps> = ({
   const Separator = () => (
     <Box w="100%" borderBottomWidth="2px" borderColor="black" my={1} />
   );
+  const cuttingPlan = order.cuttingPlan as CuttingPlan | undefined;
 
   return (
     <>
@@ -140,494 +146,518 @@ export const OrderResume: React.FC<OrderResumeProps> = ({
           zIndex: -9999,
         }}
       >
-        <Box
-          ref={componentRef}
-          p={5}
-          bg="white"
-          color="black"
-          fontFamily="sans-serif"
-          className="print-container"
-          fontSize="xs"
-          // --- MUDANÇAS PARA FIXAR RODAPÉ NO FINAL ---
-          display="flex"
-          flexDirection="column"
-          minH="280mm" // Força a altura de uma página A4 (297mm - margens)
-          boxSizing="border-box"
-          style={{ zoom }}
-        >
-          {/* --- CABEÇALHO --- */}
-          <Flex justify="space-between" align="center" mb={dp.headerMb}>
-            <Box>
-              <Image
-                src="/images/cm.png"
-                alt="JRM Compensados"
-                h={dp.logoH}
-                objectFit="contain"
-                filter="grayscale(100%)"
-              />
-            </Box>
-            <VStack align="flex-end" gap={0}>
-              <Text
-                fontSize="2xl"
-                fontWeight="black"
-                lineHeight="1"
-                color="black"
-              >
-                #{order.orderCode}
-              </Text>
-              <Text fontSize="sm" fontWeight="bold" color="gray.600">
-                PEDIDO DE CORTE
-              </Text>
-              <Text fontSize="xs" color="gray.600">
-                Emitido em:{' '}
-                {order.createdAt?.seconds
-                  ? format(
-                      new Date(order.createdAt.seconds * 1000),
-                      'dd/MM/yyyy',
-                    )
-                  : format(new Date(), 'dd/MM/yyyy')}
-              </Text>
-            </VStack>
-          </Flex>
-
+        <div ref={componentRef} className="print-container">
+          {isPrintableCuttingPlan(cuttingPlan) && (
+            <CuttingPlanPrintable
+              plan={cuttingPlan}
+              orderCode={order.orderCode as number | string | undefined}
+              forcePageBreakAfter
+            />
+          )}
           <Box
-            w="100%"
-            borderBottomWidth="3px"
-            borderColor="black"
-            mb={dp.sectionMb}
-          />
-
-          {/* --- AVISO DE EDIÇÃO (uma única frase compacta) --- */}
-          {order.edits?.length > 0 &&
-            (() => {
-              const last = order.edits[order.edits.length - 1];
-              const when = last.editedAt?.seconds
-                ? format(
-                    new Date(last.editedAt.seconds * 1000),
-                    "dd/MM/yyyy 'às' HH:mm",
-                  )
-                : '';
-              const diff = last.priceDifference ?? 0;
-              const shouldCharge = !!last.shouldCharge && diff !== 0;
-              const formattedDiff = `R$ ${Math.abs(diff)},00`;
-              const diffPart = shouldCharge
-                ? `, diferença de ${diff > 0 ? '+' : '−'}${formattedDiff}${
-                    diff > 0
-                      ? ' a receber do cliente'
-                      : ' a devolver ao cliente'
-                  }`
-                : '';
-              return (
-                <Box
-                  borderLeftWidth="3px"
-                  borderColor="black"
-                  bg="gray.100"
-                  px={2}
-                  py={1}
-                  mb={dp.miniMb}
-                >
-                  <Text fontSize="2xs" lineHeight="1.3">
-                    <strong>⚠ Pedido editado</strong> por {last.editedBy}
-                    {when ? ` em ${when}` : ''}
-                    {diffPart}.
-                  </Text>
-                </Box>
-              );
-            })()}
-
-          {/* --- DADOS DO CLIENTE --- */}
-          <Box mb={dp.sectionMb}>
-            <Text
-              fontSize="2xs"
-              fontWeight="bold"
-              textTransform="uppercase"
-              color="gray.500"
-              mb={0}
-            >
-              Cliente
-            </Text>
-            <Text
-              fontSize="xl"
-              fontWeight="extrabold"
-              lineHeight="1.2"
-              color="black"
-            >
-              {order.customer.name}
-            </Text>
-            <HStack gap={4} mt={1} color="gray.800" fontSize="xs">
-              {order.customer.telephone && (
-                <Flex align="center" gap={1}>
-                  <FaPhoneAlt size={10} />
-                  <Text fontWeight="medium">{order.customer.telephone}</Text>
-                </Flex>
-              )}
-              {order.customer.address && (
-                <Flex align="center" gap={1}>
-                  <FaMapMarkerAlt size={10} />
-                  <Text>
-                    {order.customer.address}
-                    {order.customer.area ? ` - ${order.customer.area}` : ''}
-                  </Text>
-                </Flex>
-              )}
-            </HStack>
-          </Box>
-
-          {/* --- CARTÃO ÚNICO DE INFO (Venda + Entrega) --- */}
-          <Box
-            border="1px solid"
-            borderColor="gray.300"
-            p={2}
-            borderRadius="md"
-            bg="gray.50"
-            mb={dp.sectionMb}
+            ref={summaryRef}
+            p={5}
+            bg="white"
+            color="black"
+            fontFamily="sans-serif"
+            className="order-resume-print-page"
+            fontSize="xs"
+            // --- MUDANÇAS PARA FIXAR RODAPÉ NO FINAL ---
+            display="flex"
+            flexDirection="column"
+            minH="280mm" // Força a altura de uma página A4 (297mm - margens)
+            boxSizing="border-box"
+            style={{ zoom }}
           >
-            <Text
-              fontWeight="bold"
-              textTransform="uppercase"
-              fontSize="2xs"
-              color="gray.500"
-              mb={1}
-              borderBottom="1px solid"
-              borderColor="gray.300"
-              pb={0.5}
-            >
-              Resumo do Pedido
-            </Text>
-            <Grid templateColumns="1fr 1fr 1fr" gap={2}>
+            {/* --- CABEÇALHO --- */}
+            <Flex justify="space-between" align="center" mb={dp.headerMb}>
               <Box>
-                <Text fontSize="2xs" color="gray.600">
-                  Vendedor
-                </Text>
-                <Text fontWeight="bold" fontSize="xs">
-                  {order.seller || '-'}
-                </Text>
+                <Image
+                  src="/images/cm.png"
+                  alt="JRM Compensados"
+                  h={dp.logoH}
+                  objectFit="contain"
+                  filter="grayscale(100%)"
+                />
               </Box>
-              <Box>
-                <Text fontSize="2xs" color="gray.600">
-                  Modalidade
+              <VStack align="flex-end" gap={0}>
+                <Text
+                  fontSize="2xl"
+                  fontWeight="black"
+                  lineHeight="1"
+                  color="black"
+                >
+                  #{order.orderCode}
                 </Text>
-                <Text fontWeight="bold" fontSize="xs">
-                  {order.deliveryType}
+                <Text fontSize="sm" fontWeight="bold" color="gray.600">
+                  PEDIDO DE CORTE
                 </Text>
-              </Box>
-              <Box>
-                <Text fontSize="2xs" color="gray.600">
-                  Prazo de Entrega
-                </Text>
-                <Text fontWeight="black" fontSize="xs">
-                  {order.deliveryDate?.seconds
+                <Text fontSize="xs" color="gray.600">
+                  Emitido em:{' '}
+                  {order.createdAt?.seconds
                     ? format(
-                        new Date(order.deliveryDate.seconds * 1000),
+                        new Date(order.createdAt.seconds * 1000),
                         'dd/MM/yyyy',
                       )
-                    : 'A combinar'}
+                    : format(new Date(), 'dd/MM/yyyy')}
+                </Text>
+              </VStack>
+            </Flex>
+
+            <Box
+              w="100%"
+              borderBottomWidth="3px"
+              borderColor="black"
+              mb={dp.sectionMb}
+            />
+
+            {/* --- AVISO DE EDIÇÃO (uma única frase compacta) --- */}
+            {order.edits?.length > 0 &&
+              (() => {
+                const last = order.edits[order.edits.length - 1];
+                const when = last.editedAt?.seconds
+                  ? format(
+                      new Date(last.editedAt.seconds * 1000),
+                      "dd/MM/yyyy 'às' HH:mm",
+                    )
+                  : '';
+                const diff = last.priceDifference ?? 0;
+                const shouldCharge = !!last.shouldCharge && diff !== 0;
+                const formattedDiff = `R$ ${Math.abs(diff)},00`;
+                const diffPart = shouldCharge
+                  ? `, diferença de ${diff > 0 ? '+' : '−'}${formattedDiff}${
+                      diff > 0
+                        ? ' a receber do cliente'
+                        : ' a devolver ao cliente'
+                    }`
+                  : '';
+                return (
+                  <Box
+                    borderLeftWidth="3px"
+                    borderColor="black"
+                    bg="gray.100"
+                    px={2}
+                    py={1}
+                    mb={dp.miniMb}
+                  >
+                    <Text fontSize="2xs" lineHeight="1.3">
+                      <strong>⚠ Pedido editado</strong> por {last.editedBy}
+                      {when ? ` em ${when}` : ''}
+                      {diffPart}.
+                    </Text>
+                  </Box>
+                );
+              })()}
+
+            {/* --- DADOS DO CLIENTE --- */}
+            <Box mb={dp.sectionMb}>
+              <Text
+                fontSize="2xs"
+                fontWeight="bold"
+                textTransform="uppercase"
+                color="gray.500"
+                mb={0}
+              >
+                Cliente
+              </Text>
+              <Text
+                fontSize="xl"
+                fontWeight="extrabold"
+                lineHeight="1.2"
+                color="black"
+              >
+                {order.customer.name}
+              </Text>
+              <HStack gap={4} mt={1} color="gray.800" fontSize="xs">
+                {order.customer.telephone && (
+                  <Flex align="center" gap={1}>
+                    <FaPhoneAlt size={10} />
+                    <Text fontWeight="medium">{order.customer.telephone}</Text>
+                  </Flex>
+                )}
+                {order.customer.address && (
+                  <Flex align="center" gap={1}>
+                    <FaMapMarkerAlt size={10} />
+                    <Text>
+                      {order.customer.address}
+                      {order.customer.area ? ` - ${order.customer.area}` : ''}
+                    </Text>
+                  </Flex>
+                )}
+              </HStack>
+            </Box>
+
+            {/* --- CARTÃO ÚNICO DE INFO (Venda + Entrega) --- */}
+            <Box
+              border="1px solid"
+              borderColor="gray.300"
+              p={2}
+              borderRadius="md"
+              bg="gray.50"
+              mb={dp.sectionMb}
+            >
+              <Text
+                fontWeight="bold"
+                textTransform="uppercase"
+                fontSize="2xs"
+                color="gray.500"
+                mb={1}
+                borderBottom="1px solid"
+                borderColor="gray.300"
+                pb={0.5}
+              >
+                Resumo do Pedido
+              </Text>
+              <Grid templateColumns="1fr 1fr 1fr" gap={2}>
+                <Box>
+                  <Text fontSize="2xs" color="gray.600">
+                    Vendedor
+                  </Text>
+                  <Text fontWeight="bold" fontSize="xs">
+                    {order.seller || '-'}
+                  </Text>
+                </Box>
+                <Box>
+                  <Text fontSize="2xs" color="gray.600">
+                    Modalidade
+                  </Text>
+                  <Text fontWeight="bold" fontSize="xs">
+                    {order.deliveryType}
+                  </Text>
+                </Box>
+                <Box>
+                  <Text fontSize="2xs" color="gray.600">
+                    Prazo de Entrega
+                  </Text>
+                  <Text fontWeight="black" fontSize="xs">
+                    {order.deliveryDate?.seconds
+                      ? format(
+                          new Date(order.deliveryDate.seconds * 1000),
+                          'dd/MM/yyyy',
+                        )
+                      : 'A combinar'}
+                  </Text>
+                </Box>
+              </Grid>
+            </Box>
+
+            {/* OBSERVAÇÕES */}
+            {order.ps && (
+              <Box
+                mb={dp.sectionMb}
+                p={2}
+                borderLeft="3px solid"
+                borderColor="black"
+                bg="gray.100"
+              >
+                <Text fontWeight="bold" fontSize="2xs" mb={0.5}>
+                  OBSERVAÇÕES:
+                </Text>
+                <Text fontStyle="italic" fontSize="xs" lineHeight="short">
+                  {order.ps}
                 </Text>
               </Box>
-            </Grid>
-          </Box>
+            )}
 
-          {/* OBSERVAÇÕES */}
-          {order.ps && (
-            <Box
-              mb={dp.sectionMb}
-              p={2}
-              borderLeft="3px solid"
-              borderColor="black"
-              bg="gray.100"
-            >
-              <Text fontWeight="bold" fontSize="2xs" mb={0.5}>
-                OBSERVAÇÕES:
+            {/* --- TABELA DE PEÇAS --- */}
+            <Box mb={2}>
+              <Text
+                fontSize="sm"
+                fontWeight="bold"
+                mb={1}
+                borderBottom="2px solid black"
+                display="inline-block"
+              >
+                Itens do Pedido
               </Text>
-              <Text fontStyle="italic" fontSize="xs" lineHeight="short">
-                {order.ps}
-              </Text>
-            </Box>
-          )}
-
-          {/* --- TABELA DE PEÇAS --- */}
-          <Box mb={2}>
-            <Text
-              fontSize="sm"
-              fontWeight="bold"
-              mb={1}
-              borderBottom="2px solid black"
-              display="inline-block"
-            >
-              Itens do Pedido
-            </Text>
-            <Table.Root size="sm" variant="line">
-              <Table.Header>
-                <Table.Row borderBottom="1px solid black">
-                  <Table.ColumnHeader
-                    color="black"
-                    fontWeight="black"
-                    fontSize="2xs"
-                    py={dp.rowPy}
-                  >
-                    QTD
-                  </Table.ColumnHeader>
-                  <Table.ColumnHeader
-                    color="black"
-                    fontWeight="black"
-                    fontSize="2xs"
-                    py={dp.rowPy}
-                  >
-                    MATERIAL
-                  </Table.ColumnHeader>
-                  <Table.ColumnHeader
-                    color="black"
-                    fontWeight="black"
-                    fontSize="2xs"
-                    py={dp.rowPy}
-                  >
-                    MEDIDAS (mm)
-                  </Table.ColumnHeader>
-                  <Table.ColumnHeader
-                    color="black"
-                    fontWeight="black"
-                    fontSize="2xs"
-                    textAlign="center"
-                    py={dp.rowPy}
-                  >
-                    FITAS
-                  </Table.ColumnHeader>
-                  <Table.ColumnHeader
-                    color="black"
-                    fontWeight="black"
-                    fontSize="2xs"
-                    textAlign="right"
-                    py={dp.rowPy}
-                  >
-                    VALOR
-                  </Table.ColumnHeader>
-                </Table.Row>
-              </Table.Header>
-              <Table.Body>
-                {order.cutlist.map((cut: any, idx: number) => (
-                  <Table.Row
-                    key={cut.id || idx}
-                    borderBottom="1px solid #e2e8f0"
-                  >
-                    <Table.Cell py={dp.rowPy} fontWeight="bold" fontSize={dp.cellFs}>
-                      {cut.amount}
-                    </Table.Cell>
-                    <Table.Cell py={dp.rowPy} fontSize={dp.cellFs}>
-                      {cut.material.name}
-                    </Table.Cell>
-                    <Table.Cell py={dp.rowPy} fontSize={dp.cellFs}>
-                      {cut.sideA} x {cut.sideB}
-                      {cut.hasHingeHoles && (
-                        <Text
-                          as="span"
-                          fontSize="2xs"
-                          fontWeight="bold"
-                          ml={1}
-                          bg="black"
-                          color="white"
-                          px={1}
-                          borderRadius="full"
-                        >
-                          +{cut.hingeHolesQuantity}f
-                        </Text>
-                      )}
-                      {cut.hasDrawerSlot && (
-                        <Text
-                          as="span"
-                          fontSize="2xs"
-                          fontWeight="bold"
-                          ml={1}
-                          bg="gray.600"
-                          color="white"
-                          px={1}
-                          borderRadius="full"
-                        >
-                          +R
-                        </Text>
-                      )}
-                      {cut.hasRoundedCorners && (
-                        <Text
-                          as="span"
-                          fontSize="2xs"
-                          fontWeight="bold"
-                          ml={1}
-                          bg="white"
-                          color="black"
-                          border="1px solid black"
-                          px={1}
-                          borderRadius="full"
-                        >
-                          +B
-                          {(['tl', 'tr', 'bl', 'br'] as const).filter(
-                            k => cut.roundedCorners?.[k],
-                          ).length}
-                        </Text>
-                      )}
-                    </Table.Cell>
-                    <Table.Cell py={dp.rowPy} textAlign="center" fontSize={dp.cellFs}>
-                      {cut.borderA} | {cut.borderB}
-                    </Table.Cell>
-                    <Table.Cell
+              <Table.Root size="sm" variant="line">
+                <Table.Header>
+                  <Table.Row borderBottom="1px solid black">
+                    <Table.ColumnHeader
+                      color="black"
+                      fontWeight="black"
+                      fontSize="2xs"
                       py={dp.rowPy}
-                      textAlign="right"
-                      fontWeight="medium"
-                      fontSize={dp.cellFs}
                     >
-                      {cut.price}
-                    </Table.Cell>
+                      QTD
+                    </Table.ColumnHeader>
+                    <Table.ColumnHeader
+                      color="black"
+                      fontWeight="black"
+                      fontSize="2xs"
+                      py={dp.rowPy}
+                    >
+                      MATERIAL
+                    </Table.ColumnHeader>
+                    <Table.ColumnHeader
+                      color="black"
+                      fontWeight="black"
+                      fontSize="2xs"
+                      py={dp.rowPy}
+                    >
+                      MEDIDAS (mm)
+                    </Table.ColumnHeader>
+                    <Table.ColumnHeader
+                      color="black"
+                      fontWeight="black"
+                      fontSize="2xs"
+                      textAlign="center"
+                      py={dp.rowPy}
+                    >
+                      FITAS
+                    </Table.ColumnHeader>
+                    <Table.ColumnHeader
+                      color="black"
+                      fontWeight="black"
+                      fontSize="2xs"
+                      textAlign="right"
+                      py={dp.rowPy}
+                    >
+                      VALOR
+                    </Table.ColumnHeader>
                   </Table.Row>
-                ))}
-              </Table.Body>
-            </Table.Root>
-          </Box>
+                </Table.Header>
+                <Table.Body>
+                  {order.cutlist.map((cut: any, idx: number) => (
+                    <Table.Row
+                      key={cut.id || idx}
+                      borderBottom="1px solid #e2e8f0"
+                    >
+                      <Table.Cell
+                        py={dp.rowPy}
+                        fontWeight="bold"
+                        fontSize={dp.cellFs}
+                      >
+                        {cut.amount}
+                      </Table.Cell>
+                      <Table.Cell py={dp.rowPy} fontSize={dp.cellFs}>
+                        {cut.material.name}
+                      </Table.Cell>
+                      <Table.Cell py={dp.rowPy} fontSize={dp.cellFs}>
+                        {cut.sideA} x {cut.sideB}
+                        {cut.hasHingeHoles && (
+                          <Text
+                            as="span"
+                            fontSize="2xs"
+                            fontWeight="bold"
+                            ml={1}
+                            bg="black"
+                            color="white"
+                            px={1}
+                            borderRadius="full"
+                          >
+                            +{cut.hingeHolesQuantity}f
+                          </Text>
+                        )}
+                        {cut.hasDrawerSlot && (
+                          <Text
+                            as="span"
+                            fontSize="2xs"
+                            fontWeight="bold"
+                            ml={1}
+                            bg="gray.600"
+                            color="white"
+                            px={1}
+                            borderRadius="full"
+                          >
+                            +R
+                          </Text>
+                        )}
+                        {cut.hasRoundedCorners && (
+                          <Text
+                            as="span"
+                            fontSize="2xs"
+                            fontWeight="bold"
+                            ml={1}
+                            bg="white"
+                            color="black"
+                            border="1px solid black"
+                            px={1}
+                            borderRadius="full"
+                          >
+                            +B
+                            {
+                              (['tl', 'tr', 'bl', 'br'] as const).filter(
+                                k => cut.roundedCorners?.[k],
+                              ).length
+                            }
+                          </Text>
+                        )}
+                      </Table.Cell>
+                      <Table.Cell
+                        py={dp.rowPy}
+                        textAlign="center"
+                        fontSize={dp.cellFs}
+                      >
+                        {cut.borderA} | {cut.borderB}
+                      </Table.Cell>
+                      <Table.Cell
+                        py={dp.rowPy}
+                        textAlign="right"
+                        fontWeight="medium"
+                        fontSize={dp.cellFs}
+                      >
+                        {cut.price}
+                      </Table.Cell>
+                    </Table.Row>
+                  ))}
+                </Table.Body>
+              </Table.Root>
+            </Box>
 
-          {/* --- TOTAIS --- */}
-          <Flex justify="flex-end" mb={dp.sectionMb}>
-            <Box w="240px">
-              {order.deliveryType === 'Entrega' && (
-                <>
-                  <Flex justify="space-between" align="center" fontSize="xs">
-                    <Text color="gray.600">Pedido:</Text>
-                    <Text fontWeight="medium">
-                      R$ {order.orderPrice ?? 0},00
-                    </Text>
-                  </Flex>
-                  <Flex
-                    justify="space-between"
-                    align="center"
-                    mt={0.5}
-                    fontSize="xs"
-                  >
-                    <Text color="gray.600">Frete:</Text>
-                    <Text fontWeight="medium">
-                      R$ {order.freightPrice ?? 0},00
-                    </Text>
-                  </Flex>
-                  <Separator />
-                </>
-              )}
-              <Flex justify="space-between" align="center" mb={1}>
-                <Text fontSize="sm" fontWeight="bold">
-                  TOTAL
-                </Text>
-                <Text fontSize="xl" fontWeight="black">
-                  R${' '}
-                  {(order.orderPrice ?? 0) +
-                    (order.deliveryType === 'Entrega'
-                      ? order.freightPrice ?? 0
-                      : 0)}
-                  ,00
-                </Text>
-              </Flex>
-              <Separator />
-              <Flex justify="space-between" align="center" mt={1} fontSize="xs">
-                <Text color="gray.600">Status:</Text>
-                <Text
-                  fontWeight="bold"
-                  bg="black"
-                  color="white"
-                  px={1.5}
-                  fontSize="2xs"
-                >
-                  {order.paymentType.toUpperCase()}
-                </Text>
-              </Flex>
-              {order.amountDue && order.paymentType !== 'Pago' && (
+            {/* --- TOTAIS --- */}
+            <Flex justify="flex-end" mb={dp.sectionMb}>
+              <Box w="240px">
+                {order.deliveryType === 'Entrega' && (
+                  <>
+                    <Flex justify="space-between" align="center" fontSize="xs">
+                      <Text color="gray.600">Pedido:</Text>
+                      <Text fontWeight="medium">
+                        R$ {order.orderPrice ?? 0},00
+                      </Text>
+                    </Flex>
+                    <Flex
+                      justify="space-between"
+                      align="center"
+                      mt={0.5}
+                      fontSize="xs"
+                    >
+                      <Text color="gray.600">Frete:</Text>
+                      <Text fontWeight="medium">
+                        R$ {order.freightPrice ?? 0},00
+                      </Text>
+                    </Flex>
+                    <Separator />
+                  </>
+                )}
+                <Flex justify="space-between" align="center" mb={1}>
+                  <Text fontSize="sm" fontWeight="bold">
+                    TOTAL
+                  </Text>
+                  <Text fontSize="xl" fontWeight="black">
+                    R${' '}
+                    {(order.orderPrice ?? 0) +
+                      (order.deliveryType === 'Entrega'
+                        ? (order.freightPrice ?? 0)
+                        : 0)}
+                    ,00
+                  </Text>
+                </Flex>
+                <Separator />
                 <Flex
                   justify="space-between"
                   align="center"
                   mt={1}
                   fontSize="xs"
                 >
-                  <Text color="gray.600">A Pagar:</Text>
-                  <Text fontWeight="bold" fontSize="sm">
-                    R$ {order.amountDue}
+                  <Text color="gray.600">Status:</Text>
+                  <Text
+                    fontWeight="bold"
+                    bg="black"
+                    color="white"
+                    px={1.5}
+                    fontSize="2xs"
+                  >
+                    {order.paymentType.toUpperCase()}
                   </Text>
                 </Flex>
-              )}
-            </Box>
-          </Flex>
-
-          {/* --- ESPAÇADOR DE GAP --- */}
-          {/* Este Box empurra tudo o que vem depois para o final do container minH="280mm" */}
-          <Box mt="auto" />
-
-          {/* --- TERMOS E CONDIÇÕES --- */}
-          <Box
-            mb={dp.sectionMb}
-            p={2}
-            border="1px solid"
-            borderColor="gray.300"
-            borderRadius="md"
-          >
-            <Text
-              fontSize="2xs"
-              fontWeight="bold"
-              color="gray.500"
-              mb={1}
-              textTransform="uppercase"
-            >
-              Termos e Condições
-            </Text>
-            <Text
-              fontSize="2xs"
-              color="gray.600"
-              textAlign="justify"
-              lineHeight="1.1"
-            >
-              Declaro ter conferido todas as medidas e materiais. A empresa não
-              se responsabiliza por erros de projeto ou medidas fornecidas pelo
-              cliente. Prazo de retirada inicia-se após confirmação do
-              pagamento. Pedidos não retirados em 30 dias sujeitos a descarte.
-            </Text>
-            <Flex mt={dp.termsMt} gap={4}>
-              <Box
-                borderTop="1px solid black"
-                w="50%"
-                pt={1}
-                textAlign="center"
-              >
-                <Text fontSize="2xs">Assinatura do Cliente</Text>
-              </Box>
-              <Box
-                borderTop="1px solid black"
-                w="50%"
-                pt={1}
-                textAlign="center"
-              >
-                <Text fontSize="2xs">Visto da Empresa</Text>
+                {order.amountDue && order.paymentType !== 'Pago' && (
+                  <Flex
+                    justify="space-between"
+                    align="center"
+                    mt={1}
+                    fontSize="xs"
+                  >
+                    <Text color="gray.600">A Pagar:</Text>
+                    <Text fontWeight="bold" fontSize="sm">
+                      R$ {order.amountDue}
+                    </Text>
+                  </Flex>
+                )}
               </Box>
             </Flex>
-          </Box>
 
-          {/* --- RODAPÉ INSTITUCIONAL FIXO --- */}
-          <Box
-            borderTop="2px solid black"
-            pt={2}
-            textAlign="center"
-            fontSize="2xs"
-            color="gray.600"
-          >
-            <Text fontWeight="bold" fontSize="xs" color="black" mb={0.5}>
-              JRM COMPENSADOS & MARCENARIA LTDA
-            </Text>
-            <Text lineHeight="1.1">
-              CNPJ: 45.123.001/0001-99 • R. Japoranga, 1000 - Japuíba - Angra
-              dos Reis/RJ
-            </Text>
-            <HStack justify="center" gap={3} mt={1}>
-              <Flex align="center" gap={1}>
-                <FaGlobe size={10} /> jrmcompensados.com.br
+            {/* --- ESPAÇADOR DE GAP --- */}
+            {/* Este Box empurra tudo o que vem depois para o final do container minH="280mm" */}
+            <Box mt="auto" />
+
+            {/* --- TERMOS E CONDIÇÕES --- */}
+            <Box
+              mb={dp.sectionMb}
+              p={2}
+              border="1px solid"
+              borderColor="gray.300"
+              borderRadius="md"
+            >
+              <Text
+                fontSize="2xs"
+                fontWeight="bold"
+                color="gray.500"
+                mb={1}
+                textTransform="uppercase"
+              >
+                Termos e Condições
+              </Text>
+              <Text
+                fontSize="2xs"
+                color="gray.600"
+                textAlign="justify"
+                lineHeight="1.1"
+              >
+                Declaro ter conferido todas as medidas e materiais. A empresa
+                não se responsabiliza por erros de projeto ou medidas fornecidas
+                pelo cliente. Prazo de retirada inicia-se após confirmação do
+                pagamento. Pedidos não retirados em 30 dias sujeitos a descarte.
+              </Text>
+              <Flex mt={dp.termsMt} gap={4}>
+                <Box
+                  borderTop="1px solid black"
+                  w="50%"
+                  pt={1}
+                  textAlign="center"
+                >
+                  <Text fontSize="2xs">Assinatura do Cliente</Text>
+                </Box>
+                <Box
+                  borderTop="1px solid black"
+                  w="50%"
+                  pt={1}
+                  textAlign="center"
+                >
+                  <Text fontSize="2xs">Visto da Empresa</Text>
+                </Box>
               </Flex>
-              <Flex align="center" gap={1}>
-                <FaWhatsapp size={10} /> (24) 99969-4543
-              </Flex>
-            </HStack>
-            <Text mt={1} fontStyle="italic" fontWeight="bold">
-              Obrigado pela preferência!
-            </Text>
+            </Box>
+
+            {/* --- RODAPÉ INSTITUCIONAL FIXO --- */}
+            <Box
+              borderTop="2px solid black"
+              pt={2}
+              textAlign="center"
+              fontSize="2xs"
+              color="gray.600"
+            >
+              <Text fontWeight="bold" fontSize="xs" color="black" mb={0.5}>
+                JRM COMPENSADOS & MARCENARIA LTDA
+              </Text>
+              <Text lineHeight="1.1">
+                CNPJ: 45.123.001/0001-99 • R. Japoranga, 1000 - Japuíba - Angra
+                dos Reis/RJ
+              </Text>
+              <HStack justify="center" gap={3} mt={1}>
+                <Flex align="center" gap={1}>
+                  <FaGlobe size={10} /> jrmcompensados.com.br
+                </Flex>
+                <Flex align="center" gap={1}>
+                  <FaWhatsapp size={10} /> (24) 99969-4543
+                </Flex>
+              </HStack>
+              <Text mt={1} fontStyle="italic" fontWeight="bold">
+                Obrigado pela preferência!
+              </Text>
+            </Box>
           </Box>
-        </Box>
+        </div>
       </div>
 
       {!autoPrint && (

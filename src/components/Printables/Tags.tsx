@@ -15,10 +15,8 @@ import { v4 } from 'uuid';
 
 import { sortCutlistData } from '../../utils/cutlist/sortAndReturnTag';
 import { Order, RoundedCorners } from '../../types';
-import {
-  TagSchemaSvg,
-  countCorners,
-} from '../NewOrder/TagSchemaSvg';
+import { CuttingPlanPrintable, isPrintableCuttingPlan } from '../CuttingPlan';
+import { TagSchemaSvg, countCorners } from '../NewOrder/TagSchemaSvg';
 
 interface OrderWithExtras extends Order {
   orderCode: number;
@@ -153,6 +151,14 @@ export const Tags: React.FC<TagsProps> = ({ order, onAfterPrint }) => {
           `}
         </style>
 
+        {isPrintableCuttingPlan(orderData.cuttingPlan) && (
+          <CuttingPlanPrintable
+            plan={orderData.cuttingPlan}
+            orderCode={orderData.orderCode}
+            forcePageBreakAfter
+          />
+        )}
+
         <Flex direction="column" px={2} py={2}>
           {/* --- CABEÇALHO COMPACTO --- */}
           <Box mb={2}>
@@ -229,8 +235,7 @@ export const Tags: React.FC<TagsProps> = ({ order, onAfterPrint }) => {
               {orderData.edits &&
                 orderData.edits.length > 0 &&
                 (() => {
-                  const last =
-                    orderData.edits![orderData.edits!.length - 1];
+                  const last = orderData.edits![orderData.edits!.length - 1];
                   const diff = last.priceDifference ?? 0;
                   const shouldCharge = !!last.shouldCharge && diff !== 0;
                   const formattedDiff = `R$ ${Math.abs(diff)},00`;
@@ -330,7 +335,7 @@ export const Tags: React.FC<TagsProps> = ({ order, onAfterPrint }) => {
                     TOTAL: R${' '}
                     {(orderData.orderPrice ?? 0) +
                       (orderData.deliveryType === 'Entrega'
-                        ? orderData.freightPrice ?? 0
+                        ? (orderData.freightPrice ?? 0)
                         : 0)}
                     ,00
                   </Text>
@@ -379,7 +384,8 @@ export const Tags: React.FC<TagsProps> = ({ order, onAfterPrint }) => {
                         {orderData.amountDue && orderData.amountDue !== '0'
                           ? orderData.amountDue
                           : (orderData.orderPrice ?? 0) +
-                              (orderData.freightPrice ?? 0) + ',00'}
+                            (orderData.freightPrice ?? 0) +
+                            ',00'}
                       </Text>
                     </Box>
                   )}
@@ -565,9 +571,11 @@ export const Tags: React.FC<TagsProps> = ({ order, onAfterPrint }) => {
                                 borderRadius="sm"
                               >
                                 BOLEADO x
-                                {(['tl', 'tr', 'bl', 'br'] as const).filter(
-                                  k => cut.roundedCorners?.[k],
-                                ).length}
+                                {
+                                  (['tl', 'tr', 'bl', 'br'] as const).filter(
+                                    k => cut.roundedCorners?.[k],
+                                  ).length
+                                }
                               </Text>
                             )}
                           </Table.Cell>
@@ -622,256 +630,251 @@ export const Tags: React.FC<TagsProps> = ({ order, onAfterPrint }) => {
           {/* --- ETIQUETAS INDIVIDUAIS --- */}
           <Box display="block">
             {tagCutlist.map(cut => {
-                const renderSlot = () => {
-                  // Linha pontilhada nativa do browser — imprime confiável.
-                  // SVG do esquema tem borda interna em ~21% (vertical) e ~10% (horizontal),
-                  // então posicionamos próxima dela mas dentro do contorno da peça.
-                  const isMaior = cut.slotSide !== 'Menor';
-                  if (isMaior) {
-                    // Horizontal — paralela ao lado maior, próxima do topo
-                    return (
-                      <Box
-                        position="absolute"
-                        top="25%"
-                        left="18%"
-                        right="18%"
-                        borderTop="2.5px dotted #333"
-                        zIndex={2}
-                      />
-                    );
-                  }
-                  // Vertical — paralela ao lado menor, próxima da esquerda
+              const renderSlot = () => {
+                // Linha pontilhada nativa do browser — imprime confiável.
+                // SVG do esquema tem borda interna em ~21% (vertical) e ~10% (horizontal),
+                // então posicionamos próxima dela mas dentro do contorno da peça.
+                const isMaior = cut.slotSide !== 'Menor';
+                if (isMaior) {
+                  // Horizontal — paralela ao lado maior, próxima do topo
                   return (
                     <Box
                       position="absolute"
                       top="25%"
-                      bottom="25%"
                       left="18%"
-                      borderLeft="2.5px dotted #333"
+                      right="18%"
+                      borderTop="2.5px dotted #333"
                       zIndex={2}
                     />
                   );
-                };
-                const renderHoles = () => {
-                  const pos1 = '30%';
-                  const pos2 = '70%';
-
-                  if (cut.hingeSide === 'Maior') {
-                    return (
-                      <>
-                        <Box
-                          position="absolute"
-                          top="30%"
-                          left={pos1}
-                          transform="translate(-50%, -50%)"
-                          w="6px"
-                          h="6px"
-                          bg="black"
-                          borderRadius="full"
-                          border="1px solid white"
-                          zIndex={2}
-                        />
-                        <Box
-                          position="absolute"
-                          top="30%"
-                          left={pos2}
-                          transform="translate(-50%, -50%)"
-                          w="6px"
-                          h="6px"
-                          bg="black"
-                          borderRadius="full"
-                          border="1px solid white"
-                          zIndex={2}
-                        />
-                      </>
-                    );
-                  } else {
-                    return (
-                      <>
-                        <Box
-                          position="absolute"
-                          left="20%"
-                          top="35%"
-                          transform="translate(-50%, -50%)"
-                          w="6px"
-                          h="6px"
-                          bg="black"
-                          borderRadius="full"
-                          border="1px solid white"
-                          zIndex={2}
-                        />
-                        <Box
-                          position="absolute"
-                          left="20%"
-                          top="65%"
-                          transform="translate(-50%, -50%)"
-                          w="6px"
-                          h="6px"
-                          bg="black"
-                          borderRadius="full"
-                          border="1px solid white"
-                          zIndex={2}
-                        />
-                      </>
-                    );
-                  }
-                };
-
+                }
+                // Vertical — paralela ao lado menor, próxima da esquerda
                 return (
                   <Box
-                    key={cut.id}
-                    float="left"
-                    width="33.33%"
-                    height="130px"
-                    border="1px dashed #666"
-                    p={1}
-                    m={0}
-                    boxSizing="border-box"
-                    pageBreakInside="avoid"
-                    position="relative"
-                  >
-                    <Flex
-                      direction="column"
-                      align="center"
-                      justify="center"
-                      h="100%"
-                    >
-                      <Box
-                        position="relative"
-                        width="auto"
-                        height="auto"
-                        mb={1}
-                      >
-                        {/* BADGE DE QTD FUROS (Sem o 'F') */}
-                        {cut.hasHinge && (
-                          <Box
-                            position="absolute"
-                            top="-4px"
-                            right="-4px"
-                            bg="black"
-                            color="white"
-                            fontSize="7px"
-                            fontWeight="900"
-                            px={1}
-                            py={0}
-                            borderRadius="sm"
-                            zIndex={3}
-                          >
-                            {cut.hingeQuantity}
-                          </Box>
-                        )}
-
-                        {/* BADGE DE RASGO */}
-                        {cut.hasSlot && (
-                          <Box
-                            position="absolute"
-                            top="-4px"
-                            right="-4px"
-                            bg="gray.700"
-                            color="white"
-                            fontSize="7px"
-                            fontWeight="900"
-                            px={1}
-                            py={0}
-                            borderRadius="sm"
-                            zIndex={3}
-                          >
-                            R
-                          </Box>
-                        )}
-
-                        {/* BADGE DE BOLEADO — centralizado para não esconder os cantos boleados */}
-                        {cut.hasRound && (
-                          <Box
-                            position="absolute"
-                            top="50%"
-                            left="50%"
-                            transform="translate(-50%, -50%)"
-                            bg="white"
-                            color="black"
-                            border="1px solid black"
-                            fontSize="7px"
-                            fontWeight="900"
-                            px={1}
-                            py={0}
-                            borderRadius="sm"
-                            zIndex={3}
-                          >
-                            B{countCorners(cut.roundedCorners)}
-                          </Box>
-                        )}
-
-                        {cut.hasRound ? (
-                          <TagSchemaSvg
-                            gborder={cut.gborder ?? 0}
-                            pborder={cut.pborder ?? 0}
-                            corners={cut.roundedCorners}
-                            size={45}
-                          />
-                        ) : (
-                          <Image
-                            src={cut.avatar.src}
-                            height="45px"
-                            width="auto"
-                            alt="Esquema"
-                            style={{
-                              display: 'block',
-                              filter: 'grayscale(100%)',
-                            }}
-                          />
-                        )}
-                        {cut.hasHinge && renderHoles()}
-                        {cut.hasSlot && renderSlot()}
-                      </Box>
-
-                      <Text
-                        fontWeight="900"
-                        fontSize="14px"
-                        lineHeight="1"
-                        color="black"
-                      >
-                        {cut.gside} x {cut.pside}
-                      </Text>
-
-                      <Text
-                        fontSize="12px"
-                        fontWeight="bold"
-                        textAlign="center"
-                        lineClamp={2}
-                        lineHeight="1.1"
-                        mt={1}
-                        color="black"
-                      >
-                        {cut.material}
-                      </Text>
-
-                      <Text
-                        fontSize="9px"
-                        textAlign="center"
-                        mt={1}
-                        fontWeight="bold"
-                        color="black"
-                        bg="gray.200"
-                        px={1}
-                        borderRadius="sm"
-                      >
-                        {orderData.orderCode} —{' '}
-                        {orderData.customer.name.split(' ')[0]}{' '}
-                        {orderData.customer.name.split(' ')[1] || ''}
-                      </Text>
-
-                      <Text
-                        fontSize="9px"
-                        color="black"
-                        mt={0.5}
-                        fontWeight="bold"
-                      >
-                        {cut.globalIndex} / {cut.globalTotal}
-                      </Text>
-                    </Flex>
-                  </Box>
+                    position="absolute"
+                    top="25%"
+                    bottom="25%"
+                    left="18%"
+                    borderLeft="2.5px dotted #333"
+                    zIndex={2}
+                  />
                 );
-              })}
+              };
+              const renderHoles = () => {
+                const pos1 = '30%';
+                const pos2 = '70%';
+
+                if (cut.hingeSide === 'Maior') {
+                  return (
+                    <>
+                      <Box
+                        position="absolute"
+                        top="30%"
+                        left={pos1}
+                        transform="translate(-50%, -50%)"
+                        w="6px"
+                        h="6px"
+                        bg="black"
+                        borderRadius="full"
+                        border="1px solid white"
+                        zIndex={2}
+                      />
+                      <Box
+                        position="absolute"
+                        top="30%"
+                        left={pos2}
+                        transform="translate(-50%, -50%)"
+                        w="6px"
+                        h="6px"
+                        bg="black"
+                        borderRadius="full"
+                        border="1px solid white"
+                        zIndex={2}
+                      />
+                    </>
+                  );
+                } else {
+                  return (
+                    <>
+                      <Box
+                        position="absolute"
+                        left="20%"
+                        top="35%"
+                        transform="translate(-50%, -50%)"
+                        w="6px"
+                        h="6px"
+                        bg="black"
+                        borderRadius="full"
+                        border="1px solid white"
+                        zIndex={2}
+                      />
+                      <Box
+                        position="absolute"
+                        left="20%"
+                        top="65%"
+                        transform="translate(-50%, -50%)"
+                        w="6px"
+                        h="6px"
+                        bg="black"
+                        borderRadius="full"
+                        border="1px solid white"
+                        zIndex={2}
+                      />
+                    </>
+                  );
+                }
+              };
+
+              return (
+                <Box
+                  key={cut.id}
+                  float="left"
+                  width="33.33%"
+                  height="130px"
+                  border="1px dashed #666"
+                  p={1}
+                  m={0}
+                  boxSizing="border-box"
+                  pageBreakInside="avoid"
+                  position="relative"
+                >
+                  <Flex
+                    direction="column"
+                    align="center"
+                    justify="center"
+                    h="100%"
+                  >
+                    <Box position="relative" width="auto" height="auto" mb={1}>
+                      {/* BADGE DE QTD FUROS (Sem o 'F') */}
+                      {cut.hasHinge && (
+                        <Box
+                          position="absolute"
+                          top="-4px"
+                          right="-4px"
+                          bg="black"
+                          color="white"
+                          fontSize="7px"
+                          fontWeight="900"
+                          px={1}
+                          py={0}
+                          borderRadius="sm"
+                          zIndex={3}
+                        >
+                          {cut.hingeQuantity}
+                        </Box>
+                      )}
+
+                      {/* BADGE DE RASGO */}
+                      {cut.hasSlot && (
+                        <Box
+                          position="absolute"
+                          top="-4px"
+                          right="-4px"
+                          bg="gray.700"
+                          color="white"
+                          fontSize="7px"
+                          fontWeight="900"
+                          px={1}
+                          py={0}
+                          borderRadius="sm"
+                          zIndex={3}
+                        >
+                          R
+                        </Box>
+                      )}
+
+                      {/* BADGE DE BOLEADO — centralizado para não esconder os cantos boleados */}
+                      {cut.hasRound && (
+                        <Box
+                          position="absolute"
+                          top="50%"
+                          left="50%"
+                          transform="translate(-50%, -50%)"
+                          bg="white"
+                          color="black"
+                          border="1px solid black"
+                          fontSize="7px"
+                          fontWeight="900"
+                          px={1}
+                          py={0}
+                          borderRadius="sm"
+                          zIndex={3}
+                        >
+                          B{countCorners(cut.roundedCorners)}
+                        </Box>
+                      )}
+
+                      {cut.hasRound ? (
+                        <TagSchemaSvg
+                          gborder={cut.gborder ?? 0}
+                          pborder={cut.pborder ?? 0}
+                          corners={cut.roundedCorners}
+                          size={45}
+                        />
+                      ) : (
+                        <Image
+                          src={cut.avatar.src}
+                          height="45px"
+                          width="auto"
+                          alt="Esquema"
+                          style={{
+                            display: 'block',
+                            filter: 'grayscale(100%)',
+                          }}
+                        />
+                      )}
+                      {cut.hasHinge && renderHoles()}
+                      {cut.hasSlot && renderSlot()}
+                    </Box>
+
+                    <Text
+                      fontWeight="900"
+                      fontSize="14px"
+                      lineHeight="1"
+                      color="black"
+                    >
+                      {cut.gside} x {cut.pside}
+                    </Text>
+
+                    <Text
+                      fontSize="12px"
+                      fontWeight="bold"
+                      textAlign="center"
+                      lineClamp={2}
+                      lineHeight="1.1"
+                      mt={1}
+                      color="black"
+                    >
+                      {cut.material}
+                    </Text>
+
+                    <Text
+                      fontSize="9px"
+                      textAlign="center"
+                      mt={1}
+                      fontWeight="bold"
+                      color="black"
+                      bg="gray.200"
+                      px={1}
+                      borderRadius="sm"
+                    >
+                      {orderData.orderCode} —{' '}
+                      {orderData.customer.name.split(' ')[0]}{' '}
+                      {orderData.customer.name.split(' ')[1] || ''}
+                    </Text>
+
+                    <Text
+                      fontSize="9px"
+                      color="black"
+                      mt={0.5}
+                      fontWeight="bold"
+                    >
+                      {cut.globalIndex} / {cut.globalTotal}
+                    </Text>
+                  </Flex>
+                </Box>
+              );
+            })}
             <div style={{ clear: 'both' }} />
           </Box>
         </Flex>
