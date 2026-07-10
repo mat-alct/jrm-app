@@ -1,7 +1,4 @@
-import type {
-  CuttingPlanPiece,
-  CuttingPlanSheet,
-} from '@/domain/cutting-plan';
+import type { CuttingPlanPiece, CuttingPlanSheet } from '@/domain/cutting-plan';
 import {
   calculateCuttingPlanPricing,
   DEFAULT_CUTTING_PLAN_SETTINGS,
@@ -10,6 +7,7 @@ import {
 const material = {
   id: 'mdf-white',
   name: 'MDF Branco 15mm',
+  thicknessMm: 15,
   unitPrice: 200,
 };
 

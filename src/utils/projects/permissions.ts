@@ -46,6 +46,7 @@ const PAGE_ACCESS: Record<string, UserRole[]> = {
   '/cortes/novoservico': ['admin', 'seller'],
   '/cortes/listadecortes': ['admin', 'seller', 'woodworker'],
   '/cortes/materiais': ['admin', 'seller'],
+  '/cortes/configuracoes-maquina': ['admin', 'seller', 'woodworker'],
   '/cortes/editar/[id]': ['admin', 'seller'],
   '/administracao/fretes': ['admin', 'seller'],
   '/administracao/vendedores': ['admin'],
@@ -85,15 +86,11 @@ export function canAssignDesigner(userRoles: UserRole[] | undefined): boolean {
   return isAdmin(userRoles) || hasRole(userRoles, 'seller');
 }
 
-export function canAssignAssembler(
-  userRoles: UserRole[] | undefined,
-): boolean {
+export function canAssignAssembler(userRoles: UserRole[] | undefined): boolean {
   return isAdmin(userRoles);
 }
 
-export function canEditItemStatus(
-  userRoles: UserRole[] | undefined,
-): boolean {
+export function canEditItemStatus(userRoles: UserRole[] | undefined): boolean {
   return (
     isAdmin(userRoles) ||
     hasRole(userRoles, 'assembler') ||

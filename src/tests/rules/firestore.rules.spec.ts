@@ -119,7 +119,9 @@ describe('firestore.rules', () => {
       });
 
       await db
-        .doc('projects/project-1/items/designer-item/attachments/assembler-file')
+        .doc(
+          'projects/project-1/items/designer-item/attachments/assembler-file',
+        )
         .set({
           visibility: 'assembler',
           uploadedBy: uid.assembler,
@@ -141,12 +143,14 @@ describe('firestore.rules', () => {
           changedBy: uid.seller,
         });
 
-      await db.doc('projects/project-1/items/designer-item/versions/version-1').set({
-        projectId: 'project-1',
-        itemId: 'designer-item',
-        attachmentIds: [],
-        createdBy: uid.designer,
-      });
+      await db
+        .doc('projects/project-1/items/designer-item/versions/version-1')
+        .set({
+          projectId: 'project-1',
+          itemId: 'designer-item',
+          attachmentIds: [],
+          createdBy: uid.designer,
+        });
 
       await db
         .doc(
@@ -177,7 +181,9 @@ describe('firestore.rules', () => {
         });
 
       await db.doc('payments/payment-owned').set(paymentData(uid.assembler));
-      await db.doc('payments/payment-other').set(paymentData(uid.otherAssembler));
+      await db
+        .doc('payments/payment-other')
+        .set(paymentData(uid.otherAssembler));
     });
   }
 
@@ -196,7 +202,10 @@ describe('firestore.rules', () => {
     };
   }
 
-  const basicDoc = { ok: true, createdAt: new Date('2026-01-03T00:00:00.000Z') };
+  const basicDoc = {
+    ok: true,
+    createdAt: new Date('2026-01-03T00:00:00.000Z'),
+  };
 
   describe('users/{userId}', () => {
     it('permite leitura por autenticado ativo e escrita apenas por admin', async () => {
@@ -206,18 +215,24 @@ describe('firestore.rules', () => {
       await assertFails(anonDb().doc(`users/${uid.admin}`).get());
 
       await assertSucceeds(
-        dbAs('admin').doc('users/new-user').set({
-          name: 'Novo',
-          roles: ['seller'],
-          active: true,
-        }),
+        dbAs('admin')
+          .doc('users/new-user')
+          .set({
+            name: 'Novo',
+            roles: ['seller'],
+            active: true,
+          }),
       );
       await assertSucceeds(
         dbAs('admin').doc(`users/${uid.seller}`).update({ active: true }),
       );
-      await assertSucceeds(dbAs('admin').doc(`users/${uid.woodworker}`).delete());
+      await assertSucceeds(
+        dbAs('admin').doc(`users/${uid.woodworker}`).delete(),
+      );
 
-      await assertFails(dbAs('seller').doc('users/seller-create').set(basicDoc));
+      await assertFails(
+        dbAs('seller').doc('users/seller-create').set(basicDoc),
+      );
       await assertFails(anonDb().doc('users/anon-create').set(basicDoc));
       await assertFails(
         dbAs('inactive').doc(`users/${uid.seller}`).update({ active: false }),
@@ -227,8 +242,12 @@ describe('firestore.rules', () => {
 
   describe('settings/{settingId}', () => {
     it('permite leitura autenticada ativa e escrita apenas por admin', async () => {
-      await assertSucceeds(dbAs('seller').doc('settings/deadlineDefaults').get());
-      await assertFails(dbAs('inactive').doc('settings/deadlineDefaults').get());
+      await assertSucceeds(
+        dbAs('seller').doc('settings/deadlineDefaults').get(),
+      );
+      await assertFails(
+        dbAs('inactive').doc('settings/deadlineDefaults').get(),
+      );
       await assertFails(anonDb().doc('settings/deadlineDefaults').get());
 
       await assertSucceeds(
@@ -259,8 +278,12 @@ describe('firestore.rules', () => {
           .where('password', '==', 'legado')
           .get(),
       );
-      await assertFails(dbAs('seller').doc('sellers/senha-123').update({ name: 'No' }));
-      await assertFails(dbAs('designer').doc('sellers/outro').set({ name: 'No' }));
+      await assertFails(
+        dbAs('seller').doc('sellers/senha-123').update({ name: 'No' }),
+      );
+      await assertFails(
+        dbAs('designer').doc('sellers/outro').set({ name: 'No' }),
+      );
       await assertFails(anonDb().doc('sellers/senha-123').get());
       await assertFails(dbAs('inactive').doc('sellers/senha-123').get());
     });
@@ -288,10 +311,16 @@ describe('firestore.rules', () => {
           await assertFails(dbAs(role).doc(`${collection}/doc-admin`).delete());
         }
 
-        await assertFails(dbAs('seller').doc(`${collection}/doc-admin`).delete());
-        await assertSucceeds(dbAs('admin').doc(`${collection}/doc-seller`).delete());
+        await assertFails(
+          dbAs('seller').doc(`${collection}/doc-admin`).delete(),
+        );
+        await assertSucceeds(
+          dbAs('admin').doc(`${collection}/doc-seller`).delete(),
+        );
 
-        await assertFails(dbAs('inactive').doc(`${collection}/doc-admin`).get());
+        await assertFails(
+          dbAs('inactive').doc(`${collection}/doc-admin`).get(),
+        );
         await assertFails(anonDb().doc(`${collection}/doc-admin`).get());
         await assertFails(anonDb().doc(`${collection}/anon`).set(basicDoc));
       },
@@ -301,14 +330,18 @@ describe('firestore.rules', () => {
   describe('materials/{materialId}', () => {
     it('permite leitura ativa e CRUD completo para admin e seller', async () => {
       for (const role of ['admin', 'seller'] as const) {
-        await assertSucceeds(dbAs(role).doc(`materials/mat-${role}`).set(basicDoc));
+        await assertSucceeds(
+          dbAs(role).doc(`materials/mat-${role}`).set(basicDoc),
+        );
         await assertSucceeds(
           dbAs(role).doc(`materials/mat-${role}`).update({ ok: false }),
         );
         await assertSucceeds(dbAs(role).doc(`materials/mat-${role}`).delete());
       }
 
-      await assertSucceeds(dbAs('admin').doc('materials/mat-shared').set(basicDoc));
+      await assertSucceeds(
+        dbAs('admin').doc('materials/mat-shared').set(basicDoc),
+      );
 
       for (const role of ['designer', 'assembler', 'woodworker'] as const) {
         await assertSucceeds(dbAs(role).doc('materials/mat-shared').get());
@@ -327,8 +360,12 @@ describe('firestore.rules', () => {
 
   describe('counters/{counterId}', () => {
     it('permite leitura ativa e escrita para admin e seller (sequencia de codigos)', async () => {
-      await assertSucceeds(dbAs('admin').doc('counters/orders').set({ value: 1 }));
-      await assertSucceeds(dbAs('seller').doc('counters/orders').set({ value: 2 }));
+      await assertSucceeds(
+        dbAs('admin').doc('counters/orders').set({ value: 1 }),
+      );
+      await assertSucceeds(
+        dbAs('seller').doc('counters/orders').set({ value: 2 }),
+      );
 
       for (const role of ['designer', 'assembler', 'woodworker'] as const) {
         await assertSucceeds(dbAs(role).doc('counters/orders').get());
@@ -343,16 +380,37 @@ describe('firestore.rules', () => {
   });
 
   describe('config/{configId}', () => {
-    it('permite leitura ativa e escrita apenas por admin', async () => {
-      await assertSucceeds(dbAs('admin').doc('config/fretes').set({ value: 10 }));
+    it('restringe configurações gerais, mas libera a máquina aos papéis de corte', async () => {
+      await assertSucceeds(
+        dbAs('admin').doc('config/fretes').set({ value: 10 }),
+      );
 
-      for (const role of ['seller', 'designer', 'assembler', 'woodworker'] as const) {
+      for (const role of [
+        'seller',
+        'designer',
+        'assembler',
+        'woodworker',
+      ] as const) {
         await assertSucceeds(dbAs(role).doc('config/fretes').get());
         await assertFails(dbAs(role).doc('config/fretes').set({ value: 20 }));
         await assertFails(dbAs(role).doc('config/fretes').delete());
       }
 
       await assertSucceeds(dbAs('admin').doc('config/fretes').delete());
+      for (const role of ['admin', 'seller', 'woodworker'] as const) {
+        await assertSucceeds(
+          dbAs(role).doc('config/cutting-machine').set({ kerfMm: 4.5 }),
+        );
+      }
+      for (const role of ['designer', 'assembler'] as const) {
+        await assertFails(
+          dbAs(role).doc('config/cutting-machine').set({ kerfMm: 4.5 }),
+        );
+      }
+      await assertFails(dbAs('seller').doc('config/cutting-machine').delete());
+      await assertFails(
+        dbAs('woodworker').doc('config/cutting-machine').delete(),
+      );
       await assertFails(dbAs('inactive').doc('config/fretes').get());
       await assertFails(anonDb().doc('config/fretes').get());
       await assertFails(anonDb().doc('config/fretes').set({ value: 30 }));
@@ -363,17 +421,21 @@ describe('firestore.rules', () => {
     it('permite read/create/update para admin e seller; delete apenas admin', async () => {
       for (const role of ['admin', 'seller'] as const) {
         await assertSucceeds(dbAs(role).doc('projects/project-1').get());
-        await assertSucceeds(dbAs(role).doc(`projects/create-${role}`).set(basicDoc));
+        await assertSucceeds(
+          dbAs(role).doc(`projects/create-${role}`).set(basicDoc),
+        );
         await assertSucceeds(
           dbAs(role).doc('projects/project-1').update({ updatedBy: uid[role] }),
         );
       }
 
       await assertSucceeds(
-        dbAs('designer').doc('projects/project-1').update({
-          itemSummary: { total: 2 },
-          totalCustomerValue: 1200,
-        }),
+        dbAs('designer')
+          .doc('projects/project-1')
+          .update({
+            itemSummary: { total: 2 },
+            totalCustomerValue: 1200,
+          }),
       );
       await assertSucceeds(dbAs('admin').doc('projects/project-1').delete());
 
@@ -423,20 +485,34 @@ describe('firestore.rules', () => {
     it('restringe leitura e edicao do item por papel e designer atribuido', async () => {
       for (const role of ['admin', 'seller'] as const) {
         await assertSucceeds(dbAs(role).doc(ownPath).get());
-        await assertSucceeds(dbAs(role).doc(`projects/project-1/items/new-${role}`).set(basicDoc));
-        await assertSucceeds(dbAs(role).doc(ownPath).update({ touchedBy: role }));
+        await assertSucceeds(
+          dbAs(role).doc(`projects/project-1/items/new-${role}`).set(basicDoc),
+        );
+        await assertSucceeds(
+          dbAs(role).doc(ownPath).update({ touchedBy: role }),
+        );
       }
 
       await assertSucceeds(dbAs('designer').doc(ownPath).get());
-      await assertSucceeds(dbAs('designer').doc(ownPath).update({ designerNote: 'ok' }));
+      await assertSucceeds(
+        dbAs('designer').doc(ownPath).update({ designerNote: 'ok' }),
+      );
       await assertSucceeds(dbAs('assembler').doc(ownPath).get());
 
       await assertFails(dbAs('designer').doc(otherPath).get());
-      await assertFails(dbAs('designer').doc(otherPath).update({ designerNote: 'no' }));
+      await assertFails(
+        dbAs('designer').doc(otherPath).update({ designerNote: 'no' }),
+      );
       await assertFails(dbAs('assembler').doc(otherPath).get());
-      await assertFails(dbAs('assembler').doc(ownPath).update({ assemblerNote: 'no' }));
+      await assertFails(
+        dbAs('assembler').doc(ownPath).update({ assemblerNote: 'no' }),
+      );
       await assertFails(dbAs('woodworker').doc(ownPath).get());
-      await assertFails(dbAs('designer').doc('projects/project-1/items/designer-create').set(basicDoc));
+      await assertFails(
+        dbAs('designer')
+          .doc('projects/project-1/items/designer-create')
+          .set(basicDoc),
+      );
       await assertSucceeds(dbAs('admin').doc(ownPath).delete());
       await assertFails(dbAs('seller').doc(ownPath).delete());
       await assertFails(anonDb().doc(ownPath).get());
@@ -531,22 +607,35 @@ describe('firestore.rules', () => {
         }),
       );
 
-      await assertSucceeds(dbAs('admin').doc(assemblerFile).update({ reviewed: true }));
+      await assertSucceeds(
+        dbAs('admin').doc(assemblerFile).update({ reviewed: true }),
+      );
       await assertSucceeds(dbAs('admin').doc(assemblerFile).delete());
-      await assertFails(dbAs('seller').doc(assemblerFile).update({ reviewed: false }));
+      await assertFails(
+        dbAs('seller').doc(assemblerFile).update({ reviewed: false }),
+      );
       await assertFails(dbAs('assembler').doc(assemblerFile).delete());
       await assertFails(dbAs('inactive').doc(assemblerFile).get());
     });
   });
 
   describe('items/*/statusHistory', () => {
-    const path = 'projects/project-1/items/designer-item/statusHistory/history-1';
+    const path =
+      'projects/project-1/items/designer-item/statusHistory/history-1';
 
     it('permite create por autenticado ativo e nunca permite update/delete', async () => {
-      for (const role of ['admin', 'seller', 'designer', 'assembler', 'woodworker'] as const) {
+      for (const role of [
+        'admin',
+        'seller',
+        'designer',
+        'assembler',
+        'woodworker',
+      ] as const) {
         await assertSucceeds(
           dbAs(role)
-            .doc(`projects/project-1/items/designer-item/statusHistory/create-${role}`)
+            .doc(
+              `projects/project-1/items/designer-item/statusHistory/create-${role}`,
+            )
             .set({ toStatus: 'aguardando_desenho', changedBy: uid[role] }),
         );
       }
@@ -568,10 +657,14 @@ describe('firestore.rules', () => {
       await assertSucceeds(dbAs('designer').doc(path).get());
       await assertSucceeds(
         dbAs('designer')
-          .doc('projects/project-1/items/designer-item/versions/designer-version')
+          .doc(
+            'projects/project-1/items/designer-item/versions/designer-version',
+          )
           .set({ attachmentIds: [], createdBy: uid.designer }),
       );
-      await assertSucceeds(dbAs('admin').doc(path).update({ visibleToClient: true }));
+      await assertSucceeds(
+        dbAs('admin').doc(path).update({ visibleToClient: true }),
+      );
       await assertSucceeds(dbAs('admin').doc(path).delete());
 
       await assertFails(dbAs('otherDesigner').doc(path).get());
@@ -580,7 +673,9 @@ describe('firestore.rules', () => {
           .doc('projects/project-1/items/designer-item/versions/other-version')
           .set({ attachmentIds: [], createdBy: uid.otherDesigner }),
       );
-      await assertFails(dbAs('seller').doc(path).update({ visibleToClient: false }));
+      await assertFails(
+        dbAs('seller').doc(path).update({ visibleToClient: false }),
+      );
       await assertFails(dbAs('designer').doc(path).delete());
       await assertFails(anonDb().doc(path).get());
     });
@@ -623,14 +718,22 @@ describe('firestore.rules', () => {
 
       await assertSucceeds(
         dbAs('admin')
-          .doc('projects/project-1/items/designer-item/assemblerAssignments/new-one')
+          .doc(
+            'projects/project-1/items/designer-item/assemblerAssignments/new-one',
+          )
           .set({ assemblerId: uid.otherAssembler }),
       );
-      await assertSucceeds(dbAs('admin').doc(path).update({ amountToReceive: 300 }));
+      await assertSucceeds(
+        dbAs('admin').doc(path).update({ amountToReceive: 300 }),
+      );
       await assertSucceeds(dbAs('admin').doc(path).delete());
 
-      await assertFails(dbAs('seller').doc(path).set({ assemblerId: uid.seller }));
-      await assertFails(dbAs('assembler').doc(path).update({ amountToReceive: 1 }));
+      await assertFails(
+        dbAs('seller').doc(path).set({ assemblerId: uid.seller }),
+      );
+      await assertFails(
+        dbAs('assembler').doc(path).update({ amountToReceive: 1 }),
+      );
       await assertFails(dbAs('assembler').doc(path).delete());
       await assertFails(dbAs('inactive').doc(path).get());
     });
@@ -647,8 +750,14 @@ describe('firestore.rules', () => {
       await assertFails(dbAs('seller').doc(ownedPath).get());
       await assertFails(anonDb().doc(ownedPath).get());
 
-      await assertSucceeds(dbAs('admin').doc('payments/new-payment').set(paymentData(uid.assembler)));
-      await assertSucceeds(dbAs('admin').doc(ownedPath).update({ amount: 300 }));
+      await assertSucceeds(
+        dbAs('admin')
+          .doc('payments/new-payment')
+          .set(paymentData(uid.assembler)),
+      );
+      await assertSucceeds(
+        dbAs('admin').doc(ownedPath).update({ amount: 300 }),
+      );
       await assertSucceeds(dbAs('admin').doc(otherPath).delete());
 
       await assertSucceeds(
@@ -663,7 +772,11 @@ describe('firestore.rules', () => {
         }),
       );
       await assertFails(dbAs('assembler').doc(ownedPath).delete());
-      await assertFails(dbAs('seller').doc('payments/seller-create').set(paymentData(uid.assembler)));
+      await assertFails(
+        dbAs('seller')
+          .doc('payments/seller-create')
+          .set(paymentData(uid.assembler)),
+      );
       await assertFails(dbAs('inactive').doc(ownedPath).get());
     });
 
@@ -694,7 +807,10 @@ describe('firestore.rules', () => {
         await context
           .firestore()
           .doc('payments/not-paid')
-          .set({ ...paymentData(uid.assembler), status: 'confirmado_pelo_montador' });
+          .set({
+            ...paymentData(uid.assembler),
+            status: 'confirmado_pelo_montador',
+          });
       });
       await assertFails(
         dbAs('assembler')

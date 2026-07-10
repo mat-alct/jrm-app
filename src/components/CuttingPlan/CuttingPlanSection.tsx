@@ -5,19 +5,17 @@ import {
   Button,
   Flex,
   Heading,
-  Input,
   RadioGroup,
-  SimpleGrid,
   Spinner,
   Stack,
   Text,
 } from '@chakra-ui/react';
+import { useQuery } from '@tanstack/react-query';
 import { Timestamp } from 'firebase/firestore';
+import Link from 'next/link';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   FaCheck,
-  FaChevronDown,
-  FaChevronUp,
   FaExclamationTriangle,
   FaSave,
   FaSyncAlt,
@@ -27,7 +25,6 @@ import { v4 } from 'uuid';
 import type {
   CuttingPlan,
   CuttingPlanOptimizationMode,
-  CuttingPlanSettings,
 } from '@/domain/cutting-plan';
 import {
   approveCuttingPlan,
@@ -35,10 +32,13 @@ import {
   cutlistToCuttingPlanInput,
   cutlistToCuttingPlanPieces,
   cuttingPlanMatchesPieces,
-  DEFAULT_CUTTING_PLAN_SETTINGS,
   generateCuttingPlan,
   markCuttingPlanOutdated,
 } from '@/domain/cutting-plan';
+import {
+  CUTTING_MACHINE_QUERY_KEY,
+  getCuttingMachineConfiguration,
+} from '@/services/cuttingMachine.service';
 import type { Cutlist } from '@/types';
 
 import { CuttingPlanPreview } from './CuttingPlanPreview';
@@ -50,11 +50,6 @@ interface CuttingPlanSectionProps {
   plan?: CuttingPlan;
   required?: boolean;
 }
-
-const cloneDefaultSettings = (): CuttingPlanSettings => ({
-  ...DEFAULT_CUTTING_PLAN_SETTINGS,
-  balancedWeights: { ...DEFAULT_CUTTING_PLAN_SETTINGS.balancedWeights },
-});
 
 const statusLabel = {
   draft: 'Rascunho',
@@ -68,37 +63,6 @@ const statusColor = {
   outdated: 'red',
 } as const;
 
-interface SettingInputProps {
-  label: string;
-  min?: number;
-  onChange: (value: number) => void;
-  step?: number;
-  value: number;
-}
-
-const SettingInput = ({
-  label,
-  min = 0,
-  onChange,
-  step = 1,
-  value,
-}: SettingInputProps) => (
-  <Box>
-    <Text as="label" display="block" fontSize="xs" fontWeight="700" mb={1}>
-      {label}
-    </Text>
-    <Input
-      aria-label={label}
-      type="number"
-      min={min}
-      step={step}
-      value={value}
-      onChange={event => onChange(Number(event.target.value))}
-      bg="white"
-    />
-  </Box>
-);
-
 export const CuttingPlanSection = ({
   cutlist,
   onPlanChange,
@@ -108,40 +72,44 @@ export const CuttingPlanSection = ({
 }: CuttingPlanSectionProps) => {
   const [optimizationMode, setOptimizationMode] =
     useState<CuttingPlanOptimizationMode>(plan?.optimizationMode ?? 'balanced');
-  const [settings, setSettings] = useState<CuttingPlanSettings>(() =>
-    plan
-      ? {
-          ...plan.settings,
-          balancedWeights: { ...plan.settings.balancedWeights },
-        }
-      : cloneDefaultSettings(),
-  );
-  const [showSettings, setShowSettings] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const {
+    data: machineConfiguration,
+    isLoading: isLoadingConfiguration,
+    isError: isConfigurationError,
+  } = useQuery({
+    queryKey: CUTTING_MACHINE_QUERY_KEY,
+    queryFn: getCuttingMachineConfiguration,
+  });
   const pieces = useMemo(() => cutlistToCuttingPlanPieces(cutlist), [cutlist]);
   const piecesFingerprint = useMemo(() => JSON.stringify(pieces), [pieces]);
+  const settingsFingerprint = machineConfiguration
+    ? JSON.stringify(machineConfiguration.cutting)
+    : '';
 
   useEffect(() => {
+    const settingsChanged =
+      machineConfiguration &&
+      plan &&
+      JSON.stringify(plan.settings) !== settingsFingerprint;
     if (
       plan &&
       plan.status !== 'outdated' &&
-      !cuttingPlanMatchesPieces(plan, pieces)
+      (!cuttingPlanMatchesPieces(plan, pieces) || settingsChanged)
     ) {
       onPlanChange(
         markCuttingPlanOutdated(plan, Timestamp.fromDate(new Date())),
       );
     }
-    // `piecesFingerprint` representa qualquer alteração relevante no cadastro.
-    // O callback do parent pode mudar de referência sem tornar o plano obsoleto.
+    // Fingerprints representam as mudanças relevantes. O callback do parent
+    // pode mudar de referência sem tornar o plano obsoleto.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [piecesFingerprint, plan?.id, plan?.status]);
+  }, [piecesFingerprint, settingsFingerprint, plan?.id, plan?.status]);
 
-  const updateSettings = (
-    update: (current: CuttingPlanSettings) => CuttingPlanSettings,
-  ) => {
-    setSettings(current => update(current));
-    if (plan && plan.status !== 'outdated') {
+  const changeOptimizationMode = (value: CuttingPlanOptimizationMode) => {
+    setOptimizationMode(value);
+    if (plan && plan.status !== 'outdated' && value !== plan.optimizationMode) {
       onPlanChange(
         markCuttingPlanOutdated(plan, Timestamp.fromDate(new Date())),
       );
@@ -149,14 +117,17 @@ export const CuttingPlanSection = ({
   };
 
   const generate = async () => {
+    if (!machineConfiguration) return;
     setGenerating(true);
     setError(null);
     try {
-      // Entrega um frame ao React para que o estado de carregamento seja visível
-      // antes do cálculo síncrono e puro começar.
       await new Promise<void>(resolve => setTimeout(resolve, 0));
       const result = generateCuttingPlan(
-        cutlistToCuttingPlanInput({ cutlist, optimizationMode, settings }),
+        cutlistToCuttingPlanInput({
+          cutlist,
+          optimizationMode,
+          settings: machineConfiguration.cutting,
+        }),
       );
       onPlanChange(
         buildCuttingPlan({
@@ -238,7 +209,19 @@ export const CuttingPlanSection = ({
                 Gere um plano atualizado antes de finalizar.
               </Alert.Title>
               <Alert.Description>
-                Qualquer alteração nas peças exige uma nova geração.
+                Alterações nas peças ou na máquina exigem uma nova geração.
+              </Alert.Description>
+            </Alert.Content>
+          </Alert.Root>
+        )}
+
+        {isConfigurationError && (
+          <Alert.Root status="error" borderRadius="md">
+            <Alert.Indicator />
+            <Alert.Content>
+              <Alert.Title>Parâmetros da máquina indisponíveis.</Alert.Title>
+              <Alert.Description>
+                Verifique a configuração antes de gerar o plano.
               </Alert.Description>
             </Alert.Content>
           </Alert.Root>
@@ -252,7 +235,9 @@ export const CuttingPlanSection = ({
             value={optimizationMode}
             onValueChange={event => {
               if (event.value) {
-                setOptimizationMode(event.value as CuttingPlanOptimizationMode);
+                changeOptimizationMode(
+                  event.value as CuttingPlanOptimizationMode,
+                );
               }
             }}
             colorScheme="orange"
@@ -279,158 +264,13 @@ export const CuttingPlanSection = ({
               ))}
             </Flex>
           </RadioGroup.Root>
-        </Box>
-
-        <Box>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setShowSettings(current => !current)}
-          >
-            {showSettings ? <FaChevronUp /> : <FaChevronDown />}
-            Parâmetros da máquina e custos
-          </Button>
-          {showSettings && (
-            <Box mt={3} p={4} bg="gray.50" borderRadius="lg">
-              <SimpleGrid columns={[1, 2, 4]} gap={3}>
-                <SettingInput
-                  label="Largura da chapa (mm)"
-                  min={1}
-                  value={settings.sheetWidthMm}
-                  onChange={value =>
-                    updateSettings(current => ({
-                      ...current,
-                      sheetWidthMm: value,
-                    }))
-                  }
-                />
-                <SettingInput
-                  label="Comprimento da chapa (mm)"
-                  min={1}
-                  value={settings.sheetLengthMm}
-                  onChange={value =>
-                    updateSettings(current => ({
-                      ...current,
-                      sheetLengthMm: value,
-                    }))
-                  }
-                />
-                <SettingInput
-                  label="Refino das bordas (mm)"
-                  value={settings.edgeTrimMm}
-                  onChange={value =>
-                    updateSettings(current => ({
-                      ...current,
-                      edgeTrimMm: value,
-                    }))
-                  }
-                />
-                <SettingInput
-                  label="Espessura da serra — kerf (mm)"
-                  step={0.1}
-                  value={settings.kerfMm}
-                  onChange={value =>
-                    updateSettings(current => ({ ...current, kerfMm: value }))
-                  }
-                />
-                <SettingInput
-                  label="Perda interna da seccionadora (mm)"
-                  step={0.5}
-                  value={settings.internalCutLossMm}
-                  onChange={value =>
-                    updateSettings(current => ({
-                      ...current,
-                      internalCutLossMm: value,
-                    }))
-                  }
-                />
-                <SettingInput
-                  label="Preço por movimento (R$)"
-                  step={0.01}
-                  value={settings.movementPrice}
-                  onChange={value =>
-                    updateSettings(current => ({
-                      ...current,
-                      movementPrice: value,
-                    }))
-                  }
-                />
-                <SettingInput
-                  label="Preço da fita por metro (R$)"
-                  step={0.01}
-                  value={settings.edgeBandPricePerMeter}
-                  onChange={value =>
-                    updateSettings(current => ({
-                      ...current,
-                      edgeBandPricePerMeter: value,
-                    }))
-                  }
-                />
-                <SettingInput
-                  label="Sobra mínima — largura (mm)"
-                  value={settings.reusableWasteMinWidthMm}
-                  onChange={value =>
-                    updateSettings(current => ({
-                      ...current,
-                      reusableWasteMinWidthMm: value,
-                    }))
-                  }
-                />
-                <SettingInput
-                  label="Sobra mínima — comprimento (mm)"
-                  value={settings.reusableWasteMinLengthMm}
-                  onChange={value =>
-                    updateSettings(current => ({
-                      ...current,
-                      reusableWasteMinLengthMm: value,
-                    }))
-                  }
-                />
-                <SettingInput
-                  label="Peso do desperdício"
-                  step={0.05}
-                  value={settings.balancedWeights.waste}
-                  onChange={value =>
-                    updateSettings(current => ({
-                      ...current,
-                      balancedWeights: {
-                        ...current.balancedWeights,
-                        waste: value,
-                      },
-                    }))
-                  }
-                />
-                <SettingInput
-                  label="Peso dos movimentos"
-                  step={0.05}
-                  value={settings.balancedWeights.movementCount}
-                  onChange={value =>
-                    updateSettings(current => ({
-                      ...current,
-                      balancedWeights: {
-                        ...current.balancedWeights,
-                        movementCount: value,
-                      },
-                    }))
-                  }
-                />
-                <SettingInput
-                  label="Peso das chapas"
-                  step={0.05}
-                  value={settings.balancedWeights.sheetCount}
-                  onChange={value =>
-                    updateSettings(current => ({
-                      ...current,
-                      balancedWeights: {
-                        ...current.balancedWeights,
-                        sheetCount: value,
-                      },
-                    }))
-                  }
-                />
-              </SimpleGrid>
-            </Box>
-          )}
+          <Text fontSize="xs" color="gray.500" mt={2}>
+            Margens, serra e custos vêm dos{' '}
+            <Link href="/cortes/configuracoes-maquina">
+              parâmetros globais da máquina
+            </Link>
+            .
+          </Text>
         </Box>
 
         {error && (
@@ -479,7 +319,12 @@ export const CuttingPlanSection = ({
           <Button
             colorScheme="orange"
             onClick={() => void generate()}
-            disabled={cutlist.length === 0 || generating}
+            disabled={
+              cutlist.length === 0 ||
+              generating ||
+              isLoadingConfiguration ||
+              !machineConfiguration
+            }
           >
             {generating ? <Spinner size="sm" /> : <FaSyncAlt />}
             {plan ? 'Gerar novamente' : 'Gerar plano de corte'}

@@ -38,7 +38,13 @@ const modeLabel = {
   balanced: 'Equilibrado',
 } as const;
 
-const Metric = ({ label, value }: { label: string; value: React.ReactNode }) => (
+const Metric = ({
+  label,
+  value,
+}: {
+  label: string;
+  value: React.ReactNode;
+}) => (
   <Box borderWidth="1px" borderColor="gray.200" borderRadius="md" p={3}>
     <Text fontSize="xs" color="gray.500" textTransform="uppercase">
       {label}
@@ -52,11 +58,12 @@ const Metric = ({ label, value }: { label: string; value: React.ReactNode }) => 
 export const CuttingPlanPreview = ({
   compact = false,
   plan,
-  showCutSequence = true,
+  showCutSequence = false,
 }: CuttingPlanPreviewProps) => {
-  const reusableCount = plan.sheets.reduce(
+  const offcutCount = plan.sheets.reduce(
     (total, sheet) =>
-      total + sheet.wasteRegions.filter(region => region.reusable).length,
+      total +
+      sheet.wasteRegions.filter(region => region.reason === 'remainder').length,
     0,
   );
 
@@ -64,7 +71,13 @@ export const CuttingPlanPreview = ({
     <Box data-testid="cutting-plan-preview">
       {!compact && (
         <>
-          <Flex align="center" justify="space-between" gap={3} mb={4} wrap="wrap">
+          <Flex
+            align="center"
+            justify="space-between"
+            gap={3}
+            mb={4}
+            wrap="wrap"
+          >
             <Heading size="md">Resultado do plano</Heading>
             <Badge colorScheme="orange" variant="subtle" px={3} py={1}>
               {modeLabel[plan.optimizationMode]}
@@ -77,13 +90,22 @@ export const CuttingPlanPreview = ({
               value={`${plan.metrics.utilizationPercentage.toFixed(2)}%`}
             />
             <Metric
-              label="Desperdício"
-              value={`${plan.metrics.wastePercentage.toFixed(2)}%`}
+              label="Sobras"
+              value={`${plan.metrics.offcutPercentage.toFixed(2)}%`}
             />
             <Metric label="Movimentos" value={plan.metrics.movementCount} />
-            <Metric label="Custo das chapas" value={brl(plan.pricing.sheetsCost)} />
-            <Metric label="Custo dos cortes" value={brl(plan.pricing.movementsCost)} />
-            <Metric label="Custo da fita" value={brl(plan.pricing.edgeBandCost)} />
+            <Metric
+              label="Custo das chapas"
+              value={brl(plan.pricing.sheetsCost)}
+            />
+            <Metric
+              label="Custo dos cortes"
+              value={brl(plan.pricing.movementsCost)}
+            />
+            <Metric
+              label="Custo da fita"
+              value={brl(plan.pricing.edgeBandCost)}
+            />
             <Metric label="Valor total" value={brl(plan.pricing.totalCost)} />
           </SimpleGrid>
           <Flex
@@ -99,10 +121,10 @@ export const CuttingPlanPreview = ({
             wrap="wrap"
           >
             <Text fontWeight="700" color="green.800">
-              Sobras reaproveitáveis: {reusableCount}
+              Sobras: {offcutCount}
             </Text>
             <Text color="green.800">
-              {squareMeters(plan.metrics.reusableWasteAreaMm2)}
+              {squareMeters(plan.metrics.offcutAreaMm2)}
             </Text>
           </Flex>
         </>
@@ -146,7 +168,9 @@ export const CuttingPlanPreview = ({
                 <Table.ColumnHeader>Item</Table.ColumnHeader>
                 <Table.ColumnHeader>Quantidade</Table.ColumnHeader>
                 <Table.ColumnHeader>Unitário</Table.ColumnHeader>
-                <Table.ColumnHeader textAlign="right">Subtotal</Table.ColumnHeader>
+                <Table.ColumnHeader textAlign="right">
+                  Subtotal
+                </Table.ColumnHeader>
               </Table.Row>
             </Table.Header>
             <Table.Body>
@@ -155,7 +179,9 @@ export const CuttingPlanPreview = ({
                   <Table.Cell>Chapa · {item.materialName}</Table.Cell>
                   <Table.Cell>{item.count}</Table.Cell>
                   <Table.Cell>{brl(item.unitPrice)}</Table.Cell>
-                  <Table.Cell textAlign="right">{brl(item.subtotal)}</Table.Cell>
+                  <Table.Cell textAlign="right">
+                    {brl(item.subtotal)}
+                  </Table.Cell>
                 </Table.Row>
               ))}
               <Table.Row>
@@ -171,14 +197,18 @@ export const CuttingPlanPreview = ({
                 <Table.Cell>
                   {plan.metrics.edgeBandLengthMeters.toFixed(2)} m
                 </Table.Cell>
-                <Table.Cell>{brl(plan.pricing.edgeBandPricePerMeter)}</Table.Cell>
+                <Table.Cell>
+                  {brl(plan.pricing.edgeBandPricePerMeter)}
+                </Table.Cell>
                 <Table.Cell textAlign="right">
                   {brl(plan.pricing.edgeBandCost)}
                 </Table.Cell>
               </Table.Row>
               <Table.Row fontWeight="800">
                 <Table.Cell colSpan={3}>Total do plano</Table.Cell>
-                <Table.Cell textAlign="right">{brl(plan.pricing.totalCost)}</Table.Cell>
+                <Table.Cell textAlign="right">
+                  {brl(plan.pricing.totalCost)}
+                </Table.Cell>
               </Table.Row>
             </Table.Body>
           </Table.Root>
@@ -211,12 +241,16 @@ export const CuttingPlanPreview = ({
                       {cut.sheetId} · {cut.targetRegionId}
                     </Table.Cell>
                     <Table.Cell>
-                      {cut.orientation === 'horizontal' ? 'Horizontal' : 'Vertical'}
+                      {cut.orientation === 'horizontal'
+                        ? 'Horizontal'
+                        : 'Vertical'}
                     </Table.Cell>
                     <Table.Cell>{cut.positionMm.toFixed(1)} mm</Table.Cell>
                     <Table.Cell>{cut.lengthMm.toFixed(1)} mm</Table.Cell>
                     <Table.Cell>{cut.kerfLossMm.toFixed(1)} mm</Table.Cell>
-                    <Table.Cell>{cut.internalCutLossMm.toFixed(1)} mm</Table.Cell>
+                    <Table.Cell>
+                      {cut.internalCutLossMm.toFixed(1)} mm
+                    </Table.Cell>
                   </Table.Row>
                 ))}
               </Table.Body>

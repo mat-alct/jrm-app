@@ -12,6 +12,7 @@ import {
 const material = {
   id: 'mdf-15',
   name: 'MDF Branco 15mm',
+  thicknessMm: 15,
   unitPrice: 200,
 };
 
@@ -25,7 +26,6 @@ const piece = (
   lengthMm: 800,
   quantity: 1,
   materialId: material.id,
-  thicknessMm: 15,
   grainDirection: 'none',
   canRotate: true,
   edgeBandEdges: [],
@@ -44,14 +44,15 @@ const input = (
 });
 
 describe('guillotine cutting plan algorithm', () => {
-  it('gera uma chapa para uma única peça e inclui os quatro refinos', () => {
+  it('embute as bordas sem criar refilos na sobra não utilizada', () => {
     const result = generateCuttingPlan(input([piece()]));
 
     expect(result.sheets).toHaveLength(1);
     expect(result.sheets[0].placements).toHaveLength(1);
     expect(
       result.cutSequence.filter(cut => cut.kind === 'edge_trim'),
-    ).toHaveLength(4);
+    ).toHaveLength(2);
+    expect(result.metrics.movementCount).toBe(4);
     expect(result.metrics.movementCount).toBe(result.cutSequence.length);
   });
 
@@ -96,9 +97,7 @@ describe('guillotine cutting plan algorithm', () => {
       sheetWidthMm: 100,
       sheetLengthMm: 100,
       edgeTrimMm: 0,
-      internalCutLossMm: 0,
-      reusableWasteMinWidthMm: 10,
-      reusableWasteMinLengthMm: 10,
+      internalEdgeTrimMm: 0,
     };
     const pieces = [
       piece({ id: 'a', widthMm: 50, lengthMm: 100, canRotate: false }),
@@ -115,7 +114,7 @@ describe('guillotine cutting plan algorithm', () => {
     ).toBe(2);
   });
 
-  it('registra separadamente a perda interna de 15mm em cortes aninhados', () => {
+  it('registra separadamente os acertos internos de 7,5mm em cada lado', () => {
     const result = generateCuttingPlan(
       input(
         [piece({ widthMm: 400, lengthMm: 800 })],
@@ -128,6 +127,11 @@ describe('guillotine cutting plan algorithm', () => {
     expect(pieceCuts).toHaveLength(2);
     expect(pieceCuts.map(cut => cut.kerfLossMm)).toEqual([3.2, 3.2]);
     expect(pieceCuts.map(cut => cut.internalCutLossMm)).toEqual([0, 15]);
+    expect(
+      result.sheets[0].wasteRegions.filter(
+        region => region.reason === 'internal_trim',
+      ),
+    ).toHaveLength(2);
   });
 
   it('mostra o impacto real da perda interna no número de chapas', () => {
@@ -137,8 +141,6 @@ describe('guillotine cutting plan algorithm', () => {
       sheetLengthMm: 100,
       edgeTrimMm: 0,
       kerfMm: 2,
-      reusableWasteMinWidthMm: 10,
-      reusableWasteMinLengthMm: 10,
     };
     const pieces = [
       piece({
@@ -149,10 +151,10 @@ describe('guillotine cutting plan algorithm', () => {
       }),
     ];
     const withoutInternalLoss = generateCuttingPlan(
-      input(pieces, 'best_yield', { ...settings, internalCutLossMm: 0 }),
+      input(pieces, 'best_yield', { ...settings, internalEdgeTrimMm: 0 }),
     );
     const withInternalLoss = generateCuttingPlan(
-      input(pieces, 'best_yield', { ...settings, internalCutLossMm: 15 }),
+      input(pieces, 'best_yield', { ...settings, internalEdgeTrimMm: 7.5 }),
     );
 
     expect(withoutInternalLoss.metrics.sheetCount).toBe(1);
@@ -189,8 +191,8 @@ describe('guillotine cutting plan algorithm', () => {
       -1,
     );
 
-    expect(cuts.slice(0, 2).every(cut => cut.kind === 'edge_trim')).toBe(true);
-    expect(cuts[2].kind).toBe('piece');
+    expect(cuts[0].kind).toBe('edge_trim');
+    expect(cuts[1].kind).toBe('piece');
     expect(firstSecondaryTrim).toBeGreaterThan(lastPrimaryPieceCut);
     expect(
       cuts
@@ -211,7 +213,7 @@ describe('guillotine cutting plan algorithm', () => {
     });
   });
 
-  it('bloqueia a rotação quando há sentido de veio', () => {
+  it('alinha o veio escolhido ao comprimento de 2750mm da chapa', () => {
     const settings = {
       ...DEFAULT_CUTTING_PLAN_SETTINGS,
       sheetWidthMm: 500,
@@ -219,6 +221,20 @@ describe('guillotine cutting plan algorithm', () => {
       edgeTrimMm: 0,
     };
 
+    const horizontalGrain = generateCuttingPlan(
+      input(
+        [
+          piece({
+            widthMm: 800,
+            lengthMm: 400,
+            grainDirection: 'along_length',
+          }),
+        ],
+        'balanced',
+        settings,
+      ),
+    );
+    expect(horizontalGrain.sheets[0].placements[0].rotated).toBe(true);
     expect(() =>
       generateCuttingPlan(
         input(
@@ -226,7 +242,7 @@ describe('guillotine cutting plan algorithm', () => {
             piece({
               widthMm: 800,
               lengthMm: 400,
-              grainDirection: 'along_length',
+              grainDirection: 'along_width',
             }),
           ],
           'balanced',
@@ -234,27 +250,19 @@ describe('guillotine cutting plan algorithm', () => {
         ),
       ),
     ).toThrow('não cabe');
-    expect(
-      generateCuttingPlan(
-        input([piece({ widthMm: 800, lengthMm: 400 })], 'balanced', settings),
-      ).sheets[0].placements[0].rotated,
-    ).toBe(true);
   });
 
-  it('separa grupos incompatíveis por material, espessura e acabamento', () => {
+  it('mantém peças com veios diferentes juntas quando a chapa é a mesma', () => {
     const result = generateCuttingPlan(
       input([
-        piece({ id: 'a', thicknessMm: 15, finish: 'fosco' }),
-        piece({ id: 'b', thicknessMm: 18, finish: 'fosco' }),
-        piece({ id: 'c', thicknessMm: 15, finish: 'brilho' }),
+        piece({ id: 'a', grainDirection: 'none' }),
+        piece({ id: 'b', grainDirection: 'along_length' }),
       ]),
     );
 
-    expect(result.metrics.sheetCount).toBe(3);
-    expect(
-      getPieceCompatibilityKey(piece({ thicknessMm: 15, finish: 'fosco' })),
-    ).not.toBe(
-      getPieceCompatibilityKey(piece({ thicknessMm: 18, finish: 'fosco' })),
+    expect(result.metrics.sheetCount).toBe(1);
+    expect(getPieceCompatibilityKey(piece({ grainDirection: 'none' }))).toBe(
+      getPieceCompatibilityKey(piece({ grainDirection: 'along_length' })),
     );
   });
 

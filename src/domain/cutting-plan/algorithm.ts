@@ -3,8 +3,8 @@ import {
   getPieceOrientations,
   getUsableSheetArea,
   hasOverlappingPlacements,
-  isReusableRegion,
   regionArea,
+  rotateEdgeBandEdges,
 } from './geometry';
 import { calculateCuttingPlanPricing } from './pricing';
 import {
@@ -130,9 +130,9 @@ const clonePiece = (piece: CuttingPlanPiece): CuttingPlanPiece => ({
   edgeBandEdges: [...piece.edgeBandEdges],
 });
 
-const cloneMaterial = (
-  material: CuttingPlanMaterial,
-): CuttingPlanMaterial => ({ ...material });
+const cloneMaterial = (material: CuttingPlanMaterial): CuttingPlanMaterial => ({
+  ...material,
+});
 
 const compareNumbers = (a: number, b: number) => {
   if (Math.abs(a - b) <= EPSILON) return 0;
@@ -148,14 +148,7 @@ const compareScoreArrays = (a: number[], b: number[]) => {
 };
 
 export function getPieceCompatibilityKey(piece: CuttingPlanPiece): string {
-  return [
-    piece.materialId,
-    piece.thicknessMm ?? '',
-    piece.finish ?? '',
-    piece.color ?? '',
-    piece.pattern ?? '',
-    piece.grainDirection,
-  ].join('|');
+  return piece.materialId;
 }
 
 function validateInput(input: CuttingPlanInput): void {
@@ -242,7 +235,7 @@ function cutLossAtDepth(
   depth: number,
   input: CuttingPlanInput,
 ): { internal: number; kerf: number; total: number } {
-  const internal = depth > 0 ? input.settings.internalCutLossMm : 0;
+  const internal = depth > 0 ? input.settings.internalEdgeTrimMm * 2 : 0;
   const kerf = input.settings.kerfMm;
   return { internal, kerf, total: internal + kerf };
 }
@@ -250,6 +243,7 @@ function cutLossAtDepth(
 function createLossRegion(input: {
   heightMm: number;
   id: string;
+  reason: CuttingPlanWasteRegion['reason'];
   widthMm: number;
   xMm: number;
   yMm: number;
@@ -257,9 +251,56 @@ function createLossRegion(input: {
   if (input.widthMm <= EPSILON || input.heightMm <= EPSILON) return null;
   return {
     ...input,
-    reusable: false,
-    reason: 'kerf_and_internal_loss',
   };
+}
+
+function createCutLossRegions(input: {
+  heightMm: number;
+  id: string;
+  internalEdgeTrimMm: number;
+  kerfMm: number;
+  orientation: CuttingPlanCut['orientation'];
+  widthMm: number;
+  xMm: number;
+  yMm: number;
+}): CuttingPlanWasteRegion[] {
+  const {
+    heightMm,
+    id,
+    internalEdgeTrimMm,
+    kerfMm,
+    orientation,
+    widthMm,
+    xMm,
+    yMm,
+  } = input;
+  const regions: CuttingPlanWasteRegion[] = [];
+  const vertical = orientation === 'vertical';
+  let offset = 0;
+
+  const append = (
+    sizeMm: number,
+    reason: CuttingPlanWasteRegion['reason'],
+    suffix: string,
+  ) => {
+    if (sizeMm <= EPSILON) return;
+    const region = createLossRegion({
+      id: `${id}-${suffix}`,
+      xMm: xMm + (vertical ? offset : 0),
+      yMm: yMm + (vertical ? 0 : offset),
+      widthMm: vertical ? sizeMm : widthMm,
+      heightMm: vertical ? heightMm : sizeMm,
+      reason,
+    });
+    if (region) regions.push(region);
+    offset += sizeMm;
+  };
+
+  append(internalEdgeTrimMm, 'internal_trim', 'trim-before');
+  append(kerfMm, 'kerf', 'kerf');
+  append(internalEdgeTrimMm, 'internal_trim', 'trim-after');
+
+  return regions;
 }
 
 function simulatePlacement(input: {
@@ -303,7 +344,10 @@ function simulatePlacement(input: {
     rotated: orientation.rotated,
     sourceRegionId: region.id,
     grainDirection: expandedPiece.piece.grainDirection,
-    edgeBandEdges: [...expandedPiece.piece.edgeBandEdges],
+    edgeBandEdges: rotateEdgeBandEdges(
+      expandedPiece.piece.edgeBandEdges,
+      orientation.rotated,
+    ),
   };
 
   const firstIsVertical = splitPreference === 'vertical_first';
@@ -311,7 +355,10 @@ function simulatePlacement(input: {
   const firstRegionSize = firstIsVertical ? region.widthMm : region.heightMm;
   const firstNeedsCut = firstRegionSize - firstPieceSize > EPSILON;
   const firstLoss = cutLossAtDepth(freeRegion.depth, planInput);
-  if (firstNeedsCut && firstRegionSize - firstPieceSize + EPSILON < firstLoss.total) {
+  if (
+    firstNeedsCut &&
+    firstRegionSize - firstPieceSize + EPSILON < firstLoss.total
+  ) {
     return null;
   }
 
@@ -360,24 +407,31 @@ function simulatePlacement(input: {
       });
     }
 
-    const firstLossRegion = createLossRegion(
-      firstIsVertical
-        ? {
-            id: `${region.id}-first-cut-loss`,
-            xMm: region.xMm + pieceWidth,
-            yMm: region.yMm,
-            widthMm: firstLoss.total,
-            heightMm: region.heightMm,
-          }
-        : {
-            id: `${region.id}-first-cut-loss`,
-            xMm: region.xMm,
-            yMm: region.yMm + pieceHeight,
-            widthMm: region.widthMm,
-            heightMm: firstLoss.total,
-          },
+    lossRegions.push(
+      ...createCutLossRegions(
+        firstIsVertical
+          ? {
+              id: `${region.id}-first-cut-loss`,
+              xMm: region.xMm + pieceWidth,
+              yMm: region.yMm,
+              widthMm: firstLoss.total,
+              heightMm: region.heightMm,
+              orientation: 'vertical',
+              kerfMm: firstLoss.kerf,
+              internalEdgeTrimMm: firstLoss.internal / 2,
+            }
+          : {
+              id: `${region.id}-first-cut-loss`,
+              xMm: region.xMm,
+              yMm: region.yMm + pieceHeight,
+              widthMm: region.widthMm,
+              heightMm: firstLoss.total,
+              orientation: 'horizontal',
+              kerfMm: firstLoss.kerf,
+              internalEdgeTrimMm: firstLoss.internal / 2,
+            },
+      ),
     );
-    if (firstLossRegion) lossRegions.push(firstLossRegion);
 
     cuts.push({
       sheetId,
@@ -423,24 +477,31 @@ function simulatePlacement(input: {
       });
     }
 
-    const secondLossRegion = createLossRegion(
-      firstIsVertical
-        ? {
-            id: `${firstNeedsCut ? firstStripId : region.id}-second-cut-loss`,
-            xMm: region.xMm,
-            yMm: region.yMm + pieceHeight,
-            widthMm: pieceWidth,
-            heightMm: secondLoss.total,
-          }
-        : {
-            id: `${firstNeedsCut ? firstStripId : region.id}-second-cut-loss`,
-            xMm: region.xMm + pieceWidth,
-            yMm: region.yMm,
-            widthMm: secondLoss.total,
-            heightMm: pieceHeight,
-          },
+    lossRegions.push(
+      ...createCutLossRegions(
+        firstIsVertical
+          ? {
+              id: `${firstNeedsCut ? firstStripId : region.id}-second-cut-loss`,
+              xMm: region.xMm,
+              yMm: region.yMm + pieceHeight,
+              widthMm: pieceWidth,
+              heightMm: secondLoss.total,
+              orientation: 'horizontal',
+              kerfMm: secondLoss.kerf,
+              internalEdgeTrimMm: secondLoss.internal / 2,
+            }
+          : {
+              id: `${firstNeedsCut ? firstStripId : region.id}-second-cut-loss`,
+              xMm: region.xMm + pieceWidth,
+              yMm: region.yMm,
+              widthMm: secondLoss.total,
+              heightMm: pieceHeight,
+              orientation: 'vertical',
+              kerfMm: secondLoss.kerf,
+              internalEdgeTrimMm: secondLoss.internal / 2,
+            },
+      ),
     );
-    if (secondLossRegion) lossRegions.push(secondLossRegion);
 
     cuts.push({
       sheetId,
@@ -480,6 +541,7 @@ function directionalTrimCuts(input: {
   orientation: CuttingPlanCut['orientation'];
   otherDirectionPrepared: boolean;
   panelId: string;
+  placements: CuttingPlanPlacement[];
   region: CuttingPlanRegion;
   settings: CuttingPlanInput['settings'];
   sheetId: string;
@@ -488,25 +550,42 @@ function directionalTrimCuts(input: {
     orientation,
     otherDirectionPrepared,
     panelId,
+    placements,
     region,
     settings,
     sheetId,
   } = input;
   if (settings.edgeTrimMm <= EPSILON) return [];
 
-  const perpendicularPadding = otherDirectionPrepared
-    ? 0
-    : settings.edgeTrimMm;
+  const perpendicularPadding = otherDirectionPrepared ? 0 : settings.edgeTrimMm;
   const isVertical = orientation === 'vertical';
   const startMm = isVertical
     ? region.yMm - perpendicularPadding
     : region.xMm - perpendicularPadding;
   const lengthMm =
-    (isVertical ? region.heightMm : region.widthMm) +
-    perpendicularPadding * 2;
-  const positions = isVertical
-    ? [region.xMm, region.xMm + region.widthMm]
-    : [region.yMm, region.yMm + region.heightMm];
+    (isVertical ? region.heightMm : region.widthMm) + perpendicularPadding * 2;
+  const regionEnd = isVertical
+    ? region.xMm + region.widthMm
+    : region.yMm + region.heightMm;
+  const placementTouchesTrailingEdge = placements.some(placement => {
+    const contained =
+      placement.xMm + EPSILON >= region.xMm &&
+      placement.yMm + EPSILON >= region.yMm &&
+      placement.xMm + placement.widthMm <=
+        region.xMm + region.widthMm + EPSILON &&
+      placement.yMm + placement.heightMm <=
+        region.yMm + region.heightMm + EPSILON;
+    if (!contained) return false;
+    const placementEnd = isVertical
+      ? placement.xMm + placement.widthMm
+      : placement.yMm + placement.heightMm;
+    return Math.abs(placementEnd - regionEnd) <= EPSILON;
+  });
+  // A borda inicial precisa ser acertada quando a direção é usada. A borda
+  // oposta só vira um movimento separado se uma peça realmente encostar nela;
+  // caso contrário, o refilo fica embutido na sobra retirada por inteiro.
+  const positions = [isVertical ? region.xMm : region.yMm];
+  if (placementTouchesTrailingEdge) positions.push(regionEnd);
 
   return positions.map(positionMm => ({
     sheetId,
@@ -561,6 +640,7 @@ function scheduleDirectionalCuts(input: {
     directionalTrimCuts({
       sheetId: sheet.id,
       panelId,
+      placements: sheet.placements,
       region,
       orientation,
       otherDirectionPrepared: directions.has(otherOrientation(orientation)),
@@ -583,7 +663,11 @@ function scheduleDirectionalCuts(input: {
       executable.find(({ cut }) => cut.orientation === primaryOrientation) ??
       executable[0];
     const [cut] = pending.splice(selected.index, 1);
-    ensureDirectionPrepared(cut.targetRegionId, cut.targetRegion, cut.orientation);
+    ensureDirectionPrepared(
+      cut.targetRegionId,
+      cut.targetRegion,
+      cut.orientation,
+    );
     append(cut);
 
     const inheritedDirections = new Set(
@@ -757,20 +841,17 @@ function calculateMetrics(
       ),
     0,
   );
-  const reusableWasteAreaMm2 = sheets.reduce(
+  const offcutAreaMm2 = sheets.reduce(
     (total, sheet) =>
       total +
       sheet.wasteRegions
-        .filter(region => region.reusable)
-        .reduce(
-          (sheetTotal, region) => sheetTotal + regionArea(region),
-          0,
-        ),
+        .filter(region => region.reason === 'remainder')
+        .reduce((sheetTotal, region) => sheetTotal + regionArea(region), 0),
     0,
   );
-  const discardedWasteAreaMm2 = Math.max(
+  const processLossAreaMm2 = Math.max(
     0,
-    totalSheetAreaMm2 - usedAreaMm2 - reusableWasteAreaMm2,
+    totalSheetAreaMm2 - usedAreaMm2 - offcutAreaMm2,
   );
   const percentage = (area: number) =>
     totalSheetAreaMm2 === 0
@@ -785,10 +866,10 @@ function calculateMetrics(
     ),
     totalSheetAreaMm2,
     usedAreaMm2,
-    reusableWasteAreaMm2,
-    discardedWasteAreaMm2,
+    offcutAreaMm2,
+    processLossAreaMm2,
     utilizationPercentage: percentage(usedAreaMm2),
-    wastePercentage: percentage(totalSheetAreaMm2 - usedAreaMm2),
+    offcutPercentage: percentage(totalSheetAreaMm2 - usedAreaMm2),
     edgeBandLengthMeters,
   };
 }
@@ -812,13 +893,7 @@ function runCandidate(
     .sort(([a], [b]) => a.localeCompare(b))
     .forEach(([, groupedPieces]) => {
       const firstPiece = groupedPieces[0].piece;
-      const material = {
-        ...materialById.get(firstPiece.materialId)!,
-        thicknessMm: firstPiece.thicknessMm,
-        finish: firstPiece.finish,
-        color: firstPiece.color,
-        pattern: firstPiece.pattern,
-      };
+      const material = materialById.get(firstPiece.materialId)!;
       const groupSheets: WorkingSheet[] = [];
       const orderedPieces = sortExpandedPieces(
         groupedPieces,
@@ -876,7 +951,6 @@ function runCandidate(
       ({ region }) => ({
         ...region,
         reason: 'remainder',
-        reusable: isReusableRegion(region, input.settings),
       }),
     );
     const publicSheet: CuttingPlanSheet = {
@@ -905,9 +979,7 @@ function runCandidate(
     const pieceEdgeMm = piece.edgeBandEdges.reduce(
       (sum, edge) =>
         sum +
-        (edge === 'top' || edge === 'bottom'
-          ? piece.widthMm
-          : piece.lengthMm),
+        (edge === 'top' || edge === 'bottom' ? piece.widthMm : piece.lengthMm),
       0,
     );
     return total + (pieceEdgeMm * piece.quantity) / 1000;
@@ -944,7 +1016,9 @@ function runCandidate(
 function normalized(value: number, values: number[]): number {
   const minimum = Math.min(...values);
   const maximum = Math.max(...values);
-  return maximum - minimum <= EPSILON ? 0 : (value - minimum) / (maximum - minimum);
+  return maximum - minimum <= EPSILON
+    ? 0
+    : (value - minimum) / (maximum - minimum);
 }
 
 function selectCandidate(
@@ -956,8 +1030,8 @@ function selectCandidate(
       return (
         a.result.metrics.movementCount - b.result.metrics.movementCount ||
         a.result.metrics.sheetCount - b.result.metrics.sheetCount ||
-        a.result.metrics.discardedWasteAreaMm2 -
-          b.result.metrics.discardedWasteAreaMm2 ||
+        a.result.metrics.processLossAreaMm2 -
+          b.result.metrics.processLossAreaMm2 ||
         a.configurationId.localeCompare(b.configurationId)
       );
     })[0];
@@ -967,8 +1041,8 @@ function selectCandidate(
     return [...candidates].sort((a, b) => {
       return (
         a.result.metrics.sheetCount - b.result.metrics.sheetCount ||
-        a.result.metrics.discardedWasteAreaMm2 -
-          b.result.metrics.discardedWasteAreaMm2 ||
+        a.result.metrics.processLossAreaMm2 -
+          b.result.metrics.processLossAreaMm2 ||
         a.result.metrics.movementCount - b.result.metrics.movementCount ||
         a.configurationId.localeCompare(b.configurationId)
       );
@@ -977,8 +1051,8 @@ function selectCandidate(
 
   const sheetCounts = candidates.map(item => item.result.metrics.sheetCount);
   const movements = candidates.map(item => item.result.metrics.movementCount);
-  const discardedWaste = candidates.map(
-    item => item.result.metrics.discardedWasteAreaMm2,
+  const processLoss = candidates.map(
+    item => item.result.metrics.processLossAreaMm2,
   );
   const weights = input.settings.balancedWeights;
 
@@ -989,15 +1063,16 @@ function selectCandidate(
       weights.movementCount *
         normalized(candidate.result.metrics.movementCount, movements) +
       weights.waste *
-        normalized(
-          candidate.result.metrics.discardedWasteAreaMm2,
-          discardedWaste,
-        );
-    return score(a) - score(b) || a.configurationId.localeCompare(b.configurationId);
+        normalized(candidate.result.metrics.processLossAreaMm2, processLoss);
+    return (
+      score(a) - score(b) || a.configurationId.localeCompare(b.configurationId)
+    );
   })[0];
 }
 
-export function generateCuttingPlan(input: CuttingPlanInput): CuttingPlanResult {
+export function generateCuttingPlan(
+  input: CuttingPlanInput,
+): CuttingPlanResult {
   validateInput(input);
   const candidates: CandidateResult[] = [];
   let lastError: unknown;

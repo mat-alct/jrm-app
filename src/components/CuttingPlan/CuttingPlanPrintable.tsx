@@ -156,8 +156,9 @@ export const CuttingPlanPrintable = ({
                     Sobras:{' '}
                     <strong>
                       {
-                        page.sheet.wasteRegions.filter(waste => waste.reusable)
-                          .length
+                        page.sheet.wasteRegions.filter(
+                          waste => waste.reason === 'remainder',
+                        ).length
                       }
                     </strong>
                   </Text>

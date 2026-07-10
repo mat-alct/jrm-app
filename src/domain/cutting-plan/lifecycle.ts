@@ -23,10 +23,6 @@ const canonicalPiece = (piece: CuttingPlanPiece) => ({
   lengthMm: piece.lengthMm,
   quantity: piece.quantity,
   materialId: piece.materialId,
-  thicknessMm: piece.thicknessMm ?? null,
-  finish: piece.finish ?? null,
-  color: piece.color ?? null,
-  pattern: piece.pattern ?? null,
   grainDirection: piece.grainDirection,
   canRotate: piece.canRotate,
   edgeBandEdges: [...piece.edgeBandEdges].sort(),
@@ -36,9 +32,7 @@ export function cuttingPlanPiecesFingerprint(
   pieces: CuttingPlanPiece[],
 ): string {
   return JSON.stringify(
-    [...pieces]
-      .sort((a, b) => a.id.localeCompare(b.id))
-      .map(canonicalPiece),
+    [...pieces].sort((a, b) => a.id.localeCompare(b.id)).map(canonicalPiece),
   );
 }
 

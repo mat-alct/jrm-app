@@ -14,7 +14,13 @@ import {
   isPublicRoute,
 } from '@/utils/projects/permissions';
 
-const ROLES: UserRole[] = ['admin', 'seller', 'designer', 'assembler', 'woodworker'];
+const ROLES: UserRole[] = [
+  'admin',
+  'seller',
+  'designer',
+  'assembler',
+  'woodworker',
+];
 
 /**
  * Matriz de acesso declarada de forma independente do PAGE_ACCESS do codigo:
@@ -25,6 +31,7 @@ const EXPECTED_ACCESS: Record<string, UserRole[]> = {
   '/cortes/novoservico': ['admin', 'seller'],
   '/cortes/listadecortes': ['admin', 'seller', 'woodworker'],
   '/cortes/materiais': ['admin', 'seller'],
+  '/cortes/configuracoes-maquina': ['admin', 'seller', 'woodworker'],
   '/cortes/editar/[id]': ['admin', 'seller'],
   '/administracao/fretes': ['admin', 'seller'],
   '/administracao/vendedores': ['admin'],
@@ -73,8 +80,7 @@ function realAppRoutes(): string[] {
 
 describe('canAccessPage — matriz rota x papel', () => {
   it.each(ROUTE_ROLE_PAIRS)('%s como %s', (route, role) => {
-    const expected =
-      role === 'admin' || EXPECTED_ACCESS[route].includes(role);
+    const expected = role === 'admin' || EXPECTED_ACCESS[route].includes(role);
     expect(canAccessPage(route, [role])).toBe(expected);
   });
 
@@ -86,12 +92,12 @@ describe('canAccessPage — matriz rota x papel', () => {
   });
 
   it('libera a rota quando o usuario tem qualquer um dos papeis permitidos', () => {
-    expect(canAccessPage('/cortes/listadecortes', ['designer', 'woodworker'])).toBe(
-      true,
-    );
-    expect(canAccessPage('/cortes/listadecortes', ['designer', 'assembler'])).toBe(
-      false,
-    );
+    expect(
+      canAccessPage('/cortes/listadecortes', ['designer', 'woodworker']),
+    ).toBe(true);
+    expect(
+      canAccessPage('/cortes/listadecortes', ['designer', 'assembler']),
+    ).toBe(false);
   });
 
   it('cai no default restrito a admin para rota desconhecida', () => {
@@ -144,7 +150,9 @@ describe('getDefaultRouteForRoles — precedencia entre papeis', () => {
   });
 
   it('desenhista tem precedencia sobre montador e sobre admin', () => {
-    expect(getDefaultRouteForRoles(['assembler', 'designer'])).toBe('/desenhista');
+    expect(getDefaultRouteForRoles(['assembler', 'designer'])).toBe(
+      '/desenhista',
+    );
     expect(getDefaultRouteForRoles(['admin', 'designer'])).toBe('/desenhista');
   });
 
@@ -154,7 +162,9 @@ describe('getDefaultRouteForRoles — precedencia entre papeis', () => {
 
   it('devolve a home quando os papeis nao tem area propria', () => {
     expect(getDefaultRouteForRoles(undefined)).toBe('/');
-    expect(getDefaultRouteForRoles(['admin', 'seller', 'woodworker'])).toBe('/');
+    expect(getDefaultRouteForRoles(['admin', 'seller', 'woodworker'])).toBe(
+      '/',
+    );
   });
 });
 
@@ -191,21 +201,27 @@ describe('canViewAttachment — visibilidade x papel', () => {
   });
 
   it('admin ve qualquer visibilidade, inclusive uma desconhecida', () => {
-    expect(canViewAttachment('desconhecida' as AttachmentVisibility, ['admin'])).toBe(
-      true,
-    );
-    expect(canViewAttachment('desconhecida' as AttachmentVisibility, ['seller'])).toBe(
-      false,
-    );
+    expect(
+      canViewAttachment('desconhecida' as AttachmentVisibility, ['admin']),
+    ).toBe(true);
+    expect(
+      canViewAttachment('desconhecida' as AttachmentVisibility, ['seller']),
+    ).toBe(false);
   });
 });
 
 describe('guardas de acao por papel', () => {
-  const CASES: Array<[string, (roles: UserRole[] | undefined) => boolean, UserRole[]]> = [
+  const CASES: Array<
+    [string, (roles: UserRole[] | undefined) => boolean, UserRole[]]
+  > = [
     ['canSeeAssemblerFinance', canSeeAssemblerFinance, ['admin', 'assembler']],
     ['canAssignDesigner', canAssignDesigner, ['admin', 'seller']],
     ['canAssignAssembler', canAssignAssembler, ['admin']],
-    ['canEditItemStatus', canEditItemStatus, ['admin', 'assembler', 'designer']],
+    [
+      'canEditItemStatus',
+      canEditItemStatus,
+      ['admin', 'assembler', 'designer'],
+    ],
     ['canManageUsers', canManageUsers, ['admin']],
   ];
 

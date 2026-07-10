@@ -26,41 +26,34 @@ export interface CuttingPlanSettings {
   balancedWeights: CuttingPlanBalancedWeights;
   edgeBandPricePerMeter: number;
   edgeTrimMm: number;
-  internalCutLossMm: number;
+  internalEdgeTrimMm: number;
   kerfMm: number;
   movementPrice: number;
-  reusableWasteMinLengthMm: number;
-  reusableWasteMinWidthMm: number;
   sheetLengthMm: number;
   sheetWidthMm: number;
 }
 
 export interface CuttingPlanMaterial {
-  color?: string;
-  finish?: string;
+  acMaterialKey?: string;
+  adMaterialCode?: string;
   id: string;
   name: string;
-  pattern?: string;
   sheetLengthMm?: number;
   sheetWidthMm?: number;
-  thicknessMm?: number;
+  thicknessMm: number;
   unitPrice: number;
 }
 
 export interface CuttingPlanPiece {
   canRotate: boolean;
-  color?: string;
   description: string;
   edgeBandEdges: EdgeBandEdge[];
-  finish?: string;
   grainDirection: GrainDirection;
   id: string;
   lengthMm: number;
   materialId: string;
-  pattern?: string;
   quantity: number;
   referenceItemId: string;
-  thicknessMm?: number;
   widthMm: number;
 }
 
@@ -90,13 +83,10 @@ export interface CuttingPlanPlacement extends CuttingPlanRegion {
   sourceRegionId: string;
 }
 
-export type CuttingPlanWasteReason =
-  | 'remainder'
-  | 'kerf_and_internal_loss';
+export type CuttingPlanWasteReason = 'remainder' | 'kerf' | 'internal_trim';
 
 export interface CuttingPlanWasteRegion extends CuttingPlanRegion {
   reason: CuttingPlanWasteReason;
-  reusable: boolean;
 }
 
 export interface CuttingPlanCut {
@@ -128,15 +118,15 @@ export interface CuttingPlanSheet {
 }
 
 export interface CuttingPlanMetrics {
-  discardedWasteAreaMm2: number;
   edgeBandLengthMeters: number;
   movementCount: number;
-  reusableWasteAreaMm2: number;
+  offcutAreaMm2: number;
+  offcutPercentage: number;
+  processLossAreaMm2: number;
   sheetCount: number;
   totalSheetAreaMm2: number;
   usedAreaMm2: number;
   utilizationPercentage: number;
-  wastePercentage: number;
 }
 
 export interface CuttingPlanSheetPriceItem {
@@ -187,6 +177,7 @@ export type CuttingPlanErrorCode =
   | 'EMPTY_PIECES'
   | 'INVALID_SETTINGS'
   | 'INVALID_PIECE'
+  | 'INVALID_MATERIAL_NAME'
   | 'MATERIAL_NOT_FOUND'
   | 'PIECE_TOO_LARGE';
 

@@ -8,7 +8,7 @@ import {
   getPieceOrientations,
   getUsableSheetArea,
   hasOverlappingPlacements,
-  isReusableRegion,
+  rotateEdgeBandEdges,
 } from '@/domain/cutting-plan';
 
 const piece = (
@@ -46,7 +46,7 @@ describe('cutting plan geometry', () => {
     ).toThrow('dimensões da chapa');
   });
 
-  it('oferece rotação somente quando permitida e sem veio obrigatório', () => {
+  it('oferece rotação livre sem veio e força o lado escolhido no eixo da chapa', () => {
     expect(getPieceOrientations(piece())).toEqual([
       { widthMm: 400, heightMm: 800, rotated: false },
       { widthMm: 800, heightMm: 400, rotated: true },
@@ -54,7 +54,10 @@ describe('cutting plan geometry', () => {
     expect(getPieceOrientations(piece({ canRotate: false }))).toHaveLength(1);
     expect(
       getPieceOrientations(piece({ grainDirection: 'along_length' })),
-    ).toHaveLength(1);
+    ).toEqual([{ widthMm: 400, heightMm: 800, rotated: false }]);
+    expect(
+      getPieceOrientations(piece({ grainDirection: 'along_width' })),
+    ).toEqual([{ widthMm: 800, heightMm: 400, rotated: true }]);
   });
 
   it('detecta sobreposição, mas aceita peças apenas encostadas', () => {
@@ -79,16 +82,10 @@ describe('cutting plan geometry', () => {
     });
 
     expect(
-      hasOverlappingPlacements([
-        placement('a', 0, 0),
-        placement('b', 99, 0),
-      ]),
+      hasOverlappingPlacements([placement('a', 0, 0), placement('b', 99, 0)]),
     ).toBe(true);
     expect(
-      hasOverlappingPlacements([
-        placement('a', 0, 0),
-        placement('b', 100, 0),
-      ]),
+      hasOverlappingPlacements([placement('a', 0, 0), placement('b', 100, 0)]),
     ).toBe(false);
   });
 
@@ -103,18 +100,14 @@ describe('cutting plan geometry', () => {
     ).toBe(3.2);
   });
 
-  it('classifica sobras reutilizáveis também quando giradas', () => {
-    expect(
-      isReusableRegion(
-        { widthMm: 500, heightMm: 300 },
-        DEFAULT_CUTTING_PLAN_SETTINGS,
-      ),
-    ).toBe(true);
-    expect(
-      isReusableRegion(
-        { widthMm: 299, heightMm: 500 },
-        DEFAULT_CUTTING_PLAN_SETTINGS,
-      ),
-    ).toBe(false);
+  it('gira as fitas junto com a peça', () => {
+    expect(rotateEdgeBandEdges(['top', 'left'], true)).toEqual([
+      'right',
+      'top',
+    ]);
+    expect(rotateEdgeBandEdges(['top', 'left'], false)).toEqual([
+      'top',
+      'left',
+    ]);
   });
 });

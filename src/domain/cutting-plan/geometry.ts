@@ -4,6 +4,7 @@ import {
   CuttingPlanPlacement,
   CuttingPlanRegion,
   CuttingPlanSettings,
+  EdgeBandEdge,
 } from './types';
 
 export interface PieceOrientation {
@@ -31,7 +32,7 @@ export function getUsableSheetArea(
     widthMm <= 0 ||
     heightMm <= 0 ||
     settings.kerfMm < 0 ||
-    settings.internalCutLossMm < 0
+    settings.internalEdgeTrimMm < 0
   ) {
     throw new CuttingPlanGenerationError(
       'INVALID_SETTINGS',
@@ -80,15 +81,11 @@ export function getPieceOrientations(
     rotated: false,
   };
 
-  if (
-    !piece.canRotate ||
-    piece.grainDirection !== 'none' ||
-    piece.widthMm === piece.lengthMm
-  ) {
+  if (piece.widthMm === piece.lengthMm) {
     return [base];
   }
 
-  return [
+  const orientations = [
     base,
     {
       widthMm: piece.lengthMm,
@@ -96,6 +93,36 @@ export function getPieceOrientations(
       rotated: true,
     },
   ];
+
+  if (piece.grainDirection === 'none') {
+    return piece.canRotate ? orientations : [base];
+  }
+
+  // O veio da chapa inteira percorre seu comprimento (2750 mm). Portanto a
+  // dimensão escolhida da peça precisa ficar no eixo Y da chapa.
+  const requiredGrainDimension =
+    piece.grainDirection === 'along_length'
+      ? Math.max(piece.widthMm, piece.lengthMm)
+      : Math.min(piece.widthMm, piece.lengthMm);
+
+  return orientations.filter(
+    orientation =>
+      Math.abs(orientation.heightMm - requiredGrainDimension) < 0.000001,
+  );
+}
+
+const ROTATED_EDGE: Record<EdgeBandEdge, EdgeBandEdge> = {
+  top: 'right',
+  right: 'bottom',
+  bottom: 'left',
+  left: 'top',
+};
+
+export function rotateEdgeBandEdges(
+  edges: EdgeBandEdge[],
+  rotated: boolean,
+): EdgeBandEdge[] {
+  return rotated ? edges.map(edge => ROTATED_EDGE[edge]) : [...edges];
 }
 
 export function calculateEdgeBandLengthMeters(
@@ -105,26 +132,11 @@ export function calculateEdgeBandLengthMeters(
     const edgeLength = piece.edgeBandEdges.reduce((pieceTotal, edge) => {
       return (
         pieceTotal +
-        (edge === 'top' || edge === 'bottom'
-          ? piece.widthMm
-          : piece.lengthMm)
+        (edge === 'top' || edge === 'bottom' ? piece.widthMm : piece.lengthMm)
       );
     }, 0);
     return total + edgeLength * piece.quantity;
   }, 0);
 
   return totalMm / 1000;
-}
-
-export function isReusableRegion(
-  region: Pick<CuttingPlanRegion, 'heightMm' | 'widthMm'>,
-  settings: CuttingPlanSettings,
-): boolean {
-  const direct =
-    region.widthMm >= settings.reusableWasteMinWidthMm &&
-    region.heightMm >= settings.reusableWasteMinLengthMm;
-  const rotated =
-    region.widthMm >= settings.reusableWasteMinLengthMm &&
-    region.heightMm >= settings.reusableWasteMinWidthMm;
-  return direct || rotated;
 }

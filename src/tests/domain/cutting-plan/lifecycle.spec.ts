@@ -63,7 +63,7 @@ describe('cutlist adapter and cutting plan lifecycle', () => {
     expect(converted.optimizationMode).toBe('best_yield');
     expect(converted.materials).toEqual([
       expect.objectContaining({
-        id: 'material-1',
+        id: 'material-name:mdf branco 15mm',
         unitPrice: 220,
         thicknessMm: 15,
       }),
@@ -75,16 +75,67 @@ describe('cutlist adapter and cutting plan lifecycle', () => {
       quantity: 2,
       widthMm: 500,
       lengthMm: 800,
+      materialId: 'material-name:mdf branco 15mm',
       edgeBandEdges: ['top', 'bottom', 'left'],
       canRotate: true,
     });
   });
 
-  it('desabilita rotação automaticamente quando existe veio', () => {
+  it('deriva rotação automaticamente a partir do sentido do veio', () => {
     const [converted] = cutlistToCuttingPlanPieces([
       cut({ grainDirection: 'along_length', canRotate: true }),
     ]);
     expect(converted.canRotate).toBe(false);
+  });
+
+  it('agrupa ids diferentes quando o nome completo da chapa é igual', () => {
+    const converted = cutlistToCuttingPlanInput({
+      cutlist: [
+        cut({ id: 'cut-a' }),
+        cut({
+          id: 'cut-b',
+          material: {
+            ...cut().material,
+            materialId: 'material-2',
+          },
+        }),
+      ],
+      optimizationMode: 'balanced',
+    });
+
+    expect(converted.materials).toHaveLength(1);
+    expect(new Set(converted.pieces.map(piece => piece.materialId)).size).toBe(
+      1,
+    );
+  });
+
+  it('mantém nomes de chapa diferentes em planos separados', () => {
+    const converted = cutlistToCuttingPlanInput({
+      cutlist: [
+        cut({ id: 'cut-a' }),
+        cut({
+          id: 'cut-b',
+          material: {
+            ...cut().material,
+            materialId: 'material-2',
+            name: 'MDF Preto 15mm',
+          },
+        }),
+      ],
+      optimizationMode: 'balanced',
+    });
+
+    expect(converted.materials).toHaveLength(2);
+    expect(generateCuttingPlan(converted).sheets).toHaveLength(2);
+  });
+
+  it('exige que a espessura esteja no nome completo da chapa', () => {
+    expect(() =>
+      cutlistToCuttingPlanInput({
+        cutlist: [cut({ material: { ...cut().material, name: 'MDF Branco' } })],
+        optimizationMode: 'balanced',
+      }),
+    ).toThrow('15mm');
   });
 
   it('cria versões, aprova e preserva a data original', () => {

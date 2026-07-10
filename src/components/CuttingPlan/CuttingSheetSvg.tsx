@@ -122,10 +122,10 @@ export const CuttingSheetSvg = React.memo<CuttingSheetSvgProps>(
               y={region.yMm}
               width={region.widthMm}
               height={region.heightMm}
-              fill={region.reusable ? '#bbf7d0' : '#e5e7eb'}
-              stroke={region.reusable ? '#15803d' : '#94a3b8'}
+              fill={region.reason === 'remainder' ? '#f3f4f6' : '#d1d5db'}
+              stroke={region.reason === 'remainder' ? '#4b5563' : '#9ca3af'}
               strokeWidth="2"
-              strokeDasharray={region.reusable ? '16 8' : '8 6'}
+              strokeDasharray="8 6"
             />
             {region.reason === 'remainder' &&
               region.widthMm >= 260 &&
@@ -135,10 +135,10 @@ export const CuttingSheetSvg = React.memo<CuttingSheetSvgProps>(
                   y={region.yMm + region.heightMm / 2}
                   fontSize="28"
                   textAnchor="middle"
-                  fill={region.reusable ? '#166534' : '#475569'}
+                  fill="#374151"
                 >
-                  {region.reusable ? 'Sobra' : 'Descarte'} ·{' '}
-                  {Math.round(region.widthMm)} × {Math.round(region.heightMm)}
+                  Sobra · {Math.round(region.widthMm)} ×{' '}
+                  {Math.round(region.heightMm)}
                 </text>
               )}
           </g>
@@ -149,10 +149,8 @@ export const CuttingSheetSvg = React.memo<CuttingSheetSvgProps>(
             20,
             Math.min(44, placement.widthMm / 9, placement.heightMm / 5),
           );
-          const showText =
-            placement.widthMm >= 125 && placement.heightMm >= 75;
-          const grainIsHorizontal =
-            placement.grainDirection === 'along_width';
+          const showText = placement.widthMm >= 125 && placement.heightMm >= 75;
+          const grainIsHorizontal = placement.grainDirection === 'along_width';
           return (
             <g key={placement.id}>
               <title>

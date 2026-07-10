@@ -10,6 +10,7 @@ import {
   FaPencilRuler,
   FaPlusCircle,
   FaSignOutAlt,
+  FaSlidersH,
   FaToolbox,
   FaTruck,
   FaUserCog,
@@ -17,10 +18,7 @@ import {
 } from 'react-icons/fa';
 
 import { useAppUser } from '@/services/projects/users.service';
-import {
-  ROLE_LABELS,
-  canAccessPage,
-} from '@/utils/projects/permissions';
+import { ROLE_LABELS, canAccessPage } from '@/utils/projects/permissions';
 
 import { useAuth } from '../../../hooks/authContext';
 import { NavLink } from './NavLink';
@@ -74,12 +72,7 @@ export const SidebarNav: React.FC = () => {
           />
         </Flex>
         <Flex direction="column" lineHeight="1.2" minW="0">
-          <Text
-            color="white"
-            fontSize="sm"
-            fontWeight="semibold"
-            truncate
-          >
+          <Text color="white" fontSize="sm" fontWeight="semibold" truncate>
             JRM Compensados
           </Text>
           <Text color="whiteAlpha.600" fontSize="xs" truncate>
@@ -105,7 +98,8 @@ export const SidebarNav: React.FC = () => {
         )}
         {(canAccess('/cortes/novoservico') ||
           canAccess('/cortes/listadecortes') ||
-          canAccess('/cortes/materiais')) && (
+          canAccess('/cortes/materiais') ||
+          canAccess('/cortes/configuracoes-maquina')) && (
           <NavSection title="Cortes">
             {canAccess('/cortes/novoservico') && (
               <NavLink icon={FaPlusCircle} href="/cortes/novoservico">
@@ -120,6 +114,11 @@ export const SidebarNav: React.FC = () => {
             {canAccess('/cortes/materiais') && (
               <NavLink icon={FaBoxes} href="/cortes/materiais">
                 Materiais
+              </NavLink>
+            )}
+            {canAccess('/cortes/configuracoes-maquina') && (
+              <NavLink icon={FaSlidersH} href="/cortes/configuracoes-maquina">
+                Parâmetros da máquina
               </NavLink>
             )}
           </NavSection>
@@ -187,7 +186,10 @@ export const SidebarNav: React.FC = () => {
               </NavLink>
             )}
             {canAccess('/administracao/configuracoes-prazos') && (
-              <NavLink icon={FaClock} href="/administracao/configuracoes-prazos">
+              <NavLink
+                icon={FaClock}
+                href="/administracao/configuracoes-prazos"
+              >
                 Configurações de prazos
               </NavLink>
             )}

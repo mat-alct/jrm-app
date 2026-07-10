@@ -46,6 +46,10 @@ service cloud.firestore {
       return hasRole('assembler');
     }
 
+    function isWoodworker() {
+      return hasRole('woodworker');
+    }
+
     function isAssignedAssembler(projectId, itemId) {
       return isAssembler()
         && exists(/databases/$(database)/documents/projects/$(projectId)/items/$(itemId)/assemblerAssignments/$(request.auth.uid));
@@ -137,7 +141,9 @@ service cloud.firestore {
 
     match /config/{configId} {
       allow read: if activeUser();
-      allow write: if isAdmin();
+      allow create, update: if isAdmin()
+        || (configId == 'cutting-machine' && (isSeller() || isWoodworker()));
+      allow delete: if isAdmin();
     }
 
     match /projects/{projectId} {
