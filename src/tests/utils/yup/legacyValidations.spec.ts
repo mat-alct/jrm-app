@@ -1,7 +1,13 @@
 import { ValidationError } from 'yup';
 
-import { createCustomerSchema, searchCustomerSchema } from '@/utils/yup/clientesValidations';
-import { createMaterialSchema, updatePriceSchema } from '@/utils/yup/materiaisValidations';
+import {
+  createCustomerSchema,
+  searchCustomerSchema,
+} from '@/utils/yup/clientesValidations';
+import {
+  createMaterialSchema,
+  updatePriceSchema,
+} from '@/utils/yup/materiaisValidations';
 import {
   createCutlistSchema,
   createEstimateSchema,
@@ -38,7 +44,10 @@ describe('loginSchema', () => {
   });
 
   it('recusa email malformado e senha curta', async () => {
-    const errors = await errorsOf(loginSchema, { email: 'nao-e-email', password: '1234567' });
+    const errors = await errorsOf(loginSchema, {
+      email: 'nao-e-email',
+      password: '1234567',
+    });
     expect(errors).toContain('Necessário que esteja em formato de email');
     expect(errors).toContain('Senha precisa de no mínimo 8 dígitos');
   });
@@ -130,18 +139,18 @@ describe('createCutlistSchema (peca)', () => {
   });
 
   it('recusa quantidade menor que 1', async () => {
-    expect(await errorsOf(createCutlistSchema, { ...valid, amount: 0 })).toContain(
-      'Mínimo 1 peça',
-    );
+    expect(
+      await errorsOf(createCutlistSchema, { ...valid, amount: 0 }),
+    ).toContain('Mínimo 1 peça');
   });
 
   it('recusa medidas fora do intervalo permitido', async () => {
-    expect(await errorsOf(createCutlistSchema, { ...valid, sideA: 59 })).toContain(
-      'Mín: 60mm',
-    );
-    expect(await errorsOf(createCutlistSchema, { ...valid, sideB: 2751 })).toContain(
-      'Máx: 2750mm',
-    );
+    expect(
+      await errorsOf(createCutlistSchema, { ...valid, sideA: 59 }),
+    ).toContain('Mín: 60mm');
+    expect(
+      await errorsOf(createCutlistSchema, { ...valid, sideB: 2751 }),
+    ).toContain('Máx: 2750mm');
   });
 
   it('recusa valores nao numericos e material ausente', async () => {
@@ -157,7 +166,7 @@ describe('createCutlistSchema (peca)', () => {
 
 describe('createMaterialSchema', () => {
   const valid = {
-    name: 'MDF Branco',
+    name: 'MDF Branco 15mm',
     width: 2750,
     height: 1850,
     price: 220,
@@ -166,6 +175,12 @@ describe('createMaterialSchema', () => {
 
   it('aceita material valido nos limites da chapa', async () => {
     expect(await errorsOf(createMaterialSchema, valid)).toEqual([]);
+  });
+
+  it('exige a espessura no nome completo do material', async () => {
+    expect(
+      await errorsOf(createMaterialSchema, { ...valid, name: 'MDF Branco' }),
+    ).toContain('Inclua a espessura no nome (ex.: 15mm)');
   });
 
   it('exige nome, medidas, preco e tipo', async () => {
@@ -189,8 +204,12 @@ describe('createMaterialSchema', () => {
       (await errorsOf(createMaterialSchema, { ...valid, height: 1851 })).length,
     ).toBeGreaterThan(0);
     expect(
-      (await errorsOf(createMaterialSchema, { ...valid, materialType: 'Marmore' }))
-        .length,
+      (
+        await errorsOf(createMaterialSchema, {
+          ...valid,
+          materialType: 'Marmore',
+        })
+      ).length,
     ).toBeGreaterThan(0);
   });
 
@@ -198,14 +217,16 @@ describe('createMaterialSchema', () => {
     expect(
       (await errorsOf(createMaterialSchema, { ...valid, width: -1 })).length,
     ).toBeGreaterThan(0);
-    expect(await errorsOf(createMaterialSchema, { ...valid, price: 'caro' })).toContain(
-      'Preço precisa ser um número',
-    );
+    expect(
+      await errorsOf(createMaterialSchema, { ...valid, price: 'caro' }),
+    ).toContain('Preço precisa ser um número');
   });
 
   it('updatePriceSchema exige preco numerico', async () => {
     expect(await errorsOf(updatePriceSchema, { newPrice: 10 })).toEqual([]);
-    expect(await errorsOf(updatePriceSchema, {})).toContain('Preço obrigatório');
+    expect(await errorsOf(updatePriceSchema, {})).toContain(
+      'Preço obrigatório',
+    );
     expect(await errorsOf(updatePriceSchema, { newPrice: 'x' })).toContain(
       'Preço precisa ser um número',
     );
@@ -234,7 +255,9 @@ describe('createCustomerSchema e searchCustomerSchema', () => {
 
   it('busca por nome e opcional', async () => {
     expect(await errorsOf(searchCustomerSchema, {})).toEqual([]);
-    expect(await errorsOf(searchCustomerSchema, { customerName: 'Pedro' })).toEqual([]);
+    expect(
+      await errorsOf(searchCustomerSchema, { customerName: 'Pedro' }),
+    ).toEqual([]);
   });
 });
 
@@ -251,37 +274,42 @@ describe('createUserSchema', () => {
   });
 
   it('aceita telefone com 10 ou 11 digitos, formatado ou nao', async () => {
-    expect(await errorsOf(createUserSchema, { ...valid, phone: '2499999000' })).toEqual(
-      [],
-    );
+    expect(
+      await errorsOf(createUserSchema, { ...valid, phone: '2499999000' }),
+    ).toEqual([]);
     expect(
       await errorsOf(createUserSchema, { ...valid, phone: '(24) 99999-0000' }),
     ).toEqual([]);
   });
 
   it('recusa telefone com quantidade de digitos invalida', async () => {
-    expect(await errorsOf(createUserSchema, { ...valid, phone: '99999' })).toContain(
-      'Telefone inválido',
-    );
+    expect(
+      await errorsOf(createUserSchema, { ...valid, phone: '99999' }),
+    ).toContain('Telefone inválido');
     expect(
       await errorsOf(createUserSchema, { ...valid, phone: '249999900001' }),
     ).toContain('Telefone inválido');
   });
 
   it('exige senha de 6+ caracteres e ao menos um papel valido', async () => {
-    expect(await errorsOf(createUserSchema, { ...valid, password: '12345' })).toContain(
-      'A senha deve ter ao menos 6 caracteres',
-    );
+    expect(
+      await errorsOf(createUserSchema, { ...valid, password: '12345' }),
+    ).toContain('A senha deve ter ao menos 6 caracteres');
     expect(await errorsOf(createUserSchema, { ...valid, roles: [] })).toContain(
       'Selecione ao menos um papel',
     );
     expect(
-      (await errorsOf(createUserSchema, { ...valid, roles: ['superuser'] })).length,
+      (await errorsOf(createUserSchema, { ...valid, roles: ['superuser'] }))
+        .length,
     ).toBeGreaterThan(0);
   });
 
   it('exige nome e email valido', async () => {
-    const errors = await errorsOf(createUserSchema, { ...valid, name: '', email: 'x' });
+    const errors = await errorsOf(createUserSchema, {
+      ...valid,
+      name: '',
+      email: 'x',
+    });
     expect(errors).toContain('Nome é obrigatório');
     expect(errors).toContain('Digite um e-mail válido');
   });
@@ -296,7 +324,10 @@ describe('createSellerSchema', () => {
 
   it('aceita vendedor completo', async () => {
     expect(
-      await errorsOf(createSellerSchema, { name: 'Vendedor', password: 'senha' }),
+      await errorsOf(createSellerSchema, {
+        name: 'Vendedor',
+        password: 'senha',
+      }),
     ).toEqual([]);
   });
 });

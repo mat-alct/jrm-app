@@ -1,11 +1,18 @@
 import './testEnv';
 
-import { SEED_SELLER_PASSWORD } from '@/tests/helpers/seedEmulator';
+import fs from 'node:fs';
+
+import JSZip from 'jszip';
+
+import {
+  SEED_MATERIAL_NAME,
+  SEED_SELLER_PASSWORD,
+} from '@/tests/helpers/seedEmulator';
 import { calculateCutlistPrice } from '@/utils/cutlist/calculatePrice';
 
 import { expect, loginAs, test } from './fixtures';
 
-/** Material do seed: MDF Branco 2750x1850, R$220. */
+/** Material do seed: chapa MDF 15mm 2750x1850, R$220. */
 const MATERIAL = { width: 2750, height: 1850, price: 220 };
 
 /** Clica na opcao visivel de um FormRadio (o layout renderiza mobile + desktop). */
@@ -26,8 +33,7 @@ async function addPiece(
 ) {
   const materialInput = page.locator('#materialId');
   await materialInput.click();
-  // A tabela de peças também mostra "MDF Branco": escopamos na opção do react-select.
-  await page.getByRole('option', { name: 'MDF Branco' }).click();
+  await page.getByRole('option', { name: SEED_MATERIAL_NAME }).click();
 
   await page.locator('#amount').fill(String(piece.amount));
   await page.locator('#sideA').fill(String(piece.sideA));
@@ -38,6 +44,7 @@ async function addPiece(
 test.describe('cortes — novo serviço', () => {
   test('gera, aprova e persiste um plano de corte vinculado ao pedido', async ({
     page,
+    context,
     adminDb,
   }) => {
     await loginAs(page, 'seller');
@@ -57,11 +64,27 @@ test.describe('cortes — novo serviço', () => {
     await expect(
       page.getByRole('heading', { name: 'Resultado do plano' }),
     ).toBeVisible();
-    await expect(page.getByText('Ordem sugerida dos cortes')).toBeVisible();
+    await expect(page.getByText('Ordem sugerida dos cortes')).toHaveCount(0);
     await expect(page.getByText(/Rascunho · versão 1/)).toBeVisible();
 
     await page.getByRole('button', { name: 'Aprovar plano' }).click();
     await expect(page.getByText(/Aprovado · versão 1/)).toBeVisible();
+
+    const viewerPromise = context.waitForEvent('page');
+    await page
+      .getByRole('button', { name: /Visualizar em nova aba/ })
+      .click();
+    const viewer = await viewerPromise;
+    await expect(
+      viewer.getByRole('heading', { name: 'Plano de corte 2D' }),
+    ).toBeVisible();
+    await viewer.locator('[data-piece-id]').first().click();
+    await expect(viewer.getByTestId('selected-piece-info')).toContainText(
+      'Peça 1',
+    );
+    await viewer.getByRole('button', { name: 'Aumentar zoom' }).click();
+    await expect(viewer.getByText('125%')).toBeVisible();
+    await viewer.close();
 
     await page.getByLabel('Nome', { exact: true }).first().fill('Maria');
     await page.getByLabel('Sobrenome', { exact: true }).first().fill('Plano');
@@ -98,6 +121,28 @@ test.describe('cortes — novo serviço', () => {
     });
     expect(data.cuttingPlan.cutSequence.length).toBeGreaterThan(0);
     expect(data.orderPrice).toBe(data.cuttingPlan.pricing.totalCost);
+
+    const orderRow = page.getByRole('row').filter({ hasText: 'Maria Plano' });
+    await expect(
+      orderRow.getByRole('button', { name: 'Imprimir plano de corte' }),
+    ).toBeVisible();
+    const downloadPromise = page.waitForEvent('download');
+    await orderRow
+      .getByRole('button', { name: 'Baixar arquivos AC e AD' })
+      .click();
+    const download = await downloadPromise;
+    expect(download.suggestedFilename()).toMatch(/-arquivos-giben\.zip$/);
+    const downloadPath = await download.path();
+    expect(downloadPath).not.toBeNull();
+    const zip = await JSZip.loadAsync(fs.readFileSync(downloadPath!));
+    const names = Object.keys(zip.files).sort();
+    expect(names).toHaveLength(2);
+    expect(names[0]).toMatch(/\.AC$/);
+    expect(names[1]).toMatch(/\.AD$/);
+    const ac = await zip.file(names[0])!.async('string');
+    const ad = await zip.file(names[1])!.async('string');
+    expect(ac.endsWith('\r\n')).toBe(true);
+    expect(ad.endsWith('\r\n')).toBe(true);
   });
 
   test('cria pedido com preço igual ao calculateCutlistPrice e código sequencial', async ({
@@ -213,7 +258,7 @@ test.describe('cortes — novo serviço', () => {
 
     const materialInput = page.locator('#materialId');
     await materialInput.click();
-    await page.getByRole('option', { name: 'MDF Branco' }).click();
+    await page.getByRole('option', { name: SEED_MATERIAL_NAME }).click();
 
     await page.locator('#amount').fill('1');
     await page.locator('#sideA').fill('59');

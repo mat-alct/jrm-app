@@ -7,7 +7,10 @@ if (!getApps().length) {
     credential: cert({
       projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
       clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-      privateKey: (process.env.FIREBASE_PRIVATE_KEY || '').replace(/\\n/g, '\n'),
+      privateKey: (process.env.FIREBASE_PRIVATE_KEY || '').replace(
+        /\\n/g,
+        '\n',
+      ),
     }),
   });
 }
@@ -17,24 +20,88 @@ const SELLER_NAME = 'Vendedor Teste';
 const SELLER_PASSWORD = '0000';
 
 const MATERIALS = [
-  { name: 'MDF 15mm Comum', width: 2750, height: 1850, price: 300, materialType: 'MDF' },
-  { name: 'MDF 15mm Ultra', width: 2750, height: 1850, price: 400, materialType: 'MDF' },
+  {
+    name: '340 - 00000000000730 - MDF Comum 15mm',
+    width: 2750,
+    height: 1850,
+    price: 300,
+    materialType: 'MDF',
+  },
+  {
+    name: '341 - 00000000000731 - MDF Ultra 15mm',
+    width: 2750,
+    height: 1850,
+    price: 400,
+    materialType: 'MDF',
+  },
 ];
 
-const FIRST = ['João', 'Maria', 'Pedro', 'Ana', 'Carlos', 'Beatriz', 'Felipe', 'Carla', 'Rafael', 'Juliana', 'Marcos', 'Patrícia', 'Bruno', 'Larissa', 'Thiago'];
-const LAST = ['Silva', 'Santos', 'Oliveira', 'Souza', 'Pereira', 'Costa', 'Rodrigues', 'Almeida', 'Nascimento', 'Lima', 'Ferreira', 'Carvalho'];
-const AREAS = ['Japuíba', 'Centro', 'Praia Linda', 'Frade', 'Bracuhy', 'Camorim', 'Parque Mambucaba', 'Monsuaba'];
-const STREETS = ['R. Japoranga', 'Av. Brasil', 'R. das Palmeiras', 'R. Coronel Carvalho', 'Estrada do Contorno', 'R. Marechal Deodoro'];
+const FIRST = [
+  'João',
+  'Maria',
+  'Pedro',
+  'Ana',
+  'Carlos',
+  'Beatriz',
+  'Felipe',
+  'Carla',
+  'Rafael',
+  'Juliana',
+  'Marcos',
+  'Patrícia',
+  'Bruno',
+  'Larissa',
+  'Thiago',
+];
+const LAST = [
+  'Silva',
+  'Santos',
+  'Oliveira',
+  'Souza',
+  'Pereira',
+  'Costa',
+  'Rodrigues',
+  'Almeida',
+  'Nascimento',
+  'Lima',
+  'Ferreira',
+  'Carvalho',
+];
+const AREAS = [
+  'Japuíba',
+  'Centro',
+  'Praia Linda',
+  'Frade',
+  'Bracuhy',
+  'Camorim',
+  'Parque Mambucaba',
+  'Monsuaba',
+];
+const STREETS = [
+  'R. Japoranga',
+  'Av. Brasil',
+  'R. das Palmeiras',
+  'R. Coronel Carvalho',
+  'Estrada do Contorno',
+  'R. Marechal Deodoro',
+];
 const STATUSES = ['Em Produção', 'Liberado para Transporte', 'Concluído'];
 
-const rand = (arr) => arr[Math.floor(Math.random() * arr.length)];
+const rand = arr => arr[Math.floor(Math.random() * arr.length)];
 const randInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
 
 async function ensureSeller() {
-  const snap = await db.collection('sellers').where('name', '==', SELLER_NAME).get();
+  const snap = await db
+    .collection('sellers')
+    .where('name', '==', SELLER_NAME)
+    .get();
   if (snap.empty) {
-    await db.collection('sellers').add({ name: SELLER_NAME, password: SELLER_PASSWORD });
-    console.log(`✓ Vendedor criado: ${SELLER_NAME} (senha: ${SELLER_PASSWORD})`);
+    await db
+      .collection('sellers')
+      .add({ name: SELLER_NAME, password: SELLER_PASSWORD });
+    console.log(
+      `✓ Vendedor criado: ${SELLER_NAME} (senha: ${SELLER_PASSWORD})`,
+    );
   } else {
     console.log(`✓ Vendedor já existia: ${SELLER_NAME}`);
   }
@@ -43,7 +110,10 @@ async function ensureSeller() {
 async function ensureMaterials() {
   const result = [];
   for (const mat of MATERIALS) {
-    const snap = await db.collection('materials').where('name', '==', mat.name).get();
+    const snap = await db
+      .collection('materials')
+      .where('name', '==', mat.name)
+      .get();
     if (snap.empty) {
       const ref = await db.collection('materials').add({
         ...mat,
@@ -125,7 +195,10 @@ async function seedOrders(materials) {
       city: '',
       state: 'Rio de Janeiro',
       customerId: '',
-      address: deliveryType === 'Entrega' ? `${STREETS[i % STREETS.length]}, ${randInt(1, 2000)}` : '',
+      address:
+        deliveryType === 'Entrega'
+          ? `${STREETS[i % STREETS.length]}, ${randInt(1, 2000)}`
+          : '',
       area: deliveryType === 'Entrega' ? AREAS[i % AREAS.length] : '',
     };
 
@@ -159,7 +232,10 @@ async function seedOrders(materials) {
 
     if (hasEdits) {
       const previousCutlist = cutlist.slice(0, Math.max(1, cutlist.length - 1));
-      const previousOrderPrice = previousCutlist.reduce((a, c) => a + c.price, 0);
+      const previousOrderPrice = previousCutlist.reduce(
+        (a, c) => a + c.price,
+        0,
+      );
       order.edits = [
         {
           editedAt: Timestamp.fromMillis(createdAtMs + 86400000),
@@ -175,7 +251,9 @@ async function seedOrders(materials) {
     await db.collection('orders').doc(randomUUID()).set(order);
     if ((i + 1) % 10 === 0) console.log(`  • ${i + 1}/${N} pedidos`);
   }
-  console.log(`✓ ${N} pedidos criados (códigos ${SEED_START}–${SEED_START + N - 1})`);
+  console.log(
+    `✓ ${N} pedidos criados (códigos ${SEED_START}–${SEED_START + N - 1})`,
+  );
 }
 
 async function main() {
@@ -188,7 +266,7 @@ async function main() {
   process.exit(0);
 }
 
-main().catch((err) => {
+main().catch(err => {
   console.error('❌ Erro no seed:', err);
   process.exit(1);
 });

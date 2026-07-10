@@ -36,6 +36,7 @@ import { v4 } from 'uuid';
 
 import {
   type GrainDirection,
+  machineMaterialCodesFromName,
   thicknessFromMaterialName,
 } from '../../domain/cutting-plan';
 import { useMaterial } from '../../hooks/material';
@@ -401,6 +402,14 @@ export const Cutlist = ({
     if (isCuttingPlan) {
       try {
         thicknessFromMaterialName(materialUsed.name);
+        const { acMaterialKey, adMaterialCode } = machineMaterialCodesFromName(
+          materialUsed.name,
+        );
+        if (!acMaterialKey || !adMaterialCode) {
+          throw new Error(
+            `A chapa “${materialUsed.name}” precisa seguir “código AD - chave AC - descrição xxmm”.`,
+          );
+        }
       } catch (error) {
         createCutlistSetError('materialId', {
           type: 'value',

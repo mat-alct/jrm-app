@@ -37,7 +37,7 @@ export const thicknessFromMaterialName = (name: string): number => {
   return value;
 };
 
-const machineMaterialCodes = (name: string) => {
+export const machineMaterialCodesFromName = (name: string) => {
   const [adMaterialCode, acMaterialKey] = name
     .split(/\s+-\s+/)
     .map(part => part.trim());
@@ -92,7 +92,7 @@ export function cutlistToCuttingPlanMaterials(
       );
       return;
     }
-    const { acMaterialKey, adMaterialCode } = machineMaterialCodes(
+    const { acMaterialKey, adMaterialCode } = machineMaterialCodesFromName(
       item.material.name,
     );
     byId.set(id, {

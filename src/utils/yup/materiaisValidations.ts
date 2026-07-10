@@ -2,7 +2,12 @@ import * as Yup from 'yup';
 
 export const createMaterialSchema = Yup.object().shape({
   id: Yup.string(),
-  name: Yup.string().required('Material obrigatório'),
+  name: Yup.string()
+    .required('Material obrigatório')
+    .matches(
+      /(?:^|\s)\d+(?:[.,]\d+)?\s*mm(?:\s|$)/i,
+      'Inclua a espessura no nome (ex.: 15mm)',
+    ),
   width: Yup.number()
     .max(2750)
     .min(0)

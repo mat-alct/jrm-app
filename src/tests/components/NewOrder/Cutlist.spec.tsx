@@ -25,7 +25,7 @@ jest.mock('@/hooks/useAreas', () => ({
 
 const MATERIAL = {
   id: 'mat-1',
-  name: 'MDF Branco 15mm',
+  name: '340 - 00000000000730 - MDF Branco 15mm',
   width: 1000,
   height: 1000,
   price: 100,
@@ -183,6 +183,23 @@ describe('NewOrder/Cutlist', () => {
 
     expect(
       await screen.findByText(/precisa informar a espessura no nome/i),
+    ).toBeInTheDocument();
+    expect(updateCutlist).not.toHaveBeenCalled();
+  });
+
+  it('bloqueia plano quando faltam os códigos AD e AC no nome da chapa', async () => {
+    const malformed = { ...MATERIAL, name: 'MDF Branco 15mm' };
+    jest.mocked(getAllMaterials).mockResolvedValue([malformed] as never);
+    const { updateCutlist } = renderCutlist([], {
+      orderType: 'Plano de corte',
+    });
+
+    await chooseMaterial(malformed.name);
+    fillPiece();
+    fireEvent.click(screen.getByRole('button', { name: /ADD/i }));
+
+    expect(
+      await screen.findByText(/código AD - chave AC - descrição xxmm/i),
     ).toBeInTheDocument();
     expect(updateCutlist).not.toHaveBeenCalled();
   });

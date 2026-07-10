@@ -40,6 +40,7 @@ test.describe('permissões por perfil (usuários reais do seed)', () => {
       '/cortes/novoservico',
       '/cortes/listadecortes',
       '/cortes/materiais',
+      '/cortes/configuracoes-maquina',
       '/projetos/novo',
       '/projetos',
       '/desenhista',
@@ -68,6 +69,7 @@ test.describe('permissões por perfil (usuários reais do seed)', () => {
       '/cortes/novoservico',
       '/cortes/listadecortes',
       '/cortes/materiais',
+      '/cortes/configuracoes-maquina',
       '/projetos/novo',
       '/projetos',
       '/administracao/fretes',
@@ -83,6 +85,10 @@ test.describe('permissões por perfil (usuários reais do seed)', () => {
     await expectPath(page, '/cortes/novoservico');
     await expect(page.getByText('Novo Serviço').first()).toBeVisible();
 
+    await page.goto('/cortes/plano/visualizar?plan=inexistente');
+    await expectPath(page, '/cortes/plano/visualizar');
+    await expect(page.getByText('Plano indisponível')).toBeVisible();
+
     // Acesso direto por URL às rotas de admin volta para a home do papel.
     for (const route of ADMIN_ONLY_ROUTES) {
       await page.goto(route);
@@ -94,7 +100,11 @@ test.describe('permissões por perfil (usuários reais do seed)', () => {
     await loginAs(page, 'woodworker');
     await expectPath(page, '/');
 
-    await expectVisibleLinks(page, ['/', '/cortes/listadecortes']);
+    await expectVisibleLinks(page, [
+      '/',
+      '/cortes/listadecortes',
+      '/cortes/configuracoes-maquina',
+    ]);
     await expectMissingLinks(page, [
       '/cortes/novoservico',
       '/cortes/materiais',
@@ -109,6 +119,14 @@ test.describe('permissões por perfil (usuários reais do seed)', () => {
     await page.goto('/cortes/listadecortes');
     await expectPath(page, '/cortes/listadecortes');
     await expect(page.getByText('Lista de Cortes').first()).toBeVisible();
+
+    await page.goto('/cortes/configuracoes-maquina');
+    await expectPath(page, '/cortes/configuracoes-maquina');
+    await expect(page.getByText('Parâmetros da máquina').first()).toBeVisible();
+
+    await page.goto('/cortes/plano/visualizar?plan=inexistente');
+    await expectPath(page, '/cortes/plano/visualizar');
+    await expect(page.getByText('Plano indisponível')).toBeVisible();
 
     await page.goto('/cortes/novoservico');
     await expectPath(page, '/');
@@ -126,6 +144,7 @@ test.describe('permissões por perfil (usuários reais do seed)', () => {
       '/',
       '/cortes/novoservico',
       '/cortes/listadecortes',
+      '/cortes/configuracoes-maquina',
       '/projetos',
       '/montador',
       ...ADMIN_ONLY_ROUTES,
@@ -148,6 +167,7 @@ test.describe('permissões por perfil (usuários reais do seed)', () => {
     await expectMissingLinks(page, [
       '/',
       '/cortes/listadecortes',
+      '/cortes/configuracoes-maquina',
       '/projetos',
       '/desenhista',
       ...ADMIN_ONLY_ROUTES,

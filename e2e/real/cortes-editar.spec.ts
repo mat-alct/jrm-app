@@ -1,6 +1,9 @@
 import './testEnv';
 
-import { SEED_SELLER_PASSWORD } from '@/tests/helpers/seedEmulator';
+import {
+  SEED_MATERIAL_NAME,
+  SEED_SELLER_PASSWORD,
+} from '@/tests/helpers/seedEmulator';
 
 import { expect, loginAs, test } from './fixtures';
 
@@ -9,8 +12,7 @@ const ORDER_ID = 'seed-order-1';
 /** Adiciona uma peça extra à cutlist do pedido em edição. */
 async function addExtraPiece(page: import('@playwright/test').Page) {
   await page.locator('#materialId').click();
-  // A tabela de peças também mostra "MDF Branco": escopamos na opção do react-select.
-  await page.getByRole('option', { name: 'MDF Branco' }).click();
+  await page.getByRole('option', { name: SEED_MATERIAL_NAME }).click();
   await page.locator('#amount').fill('1');
   await page.locator('#sideA').fill('900');
   await page.locator('#sideB').fill('450');
@@ -51,7 +53,9 @@ test.describe('cortes — edição de pedido', () => {
 
     await addExtraPiece(page);
     await page.getByRole('button', { name: 'Sim', exact: true }).click();
-    await page.locator('input[name="sellerPassword"]').fill(SEED_SELLER_PASSWORD);
+    await page
+      .locator('input[name="sellerPassword"]')
+      .fill(SEED_SELLER_PASSWORD);
     await page.getByRole('button', { name: 'ATUALIZAR PEDIDO' }).click();
 
     await expect
@@ -71,7 +75,9 @@ test.describe('cortes — edição de pedido', () => {
       editedBy: 'Vendedor Seed',
       shouldCharge: true,
     });
-    expect(after.edits[0].priceDifference).toBe(after.orderPrice - previousPrice);
+    expect(after.edits[0].priceDifference).toBe(
+      after.orderPrice - previousPrice,
+    );
     expect(after.edits[0].previousCutlist).toHaveLength(1);
   });
 
@@ -97,7 +103,9 @@ test.describe('cortes — edição de pedido', () => {
     await page.goto(`/cortes/editar/${ORDER_ID}`);
 
     await addExtraPiece(page);
-    await page.locator('input[name="sellerPassword"]').fill(SEED_SELLER_PASSWORD);
+    await page
+      .locator('input[name="sellerPassword"]')
+      .fill(SEED_SELLER_PASSWORD);
     await page.getByRole('button', { name: 'ATUALIZAR PEDIDO' }).click();
 
     await expect(

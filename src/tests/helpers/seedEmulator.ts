@@ -8,6 +8,8 @@ export const SEED_USER_PASSWORD = 'Seed@12345';
 export const CLIENT_ACCESS_PASSWORD = 'ABC123';
 /** Senha do vendedor usada na area legada de cortes (id do doc em `sellers`). */
 export const SEED_SELLER_PASSWORD = 'vendedor123';
+export const SEED_MATERIAL_NAME =
+  '340 - 00000000000730 - MDF Branco Texturizado 15mm';
 
 export async function seedEmulator(): Promise<void> {
   await Promise.all(
@@ -83,7 +85,9 @@ export async function seedEmulator(): Promise<void> {
     designerId: 'seed-designer',
     designerName: 'Desenhista Seed',
     budget: {
-      lines: [{ id: 'line-1', description: 'Material e ferragens', amount: 600 }],
+      lines: [
+        { id: 'line-1', description: 'Material e ferragens', amount: 600 },
+      ],
       totalCost: 600,
       customerAmount: 1200,
       suggestedAssemblerAmount: 300,
@@ -152,7 +156,7 @@ export async function seedEmulator(): Promise<void> {
   batch.set(adminDb.collection('counters').doc('orders'), { code: 2 });
 
   batch.set(adminDb.collection('materials').doc('seed-material-1'), {
-    name: 'MDF Branco',
+    name: SEED_MATERIAL_NAME,
     width: 2750,
     height: 1850,
     price: 220,
@@ -176,7 +180,7 @@ export async function seedEmulator(): Promise<void> {
         id: 'seed-cut-1',
         material: {
           materialId: 'seed-material-1',
-          name: 'MDF Branco',
+          name: SEED_MATERIAL_NAME,
           width: 2750,
           height: 1850,
           price: 220,
@@ -242,7 +246,9 @@ export async function seedEmulator(): Promise<void> {
     designerId: 'seed-designer',
     designerName: 'Desenhista Seed',
     budget: {
-      lines: [{ id: 'line-1', description: 'Material e ferragens', amount: 700 }],
+      lines: [
+        { id: 'line-1', description: 'Material e ferragens', amount: 700 },
+      ],
       totalCost: 700,
       customerAmount: 1400,
       suggestedAssemblerAmount: 350,
@@ -269,7 +275,9 @@ export async function seedEmulator(): Promise<void> {
     designerId: 'seed-designer',
     designerName: 'Desenhista Seed',
     budget: {
-      lines: [{ id: 'line-1', description: 'Material e ferragens', amount: 450 }],
+      lines: [
+        { id: 'line-1', description: 'Material e ferragens', amount: 450 },
+      ],
       totalCost: 450,
       customerAmount: 900,
       suggestedAssemblerAmount: 220,
@@ -297,7 +305,9 @@ export async function seedEmulator(): Promise<void> {
     designerName: 'Desenhista Seed',
     completedAt: Timestamp.fromDate(new Date('2026-01-18T12:00:00.000Z')),
     budget: {
-      lines: [{ id: 'line-1', description: 'Material e ferragens', amount: 200 }],
+      lines: [
+        { id: 'line-1', description: 'Material e ferragens', amount: 200 },
+      ],
       totalCost: 200,
       customerAmount: 400,
       suggestedAssemblerAmount: 100,

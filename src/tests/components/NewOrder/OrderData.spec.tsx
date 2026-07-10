@@ -32,7 +32,7 @@ const cutlist: Cutlist[] = [
     id: 'cut-1',
     material: {
       materialId: 'mat-1',
-      name: 'MDF Branco',
+      name: 'MDF Branco 15mm',
       width: 1000,
       height: 1000,
       price: 100,

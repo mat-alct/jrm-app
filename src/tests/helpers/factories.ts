@@ -76,7 +76,9 @@ export function buildProjectItem(
   };
 }
 
-export function buildAttachment(overrides: Partial<Attachment> = {}): Attachment {
+export function buildAttachment(
+  overrides: Partial<Attachment> = {},
+): Attachment {
   return {
     id: 'attachment-1',
     projectId: 'project-1',
@@ -142,7 +144,7 @@ export function buildAssemblerPayment(
 export function buildMaterial(overrides: Partial<Material> = {}): Material {
   return {
     id: 'material-1',
-    name: 'MDF Branco',
+    name: '340 - 00000000000730 - MDF Branco 15mm',
     width: 2750,
     height: 1850,
     price: 220,
@@ -195,7 +197,12 @@ export const seedUsers: Array<{
   email: string;
   role: UserRole;
 }> = [
-  { uid: 'seed-admin', name: 'Admin Seed', email: 'admin@seed.jrm', role: 'admin' },
+  {
+    uid: 'seed-admin',
+    name: 'Admin Seed',
+    email: 'admin@seed.jrm',
+    role: 'admin',
+  },
   {
     uid: 'seed-seller',
     name: 'Vendedor Seed',
