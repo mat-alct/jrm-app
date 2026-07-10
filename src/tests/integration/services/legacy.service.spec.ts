@@ -27,7 +27,11 @@ import {
 } from '@/services/materials.service';
 import { Cutlist, Estimate, Material, Order } from '@/types';
 import { resetEmulator } from '@/tests/helpers/emulator';
-import { seedEmulator, SEED_USER_PASSWORD } from '@/tests/helpers/seedEmulator';
+import {
+  seedEmulator,
+  SEED_MATERIAL_NAME,
+  SEED_USER_PASSWORD,
+} from '@/tests/helpers/seedEmulator';
 
 async function signInAs(email: string): Promise<void> {
   await signInWithEmailAndPassword(auth, email, SEED_USER_PASSWORD);
@@ -38,7 +42,7 @@ function cutlist(id: string, price: number): Cutlist {
     id,
     material: {
       materialId: 'mat-1',
-      name: 'MDF Branco',
+      name: SEED_MATERIAL_NAME,
       width: 2750,
       height: 1850,
       price: 220,
