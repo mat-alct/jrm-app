@@ -183,6 +183,8 @@ describe('OrderResume', () => {
     expect(summary).not.toHaveTextContent('120');
     expect(screen.queryByText(/Sequência de corte/i)).not.toBeInTheDocument();
     expect(summary).toHaveTextContent('Plano de corte:');
+    expect(screen.getAllByText('Peças nesta chapa').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Sobras da chapa').length).toBeGreaterThan(0);
   });
 
   it('mantem o resumo sem paginas de plano quando o pedido nao possui plano', () => {

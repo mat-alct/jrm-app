@@ -1,4 +1,4 @@
-import { Box, Flex, Text } from '@chakra-ui/react';
+import { Box, Flex, Grid, Text } from '@chakra-ui/react';
 import React from 'react';
 
 import type { CuttingPlan } from '@/domain/cutting-plan';
@@ -81,9 +81,10 @@ export const CuttingPlanPrintable = ({
               </Box>
             </Flex>
 
-            <Flex justify="space-between" align="center" gap={2} mb={2}>
+            <Flex justify="space-between" align="center" gap={2} mb={1}>
               <Text fontSize="13px" fontWeight="900">
-                Chapa {sheet.number} · {sheet.material.name}
+                Chapa {sheet.number}/{plan.sheets.length} ·{' '}
+                {sheet.material.name}
               </Text>
               <Text fontSize="9px">
                 Total {sheet.totalWidthMm} × {sheet.totalLengthMm} mm · útil{' '}
@@ -96,15 +97,15 @@ export const CuttingPlanPrintable = ({
               internalTrimMm={plan.settings.internalEdgeTrimMm}
             />
             <Box
-              mt={2}
+              mt={1}
               border="1px solid black"
-              height="225mm"
+              height="176mm"
               display="flex"
               alignItems="center"
               justifyContent="center"
               overflow="hidden"
             >
-              <CuttingSheetSvg sheet={sheet} compact />
+              <CuttingSheetSvg sheet={sheet} compact maxHeight="172mm" />
             </Box>
             <Flex
               justify="space-between"
@@ -135,6 +136,143 @@ export const CuttingPlanPrintable = ({
                 </strong>
               </Text>
             </Flex>
+
+            <Grid templateColumns="1.45fr 1fr" gap="3mm" mt="2mm">
+              <Box>
+                <Text
+                  fontSize="8px"
+                  fontWeight="900"
+                  textTransform="uppercase"
+                  borderBottom="1px solid black"
+                  pb="1px"
+                  mb="1px"
+                >
+                  Peças nesta chapa
+                </Text>
+                <table
+                  style={{
+                    width: '100%',
+                    borderCollapse: 'collapse',
+                    tableLayout: 'fixed',
+                    fontSize: '7px',
+                  }}
+                >
+                  <thead>
+                    <tr>
+                      <th style={{ width: '10%', textAlign: 'left' }}>#</th>
+                      <th style={{ width: '46%', textAlign: 'left' }}>
+                        Identificação
+                      </th>
+                      <th style={{ width: '31%', textAlign: 'left' }}>
+                        Medidas
+                      </th>
+                      <th style={{ width: '13%', textAlign: 'center' }}>
+                        Fitas
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sheet.placements.slice(0, 8).map((placement, index) => (
+                      <tr key={placement.id}>
+                        <td style={{ borderTop: '1px solid #d1d5db' }}>
+                          {index + 1}
+                        </td>
+                        <td
+                          style={{
+                            borderTop: '1px solid #d1d5db',
+                            overflow: 'hidden',
+                            whiteSpace: 'nowrap',
+                            textOverflow: 'ellipsis',
+                          }}
+                        >
+                          {placement.description}
+                        </td>
+                        <td style={{ borderTop: '1px solid #d1d5db' }}>
+                          {Math.round(placement.widthMm)} ×{' '}
+                          {Math.round(placement.heightMm)}
+                        </td>
+                        <td
+                          style={{
+                            borderTop: '1px solid #d1d5db',
+                            textAlign: 'center',
+                          }}
+                        >
+                          {placement.edgeBandEdges.length}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {sheet.placements.length > 8 && (
+                  <Text fontSize="7px" mt="1px">
+                    + {sheet.placements.length - 8} peça(s) identificada(s) no
+                    desenho
+                  </Text>
+                )}
+              </Box>
+
+              <Box>
+                <Text
+                  fontSize="8px"
+                  fontWeight="900"
+                  textTransform="uppercase"
+                  borderBottom="1px solid black"
+                  pb="1px"
+                  mb="1px"
+                >
+                  Sobras da chapa
+                </Text>
+                {sheet.wasteRegions.filter(
+                  region => region.reason === 'remainder',
+                ).length ? (
+                  <table
+                    style={{
+                      width: '100%',
+                      borderCollapse: 'collapse',
+                      fontSize: '7px',
+                    }}
+                  >
+                    <thead>
+                      <tr>
+                        <th style={{ textAlign: 'left' }}>#</th>
+                        <th style={{ textAlign: 'left' }}>Medidas</th>
+                        <th style={{ textAlign: 'right' }}>Área</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {sheet.wasteRegions
+                        .filter(region => region.reason === 'remainder')
+                        .slice(0, 8)
+                        .map((region, index) => (
+                          <tr key={region.id}>
+                            <td style={{ borderTop: '1px solid #d1d5db' }}>
+                              {String.fromCharCode(65 + index)}
+                            </td>
+                            <td style={{ borderTop: '1px solid #d1d5db' }}>
+                              {Math.round(region.widthMm)} ×{' '}
+                              {Math.round(region.heightMm)}
+                            </td>
+                            <td
+                              style={{
+                                borderTop: '1px solid #d1d5db',
+                                textAlign: 'right',
+                              }}
+                            >
+                              {(
+                                (region.widthMm * region.heightMm) /
+                                1_000_000
+                              ).toFixed(2)}{' '}
+                              m²
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                ) : (
+                  <Text fontSize="7px">Sem sobra registrada.</Text>
+                )}
+              </Box>
+            </Grid>
           </Box>
         );
       })}

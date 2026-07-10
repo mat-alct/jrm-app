@@ -8,6 +8,7 @@ import type {
 
 interface CuttingSheetSvgProps {
   compact?: boolean;
+  maxHeight?: string;
   onPieceSelect?: (placement: CuttingPlanPlacement) => void;
   selectedPieceId?: string;
   sheet: CuttingPlanSheet;
@@ -46,7 +47,7 @@ const grainLabel = (placement: CuttingPlanPlacement) =>
     : 'vertical (lado menor)';
 
 export const CuttingSheetSvg = React.memo<CuttingSheetSvgProps>(
-  ({ compact = false, onPieceSelect, selectedPieceId, sheet }) => {
+  ({ compact = false, maxHeight, onPieceSelect, selectedPieceId, sheet }) => {
     const sheetKey = safeSvgId(sheet.id);
     const offcutPatternId = `offcut-hatch-${sheetKey}`;
     const outerPatternId = `outer-hatch-${sheetKey}`;
@@ -75,7 +76,7 @@ export const CuttingSheetSvg = React.memo<CuttingSheetSvgProps>(
           display: 'block',
           width: '100%',
           height: 'auto',
-          maxHeight: compact ? '218mm' : '760px',
+          maxHeight: maxHeight ?? (compact ? '218mm' : '760px'),
           background: '#fff',
         }}
       >

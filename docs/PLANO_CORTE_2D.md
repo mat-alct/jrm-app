@@ -1,80 +1,71 @@
 # Plano de corte 2D
 
-## Arquitetura
+## Convenção dos materiais
 
-O domínio fica em `src/domain/cutting-plan` e não depende de React nem do
-Firebase. A entrada principal é:
+O nome completo da chapa é a identidade do estoque. Nomes completos iguais
+podem compartilhar chapas; nomes diferentes nunca entram no mesmo padrão. A
+espessura é extraída exclusivamente do trecho `xxmm` do nome, não da peça.
+
+Para planos enviados à seccionadora, use:
+
+```text
+código AD - chave AC - descrição do material xxmm
+```
+
+Exemplo:
+
+```text
+340 - 00000000000730 - MDF Branco Texturizado 15mm
+```
+
+O código AD e a chave AC têm até 15 caracteres ASCII. A interface bloqueia a
+inclusão em um plano quando faltam espessura ou códigos.
+
+## Domínio e otimização
+
+O domínio independente de React/Firebase fica em
+`src/domain/cutting-plan`. A entrada principal é:
 
 ```ts
 generateCuttingPlan({ pieces, materials, settings, optimizationMode });
 ```
 
-O retorno contém o snapshot da entrada, chapas, posicionamentos, sobras,
-sequência de cortes, métricas, custos e a versão do algoritmo. Componentes de
-tela e impressão consomem esse mesmo retorno; nenhuma geometria é recalculada
-na camada visual.
+Cada peça ocupa um canto de uma região livre e gera divisões completas, de modo
+que o resultado permaneça guilhotinável. O algoritmo compara candidatos
+determinísticos para menos movimentos, melhor aproveitamento ou equilíbrio por
+pesos configuráveis.
 
-## Heurística guilhotinada
+O veio da chapa percorre sempre seu comprimento de 2750 mm:
 
-Cada chapa começa como um retângulo livre. Uma peça ocupa o canto superior
-esquerdo de um painel livre e o painel é dividido por, no máximo, dois cortes
-completos: primeiro uma faixa e depois a peça dentro da faixa. As duas regiões
-restantes nunca se sobrepõem e só podem ser subdivididas por novos cortes
-completos. Isso forma uma árvore de cortes guilhotinados executável.
+- sem sentido obrigatório: a peça pode girar;
+- horizontal: o lado maior acompanha o veio;
+- vertical: o lado menor acompanha o veio.
 
-O otimizador gera candidatos determinísticos combinando cinco ordenações de
-peças, duas direções de formação de faixas e critérios de escolha do retângulo
-livre. A escolha final depende do modo:
+Não existe opção de rotação separada: ela é consequência do veio.
 
-- `fewer_cuts`: movimentos, depois chapas, depois descarte;
-- `best_yield`: chapas, depois descarte, depois movimentos;
-- `balanced`: pontuação normalizada com os pesos abaixo.
+## Refino direcional e perdas
 
-Pesos padrão do modo equilibrado:
+Os parâmetros padrão são margem externa de 10 mm, acerto interno de 7,5 mm em
+cada lado e kerf de 3,2 mm. Eles são editáveis em
+`/cortes/configuracoes-maquina` por administrador, vendedor e marceneiro.
 
-| Fator                          | Peso |
-| ------------------------------ | ---: |
-| Desperdício não reaproveitável | 0,50 |
-| Movimentos                     | 0,30 |
-| Chapas                         | 0,20 |
+As quatro bordas não são removidas no começo. O agendador prepara somente a
+direção que será usada. A borda inicial é acertada ao começar essa direção; a
+borda oposta só recebe movimento separado quando uma peça realmente encosta
+nela. É possível cortar primeiro todas as tiras e, após virá-las, acertar nelas
+as duas bordas da direção transversal.
 
-Os pesos são editáveis na interface e persistidos no plano.
+Se uma margem externa não foi cortada, ela é incorporada à dimensão física da
+sobra correspondente. Os dois acertos internos de 7,5 mm e o kerf ficam
+registrados como regiões distintas e visíveis no desenho.
 
-## Refino direcional das bordas
+## Sobras e custos
 
-A geometria útil sempre desconta 10 mm dos quatro lados por padrão, mas a
-sequência da máquina não remove as quatro bordas no início. O agendamento é
-feito sob demanda:
+Toda região restante é chamada apenas de **sobra**. Não há classificação entre
+reutilizável e descarte. As métricas separam área usada, área de sobras e perdas
+do processo.
 
-1. refina as duas bordas da direção que será cortada;
-2. executa todos os cortes de faixas disponíveis nessa direção;
-3. ao virar uma faixa, refina nela as duas bordas da nova direção;
-4. executa os cortes transversais dessa faixa.
-
-Os estados de refino são herdados pelas regiões filhas. Assim uma borda já
-preparada não é cobrada novamente, enquanto cada faixa virada recebe os dois
-refinos que ainda faltam. Cada refino é um movimento contabilizado.
-
-## Perdas
-
-- `edgeTrimMm`: 10 mm por borda por padrão;
-- `kerfMm`: 3,2 mm por corte por padrão;
-- `internalCutLossMm`: 15 mm adicionais quando um novo corte é iniciado em uma
-  faixa ou sobra já criada.
-
-Kerf e perda interna ficam separados em cada etapa. A região perdida ocupa
-`kerfMm + internalCutLossMm`, portanto nunca pode receber outra peça.
-
-## Sobras e métricas
-
-Uma sobra é reaproveitável quando aceita, em alguma orientação, o retângulo
-mínimo configurado (300 × 300 mm por padrão). Aproveitamento e desperdício são
-calculados sobre a área total das chapas cobradas. Refino, kerf, perda interna e
-sobras menores entram no descarte não reaproveitável.
-
-## Custos
-
-O cliente paga cada chapa inteira utilizada. O total é:
+O valor do plano é:
 
 ```text
 chapas inteiras
@@ -82,22 +73,68 @@ chapas inteiras
 + metros de fita × preço por metro
 ```
 
-Valores padrão: R$ 3,00 por movimento e R$ 2,00 por metro de fita. O preço
-unitário da chapa vem do material cadastrado.
+No modo plano, esse total substitui completamente os preços calculados por
+peça. Balcão/Marceneiro/Custo e valores unitários não aparecem na tela, no
+resumo nem nas etiquetas.
 
-## Persistência e invalidação
+## Desenho, visualização e impressão
 
-O plano é salvo em `order.cuttingPlan`, com `orderId`, versão, status, snapshot
-das peças e materiais, configurações, resultado, métricas, custos e timestamps.
-Ao editar as peças, o snapshot é comparado com o cadastro atual. Qualquer
-mudança relevante marca o plano como `outdated`; pedidos do tipo plano de corte
-só podem ser confirmados depois de uma nova geração.
+O SVG usa coordenadas em milímetros, mantém a chapa vertical e preserva a
+proporção geométrica. O plano é monocromático:
 
-## Limitações da primeira versão
+- aresta com fita: linha preta contínua forte;
+- aresta sem fita: linha cinza tracejada;
+- sobra: hachura diagonal;
+- margem externa e acerto interno: hachuras próprias.
 
-- usa heurística determinística, sem garantia de ótimo matemático global;
-- trabalha com peças retangulares e cortes guilhotinados;
-- não modela estoque físico de sobras entre pedidos diferentes;
-- não envia comandos diretamente para a seccionadora;
-- a impressão usa o mecanismo de impressão/PDF do navegador já adotado pelo
-  sistema.
+A visualização em nova aba oferece zoom de 50% a 400%, troca de chapas e
+detalhes da peça por clique. O zoom muda apenas o tamanho de exibição, nunca as
+coordenadas.
+
+Na impressão:
+
+- **Resumo**: página do pedido primeiro, depois uma página por chapa;
+- **Plano**: somente as páginas de plano;
+- **Etiquetas**: somente resumo operacional e etiquetas.
+
+As folhas de plano mostram diagrama, lista compacta de peças e lista de sobras.
+A ordem sugerida dos cortes não é exibida em tela ou PDF.
+
+## Persistência
+
+O resultado é salvo em `order.cuttingPlan` com versão, status, snapshot de
+entrada, configurações, chapas, geometria, métricas, custos e timestamps. Uma
+mudança nas peças ou nos parâmetros globais marca o plano como `outdated` e
+exige regeneração antes da confirmação ou exportação.
+
+## Exportação Giben `.AC/.AD`
+
+`exportCuttingPlanToGiben` converte cada chapa para uma árvore guilhotinada e
+gera um par por material/espessura. Não exporta retângulos soltos por
+coordenadas.
+
+Garantias implementadas:
+
+- `.AC`: cabeçalho de 37 caracteres e cortes de 30;
+- `.AD`: tipos 1/2/3/4 com 498/922/490/490 caracteres;
+- padrões globais `01–99`; índices AD locais por material;
+- peças locais `01–99` e `00` nos segmentos intermediários;
+- registros AD na ordem: cabeçalho, peças, sobras, chapas;
+- ASCII, CRLF e quebra final;
+- pares com o mesmo nome-base dentro do ZIP;
+- fitas acompanham a rotação física da peça;
+- validação cruzada de peças entre AC e AD;
+- fixture `input.json` e golden files comparados byte a byte.
+
+O botão “Máquina” na lista baixa o ZIP. Os arquivos devem ser validados no
+software da Giben e pelo operador responsável antes de qualquer corte real.
+
+## Limitações
+
+- a heurística não garante o ótimo matemático global;
+- são aceitas no máximo quatro fases (`2–5`) e 99 padrões por lote;
+- um padrão não pode exceder 99 peças;
+- padrões equivalentes ainda usam `repeatCount = 1`;
+- campos de etiqueta não confirmados no guia permanecem vazios ou usam o perfil
+  configurável;
+- a aplicação não envia comandos diretamente à seccionadora.

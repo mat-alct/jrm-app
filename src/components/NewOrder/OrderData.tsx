@@ -594,7 +594,8 @@ export const OrderData = ({
       >
         <HStack gap={4} color="gray.600" wrap="wrap">
           <Text>
-            Pedido: <strong>{formatBRL(orderPrice)}</strong>
+            {requiresCuttingPlan ? 'Plano de corte' : 'Pedido'}:{' '}
+            <strong>{formatBRL(orderPrice)}</strong>
           </Text>
           {((orderType === 'Orçamento' && !!selectedArea) ||
             deliveryType === 'Entrega') && (
