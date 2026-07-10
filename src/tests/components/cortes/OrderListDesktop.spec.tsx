@@ -6,6 +6,7 @@ import { fireEvent, render, screen } from '../../testUtils';
 const callbacks: OrderListCallbacks = {
   onPrintResume: jest.fn(),
   onPrintLabels: jest.fn(),
+  onPrintCuttingPlan: jest.fn(),
   onApproveEstimate: jest.fn(),
   onShowHistory: jest.fn(),
   onConfirmStatus: jest.fn(),
@@ -36,7 +37,9 @@ function estimateItem(overrides: Record<string, unknown> = {}) {
   };
 }
 
-function renderList(props: Partial<Parameters<typeof OrderListDesktop>[0]> = {}) {
+function renderList(
+  props: Partial<Parameters<typeof OrderListDesktop>[0]> = {},
+) {
   return render(
     <OrderListDesktop
       items={[orderItem()]}
@@ -60,7 +63,9 @@ describe('OrderListDesktop', () => {
   });
 
   it('resume a contagem de registros da pagina', () => {
-    renderList({ items: [orderItem(), orderItem({ id: 'order-2', orderCode: 43 })] });
+    renderList({
+      items: [orderItem(), orderItem({ id: 'order-2', orderCode: 43 })],
+    });
 
     expect(screen.getByText('2 registro(s) nesta página')).toBeInTheDocument();
   });
@@ -92,7 +97,9 @@ describe('OrderListDesktop', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Histórico de edições' }));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Histórico de edições' }),
+    );
     expect(callbacks.onShowHistory).toHaveBeenCalledWith(
       expect.objectContaining({ id: 'order-1' }),
     );
@@ -130,27 +137,78 @@ describe('OrderListDesktop', () => {
     );
   });
 
+  it('mostra o plano como primeira ação apenas em pedido com plano válido', () => {
+    const { rerender } = renderList({
+      items: [
+        orderItem({
+          serviceType: 'cutting_plan',
+          cuttingPlan: { id: 'plan-1', status: 'approved' },
+        }),
+      ],
+    });
+
+    const actions = screen.getAllByRole('button');
+    expect(actions[0]).toHaveAccessibleName('Imprimir plano de corte');
+    fireEvent.click(actions[0]);
+    expect(callbacks.onPrintCuttingPlan).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'order-1' }),
+    );
+
+    rerender(
+      <OrderListDesktop
+        items={[
+          orderItem({
+            serviceType: 'cutting_plan',
+            cuttingPlan: { id: 'plan-1', status: 'outdated' },
+          }),
+        ]}
+        isEstimateList={false}
+        isLoading={false}
+        {...callbacks}
+      />,
+    );
+    expect(
+      screen.queryByRole('button', { name: 'Imprimir plano de corte' }),
+    ).not.toBeInTheDocument();
+  });
+
   it('esconde acoes de edicao e conclusao em pedido concluido', () => {
     renderList({ items: [orderItem({ orderStatus: 'Concluído' })] });
 
-    expect(screen.queryByRole('button', { name: 'Editar' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Concluir' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Desativar' })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Editar' }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Concluir' }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Desativar' }),
+    ).not.toBeInTheDocument();
   });
 
   it('so oferece edicao para pedido em producao', () => {
-    renderList({ items: [orderItem({ orderStatus: 'Liberado para Transporte' })] });
+    renderList({
+      items: [orderItem({ orderStatus: 'Liberado para Transporte' })],
+    });
 
-    expect(screen.queryByRole('button', { name: 'Editar' })).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Concluir' })).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Editar' }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Concluir' }),
+    ).toBeInTheDocument();
   });
 
   it('marca pedido desativado e some com as acoes', () => {
     renderList({ items: [orderItem({ isDeactivated: true })] });
 
     expect(screen.getByText('Desativado')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Editar' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Desativar' })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Editar' }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Desativar' }),
+    ).not.toBeInTheDocument();
   });
 
   it('na lista de orcamentos oferece imprimir e aprovar', () => {

@@ -6,6 +6,7 @@ import { fireEvent, render, screen } from '../../testUtils';
 const callbacks: OrderListCallbacks = {
   onPrintResume: jest.fn(),
   onPrintLabels: jest.fn(),
+  onPrintCuttingPlan: jest.fn(),
   onApproveEstimate: jest.fn(),
   onShowHistory: jest.fn(),
   onConfirmStatus: jest.fn(),
@@ -25,7 +26,9 @@ function orderItem(overrides: Record<string, unknown> = {}) {
   };
 }
 
-function renderList(props: Partial<Parameters<typeof OrderListMobile>[0]> = {}) {
+function renderList(
+  props: Partial<Parameters<typeof OrderListMobile>[0]> = {},
+) {
   return render(
     <OrderListMobile
       items={[orderItem()]}
@@ -67,14 +70,20 @@ describe('OrderListMobile', () => {
         {...callbacks}
       />,
     );
-    expect(screen.getByRole('button', { name: /Concluir pedido/ })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /Concluir pedido/ }),
+    ).toBeInTheDocument();
   });
 
   it('nao oferece proxima transicao para pedido concluido', () => {
     renderList({ items: [orderItem({ orderStatus: 'Concluído' })] });
 
-    expect(screen.queryByRole('button', { name: /Concluir pedido/ })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Editar' })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /Concluir pedido/ }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Editar' }),
+    ).not.toBeInTheDocument();
   });
 
   it('dispara as acoes do cartao', () => {
@@ -95,14 +104,34 @@ describe('OrderListMobile', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Desativar' }));
     expect(callbacks.onDeactivate).toHaveBeenCalled();
 
-    fireEvent.click(screen.getByRole('button', { name: /Liberar para Transporte/ }));
+    fireEvent.click(
+      screen.getByRole('button', { name: /Liberar para Transporte/ }),
+    );
     expect(callbacks.onConfirmStatus).toHaveBeenCalled();
+  });
+
+  it('oferece impressão isolada para pedido com plano válido', () => {
+    renderList({
+      items: [
+        orderItem({
+          serviceType: 'cutting_plan',
+          cuttingPlan: { id: 'plan-1', status: 'approved' },
+        }),
+      ],
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /Plano/ }));
+    expect(callbacks.onPrintCuttingPlan).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'order-1' }),
+    );
   });
 
   it('so oferece o historico quando o pedido ja foi editado', () => {
     renderList({ items: [orderItem({ edits: [{ priceDifference: 100 }] })] });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Histórico de edições' }));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Histórico de edições' }),
+    );
     expect(callbacks.onShowHistory).toHaveBeenCalled();
   });
 
@@ -110,13 +139,19 @@ describe('OrderListMobile', () => {
     renderList({ items: [orderItem({ isDeactivated: true })] });
 
     expect(screen.getByText('Desativado')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Editar' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Desativar' })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Editar' }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Desativar' }),
+    ).not.toBeInTheDocument();
   });
 
   it('na lista de orcamentos mostra o nome e permite aprovar', () => {
     renderList({
-      items: [{ id: 'estimate-1', estimateCode: 7, name: 'Ana Souza', cutlist: [] }],
+      items: [
+        { id: 'estimate-1', estimateCode: 7, name: 'Ana Souza', cutlist: [] },
+      ],
       isEstimateList: true,
     });
 

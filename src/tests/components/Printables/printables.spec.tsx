@@ -1,6 +1,7 @@
 import { Timestamp } from 'firebase/firestore';
 
 import { EstimateResume } from '@/components/Printables/EstimateResume';
+import { CuttingPlanPrint } from '@/components/Printables/CuttingPlanPrint';
 import { OrderResume } from '@/components/Printables/OrderResume';
 import { Tags } from '@/components/Printables/Tags';
 import {
@@ -266,5 +267,43 @@ describe('Tags', () => {
     expect(
       screen.queryByTestId('printable-cutting-plan'),
     ).not.toBeInTheDocument();
+  });
+});
+
+describe('CuttingPlanPrint', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it('imprime somente as folhas do plano', () => {
+    render(
+      <CuttingPlanPrint
+        order={orderWithPlan as never}
+        onAfterPrint={jest.fn()}
+      />,
+    );
+
+    expect(screen.getByTestId('cutting-plan-only-print')).toBeInTheDocument();
+    expect(screen.getByTestId('printable-cutting-plan')).toBeInTheDocument();
+    expect(screen.queryByTestId('order-summary')).not.toBeInTheDocument();
+    expect(screen.queryByText('Pedro Silva')).not.toBeInTheDocument();
+    expect(print).toHaveBeenCalled();
+  });
+
+  it('não monta impressão para plano desatualizado', () => {
+    render(
+      <CuttingPlanPrint
+        order={
+          {
+            ...orderWithPlan,
+            cuttingPlan: { ...cuttingPlan, status: 'outdated' },
+          } as never
+        }
+        onAfterPrint={jest.fn()}
+      />,
+    );
+
+    expect(
+      screen.queryByTestId('cutting-plan-only-print'),
+    ).not.toBeInTheDocument();
+    expect(print).not.toHaveBeenCalled();
   });
 });

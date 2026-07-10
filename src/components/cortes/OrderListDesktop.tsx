@@ -19,6 +19,7 @@ import {
   FaExclamationTriangle,
   FaHandshake,
   FaHistory,
+  FaPrint,
   FaRegFileAlt,
   FaTags,
   FaTrash,
@@ -95,6 +96,7 @@ type OrderRowProps = {
     OrderListCallbacks,
     | 'onPrintResume'
     | 'onPrintLabels'
+    | 'onPrintCuttingPlan'
     | 'onShowHistory'
     | 'onConfirmStatus'
     | 'onEdit'
@@ -108,6 +110,7 @@ const OrderRow = React.memo<OrderRowProps>(
     hoverBg,
     onPrintResume,
     onPrintLabels,
+    onPrintCuttingPlan,
     onShowHistory,
     onConfirmStatus,
     onEdit,
@@ -115,6 +118,10 @@ const OrderRow = React.memo<OrderRowProps>(
   }) => {
     const isUrgent = item?.isUrgent;
     const isDeactivated = item?.isDeactivated === true;
+    const hasCuttingPlan =
+      item?.serviceType === 'cutting_plan' &&
+      item?.cuttingPlan &&
+      item.cuttingPlan.status !== 'outdated';
     return (
       <Table.Row
         bg={bg}
@@ -191,6 +198,18 @@ const OrderRow = React.memo<OrderRowProps>(
         </Table.Cell>
         <Table.Cell>
           <HStack gap={2} justify="flex-end">
+            {hasCuttingPlan && (
+              <IconButton
+                colorScheme="gray"
+                variant="outline"
+                size="sm"
+                aria-label="Imprimir plano de corte"
+                title="Imprimir somente o plano de corte"
+                onClick={() => onPrintCuttingPlan(item)}
+              >
+                <FaPrint />
+              </IconButton>
+            )}
             {item.edits?.length > 0 && (
               <IconButton
                 aria-label="Histórico de edições"
@@ -269,6 +288,7 @@ const OrderListDesktopImpl: React.FC<OrderListProps> = ({
   searchQuery,
   onPrintResume,
   onPrintLabels,
+  onPrintCuttingPlan,
   onApproveEstimate,
   onShowHistory,
   onConfirmStatus,
@@ -350,6 +370,7 @@ const OrderListDesktopImpl: React.FC<OrderListProps> = ({
                   hoverBg={hoverBg}
                   onPrintResume={onPrintResume}
                   onPrintLabels={onPrintLabels}
+                  onPrintCuttingPlan={onPrintCuttingPlan}
                   onShowHistory={onShowHistory}
                   onConfirmStatus={onConfirmStatus}
                   onEdit={onEdit}

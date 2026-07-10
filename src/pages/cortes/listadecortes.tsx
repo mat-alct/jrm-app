@@ -35,40 +35,45 @@ import { SearchBar } from '../../components/SearchBar';
 import dynamic from 'next/dynamic';
 // IMPORTAÇÃO DOS COMPONENTES DE IMPRESSÃO (lazy — só baixa quando o usuário imprime)
 const Tags = dynamic(
-  () => import('../../components/Printables/Tags').then((m) => m.Tags),
+  () => import('../../components/Printables/Tags').then(m => m.Tags),
+  { ssr: false },
+);
+const CuttingPlanPrint = dynamic(
+  () =>
+    import('../../components/Printables/CuttingPlanPrint').then(
+      m => m.CuttingPlanPrint,
+    ),
   { ssr: false },
 );
 const OrderResume = dynamic(
   () =>
-    import('../../components/Printables/OrderResume').then((m) => m.OrderResume),
+    import('../../components/Printables/OrderResume').then(m => m.OrderResume),
   { ssr: false },
 );
 const EstimateResume = dynamic(
   () =>
     import('../../components/Printables/EstimateResume').then(
-      (m) => m.EstimateResume,
+      m => m.EstimateResume,
     ),
   { ssr: false },
 );
 // DIÁLOGOS (lazy — só baixam quando abertos)
 const HistoryDialog = dynamic(
   () =>
-    import('../../components/cortes/HistoryDialog').then(
-      (m) => m.HistoryDialog,
-    ),
+    import('../../components/cortes/HistoryDialog').then(m => m.HistoryDialog),
   { ssr: false },
 );
 const ConfirmStatusDialog = dynamic(
   () =>
     import('../../components/cortes/ConfirmStatusDialog').then(
-      (m) => m.ConfirmStatusDialog,
+      m => m.ConfirmStatusDialog,
     ),
   { ssr: false },
 );
 const ConfirmDeactivateDialog = dynamic(
   () =>
     import('../../components/cortes/ConfirmDeactivateDialog').then(
-      (m) => m.ConfirmDeactivateDialog,
+      m => m.ConfirmDeactivateDialog,
     ),
   { ssr: false },
 );
@@ -76,14 +81,14 @@ const ConfirmDeactivateDialog = dynamic(
 const OrderListMobile = dynamic(
   () =>
     import('../../components/cortes/OrderListMobile').then(
-      (m) => m.OrderListMobile,
+      m => m.OrderListMobile,
     ),
   { ssr: false },
 );
 const OrderListDesktop = dynamic(
   () =>
     import('../../components/cortes/OrderListDesktop').then(
-      (m) => m.OrderListDesktop,
+      m => m.OrderListDesktop,
     ),
   { ssr: false },
 );
@@ -114,6 +119,9 @@ const Cortes: React.FC = () => {
     null,
   );
   const [printingResume, setPrintingResume] = useState<PrintItemType>(null);
+  const [printingPlanOrder, setPrintingPlanOrder] = useState<Order | null>(
+    null,
+  );
 
   // Pedido cujo histórico de edições está aberto no diálogo
   const [historyOrder, setHistoryOrder] = useState<any | null>(null);
@@ -168,6 +176,10 @@ const Cortes: React.FC = () => {
   // não re-renderizem quando o pai atualiza (ex: abrir um Dialog).
   const handlePrintLabels = useCallback((orderData: any) => {
     setPrintingLabelsOrder(orderData);
+  }, []);
+
+  const handlePrintCuttingPlan = useCallback((orderData: any) => {
+    setPrintingPlanOrder(orderData);
   }, []);
 
   const handlePrintResume = useCallback(
@@ -242,8 +254,12 @@ const Cortes: React.FC = () => {
           await Promise.all([
             queryClient.invalidateQueries({ queryKey: ['orders'] }),
             queryClient.invalidateQueries({ queryKey: ['home-stats'] }),
-            queryClient.invalidateQueries({ queryKey: ['home-next-deliveries'] }),
-            queryClient.invalidateQueries({ queryKey: ['home-next-deadlines'] }),
+            queryClient.invalidateQueries({
+              queryKey: ['home-next-deliveries'],
+            }),
+            queryClient.invalidateQueries({
+              queryKey: ['home-next-deadlines'],
+            }),
             queryClient.invalidateQueries({ queryKey: ['home-timeline'] }),
           ]);
           toast.create({
@@ -324,8 +340,7 @@ const Cortes: React.FC = () => {
   // (caso contrário o React.memo nos cards/rows não tem efeito).
   // Mantido antes do early return para respeitar Rules of Hooks.
   const dataToShow = useMemo(
-    () =>
-      searchQuery && searchData ? searchData : pagedResult?.data || [],
+    () => (searchQuery && searchData ? searchData : pagedResult?.data || []),
     [searchQuery, searchData, pagedResult?.data],
   );
 
@@ -363,6 +378,14 @@ const Cortes: React.FC = () => {
             <Tags
               order={printingLabelsOrder}
               onAfterPrint={() => setPrintingLabelsOrder(null)}
+            />
+          )}
+
+          {/* Plano de corte isolado */}
+          {printingPlanOrder && (
+            <CuttingPlanPrint
+              order={printingPlanOrder}
+              onAfterPrint={() => setPrintingPlanOrder(null)}
             />
           )}
 
@@ -501,6 +524,7 @@ const Cortes: React.FC = () => {
               searchQuery={searchQuery}
               onPrintResume={handlePrintResume}
               onPrintLabels={handlePrintLabels}
+              onPrintCuttingPlan={handlePrintCuttingPlan}
               onApproveEstimate={approveEstimate}
               onShowHistory={setHistoryOrder}
               onConfirmStatus={setConfirmingStatusOrder}
@@ -515,6 +539,7 @@ const Cortes: React.FC = () => {
               searchQuery={searchQuery}
               onPrintResume={handlePrintResume}
               onPrintLabels={handlePrintLabels}
+              onPrintCuttingPlan={handlePrintCuttingPlan}
               onApproveEstimate={approveEstimate}
               onShowHistory={setHistoryOrder}
               onConfirmStatus={setConfirmingStatusOrder}

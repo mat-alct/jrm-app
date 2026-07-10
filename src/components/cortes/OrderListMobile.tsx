@@ -17,6 +17,7 @@ import {
   FaExclamationTriangle,
   FaHandshake,
   FaHistory,
+  FaPrint,
   FaRegFileAlt,
   FaTags,
   FaTrash,
@@ -93,6 +94,7 @@ type OrderCardProps = {
   OrderListCallbacks,
   | 'onPrintResume'
   | 'onPrintLabels'
+  | 'onPrintCuttingPlan'
   | 'onShowHistory'
   | 'onConfirmStatus'
   | 'onEdit'
@@ -104,6 +106,7 @@ const OrderCard = React.memo<OrderCardProps>(
     item,
     onPrintResume,
     onPrintLabels,
+    onPrintCuttingPlan,
     onShowHistory,
     onConfirmStatus,
     onEdit,
@@ -111,6 +114,10 @@ const OrderCard = React.memo<OrderCardProps>(
   }) => {
     const isUrgent = item?.isUrgent;
     const isDeactivated = item?.isDeactivated === true;
+    const hasCuttingPlan =
+      item?.serviceType === 'cutting_plan' &&
+      item?.cuttingPlan &&
+      item.cuttingPlan.status !== 'outdated';
     const statusBg = isDeactivated
       ? 'gray.200'
       : item.orderStatus === 'Concluído'
@@ -203,6 +210,18 @@ const OrderCard = React.memo<OrderCardProps>(
         </Flex>
 
         <Flex gap={2} mt={3} wrap="wrap">
+          {hasCuttingPlan && (
+            <Button
+              flex="1"
+              minW="100px"
+              size="md"
+              variant="outline"
+              colorScheme="gray"
+              onClick={() => onPrintCuttingPlan(item)}
+            >
+              <FaPrint /> Plano
+            </Button>
+          )}
           {item.edits?.length > 0 && (
             <IconButton
               size="md"
@@ -282,6 +301,7 @@ const OrderListMobileImpl: React.FC<OrderListProps> = ({
   searchQuery,
   onPrintResume,
   onPrintLabels,
+  onPrintCuttingPlan,
   onApproveEstimate,
   onShowHistory,
   onConfirmStatus,
@@ -331,6 +351,7 @@ const OrderListMobileImpl: React.FC<OrderListProps> = ({
             item={item}
             onPrintResume={onPrintResume}
             onPrintLabels={onPrintLabels}
+            onPrintCuttingPlan={onPrintCuttingPlan}
             onShowHistory={onShowHistory}
             onConfirmStatus={onConfirmStatus}
             onEdit={onEdit}
