@@ -1,5 +1,4 @@
-// eslint-disable-next-line @typescript-eslint/ban-types
-export const removeUndefinedAndEmptyFields = (obj: Object) => {
+export const removeUndefinedAndEmptyFields = (obj: object) => {
   return Object.keys(obj).forEach(key => {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
