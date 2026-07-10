@@ -7,11 +7,15 @@
 
 # testing
 /coverage
+/coverage-integration/
 /playwright-report/
 /test-results/
+/e2e/.auth/
 
 # next.js
 /.next/
+/.next-mock/
+/.next-emulator/
 /out/
 
 # production
@@ -25,6 +29,7 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+firestore-debug.log
 
 # local env files
 .env

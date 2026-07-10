@@ -43,3 +43,32 @@ describe('formatPhoneBR', () => {
     expect(formatPhoneBR(undefined)).toBe('');
   });
 });
+
+describe('toE164BR — casos de borda de comprimento', () => {
+  it('recusa número internacional com dígitos fora do intervalo 12..13', () => {
+    expect(toE164BR('+551')).toBeNull();
+    expect(toE164BR('+55119999900001234')).toBeNull();
+  });
+
+  it('recusa quantidade de dígitos que não é 10, 11, 12 nem 13', () => {
+    expect(toE164BR('999')).toBeNull();
+    expect(toE164BR('999999999')).toBeNull();
+    expect(toE164BR('99999999999999')).toBeNull();
+  });
+
+  it('devolve null para entrada vazia', () => {
+    expect(toE164BR('')).toBeNull();
+  });
+});
+
+describe('formatPhoneBR — entradas fora do padrão', () => {
+  it('devolve a entrada crua quando não tem 10 nem 11 dígitos', () => {
+    expect(formatPhoneBR('123')).toBe('123');
+    expect(formatPhoneBR('9999999999999999')).toBe('9999999999999999');
+  });
+
+  it('devolve string vazia sem entrada', () => {
+    expect(formatPhoneBR()).toBe('');
+    expect(formatPhoneBR('')).toBe('');
+  });
+});

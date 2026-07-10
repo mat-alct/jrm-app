@@ -153,6 +153,7 @@ describe('services/projects/designer.service', () => {
         'i1',
         { currentVersionId: 'new-version-id' },
         'designer-1',
+        { recalculateSummary: false },
       );
       expect(mockedUpdateItemStatus).toHaveBeenCalledWith(
         'p1',

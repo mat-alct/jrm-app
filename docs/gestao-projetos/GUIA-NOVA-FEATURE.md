@@ -611,3 +611,31 @@ Depois faca os testes manuais por papel:
 - Via B: `docs/gestao-projetos/VIA-B-cliente-montador-financeiro.md`
 - Seguranca: `docs/gestao-projetos/SEGURANCA.md`
 - Contas de teste: `CONTAS-SEED-TESTE.md`
+
+---
+
+## Testes obrigatórios por camada
+
+Nenhuma feature entra sem os testes das camadas aplicáveis. O CI reprova um
+`src/services/**` ou `src/pages/api/**` novo que não seja referenciado por
+nenhum spec (`npm run test:guardrails`).
+
+| O que você mexeu | Testes obrigatórios |
+|---|---|
+| Lógica pura (`src/utils/**`) | Unit exaustivo. `src/utils/**` tem piso de 95% de branches. |
+| Service que fala com Firestore/Storage | **Integração contra o emulador** (`src/tests/integration/services/`): execute o service real, leia de volta com o SDK e asserte o documento/arquivo. |
+| API route (`src/pages/api/**`) | **Integração** (`src/tests/integration/api/`): chame o handler real com `firebase-admin` apontado ao emulador. Matriz: método inválido → 405, sem sessão → 401/403, input inválido → 400, caminho feliz com verificação no emulador. |
+| Regra do Firestore/Storage | Matriz permitir/negar em `src/tests/rules/`, com o caso permitido e ao menos dois negados (papel errado e não autenticado). |
+| Componente com interação | Componente (jsdom + RTL). Mock só da camada de services, nunca de subcomponentes. |
+| Página nova | Entrada em `PAGE_ACCESS` (há um teste que reprova página sem regra) + uma jornada e2e que a visita. |
+| Fluxo de negócio | Jornada e2e em `e2e/real/`, com **verificação dupla**: a UI reflete o resultado *e* uma leitura no emulador confirma a persistência. |
+
+### Prova de fogo (obrigatória)
+
+Antes de abrir o PR, sabote de propósito o código que os testes novos cobrem —
+inverta uma condição, troque um status de destino, mude um path de Storage — e
+confirme que a suíte fica **vermelha**. Desfaça a sabotagem e confirme o verde.
+
+Um teste que não fica vermelho quando o código quebra é um teste "em volta": ele
+dá a sensação de proteção sem proteger nada. Foi assim que o bug de upload para o
+Firebase Storage chegou em produção com a suíte inteira verde.

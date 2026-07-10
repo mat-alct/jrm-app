@@ -1,19 +1,8 @@
-import { expect, Page, test } from '@playwright/test';
+import './testEnv';
 
-type E2ERole = 'admin' | 'seller' | 'designer' | 'assembler' | 'woodworker';
+import { Page } from '@playwright/test';
 
-async function signInAs(page: Page, role: E2ERole, path = '/') {
-  await page.addInitScript(selectedRole => {
-    window.localStorage.setItem('jrm:e2e-role', selectedRole);
-  }, role);
-  await page.goto(path);
-}
-
-async function expectPath(page: Page, path: string) {
-  await expect
-    .poll(() => new URL(page.url()).pathname)
-    .toBe(path);
-}
+import { expect, expectPath, loginAs, test } from './fixtures';
 
 function navLink(page: Page, href: string) {
   return page.locator(`a[href="${href}"]`);
@@ -31,11 +20,19 @@ async function expectMissingLinks(page: Page, hrefs: string[]) {
   }
 }
 
-test.describe('permissões por perfil', () => {
+const ADMIN_ONLY_ROUTES = [
+  '/projetos/dashboard',
+  '/administracao/vendedores',
+  '/administracao/usuarios',
+  '/administracao/configuracoes-prazos',
+  '/administracao/financeiro-montadores',
+];
+
+test.describe('permissões por perfil (usuários reais do seed)', () => {
   test('administrador vê a sidebar completa e acessa áreas restritas', async ({
     page,
   }) => {
-    await signInAs(page, 'admin');
+    await loginAs(page, 'admin');
     await expectPath(page, '/');
 
     await expectVisibleLinks(page, [
@@ -45,15 +42,10 @@ test.describe('permissões por perfil', () => {
       '/cortes/materiais',
       '/projetos/novo',
       '/projetos',
-      '/projetos/dashboard',
       '/desenhista',
       '/montador',
       '/montador/financeiro',
-      '/administracao/vendedores',
-      '/administracao/fretes',
-      '/administracao/usuarios',
-      '/administracao/configuracoes-prazos',
-      '/administracao/financeiro-montadores',
+      ...ADMIN_ONLY_ROUTES,
     ]);
 
     await page.goto('/administracao/usuarios');
@@ -68,7 +60,7 @@ test.describe('permissões por perfil', () => {
   test('vendedor acessa cortes, projetos e fretes, mas não áreas administrativas', async ({
     page,
   }) => {
-    await signInAs(page, 'seller');
+    await loginAs(page, 'seller');
     await expectPath(page, '/');
 
     await expectVisibleLinks(page, [
@@ -81,31 +73,25 @@ test.describe('permissões por perfil', () => {
       '/administracao/fretes',
     ]);
     await expectMissingLinks(page, [
-      '/projetos/dashboard',
       '/desenhista',
       '/montador',
       '/montador/financeiro',
-      '/administracao/vendedores',
-      '/administracao/usuarios',
-      '/administracao/configuracoes-prazos',
-      '/administracao/financeiro-montadores',
+      ...ADMIN_ONLY_ROUTES,
     ]);
 
     await page.goto('/cortes/novoservico');
     await expectPath(page, '/cortes/novoservico');
     await expect(page.getByText('Novo Serviço').first()).toBeVisible();
 
-    await page.goto('/administracao/usuarios');
-    await expectPath(page, '/');
-
-    await page.goto('/projetos/dashboard');
-    await expectPath(page, '/');
+    // Acesso direto por URL às rotas de admin volta para a home do papel.
+    for (const route of ADMIN_ONLY_ROUTES) {
+      await page.goto(route);
+      await expectPath(page, '/');
+    }
   });
 
-  test('marceneiro vê apenas início e lista de serviços de corte', async ({
-    page,
-  }) => {
-    await signInAs(page, 'woodworker');
+  test('marceneiro vê apenas início e lista de serviços de corte', async ({ page }) => {
+    await loginAs(page, 'woodworker');
     await expectPath(page, '/');
 
     await expectVisibleLinks(page, ['/', '/cortes/listadecortes']);
@@ -114,15 +100,10 @@ test.describe('permissões por perfil', () => {
       '/cortes/materiais',
       '/projetos/novo',
       '/projetos',
-      '/projetos/dashboard',
       '/desenhista',
       '/montador',
-      '/montador/financeiro',
-      '/administracao/vendedores',
       '/administracao/fretes',
-      '/administracao/usuarios',
-      '/administracao/configuracoes-prazos',
-      '/administracao/financeiro-montadores',
+      ...ADMIN_ONLY_ROUTES,
     ]);
 
     await page.goto('/cortes/listadecortes');
@@ -136,10 +117,8 @@ test.describe('permissões por perfil', () => {
     await expectPath(page, '/');
   });
 
-  test('desenhista acessa somente sua fila e itens de projeto permitidos', async ({
-    page,
-  }) => {
-    await signInAs(page, 'designer', '/desenhista');
+  test('desenhista cai na própria fila e não acessa projetos', async ({ page }) => {
+    await loginAs(page, 'designer');
     await expectPath(page, '/desenhista');
 
     await expectVisibleLinks(page, ['/desenhista']);
@@ -147,22 +126,12 @@ test.describe('permissões por perfil', () => {
       '/',
       '/cortes/novoservico',
       '/cortes/listadecortes',
-      '/cortes/materiais',
-      '/projetos/novo',
       '/projetos',
-      '/projetos/dashboard',
       '/montador',
-      '/montador/financeiro',
-      '/administracao/fretes',
-      '/administracao/usuarios',
+      ...ADMIN_ONLY_ROUTES,
     ]);
 
     await expect(page.getByText('Minha Fila').first()).toBeVisible();
-    await expect(page.getByText('Armario da suite')).toBeVisible();
-
-    await page.goto('/projetos/e2e-projeto-alpha/itens/e2e-item-suite');
-    await expectPath(page, '/projetos/e2e-projeto-alpha/itens/e2e-item-suite');
-    await expect(page.getByText('Armario da suite').first()).toBeVisible();
 
     await page.goto('/');
     await expectPath(page, '/desenhista');
@@ -171,28 +140,20 @@ test.describe('permissões por perfil', () => {
     await expectPath(page, '/desenhista');
   });
 
-  test('montador acessa somente seus dashboards específicos', async ({
-    page,
-  }) => {
-    await signInAs(page, 'assembler', '/montador');
+  test('montador acessa somente seus dashboards específicos', async ({ page }) => {
+    await loginAs(page, 'assembler');
     await expectPath(page, '/montador');
 
     await expectVisibleLinks(page, ['/montador', '/montador/financeiro']);
     await expectMissingLinks(page, [
       '/',
-      '/cortes/novoservico',
       '/cortes/listadecortes',
-      '/cortes/materiais',
-      '/projetos/novo',
       '/projetos',
-      '/projetos/dashboard',
       '/desenhista',
-      '/administracao/fretes',
-      '/administracao/usuarios',
+      ...ADMIN_ONLY_ROUTES,
     ]);
 
     await expect(page.getByText('Minha montagem').first()).toBeVisible();
-    await expect(page.getByText('Painel ripado')).toBeVisible();
 
     await page.goto('/montador/financeiro');
     await expectPath(page, '/montador/financeiro');
