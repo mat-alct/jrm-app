@@ -17,6 +17,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
   FaCheck,
   FaExclamationTriangle,
+  FaExternalLinkAlt,
   FaSave,
   FaSyncAlt,
 } from 'react-icons/fa';
@@ -40,6 +41,7 @@ import {
   getCuttingMachineConfiguration,
 } from '@/services/cuttingMachine.service';
 import type { Cutlist } from '@/types';
+import { openCuttingPlanViewer } from '@/utils/cuttingPlanViewer';
 
 import { CuttingPlanPreview } from './CuttingPlanPreview';
 
@@ -302,6 +304,17 @@ export const CuttingPlanSection = ({
         )}
 
         <Flex gap={3} justify="flex-end" wrap="wrap">
+          <Button
+            variant="outline"
+            onClick={() => {
+              if (plan && plan.status !== 'outdated') {
+                openCuttingPlanViewer(plan);
+              }
+            }}
+            disabled={!plan || plan.status === 'outdated' || generating}
+          >
+            <FaExternalLinkAlt /> Visualizar em nova aba
+          </Button>
           <Button
             variant="outline"
             onClick={saveDraft}

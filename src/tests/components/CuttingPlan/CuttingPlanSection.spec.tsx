@@ -7,6 +7,7 @@ import {
 } from '@/domain/cutting-plan';
 import { getCuttingMachineConfiguration } from '@/services/cuttingMachine.service';
 import type { Cutlist } from '@/types';
+import { openCuttingPlanViewer } from '@/utils/cuttingPlanViewer';
 
 import { fireEvent, render, screen, waitFor } from '../../testUtils';
 
@@ -14,6 +15,9 @@ jest.mock('uuid', () => ({ v4: () => 'generated-plan-id' }));
 jest.mock('@/services/cuttingMachine.service', () => ({
   CUTTING_MACHINE_QUERY_KEY: ['cutting-machine-configuration'],
   getCuttingMachineConfiguration: jest.fn(),
+}));
+jest.mock('@/utils/cuttingPlanViewer', () => ({
+  openCuttingPlanViewer: jest.fn(),
 }));
 
 const cut = (overrides: Partial<Cutlist> = {}): Cutlist => ({
@@ -136,6 +140,19 @@ describe('CuttingPlanSection', () => {
     fireEvent.click(screen.getByRole('button', { name: /Gerar novamente/i }));
     await waitFor(() =>
       expect(screen.getByText(/Rascunho · versão 2/)).toBeInTheDocument(),
+    );
+  });
+
+  it('abre a visualização interativa em uma nova aba', async () => {
+    render(<Harness />);
+    await generate();
+
+    fireEvent.click(
+      screen.getByRole('button', { name: /Visualizar em nova aba/i }),
+    );
+
+    expect(openCuttingPlanViewer).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'generated-plan-id', status: 'draft' }),
     );
   });
 });

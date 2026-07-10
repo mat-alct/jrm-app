@@ -90,7 +90,11 @@ export const CuttingPlanPrintable = ({
                 {sheet.usableArea.widthMm} × {sheet.usableArea.heightMm} mm
               </Text>
             </Flex>
-            <CuttingPlanLegend compact />
+            <CuttingPlanLegend
+              compact
+              edgeTrimMm={plan.settings.edgeTrimMm}
+              internalTrimMm={plan.settings.internalEdgeTrimMm}
+            />
             <Box
               mt={2}
               border="1px solid black"

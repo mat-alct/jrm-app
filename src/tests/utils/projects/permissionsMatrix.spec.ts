@@ -32,6 +32,7 @@ const EXPECTED_ACCESS: Record<string, UserRole[]> = {
   '/cortes/listadecortes': ['admin', 'seller', 'woodworker'],
   '/cortes/materiais': ['admin', 'seller'],
   '/cortes/configuracoes-maquina': ['admin', 'seller', 'woodworker'],
+  '/cortes/plano/visualizar': ['admin', 'seller', 'woodworker'],
   '/cortes/editar/[id]': ['admin', 'seller'],
   '/administracao/fretes': ['admin', 'seller'],
   '/administracao/vendedores': ['admin'],

@@ -18,7 +18,6 @@ import { CuttingSheetSvg } from './CuttingSheetSvg';
 interface CuttingPlanPreviewProps {
   compact?: boolean;
   plan: CuttingPlanResult;
-  showCutSequence?: boolean;
 }
 
 const brl = (value: number) =>
@@ -58,7 +57,6 @@ const Metric = ({
 export const CuttingPlanPreview = ({
   compact = false,
   plan,
-  showCutSequence = false,
 }: CuttingPlanPreviewProps) => {
   const offcutCount = plan.sheets.reduce(
     (total, sheet) =>
@@ -109,9 +107,9 @@ export const CuttingPlanPreview = ({
             <Metric label="Valor total" value={brl(plan.pricing.totalCost)} />
           </SimpleGrid>
           <Flex
-            bg="green.50"
+            bg="gray.50"
             borderWidth="1px"
-            borderColor="green.200"
+            borderColor="gray.300"
             borderRadius="md"
             px={4}
             py={3}
@@ -120,17 +118,21 @@ export const CuttingPlanPreview = ({
             mb={5}
             wrap="wrap"
           >
-            <Text fontWeight="700" color="green.800">
+            <Text fontWeight="700" color="gray.800">
               Sobras: {offcutCount}
             </Text>
-            <Text color="green.800">
+            <Text color="gray.800">
               {squareMeters(plan.metrics.offcutAreaMm2)}
             </Text>
           </Flex>
         </>
       )}
 
-      <CuttingPlanLegend compact={compact} />
+      <CuttingPlanLegend
+        compact={compact}
+        edgeTrimMm={plan.settings.edgeTrimMm}
+        internalTrimMm={plan.settings.internalEdgeTrimMm}
+      />
 
       <Grid gap={compact ? 2 : 5} mt={compact ? 2 : 4}>
         {plan.sheets.map(sheet => (
@@ -212,50 +214,6 @@ export const CuttingPlanPreview = ({
               </Table.Row>
             </Table.Body>
           </Table.Root>
-        </Box>
-      )}
-
-      {!compact && showCutSequence && (
-        <Box mt={6} borderWidth="1px" borderColor="gray.200" borderRadius="lg">
-          <Box px={4} py={3} bg="gray.50" borderBottomWidth="1px">
-            <Heading size="sm">Ordem sugerida dos cortes</Heading>
-          </Box>
-          <Box overflowX="auto">
-            <Table.Root size="sm">
-              <Table.Header>
-                <Table.Row>
-                  <Table.ColumnHeader>Etapa</Table.ColumnHeader>
-                  <Table.ColumnHeader>Chapa / painel</Table.ColumnHeader>
-                  <Table.ColumnHeader>Orientação</Table.ColumnHeader>
-                  <Table.ColumnHeader>Posição</Table.ColumnHeader>
-                  <Table.ColumnHeader>Curso</Table.ColumnHeader>
-                  <Table.ColumnHeader>Kerf</Table.ColumnHeader>
-                  <Table.ColumnHeader>Perda interna</Table.ColumnHeader>
-                </Table.Row>
-              </Table.Header>
-              <Table.Body>
-                {plan.cutSequence.map(cut => (
-                  <Table.Row key={cut.id}>
-                    <Table.Cell fontWeight="700">{cut.step}</Table.Cell>
-                    <Table.Cell>
-                      {cut.sheetId} · {cut.targetRegionId}
-                    </Table.Cell>
-                    <Table.Cell>
-                      {cut.orientation === 'horizontal'
-                        ? 'Horizontal'
-                        : 'Vertical'}
-                    </Table.Cell>
-                    <Table.Cell>{cut.positionMm.toFixed(1)} mm</Table.Cell>
-                    <Table.Cell>{cut.lengthMm.toFixed(1)} mm</Table.Cell>
-                    <Table.Cell>{cut.kerfLossMm.toFixed(1)} mm</Table.Cell>
-                    <Table.Cell>
-                      {cut.internalCutLossMm.toFixed(1)} mm
-                    </Table.Cell>
-                  </Table.Row>
-                ))}
-              </Table.Body>
-            </Table.Root>
-          </Box>
         </Box>
       )}
     </Box>

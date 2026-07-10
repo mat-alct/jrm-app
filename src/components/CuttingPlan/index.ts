@@ -5,4 +5,5 @@ export {
   isPrintableCuttingPlan,
 } from './CuttingPlanPrintable';
 export { CuttingPlanSection } from './CuttingPlanSection';
+export { CuttingPlanViewer } from './CuttingPlanViewer';
 export { CuttingSheetSvg } from './CuttingSheetSvg';
