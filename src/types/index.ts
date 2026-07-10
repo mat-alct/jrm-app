@@ -1,6 +1,11 @@
 // src/types/index.ts
 import { Timestamp } from 'firebase/firestore';
 
+import type {
+  CuttingPlan,
+  GrainDirection,
+} from '../domain/cutting-plan/types';
+
 export interface Area {
   name: string;
   freight: number;
@@ -65,6 +70,15 @@ export interface Cutlist {
   // orientada com o lado maior na horizontal. R$5 por canto, por peça.
   hasRoundedCorners?: boolean;
   roundedCorners?: RoundedCorners;
+  // Metadados usados pelo otimizador 2D. Pedidos antigos continuam válidos:
+  // os adaptadores aplicam valores seguros quando estes campos não existirem.
+  description?: string;
+  thicknessMm?: number;
+  finish?: string;
+  color?: string;
+  pattern?: string;
+  grainDirection?: GrainDirection;
+  canRotate?: boolean;
 }
 
 export interface Estimate {
@@ -112,6 +126,8 @@ export interface Order {
   updatedAt: Timestamp;
   edits?: OrderEdit[];
   isDeactivated?: boolean;
+  serviceType?: 'standard' | 'cutting_plan';
+  cuttingPlan?: CuttingPlan;
 }
 
 export interface MaterialRequest {
