@@ -11,6 +11,8 @@ import {
 import { format } from 'date-fns';
 import React from 'react';
 
+import { formatBRL } from '@/utils/formatBRL';
+
 type HistoryDialogProps = {
   order: any | null;
   onClose: () => void;
@@ -44,7 +46,7 @@ export const HistoryDialog: React.FC<HistoryDialogProps> = ({
   return (
     <Dialog.Root
       open={!!order}
-      onOpenChange={(e) => {
+      onOpenChange={e => {
         if (!e.open) onClose();
       }}
       size="md"
@@ -100,9 +102,7 @@ export const HistoryDialog: React.FC<HistoryDialogProps> = ({
                             gap={0.5}
                           >
                             <Text fontWeight="bold">
-                              {isOriginal
-                                ? 'Versão Original'
-                                : `Edição ${v}`}
+                              {isOriginal ? 'Versão Original' : `Edição ${v}`}
                             </Text>
                             {isOriginal ? (
                               <Text fontSize="xs" color="gray.600">
@@ -119,13 +119,11 @@ export const HistoryDialog: React.FC<HistoryDialogProps> = ({
                                 {diff !== 0 && (
                                   <Text
                                     fontSize="xs"
-                                    color={
-                                      diff > 0 ? 'red.600' : 'green.600'
-                                    }
+                                    color={diff > 0 ? 'red.600' : 'green.600'}
                                     fontWeight="medium"
                                   >
-                                    Diferença: {diff > 0 ? '+' : '−'}R${' '}
-                                    {Math.abs(diff)},00
+                                    Diferença: {diff > 0 ? '+' : '−'}
+                                    {formatBRL(Math.abs(diff))}
                                     {shouldCharge && ' · acertar'}
                                   </Text>
                                 )}
@@ -138,8 +136,7 @@ export const HistoryDialog: React.FC<HistoryDialogProps> = ({
                     return items;
                   })()}
                   <Text fontSize="xs" color="gray.500" mt={2}>
-                    Clique em uma versão para imprimir o resumo
-                    correspondente.
+                    Clique em uma versão para imprimir o resumo correspondente.
                   </Text>
                 </VStack>
               )}

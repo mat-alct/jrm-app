@@ -32,6 +32,7 @@ import { useAuth } from '../../../hooks/authContext';
 import { useOrder } from '../../../hooks/order';
 import { db } from '../../../services/firebase';
 import { Cutlist as CutlistType, Order } from '../../../types';
+import { formatBRL } from '../../../utils/formatBRL';
 
 const draftKey = (id: string) => `app@jrmcompensados:editDraft:${id}`;
 
@@ -278,7 +279,7 @@ const EditarPedido = () => {
               </Text>
               <Text fontSize="sm" color="gray.600" mt={1}>
                 Frete (fixo, não editável):{' '}
-                <strong>R$ {order.freightPrice ?? 0},00</strong>
+                <strong>{formatBRL(order.freightPrice ?? 0)}</strong>
               </Text>
             </Box>
           )}
@@ -323,7 +324,7 @@ const EditarPedido = () => {
                   Preço original
                 </Text>
                 <Text fontSize="xl" fontWeight="bold" color="gray.800">
-                  R$ {previousOrderPrice},00
+                  {formatBRL(previousOrderPrice)}
                 </Text>
               </Box>
               <Box>
@@ -331,7 +332,7 @@ const EditarPedido = () => {
                   Novo preço
                 </Text>
                 <Text fontSize="xl" fontWeight="bold" color="gray.800">
-                  R$ {newOrderPrice},00
+                  {formatBRL(newOrderPrice)}
                 </Text>
               </Box>
               <Box>
@@ -349,7 +350,8 @@ const EditarPedido = () => {
                         : 'gray.700'
                   }
                 >
-                  {priceDifference > 0 ? '+' : ''}R$ {priceDifference},00
+                  {priceDifference > 0 ? '+' : ''}
+                  {formatBRL(priceDifference)}
                 </Text>
               </Box>
               {(order.freightPrice ?? 0) > 0 && (
@@ -358,7 +360,7 @@ const EditarPedido = () => {
                     Total novo (c/ frete)
                   </Text>
                   <Text fontSize="xl" fontWeight="bold" color="orange.600">
-                    R$ {newOrderPrice + (order.freightPrice ?? 0)},00
+                    {formatBRL(newOrderPrice + (order.freightPrice ?? 0))}
                   </Text>
                 </Box>
               )}

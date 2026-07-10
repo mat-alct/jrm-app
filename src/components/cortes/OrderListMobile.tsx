@@ -22,6 +22,8 @@ import {
   FaTrash,
 } from 'react-icons/fa';
 
+import { formatBRL } from '@/utils/formatBRL';
+
 import type { OrderListCallbacks, OrderListProps } from './OrderListTypes';
 
 type EstimateCardProps = {
@@ -130,11 +132,7 @@ const OrderCard = React.memo<OrderCardProps>(
           ? 'Concluir pedido'
           : null;
 
-    const cardBg = isDeactivated
-      ? 'gray.100'
-      : isUrgent
-        ? 'red.50'
-        : 'white';
+    const cardBg = isDeactivated ? 'gray.100' : isUrgent ? 'red.50' : 'white';
     const cardBorder = isDeactivated
       ? 'gray.300'
       : isUrgent
@@ -188,13 +186,7 @@ const OrderCard = React.memo<OrderCardProps>(
           </Text>
         )}
 
-        <Flex
-          justify="space-between"
-          align="center"
-          mt={2}
-          gap={3}
-          wrap="wrap"
-        >
+        <Flex justify="space-between" align="center" mt={2} gap={3} wrap="wrap">
           <Text fontSize="xs" color="gray.500">
             {item.deliveryDate?.seconds
               ? `Entrega ${format(new Date(item.deliveryDate.seconds * 1000), 'dd/MM/yyyy')}`
@@ -206,7 +198,7 @@ const OrderCard = React.memo<OrderCardProps>(
             color={isDeactivated ? 'gray.500' : 'orange.600'}
             textDecoration={isDeactivated ? 'line-through' : undefined}
           >
-            R$ {(item.orderPrice ?? 0) + (item.freightPrice ?? 0)},00
+            {formatBRL((item.orderPrice ?? 0) + (item.freightPrice ?? 0))}
           </Text>
         </Flex>
 

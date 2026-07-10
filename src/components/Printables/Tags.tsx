@@ -13,6 +13,8 @@ import React, { useRef, useEffect, useMemo } from 'react';
 import { useReactToPrint } from 'react-to-print';
 import { v4 } from 'uuid';
 
+import { formatBRL } from '@/utils/formatBRL';
+
 import { sortCutlistData } from '../../utils/cutlist/sortAndReturnTag';
 import { Order, RoundedCorners } from '../../types';
 import { CuttingPlanPrintable, isPrintableCuttingPlan } from '../CuttingPlan';
@@ -238,7 +240,7 @@ export const Tags: React.FC<TagsProps> = ({ order, onAfterPrint }) => {
                   const last = orderData.edits![orderData.edits!.length - 1];
                   const diff = last.priceDifference ?? 0;
                   const shouldCharge = !!last.shouldCharge && diff !== 0;
-                  const formattedDiff = `R$ ${Math.abs(diff)},00`;
+                  const formattedDiff = formatBRL(Math.abs(diff));
                   const when = last.editedAt?.seconds
                     ? ' em ' +
                       format(
@@ -324,20 +326,21 @@ export const Tags: React.FC<TagsProps> = ({ order, onAfterPrint }) => {
                   alignItems="center"
                 >
                   <Text fontSize="8px" lineHeight="1.1">
-                    Pedido: R$ {orderData.orderPrice ?? 0},00
+                    Pedido: {formatBRL(orderData.orderPrice ?? 0)}
                   </Text>
                   {orderData.deliveryType === 'Entrega' && (
                     <Text fontSize="8px" lineHeight="1.1">
-                      Frete: R$ {orderData.freightPrice ?? 0},00
+                      Frete: {formatBRL(orderData.freightPrice ?? 0)}
                     </Text>
                   )}
                   <Text fontSize="9px" fontWeight="bold">
-                    TOTAL: R${' '}
-                    {(orderData.orderPrice ?? 0) +
-                      (orderData.deliveryType === 'Entrega'
-                        ? (orderData.freightPrice ?? 0)
-                        : 0)}
-                    ,00
+                    TOTAL:{' '}
+                    {formatBRL(
+                      (orderData.orderPrice ?? 0) +
+                        (orderData.deliveryType === 'Entrega'
+                          ? (orderData.freightPrice ?? 0)
+                          : 0),
+                    )}
                   </Text>
 
                   {/* STATUS EXPLÍCITO */}
@@ -380,12 +383,12 @@ export const Tags: React.FC<TagsProps> = ({ order, onAfterPrint }) => {
                         A RECEBER NA ENTREGA:
                       </Text>
                       <Text fontWeight="900" fontSize="11px">
-                        R${' '}
                         {orderData.amountDue && orderData.amountDue !== '0'
-                          ? orderData.amountDue
-                          : (orderData.orderPrice ?? 0) +
-                            (orderData.freightPrice ?? 0) +
-                            ',00'}
+                          ? `R$ ${orderData.amountDue}`
+                          : formatBRL(
+                              (orderData.orderPrice ?? 0) +
+                                (orderData.freightPrice ?? 0),
+                            )}
                       </Text>
                     </Box>
                   )}

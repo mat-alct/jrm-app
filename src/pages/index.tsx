@@ -56,6 +56,7 @@ import { toaster } from '@/components/ui/toaster';
 import { useAuth } from '../hooks/authContext';
 import { db } from '../services/firebase';
 import { queryClient } from '../services/queryClient';
+import { formatBRL } from '../utils/formatBRL';
 
 const ConfirmStatusDialog = dynamic(
   () =>
@@ -389,7 +390,7 @@ const Home = () => {
           let diffText = '';
           if (e.shouldCharge && diff !== 0) {
             const verb = diff > 0 ? 'a receber do cliente' : 'a devolver ao cliente';
-            diffText = `, com R$ ${Math.abs(diff)},00 ${verb}`;
+            diffText = `, com ${formatBRL(Math.abs(diff))} ${verb}`;
           }
           events.push({
             id: `${d.id}-e-${i}`,

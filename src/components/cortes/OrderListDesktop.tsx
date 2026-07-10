@@ -24,6 +24,8 @@ import {
   FaTrash,
 } from 'react-icons/fa';
 
+import { formatBRL } from '@/utils/formatBRL';
+
 import type { OrderListCallbacks, OrderListProps } from './OrderListTypes';
 
 type RowVisualProps = {
@@ -184,10 +186,9 @@ const OrderRow = React.memo<OrderRowProps>(
             ? format(new Date(item.deliveryDate.seconds * 1000), 'dd/MM/yyyy')
             : '-'}
         </Table.Cell>
-        <Table.Cell
-          textAlign="right"
-          fontWeight="bold"
-        >{`R$ ${(item.orderPrice ?? 0) + (item.freightPrice ?? 0)},00`}</Table.Cell>
+        <Table.Cell textAlign="right" fontWeight="bold">
+          {formatBRL((item.orderPrice ?? 0) + (item.freightPrice ?? 0))}
+        </Table.Cell>
         <Table.Cell>
           <HStack gap={2} justify="flex-end">
             {item.edits?.length > 0 && (

@@ -23,6 +23,7 @@ import {
 import { useReactToPrint } from 'react-to-print';
 
 import type { CuttingPlan } from '@/domain/cutting-plan';
+import { formatBRL } from '@/utils/formatBRL';
 
 import { CuttingPlanPrintable, isPrintableCuttingPlan } from '../CuttingPlan';
 
@@ -223,7 +224,7 @@ export const OrderResume: React.FC<OrderResumeProps> = ({
                   : '';
                 const diff = last.priceDifference ?? 0;
                 const shouldCharge = !!last.shouldCharge && diff !== 0;
-                const formattedDiff = `R$ ${Math.abs(diff)},00`;
+                const formattedDiff = formatBRL(Math.abs(diff));
                 const diffPart = shouldCharge
                   ? `, diferença de ${diff > 0 ? '+' : '−'}${formattedDiff}${
                       diff > 0
@@ -513,7 +514,7 @@ export const OrderResume: React.FC<OrderResumeProps> = ({
                     <Flex justify="space-between" align="center" fontSize="xs">
                       <Text color="gray.600">Pedido:</Text>
                       <Text fontWeight="medium">
-                        R$ {order.orderPrice ?? 0},00
+                        {formatBRL(order.orderPrice ?? 0)}
                       </Text>
                     </Flex>
                     <Flex
@@ -524,7 +525,7 @@ export const OrderResume: React.FC<OrderResumeProps> = ({
                     >
                       <Text color="gray.600">Frete:</Text>
                       <Text fontWeight="medium">
-                        R$ {order.freightPrice ?? 0},00
+                        {formatBRL(order.freightPrice ?? 0)}
                       </Text>
                     </Flex>
                     <Separator />
@@ -535,12 +536,12 @@ export const OrderResume: React.FC<OrderResumeProps> = ({
                     TOTAL
                   </Text>
                   <Text fontSize="xl" fontWeight="black">
-                    R${' '}
-                    {(order.orderPrice ?? 0) +
-                      (order.deliveryType === 'Entrega'
-                        ? (order.freightPrice ?? 0)
-                        : 0)}
-                    ,00
+                    {formatBRL(
+                      (order.orderPrice ?? 0) +
+                        (order.deliveryType === 'Entrega'
+                          ? (order.freightPrice ?? 0)
+                          : 0),
+                    )}
                   </Text>
                 </Flex>
                 <Separator />
