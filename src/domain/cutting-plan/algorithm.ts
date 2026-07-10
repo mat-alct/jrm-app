@@ -824,6 +824,90 @@ function findPlacementOption(input: {
   return best;
 }
 
+function extendRemaindersToPhysicalSheet(input: {
+  cuts: CuttingPlanCut[];
+  remainders: CuttingPlanWasteRegion[];
+  sheet: WorkingSheet;
+}): CuttingPlanWasteRegion[] {
+  const { cuts, remainders, sheet } = input;
+  const usable = sheet.usableArea;
+  const usableRight = usable.xMm + usable.widthMm;
+  const usableBottom = usable.yMm + usable.heightMm;
+  const trimCovers = (
+    orientation: CuttingPlanCut['orientation'],
+    positionMm: number,
+    spanStartMm: number,
+    spanEndMm: number,
+  ) =>
+    cuts.some(
+      cut =>
+        cut.kind === 'edge_trim' &&
+        cut.orientation === orientation &&
+        Math.abs(cut.positionMm - positionMm) <= EPSILON &&
+        cut.startMm <= spanStartMm + EPSILON &&
+        cut.startMm + cut.lengthMm >= spanEndMm - EPSILON,
+    );
+
+  return remainders.map(region => {
+    let { xMm, yMm, widthMm, heightMm } = region;
+    const right = region.xMm + region.widthMm;
+    const bottom = region.yMm + region.heightMm;
+    const touchesLeft = Math.abs(region.xMm - usable.xMm) <= EPSILON;
+    const touchesRight = Math.abs(right - usableRight) <= EPSILON;
+    const touchesTop = Math.abs(region.yMm - usable.yMm) <= EPSILON;
+    const touchesBottom = Math.abs(bottom - usableBottom) <= EPSILON;
+
+    if (
+      touchesLeft &&
+      !trimCovers(
+        'vertical',
+        usable.xMm,
+        region.yMm,
+        region.yMm + region.heightMm,
+      )
+    ) {
+      widthMm += usable.xMm;
+      xMm = 0;
+    }
+    if (
+      touchesRight &&
+      !trimCovers(
+        'vertical',
+        usableRight,
+        region.yMm,
+        region.yMm + region.heightMm,
+      )
+    ) {
+      widthMm += sheet.totalWidthMm - usableRight;
+    }
+    if (
+      touchesTop &&
+      !trimCovers(
+        'horizontal',
+        usable.yMm,
+        region.xMm,
+        region.xMm + region.widthMm,
+      )
+    ) {
+      heightMm += usable.yMm;
+      yMm = 0;
+    }
+    if (
+      touchesBottom &&
+      !trimCovers(
+        'horizontal',
+        usableBottom,
+        region.xMm,
+        region.xMm + region.widthMm,
+      )
+    ) {
+      heightMm += sheet.totalLengthMm - usableBottom;
+    }
+
+    return { ...region, xMm, yMm, widthMm, heightMm };
+  });
+}
+
 function calculateMetrics(
   sheets: CuttingPlanSheet[],
   edgeBandLengthMeters: number,
@@ -947,12 +1031,23 @@ function runCandidate(
       ? 'vertical'
       : 'horizontal';
   const finalizedSheets: CuttingPlanSheet[] = sheets.map(sheet => {
-    const remainderRegions: CuttingPlanWasteRegion[] = sheet.freeRegions.map(
+    const rawRemainderRegions: CuttingPlanWasteRegion[] = sheet.freeRegions.map(
       ({ region }) => ({
         ...region,
         reason: 'remainder',
       }),
     );
+    const cuts = scheduleDirectionalCuts({
+      sheet,
+      settings: input.settings,
+      primaryOrientation,
+      state: scheduleState,
+    });
+    const remainderRegions = extendRemaindersToPhysicalSheet({
+      cuts,
+      remainders: rawRemainderRegions,
+      sheet,
+    });
     const publicSheet: CuttingPlanSheet = {
       id: sheet.id,
       number: sheet.number,
@@ -961,12 +1056,7 @@ function runCandidate(
       totalLengthMm: sheet.totalLengthMm,
       usableArea: sheet.usableArea,
       placements: sheet.placements,
-      cuts: scheduleDirectionalCuts({
-        sheet,
-        settings: input.settings,
-        primaryOrientation,
-        state: scheduleState,
-      }),
+      cuts,
       wasteRegions: [...sheet.wasteRegions, ...remainderRegions],
     };
     if (hasOverlappingPlacements(publicSheet.placements)) {

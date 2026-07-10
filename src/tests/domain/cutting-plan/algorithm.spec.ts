@@ -54,6 +54,16 @@ describe('guillotine cutting plan algorithm', () => {
     ).toHaveLength(2);
     expect(result.metrics.movementCount).toBe(4);
     expect(result.metrics.movementCount).toBe(result.cutSequence.length);
+    const remainders = result.sheets[0].wasteRegions.filter(
+      region => region.reason === 'remainder',
+    );
+    expect(
+      remainders.some(
+        region =>
+          Math.abs(region.xMm + region.widthMm - 1850) < 0.001 ||
+          Math.abs(region.yMm + region.heightMm - 2750) < 0.001,
+      ),
+    ).toBe(true);
   });
 
   it('não cria cortes internos quando a peça ocupa exatamente a área útil', () => {
@@ -200,6 +210,13 @@ describe('guillotine cutting plan algorithm', () => {
         .filter(cut => cut.kind === 'edge_trim')
         .every(cut => cut.orientation === secondaryOrientation),
     ).toBe(true);
+
+    const largestOffcut = result.sheets[0].wasteRegions
+      .filter(region => region.reason === 'remainder')
+      .sort((a, b) => b.widthMm * b.heightMm - a.widthMm * a.heightMm)[0];
+    expect(largestOffcut.yMm).toBe(0);
+    expect(largestOffcut.heightMm).toBe(2750);
+    expect(largestOffcut.xMm + largestOffcut.widthMm).toBe(1850);
   });
 
   it('usa várias chapas quando necessário e nunca sobrepõe as peças', () => {
