@@ -706,7 +706,14 @@ function runCandidate(
   [...groups.entries()]
     .sort(([a], [b]) => a.localeCompare(b))
     .forEach(([, groupedPieces]) => {
-      const material = materialById.get(groupedPieces[0].piece.materialId)!;
+      const firstPiece = groupedPieces[0].piece;
+      const material = {
+        ...materialById.get(firstPiece.materialId)!,
+        thicknessMm: firstPiece.thicknessMm,
+        finish: firstPiece.finish,
+        color: firstPiece.color,
+        pattern: firstPiece.pattern,
+      };
       const groupSheets: WorkingSheet[] = [];
       const orderedPieces = sortExpandedPieces(
         groupedPieces,
