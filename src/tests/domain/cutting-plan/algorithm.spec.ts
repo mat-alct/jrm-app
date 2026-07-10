@@ -105,6 +105,47 @@ describe('guillotine cutting plan algorithm', () => {
     expect(pieceCuts.map(cut => cut.internalCutLossMm)).toEqual([0, 15]);
   });
 
+  it('refina as bordas por direção e só vira as tiras depois dos cortes longitudinais', () => {
+    const result = generateCuttingPlan(
+      input(
+        [
+          piece({
+            widthMm: 500,
+            lengthMm: 2730,
+            quantity: 3,
+            canRotate: false,
+          }),
+        ],
+        'fewer_cuts',
+      ),
+    );
+    const cuts = result.sheets[0].cuts;
+    const primaryOrientation = cuts[0].orientation;
+    const secondaryOrientation =
+      primaryOrientation === 'vertical' ? 'horizontal' : 'vertical';
+    const firstSecondaryTrim = cuts.findIndex(
+      cut =>
+        cut.kind === 'edge_trim' && cut.orientation === secondaryOrientation,
+    );
+    const lastPrimaryPieceCut = cuts.reduce(
+      (last, cut, index) =>
+        cut.kind === 'piece' && cut.orientation === primaryOrientation
+          ? index
+          : last,
+      -1,
+    );
+
+    expect(cuts.slice(0, 2).every(cut => cut.kind === 'edge_trim')).toBe(true);
+    expect(cuts[2].kind).toBe('piece');
+    expect(firstSecondaryTrim).toBeGreaterThan(lastPrimaryPieceCut);
+    expect(
+      cuts
+        .slice(firstSecondaryTrim)
+        .filter(cut => cut.kind === 'edge_trim')
+        .every(cut => cut.orientation === secondaryOrientation),
+    ).toBe(true);
+  });
+
   it('usa várias chapas quando necessário e nunca sobrepõe as peças', () => {
     const result = generateCuttingPlan(
       input([piece({ widthMm: 1800, lengthMm: 2700, quantity: 2 })]),

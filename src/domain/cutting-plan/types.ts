@@ -87,6 +87,7 @@ export interface CuttingPlanPlacement extends CuttingPlanRegion {
   pieceInstanceId: string;
   referenceItemId: string;
   rotated: boolean;
+  sourceRegionId: string;
 }
 
 export type CuttingPlanWasteReason =
@@ -111,6 +112,7 @@ export interface CuttingPlanCut {
   sheetId: string;
   step: number;
   targetRegionId: string;
+  targetRegion: CuttingPlanRegion;
 }
 
 export interface CuttingPlanSheet {

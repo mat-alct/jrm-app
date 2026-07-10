@@ -76,6 +76,11 @@ interface CandidateResult {
   result: CuttingPlanResult;
 }
 
+const otherOrientation = (
+  orientation: CuttingPlanCut['orientation'],
+): CuttingPlanCut['orientation'] =>
+  orientation === 'vertical' ? 'horizontal' : 'vertical';
+
 const CANDIDATE_CONFIGURATIONS: CandidateConfiguration[] = [
   {
     id: 'dimension-rows',
@@ -296,6 +301,7 @@ function simulatePlacement(input: {
     widthMm: pieceWidth,
     heightMm: pieceHeight,
     rotated: orientation.rotated,
+    sourceRegionId: region.id,
     grainDirection: expandedPiece.piece.grainDirection,
     edgeBandEdges: [...expandedPiece.piece.edgeBandEdges],
   };
@@ -383,6 +389,7 @@ function simulatePlacement(input: {
       startMm: firstIsVertical ? region.yMm : region.xMm,
       lengthMm: firstIsVertical ? region.heightMm : region.widthMm,
       targetRegionId: region.id,
+      targetRegion: { ...region },
       resultRegionIds: [
         secondNeedsCut ? firstStripId : placementId,
         firstRemainderId,
@@ -445,6 +452,21 @@ function simulatePlacement(input: {
       startMm: firstIsVertical ? region.xMm : region.yMm,
       lengthMm: firstIsVertical ? pieceWidth : pieceHeight,
       targetRegionId: firstNeedsCut ? firstStripId : region.id,
+      targetRegion: firstIsVertical
+        ? {
+            id: firstNeedsCut ? firstStripId : region.id,
+            xMm: region.xMm,
+            yMm: region.yMm,
+            widthMm: pieceWidth,
+            heightMm: region.heightMm,
+          }
+        : {
+            id: firstNeedsCut ? firstStripId : region.id,
+            xMm: region.xMm,
+            yMm: region.yMm,
+            widthMm: region.widthMm,
+            heightMm: pieceHeight,
+          },
       resultRegionIds: [placementId, secondRemainderId],
       kerfLossMm: secondLoss.kerf,
       internalCutLossMm: secondLoss.internal,
@@ -454,62 +476,141 @@ function simulatePlacement(input: {
   return { placement, freeRegions, lossRegions, cuts };
 }
 
-function edgeTrimCuts(
-  sheet: WorkingSheet,
-  edgeTrimMm: number,
-): PendingCut[] {
-  if (edgeTrimMm <= EPSILON) return [];
-  const usable = sheet.usableArea;
-  return [
-    {
+function directionalTrimCuts(input: {
+  orientation: CuttingPlanCut['orientation'];
+  otherDirectionPrepared: boolean;
+  panelId: string;
+  region: CuttingPlanRegion;
+  settings: CuttingPlanInput['settings'];
+  sheetId: string;
+}): PendingCut[] {
+  const {
+    orientation,
+    otherDirectionPrepared,
+    panelId,
+    region,
+    settings,
+    sheetId,
+  } = input;
+  if (settings.edgeTrimMm <= EPSILON) return [];
+
+  const perpendicularPadding = otherDirectionPrepared
+    ? 0
+    : settings.edgeTrimMm;
+  const isVertical = orientation === 'vertical';
+  const startMm = isVertical
+    ? region.yMm - perpendicularPadding
+    : region.xMm - perpendicularPadding;
+  const lengthMm =
+    (isVertical ? region.heightMm : region.widthMm) +
+    perpendicularPadding * 2;
+  const positions = isVertical
+    ? [region.xMm, region.xMm + region.widthMm]
+    : [region.yMm, region.yMm + region.heightMm];
+
+  return positions.map(positionMm => ({
+    sheetId,
+    kind: 'edge_trim',
+    orientation,
+    positionMm,
+    startMm,
+    lengthMm,
+    targetRegionId: panelId,
+    targetRegion: { ...region, id: panelId },
+    resultRegionIds: [panelId],
+    kerfLossMm: 0,
+    internalCutLossMm: 0,
+  }));
+}
+
+function scheduleDirectionalCuts(input: {
+  primaryOrientation: CuttingPlanCut['orientation'];
+  settings: CuttingPlanInput['settings'];
+  sheet: WorkingSheet;
+  state: { nextStep: number };
+}): CuttingPlanCut[] {
+  const { primaryOrientation, settings, sheet, state } = input;
+  const pending = sheet.cuts
+    .filter(cut => cut.kind === 'piece')
+    .sort((a, b) => a.step - b.step)
+    .map(({ id: _id, step: _step, ...cut }) => cut);
+  const availablePanels = new Set([sheet.usableArea.id]);
+  const preparedDirections = new Map<
+    string,
+    Set<CuttingPlanCut['orientation']>
+  >([[sheet.usableArea.id, new Set()]]);
+  const scheduled: CuttingPlanCut[] = [];
+
+  const append = (cut: PendingCut) => {
+    const step = state.nextStep;
+    state.nextStep += 1;
+    scheduled.push({
+      ...cut,
+      id: `${sheet.id}-cut-${String(step).padStart(4, '0')}`,
+      step,
+    });
+  };
+
+  const ensureDirectionPrepared = (
+    panelId: string,
+    region: CuttingPlanRegion,
+    orientation: CuttingPlanCut['orientation'],
+  ) => {
+    const directions = preparedDirections.get(panelId) ?? new Set();
+    if (directions.has(orientation)) return;
+    directionalTrimCuts({
       sheetId: sheet.id,
-      kind: 'edge_trim',
-      orientation: 'vertical',
-      positionMm: edgeTrimMm,
-      startMm: 0,
-      lengthMm: sheet.totalLengthMm,
-      targetRegionId: sheet.id,
-      resultRegionIds: [`${sheet.id}-left-trim`, `${sheet.id}-after-left-trim`],
-      kerfLossMm: 0,
-      internalCutLossMm: 0,
-    },
-    {
-      sheetId: sheet.id,
-      kind: 'edge_trim',
-      orientation: 'vertical',
-      positionMm: sheet.totalWidthMm - edgeTrimMm,
-      startMm: 0,
-      lengthMm: sheet.totalLengthMm,
-      targetRegionId: `${sheet.id}-after-left-trim`,
-      resultRegionIds: [`${sheet.id}-usable-width`, `${sheet.id}-right-trim`],
-      kerfLossMm: 0,
-      internalCutLossMm: 0,
-    },
-    {
-      sheetId: sheet.id,
-      kind: 'edge_trim',
-      orientation: 'horizontal',
-      positionMm: edgeTrimMm,
-      startMm: usable.xMm,
-      lengthMm: usable.widthMm,
-      targetRegionId: `${sheet.id}-usable-width`,
-      resultRegionIds: [`${sheet.id}-top-trim`, `${sheet.id}-after-top-trim`],
-      kerfLossMm: 0,
-      internalCutLossMm: 0,
-    },
-    {
-      sheetId: sheet.id,
-      kind: 'edge_trim',
-      orientation: 'horizontal',
-      positionMm: sheet.totalLengthMm - edgeTrimMm,
-      startMm: usable.xMm,
-      lengthMm: usable.widthMm,
-      targetRegionId: `${sheet.id}-after-top-trim`,
-      resultRegionIds: [usable.id, `${sheet.id}-bottom-trim`],
-      kerfLossMm: 0,
-      internalCutLossMm: 0,
-    },
-  ];
+      panelId,
+      region,
+      orientation,
+      otherDirectionPrepared: directions.has(otherOrientation(orientation)),
+      settings,
+    }).forEach(append);
+    directions.add(orientation);
+    preparedDirections.set(panelId, directions);
+  };
+
+  while (pending.length > 0) {
+    const executable = pending
+      .map((cut, index) => ({ cut, index }))
+      .filter(({ cut }) => availablePanels.has(cut.targetRegionId));
+    if (executable.length === 0) {
+      throw new Error(
+        `Sequência guilhotinada inválida na chapa ${sheet.number}.`,
+      );
+    }
+    const selected =
+      executable.find(({ cut }) => cut.orientation === primaryOrientation) ??
+      executable[0];
+    const [cut] = pending.splice(selected.index, 1);
+    ensureDirectionPrepared(cut.targetRegionId, cut.targetRegion, cut.orientation);
+    append(cut);
+
+    const inheritedDirections = new Set(
+      preparedDirections.get(cut.targetRegionId) ?? [],
+    );
+    availablePanels.delete(cut.targetRegionId);
+    cut.resultRegionIds.forEach(resultId => {
+      availablePanels.add(resultId);
+      preparedDirections.set(resultId, new Set(inheritedDirections));
+    });
+  }
+
+  sheet.placements.forEach(placement => {
+    const inheritedDirections =
+      preparedDirections.get(placement.id) ??
+      preparedDirections.get(placement.sourceRegionId) ??
+      new Set<CuttingPlanCut['orientation']>();
+    preparedDirections.set(placement.id, new Set(inheritedDirections));
+    ensureDirectionPrepared(placement.id, placement, primaryOrientation);
+    ensureDirectionPrepared(
+      placement.id,
+      placement,
+      otherOrientation(primaryOrientation),
+    );
+  });
+
+  return scheduled;
 }
 
 function appendCuts(
@@ -532,9 +633,8 @@ function createWorkingSheet(input: {
   material: CuttingPlanMaterial;
   number: number;
   planInput: CuttingPlanInput;
-  state: { nextStep: number };
 }): WorkingSheet {
-  const { material, number, planInput, state } = input;
+  const { material, number, planInput } = input;
   const totalWidthMm = material.sheetWidthMm ?? planInput.settings.sheetWidthMm;
   const totalLengthMm =
     material.sheetLengthMm ?? planInput.settings.sheetLengthMm;
@@ -555,7 +655,6 @@ function createWorkingSheet(input: {
     wasteRegions: [],
     freeRegions: [{ region: usableArea, depth: 0 }],
   };
-  appendCuts(sheet, edgeTrimCuts(sheet, planInput.settings.edgeTrimMm), state);
   return sheet;
 }
 
@@ -739,7 +838,6 @@ function runCandidate(
             material,
             number: sheets.length + groupSheets.length + 1,
             planInput: input,
-            state,
           });
           groupSheets.push(sheet);
           option = findPlacementOption({
@@ -768,6 +866,11 @@ function runCandidate(
       sheets.push(...groupSheets);
     });
 
+  const scheduleState = { nextStep: 1 };
+  const primaryOrientation =
+    configuration.splitPreferences[0] === 'vertical_first'
+      ? 'vertical'
+      : 'horizontal';
   const finalizedSheets: CuttingPlanSheet[] = sheets.map(sheet => {
     const remainderRegions: CuttingPlanWasteRegion[] = sheet.freeRegions.map(
       ({ region }) => ({
@@ -784,7 +887,12 @@ function runCandidate(
       totalLengthMm: sheet.totalLengthMm,
       usableArea: sheet.usableArea,
       placements: sheet.placements,
-      cuts: sheet.cuts,
+      cuts: scheduleDirectionalCuts({
+        sheet,
+        settings: input.settings,
+        primaryOrientation,
+        state: scheduleState,
+      }),
       wasteRegions: [...sheet.wasteRegions, ...remainderRegions],
     };
     if (hasOverlappingPlacements(publicSheet.placements)) {

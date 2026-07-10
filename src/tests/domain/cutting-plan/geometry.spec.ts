@@ -73,6 +73,7 @@ describe('cutting plan geometry', () => {
       widthMm: 100,
       heightMm: 100,
       rotated: false,
+      sourceRegionId: id,
       grainDirection: 'none',
       edgeBandEdges: [],
     });
