@@ -106,6 +106,7 @@ export interface CuttingPlanCut {
   lengthMm: number;
   orientation: CutOrientation;
   positionMm: number;
+  startMm: number;
   resultRegionIds: string[];
   sheetId: string;
   step: number;

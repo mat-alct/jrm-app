@@ -380,6 +380,7 @@ function simulatePlacement(input: {
       positionMm: firstIsVertical
         ? region.xMm + pieceWidth
         : region.yMm + pieceHeight,
+      startMm: firstIsVertical ? region.yMm : region.xMm,
       lengthMm: firstIsVertical ? region.heightMm : region.widthMm,
       targetRegionId: region.id,
       resultRegionIds: [
@@ -441,6 +442,7 @@ function simulatePlacement(input: {
       positionMm: firstIsVertical
         ? region.yMm + pieceHeight
         : region.xMm + pieceWidth,
+      startMm: firstIsVertical ? region.xMm : region.yMm,
       lengthMm: firstIsVertical ? pieceWidth : pieceHeight,
       targetRegionId: firstNeedsCut ? firstStripId : region.id,
       resultRegionIds: [placementId, secondRemainderId],
@@ -464,6 +466,7 @@ function edgeTrimCuts(
       kind: 'edge_trim',
       orientation: 'vertical',
       positionMm: edgeTrimMm,
+      startMm: 0,
       lengthMm: sheet.totalLengthMm,
       targetRegionId: sheet.id,
       resultRegionIds: [`${sheet.id}-left-trim`, `${sheet.id}-after-left-trim`],
@@ -475,6 +478,7 @@ function edgeTrimCuts(
       kind: 'edge_trim',
       orientation: 'vertical',
       positionMm: sheet.totalWidthMm - edgeTrimMm,
+      startMm: 0,
       lengthMm: sheet.totalLengthMm,
       targetRegionId: `${sheet.id}-after-left-trim`,
       resultRegionIds: [`${sheet.id}-usable-width`, `${sheet.id}-right-trim`],
@@ -486,6 +490,7 @@ function edgeTrimCuts(
       kind: 'edge_trim',
       orientation: 'horizontal',
       positionMm: edgeTrimMm,
+      startMm: usable.xMm,
       lengthMm: usable.widthMm,
       targetRegionId: `${sheet.id}-usable-width`,
       resultRegionIds: [`${sheet.id}-top-trim`, `${sheet.id}-after-top-trim`],
@@ -497,6 +502,7 @@ function edgeTrimCuts(
       kind: 'edge_trim',
       orientation: 'horizontal',
       positionMm: sheet.totalLengthMm - edgeTrimMm,
+      startMm: usable.xMm,
       lengthMm: usable.widthMm,
       targetRegionId: `${sheet.id}-after-top-trim`,
       resultRegionIds: [usable.id, `${sheet.id}-bottom-trim`],
