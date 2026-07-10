@@ -173,7 +173,7 @@ export const OrderData = ({
       return;
     }
 
-    if (orderType === 'Serviço' && orderData.deliveryType === 'Entrega') {
+    if (orderType !== 'Orçamento' && orderData.deliveryType === 'Entrega') {
       if (!orderData.telephone)
         return createOrderSetError('telephone', {
           type: 'required',
@@ -322,7 +322,7 @@ export const OrderData = ({
       </Box>
 
       {/* 2. DADOS DO SERVIÇO */}
-      {orderType === 'Serviço' && (
+      {orderType !== 'Orçamento' && (
         <Box
           bg="white"
           borderRadius="xl"

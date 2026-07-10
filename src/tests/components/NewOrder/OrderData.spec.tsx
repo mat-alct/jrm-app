@@ -104,6 +104,11 @@ describe('NewOrder/OrderData', () => {
   it('impede finalizar um serviço de plano de corte sem plano gerado', () => {
     renderOrderData('Plano de corte', true);
 
+    expect(
+      screen.getByRole('heading', { name: '2. Detalhes do Serviço' }),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Logística')).toBeInTheDocument();
+    expect(screen.getByText('Status Pagamento')).toBeInTheDocument();
     expect(submitButton()).toBeDisabled();
   });
 

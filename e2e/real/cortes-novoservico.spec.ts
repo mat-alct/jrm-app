@@ -9,7 +9,10 @@ import { expect, loginAs, test } from './fixtures';
 const MATERIAL = { width: 2750, height: 1850, price: 220 };
 
 /** Clica na opcao visivel de um FormRadio (o layout renderiza mobile + desktop). */
-async function chooseRadio(page: import('@playwright/test').Page, option: string) {
+async function chooseRadio(
+  page: import('@playwright/test').Page,
+  option: string,
+) {
   await page
     .getByText(option, { exact: true })
     .filter({ visible: true })
@@ -33,6 +36,70 @@ async function addPiece(
 }
 
 test.describe('cortes — novo serviço', () => {
+  test('gera, aprova e persiste um plano de corte vinculado ao pedido', async ({
+    page,
+    adminDb,
+  }) => {
+    await loginAs(page, 'seller');
+    await page.goto('/cortes/novoservico');
+
+    await chooseRadio(page, 'Plano de corte');
+    await expect(
+      page.getByRole('radio', { name: 'Plano de corte' }),
+    ).toBeChecked();
+    await expect(
+      page.getByRole('heading', { name: 'Plano de corte 2D' }),
+    ).toBeVisible();
+
+    await addPiece(page, { amount: 3, sideA: 900, sideB: 450 });
+    await page.getByRole('button', { name: 'Gerar plano de corte' }).click();
+
+    await expect(
+      page.getByRole('heading', { name: 'Resultado do plano' }),
+    ).toBeVisible();
+    await expect(page.getByText('Ordem sugerida dos cortes')).toBeVisible();
+    await expect(page.getByText(/Rascunho · versão 1/)).toBeVisible();
+
+    await page.getByRole('button', { name: 'Aprovar plano' }).click();
+    await expect(page.getByText(/Aprovado · versão 1/)).toBeVisible();
+
+    await page.getByLabel('Nome', { exact: true }).first().fill('Maria');
+    await page.getByLabel('Sobrenome', { exact: true }).first().fill('Plano');
+    await page
+      .getByLabel('Telefone', { exact: true })
+      .first()
+      .fill('(24) 99999-1111');
+    await chooseRadio(page, 'Retirar na Loja');
+    await chooseRadio(page, 'Pago');
+    await page
+      .locator('input[name="sellerPassword"]')
+      .fill(SEED_SELLER_PASSWORD);
+    await page.getByRole('button', { name: 'CONFIRMAR PEDIDO' }).click();
+
+    await expect(page).toHaveURL(/\/cortes\/listadecortes/);
+    await expect
+      .poll(async () => (await adminDb.collection('orders').get()).size, {
+        timeout: 15_000,
+      })
+      .toBe(2);
+
+    const snapshot = await adminDb
+      .collection('orders')
+      .where('serviceType', '==', 'cutting_plan')
+      .get();
+    expect(snapshot.docs).toHaveLength(1);
+
+    const created = snapshot.docs[0];
+    const data = created.data();
+    expect(data.cuttingPlan).toMatchObject({
+      orderId: created.id,
+      status: 'approved',
+      version: 1,
+    });
+    expect(data.cuttingPlan.cutSequence.length).toBeGreaterThan(0);
+    expect(data.orderPrice).toBe(data.cuttingPlan.pricing.totalCost);
+  });
+
   test('cria pedido com preço igual ao calculateCutlistPrice e código sequencial', async ({
     page,
     adminDb,
@@ -54,12 +121,17 @@ test.describe('cortes — novo serviço', () => {
 
     await page.getByLabel('Nome', { exact: true }).first().fill('Pedro');
     await page.getByLabel('Sobrenome', { exact: true }).first().fill('Silva');
-    await page.getByLabel('Telefone', { exact: true }).first().fill('(24) 99999-0000');
+    await page
+      .getByLabel('Telefone', { exact: true })
+      .first()
+      .fill('(24) 99999-0000');
 
     await chooseRadio(page, 'Retirar na Loja');
     await chooseRadio(page, 'Pago');
 
-    await page.locator('input[name="sellerPassword"]').fill(SEED_SELLER_PASSWORD);
+    await page
+      .locator('input[name="sellerPassword"]')
+      .fill(SEED_SELLER_PASSWORD);
     await page.getByRole('button', { name: 'CONFIRMAR PEDIDO' }).click();
 
     // Verificação dupla: o pedido foi gravado com código sequencial e preço certo.
@@ -71,7 +143,10 @@ test.describe('cortes — novo serviço', () => {
       })
       .toBe(2); // o seed já tem 1 pedido
 
-    const orders = await adminDb.collection('orders').orderBy('orderCode').get();
+    const orders = await adminDb
+      .collection('orders')
+      .orderBy('orderCode')
+      .get();
     const created = orders.docs[orders.docs.length - 1].data();
     expect(created.orderCode).toBe(2);
     expect(created.customer).toMatchObject({ name: 'Pedro Silva' });
@@ -80,7 +155,10 @@ test.describe('cortes — novo serviço', () => {
     expect(created.cutlist[0].price).toBe(expectedPrice);
   });
 
-  test('senha de vendedor inválida bloqueia a criação', async ({ page, adminDb }) => {
+  test('senha de vendedor inválida bloqueia a criação', async ({
+    page,
+    adminDb,
+  }) => {
     await loginAs(page, 'seller');
     await page.goto('/cortes/novoservico');
 
@@ -113,14 +191,18 @@ test.describe('cortes — novo serviço', () => {
 
     await page.getByLabel('Nome', { exact: true }).first().fill('Ana');
     await page.getByLabel('Sobrenome', { exact: true }).first().fill('Souza');
-    await page.locator('input[name="sellerPassword"]').fill(SEED_SELLER_PASSWORD);
+    await page
+      .locator('input[name="sellerPassword"]')
+      .fill(SEED_SELLER_PASSWORD);
     await page.getByRole('button', { name: 'SALVAR ORÇAMENTO' }).click();
 
     await expect
       .poll(async () => (await adminDb.collection('estimates').get()).size)
       .toBe(1);
 
-    const estimate = (await adminDb.collection('estimates').get()).docs[0].data();
+    const estimate = (
+      await adminDb.collection('estimates').get()
+    ).docs[0].data();
     expect(estimate.estimateCode).toBe(1);
     expect((await adminDb.collection('orders').get()).size).toBe(1);
   });
