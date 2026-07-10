@@ -4,7 +4,6 @@ import {
   Badge,
   Box,
   Button,
-  Checkbox,
   Flex,
   Grid,
   Heading,
@@ -22,7 +21,7 @@ import {
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useQuery } from '@tanstack/react-query';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Controller, Resolver, SubmitHandler, useForm } from 'react-hook-form';
+import { Resolver, SubmitHandler, useForm } from 'react-hook-form';
 import {
   FaArrowsAltH,
   FaArrowsAltV,
@@ -35,7 +34,10 @@ import {
 } from 'react-icons/fa';
 import { v4 } from 'uuid';
 
-import type { GrainDirection } from '../../domain/cutting-plan';
+import {
+  type GrainDirection,
+  thicknessFromMaterialName,
+} from '../../domain/cutting-plan';
 import { useMaterial } from '../../hooks/material';
 import { findAreaFreight, useAreas } from '../../hooks/useAreas';
 import type { RoundedCorners } from '../../types';
@@ -71,12 +73,7 @@ interface Cutlist {
   hasRoundedCorners?: boolean;
   roundedCorners?: RoundedCorners;
   description?: string;
-  thicknessMm?: number;
-  finish?: string;
-  color?: string;
-  pattern?: string;
   grainDirection?: GrainDirection;
-  canRotate?: boolean;
 }
 
 interface CreateCutlistProps {
@@ -87,12 +84,7 @@ interface CreateCutlistProps {
   borderA: number;
   borderB: number;
   description: string;
-  thicknessMm?: number | null;
-  finish: string;
-  color: string;
-  pattern: string;
   grainDirection: GrainDirection;
-  canRotate: boolean;
 }
 
 const defaultCreateCutlistValues = {
@@ -103,12 +95,7 @@ const defaultCreateCutlistValues = {
   borderA: 0,
   borderB: 0,
   description: '',
-  thicknessMm: undefined,
-  finish: '',
-  color: '',
-  pattern: '',
   grainDirection: 'none',
-  canRotate: true,
 } as unknown as CreateCutlistProps;
 
 interface CutlistPageProps {
@@ -117,15 +104,18 @@ interface CutlistPageProps {
   selectedArea?: string;
   deliveryType?: string;
   orderType?: string;
+  cuttingPlanPrice?: number;
 }
 
 type CutlistRowProps = {
   cut: Cutlist;
   onEdit: (cutId: string) => void;
   onRemove: (cutId: string) => void;
+  showPrice: boolean;
 };
 
-const CutlistRow = React.memo<CutlistRowProps>(({ cut, onEdit, onRemove }) => {
+const CutlistRow = React.memo<CutlistRowProps>(props => {
+  const { cut, onEdit, onRemove, showPrice } = props;
   const { avatar, gside, pside } = sortCutlistData({
     sideA: cut.sideA,
     sideB: cut.sideB,
@@ -242,10 +232,12 @@ const CutlistRow = React.memo<CutlistRowProps>(({ cut, onEdit, onRemove }) => {
           {cut.borderB}
         </Badge>
       </Table.Cell>
-      <Table.Cell
-        fontWeight="bold"
-        color="green.600"
-      >{`R$ ${cut.price},00`}</Table.Cell>
+      {showPrice && (
+        <Table.Cell
+          fontWeight="bold"
+          color="green.600"
+        >{`R$ ${cut.price},00`}</Table.Cell>
+      )}
       <Table.Cell>
         <HStack gap={1}>
           <IconButton
@@ -279,7 +271,9 @@ export const Cutlist = ({
   selectedArea,
   deliveryType,
   orderType,
+  cuttingPlanPrice,
 }: CutlistPageProps) => {
+  const isCuttingPlan = orderType === 'Plano de corte';
   const isStorePickup = deliveryType === 'Retirar na Loja';
   const shouldShowFreightLine =
     orderType === 'Orçamento' ? !!selectedArea : !isStorePickup;
@@ -291,7 +285,6 @@ export const Cutlist = ({
     reset: createCutlistReset,
     setValue: createCutlistSetValue,
     setError: createCutlistSetError,
-    watch: createCutlistWatch,
     formState: { errors: createCutlistErrors },
   } = useForm<CreateCutlistProps>({
     resolver: yupResolver(
@@ -329,7 +322,6 @@ export const Cutlist = ({
   const [roundedCorners, setRoundedCorners] =
     useState<RoundedCorners>(emptyCorners());
   const [pricePercent, setPricePercent] = useState<number>(75);
-  const selectedGrainDirection = createCutlistWatch('grainDirection');
 
   const toggleCorner = useCallback((corner: keyof RoundedCorners) => {
     setRoundedCorners(prev => ({ ...prev, [corner]: !prev[corner] }));
@@ -406,6 +398,21 @@ export const Cutlist = ({
     );
     if (!materialUsed) throw new Error('Material não encontrado');
 
+    if (isCuttingPlan) {
+      try {
+        thicknessFromMaterialName(materialUsed.name);
+      } catch (error) {
+        createCutlistSetError('materialId', {
+          type: 'value',
+          message:
+            error instanceof Error
+              ? error.message
+              : 'O nome da chapa precisa informar a espessura em xxmm.',
+        });
+        return;
+      }
+    }
+
     const hasHinge = extraType === 'hinge';
     const hasSlot = extraType === 'slot';
     const hasRound = extraType === 'round';
@@ -448,14 +455,7 @@ export const Cutlist = ({
         ...cutlistFormData,
         price,
         description: cutlistFormData.description.trim() || undefined,
-        thicknessMm: cutlistFormData.thicknessMm || undefined,
-        finish: cutlistFormData.finish.trim() || undefined,
-        color: cutlistFormData.color.trim() || undefined,
-        pattern: cutlistFormData.pattern.trim() || undefined,
         grainDirection: cutlistFormData.grainDirection,
-        canRotate:
-          cutlistFormData.grainDirection === 'none' &&
-          cutlistFormData.canRotate,
         hasHingeHoles: hasHinge,
         hingeHolesSide: hasHinge ? extraSide : undefined,
         hingeHolesQuantity: calculatedQty,
@@ -532,15 +532,10 @@ export const Cutlist = ({
       createCutlistSetValue('borderB', borderB);
       createCutlistSetValue('materialId', material.materialId);
       createCutlistSetValue('description', cutToUpdate.description ?? '');
-      createCutlistSetValue('thicknessMm', cutToUpdate.thicknessMm);
-      createCutlistSetValue('finish', cutToUpdate.finish ?? '');
-      createCutlistSetValue('color', cutToUpdate.color ?? '');
-      createCutlistSetValue('pattern', cutToUpdate.pattern ?? '');
       createCutlistSetValue(
         'grainDirection',
         cutToUpdate.grainDirection ?? 'none',
       );
-      createCutlistSetValue('canRotate', cutToUpdate.canRotate !== false);
 
       if (cutToUpdate.hasHingeHoles) {
         setExtraType('hinge');
@@ -667,40 +662,42 @@ export const Cutlist = ({
             </Box>
 
             <Flex direction="column" align={['center', 'flex-end']} gap={2}>
-              <RadioGroup.Root
-                colorScheme="orange"
-                value={String(pricePercent)}
-                onValueChange={e => {
-                  if (e.value) updatePricePercent(e.value);
-                }}
-                // @ts-expect-error Chakra aceita o tamanho responsivo resolvido.
-                size={radioSize}
-              >
-                <HStack gap={2} bg="gray.100" p={1} borderRadius="lg">
-                  {['75', '50', '1'].map(val => (
-                    <RadioGroup.Item
-                      key={val}
-                      value={val}
-                      p={2}
-                      borderRadius="md"
-                      _checked={{
-                        bg: 'white',
-                        shadow: 'sm',
-                        color: 'yellow.700',
-                      }}
-                    >
-                      <RadioGroup.ItemHiddenInput />
-                      <Text fontSize="xs" fontWeight="bold" px={2}>
-                        {val === '75'
-                          ? 'Balcão'
-                          : val === '50'
-                            ? 'Marceneiro'
-                            : 'Custo'}
-                      </Text>
-                    </RadioGroup.Item>
-                  ))}
-                </HStack>
-              </RadioGroup.Root>
+              {!isCuttingPlan && (
+                <RadioGroup.Root
+                  colorScheme="orange"
+                  value={String(pricePercent)}
+                  onValueChange={e => {
+                    if (e.value) updatePricePercent(e.value);
+                  }}
+                  // @ts-expect-error Chakra aceita o tamanho responsivo resolvido.
+                  size={radioSize}
+                >
+                  <HStack gap={2} bg="gray.100" p={1} borderRadius="lg">
+                    {['75', '50', '1'].map(val => (
+                      <RadioGroup.Item
+                        key={val}
+                        value={val}
+                        p={2}
+                        borderRadius="md"
+                        _checked={{
+                          bg: 'white',
+                          shadow: 'sm',
+                          color: 'yellow.700',
+                        }}
+                      >
+                        <RadioGroup.ItemHiddenInput />
+                        <Text fontSize="xs" fontWeight="bold" px={2}>
+                          {val === '75'
+                            ? 'Balcão'
+                            : val === '50'
+                              ? 'Marceneiro'
+                              : 'Custo'}
+                        </Text>
+                      </RadioGroup.Item>
+                    ))}
+                  </HStack>
+                </RadioGroup.Root>
+              )}
 
               <Flex
                 align="baseline"
@@ -715,8 +712,17 @@ export const Cutlist = ({
                   letterSpacing="tight"
                   lineHeight="1"
                 >
-                  {brl(cutlist.reduce((prev, curr) => prev + curr.price, 0))}
+                  {isCuttingPlan
+                    ? cuttingPlanPrice === undefined
+                      ? '—'
+                      : brl(cuttingPlanPrice)
+                    : brl(cutlist.reduce((prev, curr) => prev + curr.price, 0))}
                 </Text>
+                {isCuttingPlan && cuttingPlanPrice === undefined && (
+                  <Text fontSize="xs" color="gray.500" fontWeight="medium">
+                    Gere o plano para calcular o preço
+                  </Text>
+                )}
                 {shouldShowFreightLine && (
                   <>
                     <Text
@@ -901,75 +907,6 @@ export const Cutlist = ({
             </Box>
           </Grid>
 
-          <SimpleGrid
-            columns={[1, 2, 3, 6]}
-            gap={4}
-            mt={5}
-            pt={5}
-            borderTopWidth="1px"
-            borderColor="gray.100"
-            alignItems="flex-end"
-          >
-            <FormInput
-              {...createCutlistRegister('description')}
-              name="description"
-              label="Identificação da peça"
-              placeholder="Ex.: Porta esquerda"
-              size="md"
-            />
-            <FormInput
-              {...createCutlistRegister('thicknessMm')}
-              name="thicknessMm"
-              label="Espessura (mm)"
-              placeholder="Ex.: 15"
-              type="number"
-              min={1}
-              step={0.1}
-              size="md"
-            />
-            <FormInput
-              {...createCutlistRegister('finish')}
-              name="finish"
-              label="Acabamento"
-              placeholder="Ex.: Fosco"
-              size="md"
-            />
-            <FormInput
-              {...createCutlistRegister('color')}
-              name="color"
-              label="Cor / padrão"
-              placeholder="Ex.: Branco TX"
-              size="md"
-            />
-            <FormSelect
-              control={createCutlistControl}
-              name="grainDirection"
-              label="Sentido do veio"
-              options={[
-                { value: 'none', label: 'Sem veio obrigatório' },
-                { value: 'along_length', label: 'No comprimento' },
-                { value: 'along_width', label: 'Na largura' },
-              ]}
-              defaultValue="none"
-            />
-            <Controller
-              control={createCutlistControl}
-              name="canRotate"
-              render={({ field }) => (
-                <Checkbox.Root
-                  checked={selectedGrainDirection === 'none' && field.value}
-                  disabled={selectedGrainDirection !== 'none'}
-                  onCheckedChange={event => field.onChange(event.checked)}
-                  pb={3}
-                >
-                  <Checkbox.HiddenInput />
-                  <Checkbox.Control />
-                  <Checkbox.Label>Permitir rotação da peça</Checkbox.Label>
-                </Checkbox.Root>
-              )}
-            />
-          </SimpleGrid>
-
           {/* ÁREA DE DETALHE (Furação, Rasgo ou Boleado) */}
           {isOptionsOpen && (
             <Box
@@ -997,6 +934,44 @@ export const Cutlist = ({
               }
               position="relative"
             >
+              <SimpleGrid
+                columns={[1, 1, 2]}
+                gap={4}
+                mb={5}
+                pb={5}
+                borderBottomWidth="1px"
+                borderColor="gray.200"
+                alignItems="flex-end"
+              >
+                <FormInput
+                  {...createCutlistRegister('description')}
+                  name="description"
+                  label="Identificação da peça"
+                  placeholder="Ex.: Porta esquerda"
+                  size="md"
+                />
+                <FormSelect
+                  control={createCutlistControl}
+                  name="grainDirection"
+                  label="Sentido do veio"
+                  options={[
+                    {
+                      value: 'none',
+                      label: 'Sem sentido obrigatório (rotação livre)',
+                    },
+                    {
+                      value: 'along_length',
+                      label: 'Horizontal (lado maior)',
+                    },
+                    {
+                      value: 'along_width',
+                      label: 'Vertical (lado menor)',
+                    },
+                  ]}
+                  defaultValue="none"
+                />
+              </SimpleGrid>
+
               {extraType !== 'none' && (
                 <Badge
                   position="absolute"
@@ -1188,7 +1163,11 @@ export const Cutlist = ({
                 <Table.ColumnHeader color="gray.600">
                   Fitas (A|B)
                 </Table.ColumnHeader>
-                <Table.ColumnHeader color="gray.600">Preço</Table.ColumnHeader>
+                {!isCuttingPlan && (
+                  <Table.ColumnHeader color="gray.600">
+                    Preço
+                  </Table.ColumnHeader>
+                )}
                 <Table.ColumnHeader width="1%"> </Table.ColumnHeader>
               </Table.Row>
             </Table.Header>
@@ -1199,6 +1178,7 @@ export const Cutlist = ({
                   cut={c}
                   onEdit={updateCut}
                   onRemove={removeCut}
+                  showPrice={!isCuttingPlan}
                 />
               ))}
             </Table.Body>

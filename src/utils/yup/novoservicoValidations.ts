@@ -54,18 +54,7 @@ export const createCutlistSchema = Yup.object().shape({
   borderA: Yup.number().required('Fita Obrigatória'),
   borderB: Yup.number().required('Fita Obrigatória'),
   description: Yup.string().default(''),
-  thicknessMm: Yup.number()
-    .transform((value: unknown, originalValue: unknown) => {
-      if (originalValue === '' || originalValue === undefined) return undefined;
-      return typeof value === 'number' ? value : Number(value);
-    })
-    .positive('Espessura inválida')
-    .notRequired(),
-  finish: Yup.string().default(''),
-  color: Yup.string().default(''),
-  pattern: Yup.string().default(''),
   grainDirection: Yup.string()
     .oneOf(['none', 'along_width', 'along_length'])
     .default('none'),
-  canRotate: Yup.boolean().default(true),
 });

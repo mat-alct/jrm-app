@@ -205,6 +205,11 @@ const NovoServiço = () => {
           selectedArea={currentArea}
           deliveryType={currentDeliveryType}
           orderType={orderType}
+          cuttingPlanPrice={
+            cuttingPlan?.status !== 'outdated'
+              ? cuttingPlan?.pricing.totalCost
+              : undefined
+          }
         />
 
         {orderType === 'Plano de corte' && (

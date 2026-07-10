@@ -25,14 +25,17 @@ jest.mock('@/hooks/useAreas', () => ({
 
 const MATERIAL = {
   id: 'mat-1',
-  name: 'MDF Branco',
+  name: 'MDF Branco 15mm',
   width: 1000,
   height: 1000,
   price: 100,
   materialType: 'MDF' as const,
 };
 
-function renderCutlist(cutlist: CutlistType[] = []) {
+function renderCutlist(
+  cutlist: CutlistType[] = [],
+  options: { orderType?: string; cuttingPlanPrice?: number } = {},
+) {
   const updateCutlist = jest.fn();
 
   const utils = render(
@@ -42,7 +45,8 @@ function renderCutlist(cutlist: CutlistType[] = []) {
         updateCutlist={updateCutlist}
         selectedArea="Centro"
         deliveryType="Entrega"
-        orderType="Pedido"
+        orderType={options.orderType ?? 'Pedido'}
+        cuttingPlanPrice={options.cuttingPlanPrice}
       />
     </MaterialProvider>,
   );
@@ -51,11 +55,11 @@ function renderCutlist(cutlist: CutlistType[] = []) {
 }
 
 /** Escolhe o material no react-select (inputId = materialId). */
-async function chooseMaterial() {
+async function chooseMaterial(label = MATERIAL.name) {
   const input = document.querySelector('#materialId') as HTMLInputElement;
   fireEvent.focus(input);
   fireEvent.keyDown(input, { key: 'ArrowDown' });
-  fireEvent.click(await screen.findByText('MDF Branco'));
+  fireEvent.click(await screen.findByText(label));
 }
 
 function fillPiece({
@@ -131,39 +135,61 @@ describe('NewOrder/Cutlist', () => {
     expect(expectedPrice).toBe(700);
   });
 
-  it('salva identificação, espessura, veio e bloqueia rotação incompatível', async () => {
+  it('mantém identificação e veio apenas dentro das opções auxiliares', async () => {
     const { updateCutlist } = renderCutlist();
 
     await chooseMaterial();
     fillPiece();
+
+    expect(
+      screen.queryByLabelText('Identificação da peça'),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Sentido do veio')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Opções de Detalhe' }));
     fireEvent.change(screen.getByLabelText('Identificação da peça'), {
       target: { value: 'Porta esquerda' },
-    });
-    fireEvent.change(screen.getByLabelText('Espessura (mm)'), {
-      target: { value: '15' },
     });
     const grain = document.querySelector('#grainDirection') as HTMLInputElement;
     fireEvent.focus(grain);
     fireEvent.keyDown(grain, { key: 'ArrowDown' });
-    fireEvent.click(await screen.findByText('No comprimento'));
+    fireEvent.click(await screen.findByText('Horizontal (lado maior)'));
 
-    expect(
-      screen.getByRole('checkbox', { name: 'Permitir rotação da peça' }),
-    ).toBeDisabled();
+    expect(screen.queryByLabelText('Espessura (mm)')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Acabamento')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Cor / padrão')).not.toBeInTheDocument();
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /ADD/i }));
 
     await waitFor(() => expect(updateCutlist).toHaveBeenCalled());
     expect(updateCutlist.mock.calls[0][0][0]).toMatchObject({
       description: 'Porta esquerda',
-      thicknessMm: 15,
       grainDirection: 'along_length',
-      canRotate: false,
     });
+    expect(updateCutlist.mock.calls[0][0][0]).not.toHaveProperty('thicknessMm');
+    expect(updateCutlist.mock.calls[0][0][0]).not.toHaveProperty('canRotate');
+  });
+
+  it('bloqueia material sem espessura no nome ao adicionar peça ao plano', async () => {
+    const malformed = { ...MATERIAL, name: 'MDF Branco' };
+    jest.mocked(getAllMaterials).mockResolvedValue([malformed] as never);
+    const { updateCutlist } = renderCutlist([], {
+      orderType: 'Plano de corte',
+    });
+
+    await chooseMaterial(malformed.name);
+    fillPiece();
+    fireEvent.click(screen.getByRole('button', { name: /ADD/i }));
+
+    expect(
+      await screen.findByText(/precisa informar a espessura no nome/i),
+    ).toBeInTheDocument();
+    expect(updateCutlist).not.toHaveBeenCalled();
   });
 
   it('recalcula os precos da lista ao trocar a porcentagem', async () => {
     const { updateCutlist } = renderCutlist([existingPiece()]);
-    await screen.findByText('MDF Branco');
+    await screen.findByText(MATERIAL.name);
 
     // O radio de porcentagem e rotulado por publico-alvo: 75=Balcao, 50=Marceneiro, 1=Custo.
     fireEvent.click(screen.getByText('Marceneiro'));
@@ -215,7 +241,7 @@ describe('NewOrder/Cutlist', () => {
   it('lista as pecas existentes com material e preco', async () => {
     renderCutlist([existingPiece()]);
 
-    expect(await screen.findByText('MDF Branco')).toBeInTheDocument();
+    expect(await screen.findByText(MATERIAL.name)).toBeInTheDocument();
     const table = screen.getByRole('table');
     expect(within(table).getByText(/350/)).toBeInTheDocument();
   });
@@ -225,7 +251,7 @@ describe('NewOrder/Cutlist', () => {
       existingPiece(),
       existingPiece({ id: 'cut-2' }),
     ]);
-    await screen.findAllByText('MDF Branco');
+    await screen.findAllByText(MATERIAL.name);
 
     const removeButtons = screen.getAllByRole('button', { name: 'Remover' });
     fireEvent.click(removeButtons[0]);
@@ -233,5 +259,21 @@ describe('NewOrder/Cutlist', () => {
     await waitFor(() => expect(updateCutlist).toHaveBeenCalled());
     const [pieces] = updateCutlist.mock.calls.at(-1)!;
     expect(pieces.map((p: CutlistType) => p.id)).toEqual(['cut-2']);
+  });
+
+  it('mostra apenas o preço total do plano e oculta preços individuais', async () => {
+    renderCutlist([existingPiece()], {
+      orderType: 'Plano de corte',
+      cuttingPlanPrice: 123.45,
+    });
+
+    expect(await screen.findByText(/123,45/)).toBeInTheDocument();
+    expect(screen.queryByText('Balcão')).not.toBeInTheDocument();
+    expect(screen.queryByText('Marceneiro')).not.toBeInTheDocument();
+    expect(screen.queryByText('Custo')).not.toBeInTheDocument();
+
+    const table = screen.getByRole('table');
+    expect(within(table).queryByText('Preço')).not.toBeInTheDocument();
+    expect(within(table).queryByText(/350/)).not.toBeInTheDocument();
   });
 });

@@ -291,6 +291,12 @@ const EditarPedido = () => {
               <CutlistComponent
                 cutlist={cutlist}
                 updateCutlist={updateCutlist}
+                orderType={requiresCuttingPlan ? 'Plano de corte' : 'Serviço'}
+                cuttingPlanPrice={
+                  cuttingPlan?.status !== 'outdated'
+                    ? cuttingPlan?.pricing.totalCost
+                    : undefined
+                }
               />
             </Box>
             <CuttingPlanSection
