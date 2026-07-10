@@ -204,12 +204,27 @@ describe('guillotine cutting plan algorithm', () => {
     expect(cuts[0].kind).toBe('edge_trim');
     expect(cuts[1].kind).toBe('piece');
     expect(firstSecondaryTrim).toBeGreaterThan(lastPrimaryPieceCut);
+    const trimsAfterTurningStrips = cuts
+      .slice(firstSecondaryTrim)
+      .filter(cut => cut.kind === 'edge_trim');
     expect(
-      cuts
-        .slice(firstSecondaryTrim)
-        .filter(cut => cut.kind === 'edge_trim')
-        .every(cut => cut.orientation === secondaryOrientation),
+      trimsAfterTurningStrips.every(
+        cut => cut.orientation === secondaryOrientation,
+      ),
     ).toBe(true);
+    expect(trimsAfterTurningStrips).toHaveLength(6);
+    expect(
+      trimsAfterTurningStrips.reduce<Record<string, number>>((count, cut) => {
+        count[cut.targetRegionId] = (count[cut.targetRegionId] ?? 0) + 1;
+        return count;
+      }, {}),
+    ).toEqual(
+      expect.objectContaining(
+        Object.fromEntries(
+          result.sheets[0].placements.map(placement => [placement.id, 2]),
+        ),
+      ),
+    );
 
     const largestOffcut = result.sheets[0].wasteRegions
       .filter(region => region.reason === 'remainder')

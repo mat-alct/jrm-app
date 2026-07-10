@@ -61,9 +61,9 @@ registrados como regiões distintas e visíveis no desenho.
 
 ## Sobras e custos
 
-Toda região restante é chamada apenas de **sobra**. Não há classificação entre
-reutilizável e descarte. As métricas separam área usada, área de sobras e perdas
-do processo.
+Toda região restante é chamada apenas de **sobra**. As métricas separam área
+usada, área de sobras e perdas do processo, sem criar categorias para o material
+restante.
 
 O valor do plano é:
 
