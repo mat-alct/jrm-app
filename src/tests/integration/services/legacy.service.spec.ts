@@ -2,6 +2,12 @@ import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { Timestamp as AdminTimestamp } from 'firebase-admin/firestore';
 import { Timestamp } from 'firebase/firestore';
 
+import {
+  buildCuttingPlan,
+  cutlistToCuttingPlanInput,
+  generateCuttingPlan,
+} from '@/domain/cutting-plan';
+
 import { auth } from '@/services/firebase';
 import { adminDb } from '@/services/firebaseAdmin';
 import {
@@ -9,6 +15,7 @@ import {
   createOrder,
   getOrders,
   getOrdersBySearch,
+  stripUndefined,
   updateOrderCutlist,
 } from '@/services/orders.service';
 import {
@@ -93,6 +100,36 @@ function adminOrderData(overrides: Parameters<typeof order>[0] = {}) {
   };
 }
 
+function cuttingPlanFor(items: Cutlist[]) {
+  const timestamp = Timestamp.fromDate(new Date('2026-01-15T12:00:00.000Z'));
+  return buildCuttingPlan({
+    id: 'plan-integration',
+    orderId: 'pending',
+    status: 'approved',
+    timestamp,
+    result: generateCuttingPlan(
+      cutlistToCuttingPlanInput({
+        cutlist: items,
+        optimizationMode: 'balanced',
+      }),
+    ),
+  });
+}
+
+function adminCuttingPlanFor(items: Cutlist[]) {
+  const plan = stripUndefined(cuttingPlanFor(items));
+  const timestamp = AdminTimestamp.fromDate(
+    new Date('2026-01-15T12:00:00.000Z'),
+  );
+
+  return {
+    ...plan,
+    createdAt: timestamp,
+    updatedAt: timestamp,
+    approvedAt: timestamp,
+  };
+}
+
 describe('legacy orders/materials services integration', () => {
   beforeEach(async () => {
     await resetEmulator();
@@ -125,8 +162,12 @@ describe('legacy orders/materials services integration', () => {
       .collection('orders')
       .where('seller', '==', 'Vendedor Seed')
       .get();
-    expect(ordersSnap.docs.map(doc => doc.data().orderCode).sort()).toEqual([1, 10, 11]);
-    const createdOrder = ordersSnap.docs.find(doc => doc.data().orderCode === 10);
+    expect(ordersSnap.docs.map(doc => doc.data().orderCode).sort()).toEqual([
+      1, 10, 11,
+    ]);
+    const createdOrder = ordersSnap.docs.find(
+      doc => doc.data().orderCode === 10,
+    );
     expect(createdOrder?.data()).toMatchObject({
       orderPrice: 100,
       customer: { name: 'Ana Lima' },
@@ -138,7 +179,9 @@ describe('legacy orders/materials services integration', () => {
       .collection('estimates')
       .orderBy('estimateCode')
       .get();
-    expect(estimatesSnap.docs.map(doc => doc.data().estimateCode)).toEqual([20]);
+    expect(estimatesSnap.docs.map(doc => doc.data().estimateCode)).toEqual([
+      20,
+    ]);
     expect(estimatesSnap.docs[0].data()).toMatchObject({ estimatePrice: 80 });
     expect(estimatesSnap.docs[0].data().telephone).toBeUndefined();
   });
@@ -164,7 +207,9 @@ describe('legacy orders/materials services integration', () => {
     );
 
     const secondPage = await getOrders('Concluído', firstPage.lastDoc);
-    expect(secondPage.data.map(item => item.orderCode)).toEqual([5, 4, 3, 2, 1]);
+    expect(secondPage.data.map(item => item.orderCode)).toEqual([
+      5, 4, 3, 2, 1,
+    ]);
 
     await expect(getOrdersBySearch('pedro silva', 'orders')).resolves.toEqual([
       expect.objectContaining({
@@ -174,18 +219,56 @@ describe('legacy orders/materials services integration', () => {
     ]);
   });
 
+  it('creates an order with the saved cutting plan, linked id and calculated price', async () => {
+    await signInAs('vendedor@seed.jrm');
+    const items = [cutlist('cut-plan', 999)];
+    const cuttingPlan = cuttingPlanFor(items);
+
+    await createOrder(
+      order({
+        cutlist: items,
+        serviceType: 'cutting_plan',
+        cuttingPlan,
+      }),
+    );
+
+    const snapshot = await adminDb
+      .collection('orders')
+      .where('serviceType', '==', 'cutting_plan')
+      .get();
+    expect(snapshot.docs).toHaveLength(1);
+    const created = snapshot.docs[0];
+    expect(created.data()).toMatchObject({
+      orderPrice: cuttingPlan.pricing.totalCost,
+      cuttingPlan: {
+        id: 'plan-integration',
+        orderId: created.id,
+        status: 'approved',
+      },
+    });
+  });
+
   it('updates order cutlist only with a valid seller password and records edit history', async () => {
     await signInAs('vendedor@seed.jrm');
     await adminDb.doc('orders/order-to-edit').set({
       ...adminOrderData(),
       orderCode: 99,
       orderPrice: 100,
+      serviceType: 'cutting_plan',
+      cuttingPlan: adminCuttingPlanFor([cutlist('cut-1', 100)]),
     });
 
     await expect(
-      updateOrderCutlist('order-to-edit', [cutlist('new-cut', 160)], 'wrong', true),
+      updateOrderCutlist(
+        'order-to-edit',
+        [cutlist('new-cut', 160)],
+        'wrong',
+        true,
+      ),
     ).resolves.toEqual({ success: false, reason: 'invalid-password' });
-    const unchangedOrder = (await adminDb.doc('orders/order-to-edit').get()).data();
+    const unchangedOrder = (
+      await adminDb.doc('orders/order-to-edit').get()
+    ).data();
     expect(unchangedOrder).toMatchObject({ orderPrice: 100 });
     expect(unchangedOrder?.edits).toBeUndefined();
 
@@ -202,7 +285,9 @@ describe('legacy orders/materials services integration', () => {
       priceDifference: 60,
     });
 
-    const editedOrder = (await adminDb.doc('orders/order-to-edit').get()).data();
+    const editedOrder = (
+      await adminDb.doc('orders/order-to-edit').get()
+    ).data();
     expect(editedOrder).toMatchObject({
       orderPrice: 160,
       cutlist: [expect.objectContaining({ id: 'new-cut', price: 160 })],
@@ -214,6 +299,7 @@ describe('legacy orders/materials services integration', () => {
           shouldCharge: true,
         }),
       ],
+      cuttingPlan: expect.objectContaining({ status: 'outdated' }),
     });
   });
 

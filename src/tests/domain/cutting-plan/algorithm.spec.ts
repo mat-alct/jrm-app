@@ -49,10 +49,35 @@ describe('guillotine cutting plan algorithm', () => {
 
     expect(result.sheets).toHaveLength(1);
     expect(result.sheets[0].placements).toHaveLength(1);
-    expect(result.cutSequence.filter(cut => cut.kind === 'edge_trim')).toHaveLength(
-      4,
-    );
+    expect(
+      result.cutSequence.filter(cut => cut.kind === 'edge_trim'),
+    ).toHaveLength(4);
     expect(result.metrics.movementCount).toBe(result.cutSequence.length);
+  });
+
+  it('não cria cortes internos quando a peça ocupa exatamente a área útil', () => {
+    const settings = {
+      ...DEFAULT_CUTTING_PLAN_SETTINGS,
+      sheetWidthMm: 100,
+      sheetLengthMm: 100,
+      edgeTrimMm: 10,
+    };
+    const result = generateCuttingPlan(
+      input(
+        [piece({ widthMm: 80, lengthMm: 80, canRotate: false })],
+        'balanced',
+        settings,
+      ),
+    );
+
+    expect(result.cutSequence.filter(cut => cut.kind === 'piece')).toHaveLength(
+      0,
+    );
+    expect(result.metrics.movementCount).toBe(4);
+    expect(result.sheets[0].placements[0]).toMatchObject({
+      widthMm: 80,
+      heightMm: 80,
+    });
   });
 
   it('mantém identificação individual para peças repetidas', () => {
@@ -103,6 +128,35 @@ describe('guillotine cutting plan algorithm', () => {
     expect(pieceCuts).toHaveLength(2);
     expect(pieceCuts.map(cut => cut.kerfLossMm)).toEqual([3.2, 3.2]);
     expect(pieceCuts.map(cut => cut.internalCutLossMm)).toEqual([0, 15]);
+  });
+
+  it('mostra o impacto real da perda interna no número de chapas', () => {
+    const settings = {
+      ...DEFAULT_CUTTING_PLAN_SETTINGS,
+      sheetWidthMm: 100,
+      sheetLengthMm: 100,
+      edgeTrimMm: 0,
+      kerfMm: 2,
+      reusableWasteMinWidthMm: 10,
+      reusableWasteMinLengthMm: 10,
+    };
+    const pieces = [
+      piece({
+        widthMm: 45,
+        lengthMm: 40,
+        quantity: 4,
+        canRotate: false,
+      }),
+    ];
+    const withoutInternalLoss = generateCuttingPlan(
+      input(pieces, 'best_yield', { ...settings, internalCutLossMm: 0 }),
+    );
+    const withInternalLoss = generateCuttingPlan(
+      input(pieces, 'best_yield', { ...settings, internalCutLossMm: 15 }),
+    );
+
+    expect(withoutInternalLoss.metrics.sheetCount).toBe(1);
+    expect(withInternalLoss.metrics.sheetCount).toBeGreaterThan(1);
   });
 
   it('refina as bordas por direção e só vira as tiras depois dos cortes longitudinais', () => {
@@ -243,7 +297,9 @@ describe('guillotine cutting plan algorithm', () => {
 
   it('é determinístico para a mesma entrada', () => {
     const planInput = input([piece({ quantity: 4 })]);
-    expect(generateCuttingPlan(planInput)).toEqual(generateCuttingPlan(planInput));
+    expect(generateCuttingPlan(planInput)).toEqual(
+      generateCuttingPlan(planInput),
+    );
   });
 
   it('rejeita lista vazia e peça maior que a área útil', () => {
