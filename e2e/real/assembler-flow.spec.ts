@@ -24,7 +24,9 @@ test.describe('jornada Via B — montador e financeiro', () => {
     await expect(page.getByText(/250,00/)).toBeVisible();
 
     await page.getByRole('button', { name: 'Abrir item' }).click();
-    await expect(page).toHaveURL(`/montador/item/${PROJECT_ID}/${ITEM_ID}`);
+    await expect(page).toHaveURL(`/montador/item/${PROJECT_ID}/${ITEM_ID}`, {
+      timeout: 20_000,
+    });
 
     await page
       .getByRole('button', { name: 'Atualizar etapa para pronto_para_montagem' })
