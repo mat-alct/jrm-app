@@ -78,7 +78,10 @@ export async function recalculateProjectSummaryAdmin(
       acc.aguardandoAprovacao += 1;
     }
     if (item.status === 'aguardando_atribuicao_montador') acc.aprovados += 1;
-    if (item.status === 'em_producao' || item.status === 'pronto_para_montagem') {
+    if (
+      item.status === 'em_producao' ||
+      item.status === 'pronto_para_montagem'
+    ) {
       acc.emProducao += 1;
     }
     if (
@@ -139,7 +142,9 @@ export async function applyClientItemTransition(
     updatedBy: 'client',
   });
 
-  const historyRef = adminDb.collection(itemStatusHistoryPath(projectId, itemId)).doc();
+  const historyRef = adminDb
+    .collection(itemStatusHistoryPath(projectId, itemId))
+    .doc();
   await historyRef.set({
     id: historyRef.id,
     projectId,
@@ -155,7 +160,9 @@ export async function applyClientItemTransition(
   await recalculateProjectSummaryAdmin(projectId);
 }
 
-export async function approveAllClientItems(projectId: string): Promise<number> {
+export async function approveAllClientItems(
+  projectId: string,
+): Promise<number> {
   const snap = await adminDb.collection(projectItemsPath(projectId)).get();
   const pendingItems = snap.docs
     .map(doc => ({ id: doc.id, ...doc.data() }) as ProjectItem)

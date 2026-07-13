@@ -43,7 +43,6 @@ const db =
 const storage = getStorage(app);
 
 declare global {
-  // eslint-disable-next-line no-var
   var __JRM_FIREBASE_EMULATORS_CONNECTED__: boolean | undefined;
 }
 

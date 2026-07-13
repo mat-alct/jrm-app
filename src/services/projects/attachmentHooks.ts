@@ -8,8 +8,8 @@ import {
 
 import { Attachment } from '@/types/projects';
 
-import { deleteAttachment } from './attachmentAdmin';
 import { listAttachments, uploadAttachment } from './attachment.service';
+import { deleteAttachment } from './attachmentAdmin';
 
 function attachmentsQueryKey(projectId: string, itemId?: string) {
   return itemId
@@ -31,14 +31,17 @@ export function useAttachments(
 export function useUploadAttachment(
   projectId: string,
   itemId?: string,
-): UseMutationResult<Attachment, Error, Omit<Parameters<typeof uploadAttachment>[0], 'projectId' | 'itemId'>> {
+): UseMutationResult<
+  Attachment,
+  Error,
+  Omit<Parameters<typeof uploadAttachment>[0], 'projectId' | 'itemId'>
+> {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: params =>
-      uploadAttachment({ ...params, projectId, itemId }),
+    mutationFn: params => uploadAttachment({ ...params, projectId, itemId }),
     onSuccess: () => {
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: attachmentsQueryKey(projectId, itemId),
       });
     },
@@ -54,7 +57,7 @@ export function useDeleteAttachment(
   return useMutation({
     mutationFn: attachment => deleteAttachment(attachment),
     onSuccess: () => {
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: attachmentsQueryKey(projectId, itemId),
       });
     },

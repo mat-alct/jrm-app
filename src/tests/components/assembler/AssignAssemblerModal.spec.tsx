@@ -11,7 +11,9 @@ const assemblers = [
 describe('AssignAssemblerModal', () => {
   it('validates amount greater than zero', async () => {
     const onSubmit = jest.fn();
-    render(<AssignAssemblerModal assemblers={assemblers} onSubmit={onSubmit} />);
+    render(
+      <AssignAssemblerModal assemblers={assemblers} onSubmit={onSubmit} />,
+    );
 
     fireEvent.click(screen.getByRole('button', { name: 'Salvar atribuições' }));
 
@@ -23,7 +25,9 @@ describe('AssignAssemblerModal', () => {
 
   it('submits multiple assembler assignments', async () => {
     const onSubmit = jest.fn();
-    render(<AssignAssemblerModal assemblers={assemblers} onSubmit={onSubmit} />);
+    render(
+      <AssignAssemblerModal assemblers={assemblers} onSubmit={onSubmit} />,
+    );
 
     fireEvent.change(screen.getByLabelText('Valor a receber'), {
       target: { value: '500' },

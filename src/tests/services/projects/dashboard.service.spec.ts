@@ -129,17 +129,31 @@ describe('services/projects/dashboard.service', () => {
     };
 
     const items = [
-      item({ id: 'i1', projectId: 'p1', designerId: 'd1', status: 'em_producao' }),
-      item({ id: 'i2', projectId: 'p2', designerId: 'd2', status: 'aguardando_desenho' }),
+      item({
+        id: 'i1',
+        projectId: 'p1',
+        designerId: 'd1',
+        status: 'em_producao',
+      }),
+      item({
+        id: 'i2',
+        projectId: 'p2',
+        designerId: 'd2',
+        status: 'aguardando_desenho',
+      }),
     ];
 
     it('filters by sellerId', () => {
-      const result = filterDashboardItems(items, projectsById, { sellerId: 's1' });
+      const result = filterDashboardItems(items, projectsById, {
+        sellerId: 's1',
+      });
       expect(result.map(i => i.id)).toEqual(['i1']);
     });
 
     it('filters by designerId', () => {
-      const result = filterDashboardItems(items, projectsById, { designerId: 'd2' });
+      const result = filterDashboardItems(items, projectsById, {
+        designerId: 'd2',
+      });
       expect(result.map(i => i.id)).toEqual(['i2']);
     });
 

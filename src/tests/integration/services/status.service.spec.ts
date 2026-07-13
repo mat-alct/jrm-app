@@ -1,15 +1,15 @@
 import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
 
-import { listItemStatusHistory } from '@/services/projects/projectItem.service';
+import { auth } from '@/services/firebase';
+import { adminDb } from '@/services/firebaseAdmin';
 import { projectItemPath, projectPath } from '@/services/projects/paths';
+import { listItemStatusHistory } from '@/services/projects/projectItem.service';
 import {
   InvalidStatusTransitionError,
   updateItemStatus,
 } from '@/services/projects/status.service';
-import { auth } from '@/services/firebase';
-import { adminDb } from '@/services/firebaseAdmin';
 import { resetEmulator } from '@/tests/helpers/emulator';
-import { seedEmulator, SEED_USER_PASSWORD } from '@/tests/helpers/seedEmulator';
+import { SEED_USER_PASSWORD, seedEmulator } from '@/tests/helpers/seedEmulator';
 
 async function signInAs(email: string): Promise<void> {
   await signInWithEmailAndPassword(auth, email, SEED_USER_PASSWORD);

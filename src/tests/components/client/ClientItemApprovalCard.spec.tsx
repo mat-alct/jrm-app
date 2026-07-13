@@ -43,7 +43,9 @@ describe('ClientItemApprovalCard', () => {
 
     expect(screen.getByRole('button', { name: 'Aprovar item' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Recusar' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Pedir alteração' })).toBeDisabled();
+    expect(
+      screen.getByRole('button', { name: 'Pedir alteração' }),
+    ).toBeDisabled();
   });
 
   it('disables actions when the item is refused', () => {
@@ -58,6 +60,8 @@ describe('ClientItemApprovalCard', () => {
 
     expect(screen.getByRole('button', { name: 'Aprovar item' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Recusar' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Pedir alteração' })).toBeDisabled();
+    expect(
+      screen.getByRole('button', { name: 'Pedir alteração' }),
+    ).toBeDisabled();
   });
 });

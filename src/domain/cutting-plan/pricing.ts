@@ -42,9 +42,7 @@ export function calculateCuttingPlanPricing(input: {
   const sheetsCost = roundCurrency(
     sheetItems.reduce((total, item) => total + item.subtotal, 0),
   );
-  const movementsCost = roundCurrency(
-    movementCount * settings.movementPrice,
-  );
+  const movementsCost = roundCurrency(movementCount * settings.movementPrice);
   const edgeBandLengthMeters = calculateEdgeBandLengthMeters(pieces);
   const edgeBandCost = roundCurrency(
     edgeBandLengthMeters * settings.edgeBandPricePerMeter,

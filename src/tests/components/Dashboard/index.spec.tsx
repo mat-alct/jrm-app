@@ -1,5 +1,5 @@
 import { Dashboard } from '../../../components/Dashboard';
-import { render } from '../../testUtils';
+import { act, render } from '../../testUtils';
 
 jest.mock('next/router', () => ({
   useRouter: () => ({
@@ -9,7 +9,8 @@ jest.mock('next/router', () => ({
 }));
 
 describe('Component: Dashboard', () => {
-  it('render the component', () => {
+  it('render the component', async () => {
     render(<Dashboard>Teste de Dashboard</Dashboard>);
+    await act(() => Promise.resolve());
   });
 });

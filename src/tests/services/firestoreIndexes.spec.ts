@@ -27,7 +27,9 @@ interface FieldOverride {
   indexes: Array<{ order?: string; queryScope: string }>;
 }
 
-const indexes = JSON.parse(fs.readFileSync('firestore.indexes.json', 'utf8')) as {
+const indexes = JSON.parse(
+  fs.readFileSync('firestore.indexes.json', 'utf8'),
+) as {
   indexes: CompositeIndex[];
   fieldOverrides: FieldOverride[];
 };
@@ -40,7 +42,8 @@ const REQUIRED_COMPOSITE_INDEXES: Array<{
   fields: IndexField[];
 }> = [
   {
-    origem: "project.service.listProjects: where('sellerId') + orderBy('createdAt','desc')",
+    origem:
+      "project.service.listProjects: where('sellerId') + orderBy('createdAt','desc')",
     collectionGroup: 'projects',
     queryScope: 'COLLECTION',
     fields: [
@@ -49,7 +52,8 @@ const REQUIRED_COMPOSITE_INDEXES: Array<{
     ],
   },
   {
-    origem: "orders.service.getOrders: where('orderStatus') + orderBy('orderCode','desc')",
+    origem:
+      "orders.service.getOrders: where('orderStatus') + orderBy('orderCode','desc')",
     collectionGroup: 'orders',
     queryScope: 'COLLECTION',
     fields: [
@@ -71,7 +75,8 @@ const REQUIRED_COLLECTION_GROUP_FIELDS: Array<{
     fieldPath: 'designerId',
   },
   {
-    origem: "assembler.service: collectionGroup('assemblerAssignments') + where('assemblerId')",
+    origem:
+      "assembler.service: collectionGroup('assemblerAssignments') + where('assemblerId')",
     collectionGroup: 'assemblerAssignments',
     fieldPath: 'assemblerId',
   },
@@ -83,7 +88,9 @@ const REQUIRED_COLLECTION_GROUP_FIELDS: Array<{
   },
 ];
 
-function hasCompositeIndex(required: (typeof REQUIRED_COMPOSITE_INDEXES)[number]) {
+function hasCompositeIndex(
+  required: (typeof REQUIRED_COMPOSITE_INDEXES)[number],
+) {
   return indexes.indexes.some(
     index =>
       index.collectionGroup === required.collectionGroup &&
@@ -92,41 +99,50 @@ function hasCompositeIndex(required: (typeof REQUIRED_COMPOSITE_INDEXES)[number]
       required.fields.every((field, position) => {
         const declared = index.fields[position];
         return (
-          declared?.fieldPath === field.fieldPath && declared?.order === field.order
+          declared?.fieldPath === field.fieldPath &&
+          declared?.order === field.order
         );
       }),
   );
 }
 
 describe('firestore.indexes.json — contrato com as queries do app', () => {
-  it.each(REQUIRED_COMPOSITE_INDEXES.map(index => [index.origem, index] as const))(
-    'declara o índice composto exigido por %s',
+  it.each(
+    REQUIRED_COMPOSITE_INDEXES.map(index => [index.origem, index] as const),
+  )('declara o índice composto exigido por %s', (_origem, required) => {
+    expect(hasCompositeIndex(required)).toBe(true);
+  });
+
+  it.each(
+    REQUIRED_COLLECTION_GROUP_FIELDS.map(
+      field => [field.origem, field] as const,
+    ),
+  )(
+    'declara o fieldOverride de collection-group exigido por %s',
     (_origem, required) => {
-      expect(hasCompositeIndex(required)).toBe(true);
+      const override = indexes.fieldOverrides.find(
+        entry =>
+          entry.collectionGroup === required.collectionGroup &&
+          entry.fieldPath === required.fieldPath,
+      );
+
+      expect(override).toBeDefined();
+      expect(
+        override!.indexes.some(
+          entry => entry.queryScope === 'COLLECTION_GROUP',
+        ),
+      ).toBe(true);
     },
   );
 
-  it.each(
-    REQUIRED_COLLECTION_GROUP_FIELDS.map(field => [field.origem, field] as const),
-  )('declara o fieldOverride de collection-group exigido por %s', (_origem, required) => {
-    const override = indexes.fieldOverrides.find(
-      entry =>
-        entry.collectionGroup === required.collectionGroup &&
-        entry.fieldPath === required.fieldPath,
-    );
-
-    expect(override).toBeDefined();
-    expect(
-      override!.indexes.some(entry => entry.queryScope === 'COLLECTION_GROUP'),
-    ).toBe(true);
-  });
-
   it('não deixa índice órfão sem query correspondente registrada aqui', () => {
     const declared = indexes.indexes.map(
-      index => `${index.collectionGroup}:${index.fields.map(f => f.fieldPath).join(',')}`,
+      index =>
+        `${index.collectionGroup}:${index.fields.map(f => f.fieldPath).join(',')}`,
     );
     const required = REQUIRED_COMPOSITE_INDEXES.map(
-      index => `${index.collectionGroup}:${index.fields.map(f => f.fieldPath).join(',')}`,
+      index =>
+        `${index.collectionGroup}:${index.fields.map(f => f.fieldPath).join(',')}`,
     );
 
     expect(declared.sort()).toEqual(required.sort());

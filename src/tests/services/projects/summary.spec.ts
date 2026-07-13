@@ -91,7 +91,9 @@ describe('services/projects/summary', () => {
       ];
 
       expect(
-        computeTotalCustomerValue(items as Parameters<typeof computeTotalCustomerValue>[0]),
+        computeTotalCustomerValue(
+          items as Parameters<typeof computeTotalCustomerValue>[0],
+        ),
       ).toBe(350.5);
     });
 

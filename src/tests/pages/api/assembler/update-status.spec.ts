@@ -30,7 +30,9 @@ describe('pages/api/assembler/update-status', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockedAdminAuth.verifySessionCookie.mockResolvedValue({ uid: 'assembler-1' } as never);
+    mockedAdminAuth.verifySessionCookie.mockResolvedValue({
+      uid: 'assembler-1',
+    } as never);
     mockedAdminDb.doc.mockImplementation((path: string) => {
       if (path === 'users/assembler-1') {
         return {
@@ -42,7 +44,10 @@ describe('pages/api/assembler/update-status', () => {
           }),
         } as never;
       }
-      if (path === 'projects/project-1/items/item-1/assemblerAssignments/assembler-1') {
+      if (
+        path ===
+        'projects/project-1/items/item-1/assemblerAssignments/assembler-1'
+      ) {
         return {
           get: jest.fn().mockResolvedValue({ exists: true }),
           update: assignmentUpdate,
@@ -101,7 +106,10 @@ describe('pages/api/assembler/update-status', () => {
           }),
         } as never;
       }
-      if (path === 'projects/project-1/items/item-1/assemblerAssignments/assembler-1') {
+      if (
+        path ===
+        'projects/project-1/items/item-1/assemblerAssignments/assembler-1'
+      ) {
         return {
           get: jest.fn().mockResolvedValue({ exists: false }),
         } as never;

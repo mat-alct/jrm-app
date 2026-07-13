@@ -48,7 +48,9 @@ describe('ClientLayout', () => {
       </ClientLayout>,
     );
 
-    expect(document.querySelector('title')).toHaveTextContent('Meu projeto | JRM');
+    expect(document.querySelector('title')).toHaveTextContent(
+      'Meu projeto | JRM',
+    );
 
     rerender(
       <ClientLayout>

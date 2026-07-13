@@ -48,7 +48,11 @@ export function AssemblerPaymentHistory({
               wrap="wrap"
             >
               <Box>
-                <Text fontWeight="600" color="app.text" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                <Text
+                  fontWeight="600"
+                  color="app.text"
+                  style={{ fontVariantNumeric: 'tabular-nums' }}
+                >
                   {formatAssemblerCurrency(payment.amount)}
                 </Text>
                 <StatusPill

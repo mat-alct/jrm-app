@@ -8,7 +8,7 @@ import {
 
 import { db } from './firebase';
 
-const stripUndefined = <T,>(value: T): T => {
+const stripUndefined = <T>(value: T): T => {
   if (Array.isArray(value)) {
     return (value as unknown[]).map(item => stripUndefined(item)) as T;
   }
@@ -53,10 +53,7 @@ export async function approveStoredCuttingPlan(
 ): Promise<CuttingPlan | null> {
   const current = await getCuttingPlan(orderId);
   if (!current) return null;
-  const approved = approvePlanRecord(
-    current,
-    Timestamp.fromDate(new Date()),
-  );
+  const approved = approvePlanRecord(current, Timestamp.fromDate(new Date()));
   return saveCuttingPlan(orderId, approved);
 }
 

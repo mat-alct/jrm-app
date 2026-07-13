@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   Box,
   Button,
@@ -11,8 +10,10 @@ import {
 import React from 'react';
 import { FaCheck } from 'react-icons/fa';
 
+import type { OrderSummary } from '@/types';
+
 type ConfirmStatusDialogProps = {
-  order: any | null;
+  order: OrderSummary | null;
   onCancel: () => void;
   onConfirm: (id: string) => void;
   loading: boolean;
@@ -33,7 +34,7 @@ export const ConfirmStatusDialog: React.FC<ConfirmStatusDialogProps> = ({
   return (
     <Dialog.Root
       open={!!order}
-      onOpenChange={(e) => {
+      onOpenChange={e => {
         if (!e.open && !loading) onCancel();
       }}
       placement="center"

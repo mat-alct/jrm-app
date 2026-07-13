@@ -20,7 +20,10 @@ describe('services/projects/storageSignedUrl.server', () => {
   it('assina leitura do arquivo pedido com a expiracao informada', async () => {
     const expiresAtMs = Date.parse('2026-02-01T00:00:00.000Z');
 
-    const url = await getSignedReadUrl('projects/p1/general/doc.pdf', expiresAtMs);
+    const url = await getSignedReadUrl(
+      'projects/p1/general/doc.pdf',
+      expiresAtMs,
+    );
 
     expect(url).toBe('https://signed.test/arquivo.pdf');
     expect(file).toHaveBeenCalledWith('projects/p1/general/doc.pdf');
@@ -31,7 +34,9 @@ describe('services/projects/storageSignedUrl.server', () => {
   });
 
   it('propaga a falha de assinatura em vez de devolver url vazia', async () => {
-    getSignedUrl.mockRejectedValue(new Error('Could not load the default credentials'));
+    getSignedUrl.mockRejectedValue(
+      new Error('Could not load the default credentials'),
+    );
 
     await expect(
       getSignedReadUrl('projects/p1/general/doc.pdf', 0),

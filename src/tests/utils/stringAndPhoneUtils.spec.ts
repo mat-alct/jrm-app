@@ -59,7 +59,9 @@ describe('normalizeTelephoneInput', () => {
   it('devolve string vazia quando o usuario apaga (valor nao cresceu)', () => {
     // Comportamento atual: qualquer entrada que nao seja maior que a anterior
     // zera o campo, e nao apenas remove o ultimo caractere.
-    expect(normalizeTelephoneInput('(24) 99999-000', '(24) 99999-0000')).toBe('');
+    expect(normalizeTelephoneInput('(24) 99999-000', '(24) 99999-0000')).toBe(
+      '',
+    );
     expect(normalizeTelephoneInput('24', '24')).toBe('');
   });
 });

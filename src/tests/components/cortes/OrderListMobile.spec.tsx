@@ -1,5 +1,6 @@
 import { OrderListMobile } from '@/components/cortes/OrderListMobile';
 import { OrderListCallbacks } from '@/components/cortes/OrderListTypes';
+import type { EstimateDocument, OrderDocument } from '@/types';
 
 import { fireEvent, render, screen } from '../../testUtils';
 
@@ -23,8 +24,14 @@ function orderItem(overrides: Record<string, unknown> = {}) {
     customer: { name: 'Pedro Silva' },
     cutlist: [],
     orderPrice: 1000,
+    deliveryType: 'Retirada',
+    paymentType: 'Dinheiro',
+    seller: 'Vendedor',
+    deliveryDate: Timestamp.now(),
+    createdAt: Timestamp.now(),
+    updatedAt: Timestamp.now(),
     ...overrides,
-  };
+  } as OrderDocument;
 }
 
 function renderList(
@@ -155,7 +162,15 @@ describe('OrderListMobile', () => {
   it('na lista de orcamentos mostra o nome e permite aprovar', () => {
     renderList({
       items: [
-        { id: 'estimate-1', estimateCode: 7, name: 'Ana Souza', cutlist: [] },
+        {
+          id: 'estimate-1',
+          estimateCode: 7,
+          name: 'Ana Souza',
+          cutlist: [],
+          estimatePrice: 1000,
+          createdAt: Timestamp.now(),
+          updatedAt: Timestamp.now(),
+        } as EstimateDocument,
       ],
       isEstimateList: true,
     });
@@ -171,3 +186,4 @@ describe('OrderListMobile', () => {
     expect(screen.getByText('Cliente Removido')).toBeInTheDocument();
   });
 });
+import { Timestamp } from 'firebase/firestore';

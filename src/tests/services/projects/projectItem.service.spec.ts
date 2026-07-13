@@ -93,12 +93,7 @@ describe('services/projects/projectItem.service', () => {
 
   describe('updateProjectItem', () => {
     it('updates fields and recalculates the summary', async () => {
-      await updateProjectItem(
-        'p1',
-        'i1',
-        { material: 'MDF' },
-        'admin-1',
-      );
+      await updateProjectItem('p1', 'i1', { material: 'MDF' }, 'admin-1');
 
       expect(mockedUpdateDoc).toHaveBeenCalledWith(
         { id: 'new-item-id' },

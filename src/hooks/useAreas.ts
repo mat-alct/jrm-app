@@ -72,7 +72,7 @@ export const useAddArea = () =>
       await writeAreas([...current, { name: trimmed, freight }]);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: AREAS_QUERY_KEY });
+      void queryClient.invalidateQueries({ queryKey: AREAS_QUERY_KEY });
     },
   });
 
@@ -80,13 +80,11 @@ export const useUpdateAreaFreight = () =>
   useMutation({
     mutationFn: async ({ name, freight }: Area) => {
       const current = await fetchAreas();
-      const next = current.map(a =>
-        a.name === name ? { ...a, freight } : a,
-      );
+      const next = current.map(a => (a.name === name ? { ...a, freight } : a));
       await writeAreas(next);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: AREAS_QUERY_KEY });
+      void queryClient.invalidateQueries({ queryKey: AREAS_QUERY_KEY });
     },
   });
 
@@ -98,7 +96,7 @@ export const useRemoveArea = () =>
       await writeAreas(next);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: AREAS_QUERY_KEY });
+      void queryClient.invalidateQueries({ queryKey: AREAS_QUERY_KEY });
     },
   });
 

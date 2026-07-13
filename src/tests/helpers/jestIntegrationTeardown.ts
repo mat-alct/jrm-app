@@ -1,10 +1,10 @@
+import { deleteApp } from 'firebase/app';
+import { signOut } from 'firebase/auth';
+import { terminate } from 'firebase/firestore';
 import {
   deleteApp as deleteAdminApp,
   getApps as getAdminApps,
 } from 'firebase-admin/app';
-import { deleteApp } from 'firebase/app';
-import { signOut } from 'firebase/auth';
-import { terminate } from 'firebase/firestore';
 
 import { app, auth, db } from '@/services/firebase';
 

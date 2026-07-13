@@ -1,6 +1,6 @@
 import handler from '@/pages/api/client-access/verify';
-import { hashAccessCode } from '@/services/projects/clientAccess.service';
 import { adminDb } from '@/services/firebaseAdmin';
+import { hashAccessCode } from '@/services/projects/clientAccess.service';
 
 jest.mock('@/services/firebaseAdmin', () => ({
   adminDb: {
@@ -68,7 +68,10 @@ describe('pages/api/client-access/verify', () => {
   it('rejects missing credentials', async () => {
     const res = createResponse();
 
-    await handler({ method: 'POST', headers: {}, body: {} } as never, res as never);
+    await handler(
+      { method: 'POST', headers: {}, body: {} } as never,
+      res as never,
+    );
 
     expect(res.status).toHaveBeenCalledWith(400);
   });

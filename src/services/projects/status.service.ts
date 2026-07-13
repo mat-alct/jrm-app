@@ -40,10 +40,12 @@ export class InvalidStatusTransitionError extends Error {
 
 function itemTimestampFieldFor(
   next: ProjectItemStatus,
-): keyof Pick<
-  ProjectItem,
-  'approvedAt' | 'rejectedAt' | 'changeRequestedAt' | 'completedAt'
-> | null {
+):
+  | keyof Pick<
+      ProjectItem,
+      'approvedAt' | 'rejectedAt' | 'changeRequestedAt' | 'completedAt'
+    >
+  | null {
   switch (next) {
     case 'aguardando_atribuicao_montador':
       return 'approvedAt';

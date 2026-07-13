@@ -14,7 +14,14 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   description,
   action,
 }) => (
-  <Flex direction="column" align="center" justify="center" py="12" px="4" gap="3">
+  <Flex
+    direction="column"
+    align="center"
+    justify="center"
+    py="12"
+    px="4"
+    gap="3"
+  >
     <Flex
       w="48px"
       h="48px"

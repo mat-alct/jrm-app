@@ -13,7 +13,7 @@ import {
   recalculateProjectSummary,
 } from '@/services/projects/summary';
 import { resetEmulator } from '@/tests/helpers/emulator';
-import { seedEmulator, SEED_USER_PASSWORD } from '@/tests/helpers/seedEmulator';
+import { SEED_USER_PASSWORD, seedEmulator } from '@/tests/helpers/seedEmulator';
 
 async function signInAs(email: string): Promise<void> {
   await signInWithEmailAndPassword(auth, email, SEED_USER_PASSWORD);
@@ -114,7 +114,9 @@ describe('services/projects/statusAdmin.service and summary integration', () => 
       finalizados: 2,
       atrasados: 1,
     });
-    expect((await adminDb.doc(projectPath('seed-project-2')).get()).data()).toMatchObject({
+    expect(
+      (await adminDb.doc(projectPath('seed-project-2')).get()).data(),
+    ).toMatchObject({
       totalCustomerValue: 2700,
     });
   });

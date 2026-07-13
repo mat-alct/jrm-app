@@ -1,6 +1,6 @@
 import {
-  FALLBACK_DEADLINE_DEFAULTS,
   computeDeadline,
+  FALLBACK_DEADLINE_DEFAULTS,
 } from '@/services/projects/deadline.service';
 
 describe('services/projects/deadline.service', () => {
@@ -14,9 +14,7 @@ describe('services/projects/deadline.service', () => {
         from,
       );
 
-      expect(deadline?.toDate().toISOString().slice(0, 10)).toBe(
-        '2026-07-13',
-      );
+      expect(deadline?.toDate().toISOString().slice(0, 10)).toBe('2026-07-13');
     });
 
     it('adds producaoDias for em_producao', () => {
@@ -26,9 +24,7 @@ describe('services/projects/deadline.service', () => {
         from,
       );
 
-      expect(deadline?.toDate().toISOString().slice(0, 10)).toBe(
-        '2026-07-18',
-      );
+      expect(deadline?.toDate().toISOString().slice(0, 10)).toBe('2026-07-18');
     });
 
     it('returns undefined for a status without a configured deadline', () => {

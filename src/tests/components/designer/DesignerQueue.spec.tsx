@@ -1,6 +1,9 @@
 import { Timestamp } from 'firebase/firestore';
 
-import { DesignerQueue, sortQueueByDeadline } from '@/components/designer/DesignerQueue';
+import {
+  DesignerQueue,
+  sortQueueByDeadline,
+} from '@/components/designer/DesignerQueue';
 import { ProjectItem } from '@/types/projects';
 
 import { render, screen } from '../../testUtils';
@@ -23,8 +26,14 @@ function item(overrides: Partial<ProjectItem>): ProjectItem {
 
 describe('sortQueueByDeadline', () => {
   it('orders items with an earlier deadline first', () => {
-    const later = item({ id: 'later', deadlineCurrent: Timestamp.fromMillis(2000) });
-    const earlier = item({ id: 'earlier', deadlineCurrent: Timestamp.fromMillis(1000) });
+    const later = item({
+      id: 'later',
+      deadlineCurrent: Timestamp.fromMillis(2000),
+    });
+    const earlier = item({
+      id: 'earlier',
+      deadlineCurrent: Timestamp.fromMillis(1000),
+    });
 
     const result = sortQueueByDeadline([later, earlier]);
 
@@ -32,7 +41,10 @@ describe('sortQueueByDeadline', () => {
   });
 
   it('pushes items without a deadline to the end', () => {
-    const withDeadline = item({ id: 'with', deadlineCurrent: Timestamp.fromMillis(1000) });
+    const withDeadline = item({
+      id: 'with',
+      deadlineCurrent: Timestamp.fromMillis(1000),
+    });
     const withoutDeadline = item({ id: 'without' });
 
     const result = sortQueueByDeadline([withoutDeadline, withDeadline]);

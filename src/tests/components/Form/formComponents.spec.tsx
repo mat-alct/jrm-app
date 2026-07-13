@@ -26,7 +26,7 @@ function FormHarness({ onSubmit, isDisabled }: HarnessProps) {
   });
 
   return (
-    <form onSubmit={handleSubmit(onSubmit as never)}>
+    <form onSubmit={event => void handleSubmit(onSubmit as never)(event)}>
       <FormRadio
         name="tipo"
         control={control}

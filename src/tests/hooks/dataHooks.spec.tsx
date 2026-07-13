@@ -3,11 +3,11 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { doc, getDoc } from 'firebase/firestore';
 import React, { ReactNode } from 'react';
 
-import { deleteAttachment } from '@/services/projects/attachmentAdmin';
 import {
   listAttachments,
   uploadAttachment,
 } from '@/services/projects/attachment.service';
+import { deleteAttachment } from '@/services/projects/attachmentAdmin';
 import {
   useAttachments,
   useDeleteAttachment,
@@ -32,7 +32,9 @@ jest.mock('firebase/firestore', () => ({
   getDoc: jest.fn(),
 }));
 
-function makeWrapper(user: ReturnType<typeof fakeAuthUser> | null = fakeAuthUser()) {
+function makeWrapper(
+  user: ReturnType<typeof fakeAuthUser> | null = fakeAuthUser(),
+) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
@@ -123,7 +125,9 @@ describe('useAttachments', () => {
     jest.mocked(listAttachments).mockResolvedValue([]);
     const { Wrapper, queryClient } = makeWrapper();
 
-    renderHook(() => useAttachments('project-1', 'item-1'), { wrapper: Wrapper });
+    renderHook(() => useAttachments('project-1', 'item-1'), {
+      wrapper: Wrapper,
+    });
 
     await waitFor(() =>
       expect(
@@ -142,7 +146,9 @@ describe('useAttachments', () => {
   it('nao busca sem projectId', () => {
     const { Wrapper } = makeWrapper();
 
-    const { result } = renderHook(() => useAttachments(''), { wrapper: Wrapper });
+    const { result } = renderHook(() => useAttachments(''), {
+      wrapper: Wrapper,
+    });
 
     expect(result.current.fetchStatus).toBe('idle');
     expect(listAttachments).not.toHaveBeenCalled();
@@ -181,7 +187,9 @@ describe('useUploadAttachment', () => {
   });
 
   it('propaga o erro do service sem invalidar a lista', async () => {
-    jest.mocked(uploadAttachment).mockRejectedValue(new Error('storage/unauthorized'));
+    jest
+      .mocked(uploadAttachment)
+      .mockRejectedValue(new Error('storage/unauthorized'));
     const { Wrapper, queryClient } = makeWrapper();
     const invalidate = jest.spyOn(queryClient, 'invalidateQueries');
 

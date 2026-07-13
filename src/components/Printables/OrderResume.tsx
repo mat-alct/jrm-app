@@ -2,35 +2,32 @@
 import {
   Box,
   Flex,
+  Grid,
+  HStack,
   IconButton,
+  Image,
   Table,
   Text,
-  Grid,
   VStack,
-  Image,
-  HStack,
 } from '@chakra-ui/react';
 import { format } from 'date-fns';
-import { DocumentData } from 'firebase/firestore';
-import React, { useRef, useEffect, useLayoutEffect, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import {
-  FaRegFileAlt,
-  FaWhatsapp,
+  FaGlobe,
   FaMapMarkerAlt,
   FaPhoneAlt,
-  FaGlobe,
+  FaRegFileAlt,
+  FaWhatsapp,
 } from 'react-icons/fa';
 import { useReactToPrint } from 'react-to-print';
 
-import type { CuttingPlan } from '@/domain/cutting-plan';
+import type { OrderDocument } from '@/types';
 import { formatBRL } from '@/utils/formatBRL';
 
 import { CuttingPlanPrintable, isPrintableCuttingPlan } from '../CuttingPlan';
 
 interface OrderResumeProps {
-  order: DocumentData & {
-    id: string;
-  };
+  order: OrderDocument;
   variant?: 'outline' | 'solid' | 'subtle' | 'surface' | 'ghost' | 'plain';
   size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '2xs' | 'xs';
   colorScheme?: string;
@@ -97,6 +94,7 @@ export const OrderResume: React.FC<OrderResumeProps> = ({
   const density: Density =
     cutCount <= 12 ? 'normal' : cutCount <= 20 ? 'compact' : 'ultra';
   const dp = densityPresets[density];
+  const edits = order.edits ?? [];
 
   const handlePrint = useReactToPrint({
     contentRef: componentRef,
@@ -127,12 +125,12 @@ export const OrderResume: React.FC<OrderResumeProps> = ({
     if (autoPrint) {
       handlePrint();
     }
-  }, [autoPrint]);
+  }, [autoPrint, handlePrint]);
 
   const Separator = () => (
     <Box w="100%" borderBottomWidth="2px" borderColor="black" my={1} />
   );
-  const cuttingPlan = order.cuttingPlan as CuttingPlan | undefined;
+  const cuttingPlan = order.cuttingPlan;
   const hasPrintablePlan = isPrintableCuttingPlan(cuttingPlan);
   const isCuttingPlanOrder =
     order.serviceType === 'cutting_plan' || hasPrintablePlan;
@@ -216,9 +214,9 @@ export const OrderResume: React.FC<OrderResumeProps> = ({
             />
 
             {/* --- AVISO DE EDIÇÃO (uma única frase compacta) --- */}
-            {order.edits?.length > 0 &&
+            {edits.length > 0 &&
               (() => {
-                const last = order.edits[order.edits.length - 1];
+                const last = edits[edits.length - 1];
                 const when = last.editedAt?.seconds
                   ? format(
                       new Date(last.editedAt.seconds * 1000),
@@ -424,7 +422,7 @@ export const OrderResume: React.FC<OrderResumeProps> = ({
                   </Table.Row>
                 </Table.Header>
                 <Table.Body>
-                  {order.cutlist.map((cut: any, idx: number) => (
+                  {order.cutlist.map((cut, idx) => (
                     <Table.Row
                       key={cut.id || idx}
                       borderBottom="1px solid #e2e8f0"

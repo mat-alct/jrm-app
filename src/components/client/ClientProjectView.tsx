@@ -33,7 +33,10 @@ export function ClientProjectView({
   onRejectItem,
   onRequestChange,
 }: ClientProjectViewProps) {
-  const total = project.items.reduce((sum, item) => sum + (item.customerAmount ?? 0), 0);
+  const total = project.items.reduce(
+    (sum, item) => sum + (item.customerAmount ?? 0),
+    0,
+  );
   const approvedItems = project.items.filter(
     item => item.approvalStatus === 'aprovado',
   ).length;
@@ -59,7 +62,11 @@ export function ClientProjectView({
         <StatCard
           label="Itens aprovados"
           value={`${approvedItems} de ${project.items.length}`}
-          hint={hasPendingItems ? 'Existem itens aguardando sua decisão.' : 'Todos os itens já foram avaliados.'}
+          hint={
+            hasPendingItems
+              ? 'Existem itens aguardando sua decisão.'
+              : 'Todos os itens já foram avaliados.'
+          }
         />
       </SimpleGrid>
 
@@ -96,13 +103,17 @@ export function ClientProjectView({
             _hover={{ bg: 'green.700' }}
             _focusVisible={{ shadow: 'focus', outline: 'none' }}
             disabled={!hasPendingItems || isBusy}
-          loading={isBusy}
-          onClick={() => {
-            if (window.confirm('Confirmar aprovação de todos os itens pendentes?')) {
-              void onApproveAll();
-            }
-          }}
-        >
+            loading={isBusy}
+            onClick={() => {
+              if (
+                window.confirm(
+                  'Confirmar aprovação de todos os itens pendentes?',
+                )
+              ) {
+                void onApproveAll();
+              }
+            }}
+          >
             Aprovar tudo
           </Button>
         </Flex>

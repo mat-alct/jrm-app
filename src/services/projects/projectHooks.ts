@@ -9,23 +9,23 @@ import {
 import { Project, ProjectItem, StatusHistory } from '@/types/projects';
 
 import {
+  createProject,
   CreateProjectActor,
   CreateProjectInput,
-  createProject,
   getProject,
-  ListProjectsFilters,
   listProjects,
-  UpdateProjectInput,
+  ListProjectsFilters,
   updateProject,
+  UpdateProjectInput,
 } from './project.service';
 import {
-  CreateProjectItemInput,
   createProjectItem,
+  CreateProjectItemInput,
   getProjectItem,
   listItemStatusHistory,
   listProjectItems,
-  UpdateProjectItemInput,
   updateProjectItem,
+  UpdateProjectItemInput,
 } from './projectItem.service';
 import { StatusActor, updateItemStatus } from './status.service';
 
@@ -88,21 +88,25 @@ export function useCreateProject(): UseMutationResult<
   return useMutation({
     mutationFn: ({ input, actor }) => createProject(input, actor),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      void queryClient.invalidateQueries({ queryKey: ['projects'] });
     },
   });
 }
 
 export function useUpdateProject(
   projectId: string,
-): UseMutationResult<void, Error, { updates: UpdateProjectInput; updatedBy: string }> {
+): UseMutationResult<
+  void,
+  Error,
+  { updates: UpdateProjectInput; updatedBy: string }
+> {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: ({ updates, updatedBy }) =>
       updateProject(projectId, updates, updatedBy),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      void queryClient.invalidateQueries({ queryKey: ['projects'] });
     },
   });
 }
@@ -120,8 +124,10 @@ export function useCreateProjectItem(
     mutationFn: ({ input, createdBy }) =>
       createProjectItem(projectId, input, createdBy),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['projects', projectId, 'items'] });
-      queryClient.invalidateQueries({ queryKey: ['projects', projectId] });
+      void queryClient.invalidateQueries({
+        queryKey: ['projects', projectId, 'items'],
+      });
+      void queryClient.invalidateQueries({ queryKey: ['projects', projectId] });
     },
   });
 }
@@ -139,11 +145,13 @@ export function useUpdateProjectItem(
     mutationFn: ({ itemId, updates, updatedBy }) =>
       updateProjectItem(projectId, itemId, updates, updatedBy),
     onSuccess: (_data, { itemId }) => {
-      queryClient.invalidateQueries({ queryKey: ['projects', projectId, 'items'] });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
+        queryKey: ['projects', projectId, 'items'],
+      });
+      void queryClient.invalidateQueries({
         queryKey: ['projects', projectId, 'items', itemId],
       });
-      queryClient.invalidateQueries({ queryKey: ['projects', projectId] });
+      void queryClient.invalidateQueries({ queryKey: ['projects', projectId] });
     },
   });
 }
@@ -162,14 +170,16 @@ export function useUpdateItemStatus(
     mutationFn: ({ next, actor, note }) =>
       updateItemStatus(projectId, itemId, next, actor, note),
     onSuccess: () => {
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: ['projects', projectId, 'items', itemId],
       });
-      queryClient.invalidateQueries({ queryKey: ['projects', projectId, 'items'] });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
+        queryKey: ['projects', projectId, 'items'],
+      });
+      void queryClient.invalidateQueries({
         queryKey: ['projects', projectId, 'items', itemId, 'statusHistory'],
       });
-      queryClient.invalidateQueries({ queryKey: ['projects', projectId] });
+      void queryClient.invalidateQueries({ queryKey: ['projects', projectId] });
     },
   });
 }

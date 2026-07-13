@@ -1,8 +1,8 @@
-import { v4 } from 'uuid';
 import {
   arrayUnion,
   collection,
   doc,
+  DocumentData,
   getCountFromServer,
   getDoc,
   getDocs,
@@ -10,32 +10,43 @@ import {
   limit,
   orderBy,
   query,
+  QueryConstraint,
+  QueryDocumentSnapshot,
   setDoc,
   startAfter,
   Timestamp,
   updateDoc,
   where,
-  DocumentData,
-  QueryDocumentSnapshot,
 } from 'firebase/firestore';
+import { v4 } from 'uuid';
 
+import type { CuttingPlan } from '@/domain/cutting-plan';
 import {
-  cuttingPlanMatchesPieces,
   cutlistToCuttingPlanPieces,
+  cuttingPlanMatchesPieces,
   markCuttingPlanOutdated,
 } from '@/domain/cutting-plan';
-import type { CuttingPlan } from '@/domain/cutting-plan';
-import { Cutlist, Estimate, Order, OrderEdit } from '@/types';
+import {
+  Cutlist,
+  Estimate,
+  EstimateDocument,
+  Order,
+  OrderDocument,
+  OrderEdit,
+  OrderListItem,
+} from '@/types';
 import { removeUndefinedAndEmptyFields } from '@/utils/removeUndefinedAndEmpty';
 
 import { db } from './firebase';
 import { getSellerByPassword } from './sellers';
 
 export interface PagedResult {
-  data: (DocumentData & { id: string })[];
+  data: OrderListItem[];
   totalCount: number;
   lastDoc: QueryDocumentSnapshot<DocumentData> | null;
 }
+
+export type OrderCollection = 'estimates' | 'orders';
 
 export type UpdateOrderCutlistResult =
   | { success: true; editedBy: string; priceDifference: number }
@@ -54,20 +65,23 @@ interface EstimatePropsWithEstimateCode extends Estimate {
 const capitalizeSearchTerm = (term: string) =>
   term.toLowerCase().replace(/(?:^|\s)\S/g, a => a.toUpperCase());
 
-export const stripUndefined = <T,>(value: T): T => {
+const stripUndefinedValue = (value: unknown): unknown => {
   if (Array.isArray(value)) {
-    return value.map(item => stripUndefined(item)) as unknown as T;
+    return value.map(item => stripUndefinedValue(item));
   }
   if (value && typeof value === 'object' && !(value instanceof Timestamp)) {
     const out: Record<string, unknown> = {};
-    Object.entries(value as Record<string, unknown>).forEach(([key, item]) => {
+    Object.entries(value).forEach(([key, item]) => {
       if (item === undefined) return;
-      out[key] = stripUndefined(item);
+      out[key] = stripUndefinedValue(item);
     });
-    return out as T;
+    return out;
   }
   return value;
 };
+
+export const stripUndefined = <T>(value: T): T =>
+  stripUndefinedValue(value) as T;
 
 const sumCutlistPrice = (items: Cutlist[]) =>
   items.reduce((acc, item) => acc + (item.price ?? 0), 0);
@@ -93,7 +107,15 @@ export async function createEstimate(estimateData: Estimate): Promise<void> {
 
   const counterRef = doc(db, 'counters', 'estimates');
   const counterSnap = await getDoc(counterRef);
-  const estimateCode = counterSnap.exists() ? counterSnap.data()?.code : 1;
+  const counterData: unknown = counterSnap.data();
+  const storedEstimateCode =
+    counterData && typeof counterData === 'object' && 'code' in counterData
+      ? counterData.code
+      : undefined;
+  const estimateCode =
+    counterSnap.exists() && typeof storedEstimateCode === 'number'
+      ? storedEstimateCode
+      : 1;
   const estimatePrice = sumCutlistPrice(estimateData.cutlist);
 
   await writeEstimate({
@@ -115,7 +137,15 @@ export async function createOrder(orderData: Order): Promise<void> {
 
   const counterRef = doc(db, 'counters', 'orders');
   const counterSnap = await getDoc(counterRef);
-  const orderCode = counterSnap.exists() ? counterSnap.data()?.code : 1;
+  const counterData: unknown = counterSnap.data();
+  const storedOrderCode =
+    counterData && typeof counterData === 'object' && 'code' in counterData
+      ? counterData.code
+      : undefined;
+  const orderCode =
+    counterSnap.exists() && typeof storedOrderCode === 'number'
+      ? storedOrderCode
+      : 1;
   const orderPrice =
     orderData.cuttingPlan && orderData.cuttingPlan.status !== 'outdated'
       ? orderData.cuttingPlan.pricing.totalCost
@@ -145,7 +175,7 @@ export async function getOrders(
   const collectionName = orderFilter === 'Orçamento' ? 'estimates' : 'orders';
   const colRef = collection(db, collectionName);
 
-  const baseConstraints: any[] = [];
+  const baseConstraints: QueryConstraint[] = [];
   if (orderFilter === 'Orçamento') {
     baseConstraints.push(orderBy('estimateCode', 'desc'));
   } else {
@@ -153,8 +183,10 @@ export async function getOrders(
     baseConstraints.push(orderBy('orderCode', 'desc'));
   }
 
-  const countConstraints = baseConstraints.filter(c => c.type === 'where');
-  const countQuery = query(colRef, ...countConstraints);
+  const countQuery =
+    orderFilter === 'Orçamento'
+      ? query(colRef)
+      : query(colRef, where('orderStatus', '==', orderFilter));
   const countSnapshot = await getCountFromServer(countQuery);
   const totalCount = countSnapshot.data().count;
 
@@ -165,11 +197,23 @@ export async function getOrders(
   }
 
   const snapshot = await getDocs(query(colRef, ...queryConstraints));
-  const rawData = snapshot.docs.map(d => ({ ...d.data(), id: d.id }));
+  const rawData: OrderListItem[] = snapshot.docs.map(snapshotDocument =>
+    orderFilter === 'Orçamento'
+      ? ({
+          ...(snapshotDocument.data() as Omit<EstimateDocument, 'id'>),
+          id: snapshotDocument.id,
+        } satisfies EstimateDocument)
+      : ({
+          ...(snapshotDocument.data() as Omit<OrderDocument, 'id'>),
+          id: snapshotDocument.id,
+        } satisfies OrderDocument),
+  );
   const data =
     orderFilter === 'Orçamento'
       ? rawData
-      : rawData.filter(d => (d as any).isDeactivated !== true);
+      : rawData.filter(
+          item => !('orderCode' in item) || item.isDeactivated !== true,
+        );
   const newLastDoc =
     snapshot.docs.length > 0 ? snapshot.docs[snapshot.docs.length - 1] : null;
 
@@ -178,8 +222,8 @@ export async function getOrders(
 
 export async function getOrdersBySearch(
   searchFilter: string | undefined,
-  type: string,
-): Promise<(DocumentData & { id: string })[]> {
+  type: OrderCollection,
+): Promise<OrderListItem[]> {
   if (!searchFilter) return [];
 
   const colRef = collection(db, type);
@@ -189,7 +233,11 @@ export async function getOrdersBySearch(
   const searchQuery = isNumeric
     ? query(
         colRef,
-        where(type === 'estimates' ? 'estimateCode' : 'orderCode', '==', Number(term)),
+        where(
+          type === 'estimates' ? 'estimateCode' : 'orderCode',
+          '==',
+          Number(term),
+        ),
         limit(5),
       )
     : query(
@@ -210,10 +258,20 @@ export async function getOrdersBySearch(
 
   try {
     const snapshot = await getDocs(searchQuery);
-    return snapshot.docs.map(d => ({ ...d.data(), id: d.id }));
-  } catch (error: any) {
+    return snapshot.docs.map(snapshotDocument =>
+      type === 'estimates'
+        ? ({
+            ...(snapshotDocument.data() as Omit<EstimateDocument, 'id'>),
+            id: snapshotDocument.id,
+          } satisfies EstimateDocument)
+        : ({
+            ...(snapshotDocument.data() as Omit<OrderDocument, 'id'>),
+            id: snapshotDocument.id,
+          } satisfies OrderDocument),
+    );
+  } catch (error: unknown) {
     console.error('Erro na busca:', error);
-    if (error.message.includes('index')) {
+    if (error instanceof Error && error.message.includes('index')) {
       console.warn(`
           ⚠️ FALTA ÍNDICE NO FIREBASE!
           O Firebase exige um índice composto para buscar e ordenar ao mesmo tempo.
@@ -241,7 +299,8 @@ export async function updateOrderCutlist(
 
     const order = orderSnap.data() as Order & { orderPrice?: number };
     const previousCutlist = order.cutlist ?? [];
-    const previousOrderPrice = order.orderPrice ?? sumCutlistPrice(previousCutlist);
+    const previousOrderPrice =
+      order.orderPrice ?? sumCutlistPrice(previousCutlist);
     const now = Timestamp.fromDate(new Date());
     let nextCuttingPlan = cuttingPlan
       ? { ...cuttingPlan, orderId: id, updatedAt: now }

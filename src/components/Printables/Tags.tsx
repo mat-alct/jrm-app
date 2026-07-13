@@ -1,24 +1,24 @@
 import {
   Box,
   Flex,
-  Heading,
-  Image,
-  Text,
-  Table,
   Grid,
   GridItem,
+  Heading,
+  Image,
+  Table,
+  Text,
 } from '@chakra-ui/react';
 import { format } from 'date-fns';
-import React, { useRef, useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { useReactToPrint } from 'react-to-print';
 import { v4 } from 'uuid';
 
 import { formatBRL } from '@/utils/formatBRL';
 
+import { Order } from '../../types';
 import { sortCutlistData } from '../../utils/cutlist/sortAndReturnTag';
-import { Order, RoundedCorners } from '../../types';
 import { isPrintableCuttingPlan } from '../CuttingPlan';
-import { TagSchemaSvg, countCorners } from '../NewOrder/TagSchemaSvg';
+import { countCorners, TagSchemaSvg } from '../NewOrder/TagSchemaSvg';
 
 interface OrderWithExtras extends Order {
   orderCode: number;
@@ -116,7 +116,7 @@ export const Tags: React.FC<TagsProps> = ({ order, onAfterPrint }) => {
           hasSlot: cut.hasDrawerSlot,
           slotSide: cut.drawerSlotSide,
           hasRound: cut.hasRoundedCorners,
-          roundedCorners: cut.roundedCorners as RoundedCorners | undefined,
+          roundedCorners: cut.roundedCorners,
           gborder,
           pborder,
         });
@@ -232,7 +232,7 @@ export const Tags: React.FC<TagsProps> = ({ order, onAfterPrint }) => {
               {orderData.edits &&
                 orderData.edits.length > 0 &&
                 (() => {
-                  const last = orderData.edits![orderData.edits!.length - 1];
+                  const last = orderData.edits[orderData.edits.length - 1];
                   const diff = last.priceDifference ?? 0;
                   const shouldCharge = !!last.shouldCharge && diff !== 0;
                   const formattedDiff = formatBRL(Math.abs(diff));

@@ -21,7 +21,12 @@ describe('countCorners', () => {
 
 describe('emptyCorners', () => {
   it('devolve os quatro cantos desmarcados', () => {
-    expect(emptyCorners()).toEqual({ tl: false, tr: false, bl: false, br: false });
+    expect(emptyCorners()).toEqual({
+      tl: false,
+      tr: false,
+      bl: false,
+      br: false,
+    });
   });
 
   it('devolve um objeto novo a cada chamada', () => {
@@ -33,8 +38,8 @@ describe('TagSchemaSvg', () => {
   it('usa opacidade cheia na borda presente e reduzida na ausente', () => {
     const { container } = render(<TagSchemaSvg gborder={1} pborder={0} />);
 
-    const opacities = Array.from(container.querySelectorAll('[opacity]')).map(node =>
-      node.getAttribute('opacity'),
+    const opacities = Array.from(container.querySelectorAll('[opacity]')).map(
+      node => node.getAttribute('opacity'),
     );
 
     expect(opacities).toContain('1');
@@ -42,13 +47,23 @@ describe('TagSchemaSvg', () => {
   });
 
   it('amplia o viewBox no modo interativo, para caber os cantos clicaveis', () => {
-    const { container: still } = render(<TagSchemaSvg gborder={0} pborder={0} />);
+    const { container: still } = render(
+      <TagSchemaSvg gborder={0} pborder={0} />,
+    );
     const { container: interactive } = render(
-      <TagSchemaSvg gborder={0} pborder={0} interactive onToggleCorner={jest.fn()} />,
+      <TagSchemaSvg
+        gborder={0}
+        pborder={0}
+        interactive
+        onToggleCorner={jest.fn()}
+      />,
     );
 
     expect(still.querySelector('svg')).toHaveAttribute('viewBox', '0 0 76 76');
-    expect(interactive.querySelector('svg')).toHaveAttribute('viewBox', '-10 -10 96 96');
+    expect(interactive.querySelector('svg')).toHaveAttribute(
+      'viewBox',
+      '-10 -10 96 96',
+    );
   });
 
   it('nao expoe cantos clicaveis fora do modo interativo', () => {
@@ -82,6 +97,8 @@ describe('TagSchemaSvg', () => {
 
     fireEvent.click(corners[3]);
     expect(onToggleCorner).toHaveBeenCalledTimes(2);
-    expect(onToggleCorner.mock.calls[0][0]).not.toBe(onToggleCorner.mock.calls[1][0]);
+    expect(onToggleCorner.mock.calls[0][0]).not.toBe(
+      onToggleCorner.mock.calls[1][0],
+    );
   });
 });

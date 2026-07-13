@@ -1,19 +1,19 @@
 import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
 
+import { auth } from '@/services/firebase';
+import { adminDb, adminStorage } from '@/services/firebaseAdmin';
+import {
+  itemAssemblerAssignmentPath,
+  paymentPath,
+} from '@/services/projects/paths';
 import {
   confirmAssemblerPayment,
   createAssemblerPayment,
   listAssemblerPayments,
   listPendingAssemblerAssignments,
 } from '@/services/projects/payment.service';
-import {
-  itemAssemblerAssignmentPath,
-  paymentPath,
-} from '@/services/projects/paths';
-import { auth } from '@/services/firebase';
-import { adminDb, adminStorage } from '@/services/firebaseAdmin';
 import { resetEmulator } from '@/tests/helpers/emulator';
-import { seedEmulator, SEED_USER_PASSWORD } from '@/tests/helpers/seedEmulator';
+import { SEED_USER_PASSWORD, seedEmulator } from '@/tests/helpers/seedEmulator';
 
 async function signInAs(email: string): Promise<void> {
   await signInWithEmailAndPassword(auth, email, SEED_USER_PASSWORD);

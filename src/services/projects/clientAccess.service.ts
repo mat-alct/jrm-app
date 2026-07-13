@@ -55,7 +55,9 @@ export function verifyAccessCode(code: string, encodedHash: string): boolean {
   try {
     const stored = Buffer.from(storedHash, 'base64url');
     const candidate = scryptSync(code, salt, stored.length);
-    return stored.length === candidate.length && timingSafeEqual(stored, candidate);
+    return (
+      stored.length === candidate.length && timingSafeEqual(stored, candidate)
+    );
   } catch {
     return false;
   }
@@ -90,7 +92,7 @@ export function registerFailedClientAccessAttempt(
 ): ClientAccessAttemptUpdate {
   const lockUntil = toDate(project.clientAccessLockUntil);
   const lockExpired = Boolean(lockUntil && !isAfter(lockUntil, now));
-  const currentAttempts = lockExpired ? 0 : project.clientAccessAttempts ?? 0;
+  const currentAttempts = lockExpired ? 0 : (project.clientAccessAttempts ?? 0);
   const nextAttempts = currentAttempts + 1;
 
   if (nextAttempts >= LOCKOUT_THRESHOLD) {

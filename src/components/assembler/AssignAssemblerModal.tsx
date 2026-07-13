@@ -101,9 +101,17 @@ export function AssignAssemblerModal({
           </Text>
 
           {rows.map((row, index) => (
-            <Stack key={index} direction={{ base: 'column', md: 'row' }} gap={3}>
+            <Stack
+              key={index}
+              direction={{ base: 'column', md: 'row' }}
+              gap={3}
+            >
               <Field.Root>
-                <Field.Label fontSize="13px" fontWeight="500" color="app.textSecondary">
+                <Field.Label
+                  fontSize="13px"
+                  fontWeight="500"
+                  color="app.textSecondary"
+                >
                   Montador
                 </Field.Label>
                 <NativeSelect.Root>
@@ -126,7 +134,11 @@ export function AssignAssemblerModal({
                 </NativeSelect.Root>
               </Field.Root>
               <Field.Root>
-                <Field.Label fontSize="13px" fontWeight="500" color="app.textSecondary">
+                <Field.Label
+                  fontSize="13px"
+                  fontWeight="500"
+                  color="app.textSecondary"
+                >
                   Valor a receber
                 </Field.Label>
                 <Input

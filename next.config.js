@@ -5,9 +5,6 @@ const withBundleAnalyzer = require('@next/bundle-analyzer')({
 const config = {
   distDir: process.env.NEXT_DIST_DIR || '.next',
   reactStrictMode: true,
-  typescript: { ignoreBuildErrors: true },
-  // TODO: arrumar lint progressivamente e reativar a checagem no build
-  eslint: { ignoreDuringBuilds: true },
   compiler: {
     removeConsole: { exclude: ['error', 'warn'] },
   },

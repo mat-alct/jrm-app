@@ -79,7 +79,9 @@ describe('services/projects/clientPortal.server', () => {
 
     it('when the token is malformed', async () => {
       await expectAuthError(
-        requireClientProject(requestWithCookie('client_session=nao-e-um-token')),
+        requireClientProject(
+          requestWithCookie('client_session=nao-e-um-token'),
+        ),
         401,
       );
     });

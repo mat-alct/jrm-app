@@ -1,5 +1,6 @@
 // src/pages/cortes/listadecortes.tsx
 import {
+  Alert,
   Box,
   Button,
   Flex,
@@ -8,31 +9,30 @@ import {
   Stack,
   Text,
   useBreakpointValue,
-  Alert,
 } from '@chakra-ui/react';
+import { useQuery } from '@tanstack/react-query';
 import {
   doc,
-  getDoc,
-  updateDoc,
-  QueryDocumentSnapshot,
   DocumentData,
+  getDoc,
+  QueryDocumentSnapshot,
   Timestamp,
+  updateDoc,
 } from 'firebase/firestore';
+import dynamic from 'next/dynamic';
 import Head from 'next/head';
 import Router from 'next/router';
 import React, { useCallback, useMemo, useState } from 'react';
 import {
-  FaExclamationTriangle,
   FaChevronLeft,
   FaChevronRight,
+  FaExclamationTriangle,
 } from 'react-icons/fa';
-import { useQuery } from '@tanstack/react-query';
 
 import { Dashboard } from '../../components/Dashboard';
 import { Header } from '../../components/Dashboard/Content/Header';
 import { Loader } from '../../components/Loader';
 import { SearchBar } from '../../components/SearchBar';
-import dynamic from 'next/dynamic';
 // IMPORTAÇÃO DOS COMPONENTES DE IMPRESSÃO (lazy — só baixa quando o usuário imprime)
 const Tags = dynamic(
   () => import('../../components/Printables/Tags').then(m => m.Tags),
@@ -101,17 +101,18 @@ import {
   CUTTING_MACHINE_QUERY_KEY,
   getCuttingMachineConfiguration,
 } from '@/services/cuttingMachine.service';
+
 import { useAuth } from '../../hooks/authContext';
 import { useOrder } from '../../hooks/order';
-import { queryClient } from '../../services/queryClient';
 import { db } from '../../services/firebase';
-import { Estimate, Order } from '../../types';
+import { queryClient } from '../../services/queryClient';
+import { EstimateDocument, OrderDocument, OrderListItem } from '../../types';
 
 // Definindo tipo para o estado de impressão
-type PrintItemType = {
-  data: any;
-  type: 'order' | 'estimate';
-} | null;
+type PrintItemType =
+  | { data: OrderDocument; type: 'order' }
+  | { data: EstimateDocument; type: 'estimate' }
+  | null;
 
 const Cortes: React.FC = () => {
   const { user } = useAuth();
@@ -123,25 +124,23 @@ const Cortes: React.FC = () => {
   >([null]);
 
   // ESTADO PARA CONTROLAR A IMPRESSÃO DE ETIQUETAS E RESUMOS
-  const [printingLabelsOrder, setPrintingLabelsOrder] = useState<Order | null>(
-    null,
-  );
+  const [printingLabelsOrder, setPrintingLabelsOrder] =
+    useState<OrderDocument | null>(null);
   const [printingResume, setPrintingResume] = useState<PrintItemType>(null);
-  const [printingPlanOrder, setPrintingPlanOrder] = useState<Order | null>(
-    null,
-  );
+  const [printingPlanOrder, setPrintingPlanOrder] =
+    useState<OrderDocument | null>(null);
 
   // Pedido cujo histórico de edições está aberto no diálogo
-  const [historyOrder, setHistoryOrder] = useState<any | null>(null);
+  const [historyOrder, setHistoryOrder] = useState<OrderDocument | null>(null);
 
   // Pedido com confirmação de avanço de status pendente
-  const [confirmingStatusOrder, setConfirmingStatusOrder] = useState<
-    any | null
-  >(null);
+  const [confirmingStatusOrder, setConfirmingStatusOrder] =
+    useState<OrderDocument | null>(null);
   const [advancingStatus, setAdvancingStatus] = useState(false);
 
   // Pedido com confirmação de desativação pendente
-  const [deactivatingOrder, setDeactivatingOrder] = useState<any | null>(null);
+  const [deactivatingOrder, setDeactivatingOrder] =
+    useState<OrderDocument | null>(null);
   const [deactivatingLoading, setDeactivatingLoading] = useState(false);
 
   const toast = toaster;
@@ -178,7 +177,10 @@ const Cortes: React.FC = () => {
     }
   }, [pagedResult, currentPage]);
 
-  const radioSize = useBreakpointValue(['sm', 'sm', 'md'], { fallback: 'sm' });
+  const radioSize =
+    useBreakpointValue<'sm' | 'md'>(['sm', 'sm', 'md'], {
+      fallback: 'sm',
+    }) ?? 'sm';
   const isMobile = useBreakpointValue(
     { base: true, md: false },
     { fallback: 'base' },
@@ -187,16 +189,16 @@ const Cortes: React.FC = () => {
   // --- Ações ---
   // Handlers em useCallback: refs estáveis garantem que cards/rows memoizados
   // não re-renderizem quando o pai atualiza (ex: abrir um Dialog).
-  const handlePrintLabels = useCallback((orderData: any) => {
+  const handlePrintLabels = useCallback((orderData: OrderDocument) => {
     setPrintingLabelsOrder(orderData);
   }, []);
 
-  const handlePrintCuttingPlan = useCallback((orderData: any) => {
+  const handlePrintCuttingPlan = useCallback((orderData: OrderDocument) => {
     setPrintingPlanOrder(orderData);
   }, []);
 
   const handleDownloadMachineFiles = useCallback(
-    async (orderData: any) => {
+    async (orderData: OrderDocument) => {
       if (!machineConfiguration || !orderData.cuttingPlan) {
         toast.create({
           type: 'error',
@@ -233,8 +235,12 @@ const Cortes: React.FC = () => {
   );
 
   const handlePrintResume = useCallback(
-    (data: any, type: 'order' | 'estimate') => {
-      setPrintingResume({ data, type });
+    (data: OrderListItem, type: 'order' | 'estimate') => {
+      if (type === 'order' && 'orderCode' in data) {
+        setPrintingResume({ data, type });
+      } else if (type === 'estimate' && 'estimateCode' in data) {
+        setPrintingResume({ data, type });
+      }
     },
     [],
   );
@@ -248,8 +254,8 @@ const Cortes: React.FC = () => {
           const estimateData = {
             ...estimateSnap.data(),
             id: estimateSnap.id,
-          } as Estimate & { id: string };
-          router.push({
+          } as EstimateDocument;
+          void router.push({
             pathname: '/cortes/novoservico',
             query: {
               orderType: 'estimate',
@@ -259,7 +265,7 @@ const Cortes: React.FC = () => {
             },
           });
         }
-      } catch (error) {
+      } catch {
         toast.create({
           type: 'error',
           description: 'Erro ao carregar orçamento.',
@@ -277,9 +283,10 @@ const Cortes: React.FC = () => {
         const orderRef = doc(db, 'orders', id);
         const orderSnap = await getDoc(orderRef);
         if (!orderSnap.exists()) return;
-        const order = { ...orderSnap.data(), id: orderSnap.id } as Order & {
-          id: string;
-        };
+        const order = {
+          ...orderSnap.data(),
+          id: orderSnap.id,
+        } as OrderDocument;
 
         switch (order.orderStatus) {
           case 'Em Produção':
@@ -328,7 +335,9 @@ const Cortes: React.FC = () => {
   );
 
   const handleEdit = useCallback(
-    (id: string) => router.push(`/cortes/editar/${id}`),
+    (id: string) => {
+      void router.push(`/cortes/editar/${id}`);
+    },
     [router],
   );
 
@@ -372,7 +381,7 @@ const Cortes: React.FC = () => {
   const currentSearchType =
     ordersFilter === 'Orçamento' ? 'estimates' : 'orders';
 
-  const handleSearchOrder = async (search: string) => {
+  const handleSearchOrder = (search: string) => {
     setSearchQuery(search || undefined);
   };
 
@@ -383,7 +392,7 @@ const Cortes: React.FC = () => {
   });
 
   React.useEffect(() => {
-    if (user === null) router.push('/login');
+    if (user === null) void router.push('/login');
   }, [user, router]);
 
   // useMemo evita criar [] novo a cada render quando lista está vazia
@@ -474,7 +483,7 @@ const Cortes: React.FC = () => {
             <ConfirmStatusDialog
               order={confirmingStatusOrder}
               onCancel={() => setConfirmingStatusOrder(null)}
-              onConfirm={updateCutlistStatus}
+              onConfirm={id => void updateCutlistStatus(id)}
               loading={advancingStatus}
             />
           )}
@@ -484,7 +493,7 @@ const Cortes: React.FC = () => {
             <ConfirmDeactivateDialog
               order={deactivatingOrder}
               onCancel={() => setDeactivatingOrder(null)}
-              onConfirm={deactivateOrder}
+              onConfirm={id => void deactivateOrder(id)}
               loading={deactivatingLoading}
             />
           )}
@@ -513,7 +522,6 @@ const Cortes: React.FC = () => {
             <Box overflowX="auto" pb={[2, 2, 0]}>
               <RadioGroup.Root
                 colorScheme="orange"
-                // @ts-ignore
                 size={radioSize}
                 value={ordersFilter}
                 onValueChange={e => {
@@ -560,7 +568,7 @@ const Cortes: React.FC = () => {
               </Alert.Indicator>
               <Alert.Title>Erro ao carregar dados.</Alert.Title>
               <Alert.Description>
-                Verifique o Console. {(error as any)?.message}
+                {error instanceof Error ? error.message : 'Tente novamente.'}
               </Alert.Description>
             </Alert.Root>
           )}
@@ -575,8 +583,10 @@ const Cortes: React.FC = () => {
               onPrintResume={handlePrintResume}
               onPrintLabels={handlePrintLabels}
               onPrintCuttingPlan={handlePrintCuttingPlan}
-              onDownloadMachineFiles={handleDownloadMachineFiles}
-              onApproveEstimate={approveEstimate}
+              onDownloadMachineFiles={order =>
+                void handleDownloadMachineFiles(order)
+              }
+              onApproveEstimate={id => void approveEstimate(id)}
               onShowHistory={setHistoryOrder}
               onConfirmStatus={setConfirmingStatusOrder}
               onEdit={handleEdit}
@@ -591,8 +601,10 @@ const Cortes: React.FC = () => {
               onPrintResume={handlePrintResume}
               onPrintLabels={handlePrintLabels}
               onPrintCuttingPlan={handlePrintCuttingPlan}
-              onDownloadMachineFiles={handleDownloadMachineFiles}
-              onApproveEstimate={approveEstimate}
+              onDownloadMachineFiles={order =>
+                void handleDownloadMachineFiles(order)
+              }
+              onApproveEstimate={id => void approveEstimate(id)}
               onShowHistory={setHistoryOrder}
               onConfirmStatus={setConfirmingStatusOrder}
               onEdit={handleEdit}

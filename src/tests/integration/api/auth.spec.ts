@@ -10,7 +10,9 @@ import {
 import { resetEmulator } from '@/tests/helpers/emulator';
 import { seedEmulator } from '@/tests/helpers/seedEmulator';
 
-function sessionCookieValue(headers: Record<string, string | string[]>): string {
+function sessionCookieValue(
+  headers: Record<string, string | string[]>,
+): string {
   const raw = headers['Set-Cookie'];
   const value = Array.isArray(raw) ? raw[0] : raw;
   return (value ?? '').split(';')[0].replace('session=', '');
@@ -30,7 +32,10 @@ describe('api/login e api/logout integration', () => {
     const idToken = await idTokenFor('admin@seed.jrm');
 
     const res = mockRes();
-    await loginHandler(mockReq({ method: 'POST', body: { token: idToken } }), res);
+    await loginHandler(
+      mockReq({ method: 'POST', body: { token: idToken } }),
+      res,
+    );
 
     expect(res.statusCode).toBe(200);
     expect(res.body).toEqual({
@@ -73,13 +78,13 @@ describe('api/login e api/logout integration', () => {
     expect(loginRes.statusCode).toBe(405);
 
     const logoutRes = mockRes();
-    await logoutHandler(mockReq({ method: 'GET' }), logoutRes);
+    logoutHandler(mockReq({ method: 'GET' }), logoutRes);
     expect(logoutRes.statusCode).toBe(405);
   });
 
   it('logout expira o cookie de sessao', async () => {
     const res = mockRes();
-    await logoutHandler(mockReq({ method: 'POST' }), res);
+    logoutHandler(mockReq({ method: 'POST' }), res);
 
     expect(res.statusCode).toBe(200);
     const setCookie = res.headers['Set-Cookie'] as string;

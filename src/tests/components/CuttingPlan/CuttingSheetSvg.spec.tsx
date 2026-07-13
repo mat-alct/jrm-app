@@ -1,5 +1,8 @@
 import { CuttingSheetSvg } from '@/components/CuttingPlan';
-import type { CuttingPlanSheet, CuttingPlanWasteRegion } from '@/domain/cutting-plan';
+import type {
+  CuttingPlanSheet,
+  CuttingPlanWasteRegion,
+} from '@/domain/cutting-plan';
 
 import { render } from '../../testUtils';
 
@@ -16,7 +19,9 @@ const offcut = (
   reason: 'remainder',
 });
 
-const sheetWith = (wasteRegions: CuttingPlanWasteRegion[]): CuttingPlanSheet => ({
+const sheetWith = (
+  wasteRegions: CuttingPlanWasteRegion[],
+): CuttingPlanSheet => ({
   id: 'sheet-001',
   number: 1,
   material: {

@@ -17,13 +17,15 @@ import { canAccessRoles } from '@/utils/projects/permissions';
 export default function AssemblerFinancePage() {
   const { user } = useAuth();
   const { data: appUser, isLoading: isUserLoading } = useAppUser();
-  const [assignments, setAssignments] = React.useState<AssemblerAssignment[]>([]);
+  const [assignments, setAssignments] = React.useState<AssemblerAssignment[]>(
+    [],
+  );
   const [payments, setPayments] = React.useState<AssemblerPayment[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [isSaving, setIsSaving] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
-  async function load() {
+  const load = React.useCallback(async () => {
     if (!user?.uid) return;
     setIsLoading(true);
     setError(null);
@@ -35,15 +37,17 @@ export default function AssemblerFinancePage() {
       setAssignments(assignmentData);
       setPayments(paymentData);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao carregar financeiro.');
+      setError(
+        err instanceof Error ? err.message : 'Erro ao carregar financeiro.',
+      );
     } finally {
       setIsLoading(false);
     }
-  }
+  }, [user?.uid]);
 
   React.useEffect(() => {
     void load();
-  }, [user?.uid]);
+  }, [load]);
 
   async function confirmPayment(paymentId: string) {
     if (!appUser) return;
@@ -61,7 +65,9 @@ export default function AssemblerFinancePage() {
       }
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao confirmar recebimento.');
+      setError(
+        err instanceof Error ? err.message : 'Erro ao confirmar recebimento.',
+      );
     } finally {
       setIsSaving(false);
     }
@@ -88,7 +94,11 @@ export default function AssemblerFinancePage() {
         <Header pageTitle="Meu financeiro" isLoading={isSaving} />
         <VStack align="stretch" gap={5} maxW="760px" mx="auto">
           <Box>
-            <Heading as="h1" fontSize={{ base: '2xl', md: '3xl' }} fontWeight="600">
+            <Heading
+              as="h1"
+              fontSize={{ base: '2xl', md: '3xl' }}
+              fontWeight="600"
+            >
               Meu financeiro
             </Heading>
             <Text color="app.textSecondary">

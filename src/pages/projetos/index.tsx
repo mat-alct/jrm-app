@@ -10,8 +10,8 @@ import { hasRole, isAdmin } from '@/utils/projects/permissions';
 
 import { Dashboard } from '../../components/Dashboard';
 import { Header } from '../../components/Dashboard/Content/Header';
-import { SearchBar } from '../../components/SearchBar';
 import { Loader } from '../../components/Loader';
+import { SearchBar } from '../../components/SearchBar';
 import { useAuth } from '../../hooks/authContext';
 
 const ProjetosIndex = () => {
@@ -21,12 +21,17 @@ const ProjetosIndex = () => {
   const [search, setSearch] = React.useState<string | undefined>(undefined);
 
   React.useEffect(() => {
-    if (user === null) router.push('/login');
+    if (user === null) void router.push('/login');
   }, [user, router]);
 
-  const sellerOnly = !!appUser && !isAdmin(appUser.roles) && hasRole(appUser.roles, 'seller');
+  const sellerOnly =
+    !!appUser && !isAdmin(appUser.roles) && hasRole(appUser.roles, 'seller');
 
-  const { data: projects, isLoading, isFetching } = useProjects({
+  const {
+    data: projects,
+    isLoading,
+    isFetching,
+  } = useProjects({
     sellerId: sellerOnly ? user?.uid : undefined,
     search,
   });
@@ -56,7 +61,11 @@ const ProjetosIndex = () => {
         </Box>
 
         <Box overflowX="auto">
-          <Table.Root variant="outline" colorScheme="orange" whiteSpace="nowrap">
+          <Table.Root
+            variant="outline"
+            colorScheme="orange"
+            whiteSpace="nowrap"
+          >
             <Table.Header>
               <Table.Row>
                 <Table.ColumnHeader>Cliente</Table.ColumnHeader>
@@ -70,7 +79,7 @@ const ProjetosIndex = () => {
                 <Table.Row
                   key={project.id}
                   cursor="pointer"
-                  onClick={() => router.push(`/projetos/${project.id}`)}
+                  onClick={() => void router.push(`/projetos/${project.id}`)}
                   _hover={{ bg: 'orange.50' }}
                 >
                   <Table.Cell>{project.customerName}</Table.Cell>

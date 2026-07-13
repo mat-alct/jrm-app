@@ -32,7 +32,9 @@ export async function updateMaterialPrice(input: {
   });
 }
 
-export async function getMaterials(materialFilter: string): Promise<Material[]> {
+export async function getMaterials(
+  materialFilter: string,
+): Promise<Material[]> {
   const materialsQuery = query(
     collection(db, 'materials'),
     where('materialType', '==', materialFilter),
@@ -45,5 +47,7 @@ export async function getMaterials(materialFilter: string): Promise<Material[]> 
 
 export async function getAllMaterials(): Promise<Material[]> {
   const querySnapshot = await getDocs(collection(db, 'materials'));
-  return querySnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }) as Material);
+  return querySnapshot.docs.map(
+    doc => ({ ...doc.data(), id: doc.id }) as Material,
+  );
 }

@@ -1,18 +1,17 @@
 // src/hooks/AuthContext.tsx
 
 import {
-  User,
   onAuthStateChanged,
   signInWithEmailAndPassword,
   signOut as firebaseSignOut,
+  User,
 } from 'firebase/auth';
-import { useRouter } from 'next/router';
 import React, {
   createContext,
+  ReactNode,
   useContext,
   useEffect,
   useState,
-  ReactNode,
 } from 'react';
 
 // Importamos a instância 'auth' do nosso novo arquivo de serviço
@@ -26,7 +25,9 @@ export interface AuthContextData {
 }
 
 // Exportado para que os testes possam prover um valor controlado sem mockar o hook.
-export const AuthContext = createContext<AuthContextData>({} as AuthContextData);
+export const AuthContext = createContext<AuthContextData>(
+  {} as AuthContextData,
+);
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -34,12 +35,15 @@ interface AuthProviderProps {
 
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null | undefined>(undefined);
-  const router = useRouter();
 
   // Função de login que será usada na página de login
   const signIn = async (email: string, password: string) => {
     // 1. Primeiro, autentica no lado do cliente como você já faz
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const userCredential = await signInWithEmailAndPassword(
+      auth,
+      email,
+      password,
+    );
 
     // 2. PEÇA-CHAVE FALTANTE: Pega o ID Token do usuário
     const token = await userCredential.user.getIdToken();
@@ -51,8 +55,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ token }),
-  });
-};
+    });
+  };
 
   const signOut = async () => {
     // 1. PEÇA-CHAVE FALTANTE: Informa o backend para remover o cookie de sessão
@@ -69,7 +73,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Efeito que monitora o estado de autenticação em tempo real
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    const unsubscribe = onAuthStateChanged(auth, currentUser => {
       // Quando o estado muda (login/logout), atualizamos nosso estado 'user'
       setUser(currentUser);
     });

@@ -31,6 +31,9 @@ export default function ClientPortalPage() {
   }
 
   async function handleLogin(accessCode: string) {
+    // Rota dinamica sem getServerSideProps: router.query so e preenchido depois
+    // da hidratacao. Enviar antes disso posta publicId vazio e a API recusa.
+    if (!publicId) return;
     setIsLoading(true);
     setLoginError(undefined);
     setPageError(null);
@@ -47,7 +50,9 @@ export default function ClientPortalPage() {
       await loadProject();
     } catch (err) {
       setLoginError(
-        err instanceof Error ? err.message : 'Nao foi possivel validar a senha.',
+        err instanceof Error
+          ? err.message
+          : 'Nao foi possivel validar a senha.',
       );
     } finally {
       setIsLoading(false);
@@ -88,6 +93,7 @@ export default function ClientPortalPage() {
         <ClientLoginWithCode
           error={loginError}
           isSubmitting={isLoading}
+          disabled={!router.isReady}
           onSubmit={handleLogin}
         />
       ) : (
@@ -149,8 +155,8 @@ export default function ClientPortalPage() {
             }
           />
           <Text color="app.textSecondary" fontSize="sm">
-            Após aprovar um item, recusas e alterações passam a ser tratadas pela
-            equipe interna.
+            Após aprovar um item, recusas e alterações passam a ser tratadas
+            pela equipe interna.
           </Text>
         </VStack>
       )}

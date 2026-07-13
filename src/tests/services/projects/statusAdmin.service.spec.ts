@@ -72,7 +72,11 @@ describe('services/projects/statusAdmin.service', () => {
   });
 
   it('applies a client approval, records history and recalculates summary', async () => {
-    await applyClientItemTransition('project-1', 'item-1', 'aguardando_atribuicao_montador');
+    await applyClientItemTransition(
+      'project-1',
+      'item-1',
+      'aguardando_atribuicao_montador',
+    );
 
     expect(itemUpdate).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -111,11 +115,7 @@ describe('services/projects/statusAdmin.service', () => {
     });
 
     await expect(
-      applyClientItemTransition(
-        'project-1',
-        'item-1',
-        'alteracao_solicitada',
-      ),
+      applyClientItemTransition('project-1', 'item-1', 'alteracao_solicitada'),
     ).rejects.toMatchObject({ statusCode: 409 });
 
     expect(itemUpdate).not.toHaveBeenCalled();

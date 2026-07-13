@@ -7,6 +7,7 @@ import {
   DEFAULT_CUTTING_PLAN_SETTINGS,
   generateCuttingPlan,
   getPieceCompatibilityKey,
+  searchCuttingPlan,
 } from '@/domain/cutting-plan';
 
 const material = {
@@ -124,7 +125,7 @@ describe('guillotine cutting plan algorithm', () => {
     ).toBe(2);
   });
 
-  it('registra separadamente os acertos internos de 7,5mm em cada lado', () => {
+  it('não repete acerto nas bordas herdadas da chapa refilada', () => {
     const result = generateCuttingPlan(
       input(
         [piece({ widthMm: 400, lengthMm: 800 })],
@@ -136,15 +137,15 @@ describe('guillotine cutting plan algorithm', () => {
 
     expect(pieceCuts).toHaveLength(2);
     expect(pieceCuts.map(cut => cut.kerfLossMm)).toEqual([3.2, 3.2]);
-    expect(pieceCuts.map(cut => cut.internalCutLossMm)).toEqual([0, 15]);
+    expect(pieceCuts.map(cut => cut.internalCutLossMm)).toEqual([0, 0]);
     expect(
       result.sheets[0].wasteRegions.filter(
         region => region.reason === 'internal_trim',
       ),
-    ).toHaveLength(2);
+    ).toHaveLength(0);
   });
 
-  it('mostra o impacto real da perda interna no número de chapas', () => {
+  it('preserva a faixa completa refilada ao mudar a direção do corte', () => {
     const settings = {
       ...DEFAULT_CUTTING_PLAN_SETTINGS,
       sheetWidthMm: 100,
@@ -170,10 +171,10 @@ describe('guillotine cutting plan algorithm', () => {
     );
 
     expect(withoutInternalLoss.metrics.sheetCount).toBe(1);
-    expect(withInternalLoss.metrics.sheetCount).toBeGreaterThan(1);
+    expect(withInternalLoss.metrics.sheetCount).toBe(1);
   });
 
-  it('cobra o acerto interno só no corte que vira o painel', () => {
+  it('não cobra acerto ao virar uma faixa que conserva as bordas refiladas', () => {
     const result = generateCuttingPlan(
       input(
         [
@@ -188,16 +189,33 @@ describe('guillotine cutting plan algorithm', () => {
 
     // A serra entra em todo corte; o acerto entra uma vez por painel virado.
     expect(pieceCuts.every(cut => cut.kerfLossMm === 3.2)).toBe(true);
-    expect(
-      pieceCuts.filter(cut => cut.internalCutLossMm === 15),
-    ).not.toHaveLength(0);
-    expect(
-      pieceCuts.filter(cut => cut.internalCutLossMm !== 0).length,
-    ).toBeLessThan(pieceCuts.length);
+    expect(pieceCuts.every(cut => cut.internalCutLossMm === 0)).toBe(true);
 
-    // As sete peças cabem numa chapa só quando o acerto não é cobrado em cada
-    // corte paralelo: 5 × 300 + 15 + 4 × 3,2 = 1527,8 ≤ 1830.
+    // As sete peças cabem numa chapa só porque as bordas refiladas da faixa
+    // dispensam novo acerto: 5 × 300 + 4 × 3,2 = 1512,8 ≤ 1830.
     expect(result.metrics.sheetCount).toBe(1);
+  });
+
+  it('acomoda seis peças de 2000x300 e duas de 1600x300 em uma chapa', () => {
+    const result = generateCuttingPlan(
+      input([
+        piece({
+          id: 'longa',
+          widthMm: 2000,
+          lengthMm: 300,
+          quantity: 6,
+        }),
+        piece({
+          id: 'curta',
+          widthMm: 1600,
+          lengthMm: 300,
+          quantity: 2,
+        }),
+      ]),
+    );
+
+    expect(result.metrics.sheetCount).toBe(1);
+    expect(result.sheets[0].placements).toHaveLength(8);
   });
 
   it('refina as bordas por direção e só vira as tiras depois dos cortes longitudinais', () => {
@@ -331,7 +349,7 @@ describe('guillotine cutting plan algorithm', () => {
     'fewer_cuts',
     'best_yield',
     'balanced',
-  ])('executa o modo de otimização %s', mode => {
+  ])('converte o modo legado %s para a otimização única', mode => {
     const result = generateCuttingPlan(
       input(
         [
@@ -342,12 +360,12 @@ describe('guillotine cutting plan algorithm', () => {
       ),
     );
 
-    expect(result.optimizationMode).toBe(mode);
+    expect(result.optimizationMode).toBe('best_yield');
     expect(result.metrics.sheetCount).toBeGreaterThan(0);
     expect(result.metrics.utilizationPercentage).toBeGreaterThan(0);
   });
 
-  it('prioriza movimentos no modo fewer_cuts e chapas no best_yield', () => {
+  it('produz o mesmo melhor plano independentemente do modo legado', () => {
     const pieces = [
       piece({ id: 'a', widthMm: 900, lengthMm: 400, quantity: 3 }),
       piece({ id: 'b', widthMm: 500, lengthMm: 700, quantity: 3 }),
@@ -356,12 +374,85 @@ describe('guillotine cutting plan algorithm', () => {
     const fewerCuts = generateCuttingPlan(input(pieces, 'fewer_cuts'));
     const bestYield = generateCuttingPlan(input(pieces, 'best_yield'));
 
-    expect(fewerCuts.metrics.movementCount).toBeLessThanOrEqual(
-      bestYield.metrics.movementCount,
+    expect(fewerCuts).toEqual(bestYield);
+  });
+
+  it('explora combinações adicionais e mantém o melhor resultado encontrado', () => {
+    const planInput = input([
+      piece({ id: 'a', widthMm: 900, lengthMm: 400, quantity: 3 }),
+      piece({ id: 'b', widthMm: 500, lengthMm: 700, quantity: 3 }),
+      piece({ id: 'c', widthMm: 350, lengthMm: 1000, quantity: 2 }),
+    ]);
+    const baseline = generateCuttingPlan(planInput);
+    const progress: number[] = [];
+    const searched = searchCuttingPlan(
+      planInput,
+      {
+        maxCandidates: 30,
+        maxDurationMs: 60_000,
+        seed: 1234,
+        stagnationMs: 60_000,
+      },
+      update => progress.push(update.candidatesTested),
     );
-    expect(bestYield.metrics.sheetCount).toBeLessThanOrEqual(
-      fewerCuts.metrics.sheetCount,
+
+    expect(progress[0]).toBeGreaterThan(0);
+    expect(progress.at(-1)).toBe(30);
+    expect(searched.metrics.sheetCount).toBeLessThanOrEqual(
+      baseline.metrics.sheetCount,
     );
+    if (searched.metrics.sheetCount === baseline.metrics.sheetCount) {
+      expect(searched.metrics.movementCount).toBeLessThanOrEqual(
+        baseline.metrics.movementCount,
+      );
+      if (searched.metrics.movementCount === baseline.metrics.movementCount) {
+        expect(searched.metrics.processLossAreaMm2).toBeLessThanOrEqual(
+          baseline.metrics.processLossAreaMm2,
+        );
+      }
+    }
+  });
+
+  it('produz busca reproduzível quando recebe a mesma semente', () => {
+    const planInput = input([
+      piece({ id: 'a', widthMm: 720, lengthMm: 410, quantity: 4 }),
+      piece({ id: 'b', widthMm: 330, lengthMm: 980, quantity: 3 }),
+    ]);
+    const options = {
+      maxCandidates: 18,
+      maxDurationMs: 60_000,
+      seed: 9876,
+      stagnationMs: 60_000,
+    };
+
+    expect(searchCuttingPlan(planInput, options)).toEqual(
+      searchCuttingPlan(planInput, options),
+    );
+  });
+
+  it('encerra a busca quando passa o período configurado sem melhora', () => {
+    let clockMs = 0;
+    const clock = jest
+      .spyOn(Date, 'now')
+      .mockImplementation(() => (clockMs += 1_000));
+    const progress: number[] = [];
+
+    try {
+      searchCuttingPlan(
+        input([piece({ quantity: 2 })]),
+        {
+          maxCandidates: 1_000,
+          maxDurationMs: 60_000,
+          stagnationMs: 10_000,
+        },
+        update => progress.push(update.elapsedMs),
+      );
+    } finally {
+      clock.mockRestore();
+    }
+
+    expect(progress.at(-1)).toBeLessThanOrEqual(60_000);
+    expect(clockMs).toBeLessThan(60_000);
   });
 
   it('é determinístico para a mesma entrada', () => {

@@ -6,9 +6,14 @@ import { fireEvent, render, screen, waitFor } from '../testUtils';
 
 const push = jest.fn();
 jest.mock('next/router', () => ({ useRouter: () => ({ push }) }));
-jest.mock('@/components/ui/toaster', () => ({ toaster: { create: jest.fn() } }));
+jest.mock('@/components/ui/toaster', () => ({
+  toaster: { create: jest.fn() },
+}));
 
-function renderLogin(signIn = jest.fn(), user: ReturnType<typeof fakeAuthUser> | null = null) {
+function renderLogin(
+  signIn = jest.fn(),
+  user: ReturnType<typeof fakeAuthUser> | null = null,
+) {
   render(
     <TestAuthProvider user={user} signIn={signIn}>
       <Login />
@@ -18,8 +23,12 @@ function renderLogin(signIn = jest.fn(), user: ReturnType<typeof fakeAuthUser> |
 }
 
 function fillCredentials(email = 'admin@jrm.com', password = 'Seed@12345') {
-  fireEvent.change(screen.getByPlaceholderText('Email'), { target: { value: email } });
-  fireEvent.change(screen.getByPlaceholderText('Senha'), { target: { value: password } });
+  fireEvent.change(screen.getByPlaceholderText('Email'), {
+    target: { value: email },
+  });
+  fireEvent.change(screen.getByPlaceholderText('Senha'), {
+    target: { value: password },
+  });
 }
 
 describe('pages/login', () => {
@@ -38,7 +47,9 @@ describe('pages/login', () => {
   });
 
   it('mostra erro de credencial invalida e nao redireciona', async () => {
-    renderLogin(jest.fn().mockRejectedValue(new Error('auth/invalid-credential')));
+    renderLogin(
+      jest.fn().mockRejectedValue(new Error('auth/invalid-credential')),
+    );
 
     fillCredentials('admin@jrm.com', 'senha-errada');
     fireEvent.click(screen.getByRole('button', { name: 'Entrar' }));

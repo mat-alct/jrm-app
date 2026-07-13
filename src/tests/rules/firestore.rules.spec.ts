@@ -6,6 +6,7 @@ import {
   initializeTestEnvironment,
   RulesTestEnvironment,
 } from '@firebase/rules-unit-testing';
+import { setLogLevel } from 'firebase/firestore';
 
 type RoleName =
   | 'admin'
@@ -43,6 +44,8 @@ describe('firestore.rules', () => {
   let testEnv: RulesTestEnvironment;
 
   beforeAll(async () => {
+    // Negativas de permissão são o resultado esperado de assertFails.
+    setLogLevel('silent');
     testEnv = await initializeTestEnvironment({
       projectId: 'demo-jrm',
       firestore: {

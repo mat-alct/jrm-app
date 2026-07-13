@@ -53,7 +53,10 @@ export function ClientItemApprovalCard({
     attachment => !modelAttachments.includes(attachment),
   );
 
-  async function confirmAction(message: string, action: () => Promise<void> | void) {
+  async function confirmAction(
+    message: string,
+    action: () => Promise<void> | void,
+  ) {
     if (window.confirm(message)) {
       await action();
     }
@@ -83,7 +86,11 @@ export function ClientItemApprovalCard({
 
         <Flex justify="space-between" gap={3} wrap="wrap">
           <Text color="app.textSecondary">Valor</Text>
-          <Text fontWeight="600" color="app.text" style={{ fontVariantNumeric: 'tabular-nums' }}>
+          <Text
+            fontWeight="600"
+            color="app.text"
+            style={{ fontVariantNumeric: 'tabular-nums' }}
+          >
             {formatCurrency(item.customerAmount ?? 0)}
           </Text>
         </Flex>
@@ -91,7 +98,11 @@ export function ClientItemApprovalCard({
         {item.estimatedDeliveryDate ? (
           <Flex justify="space-between" gap={3} wrap="wrap">
             <Text color="app.textSecondary">Previsão</Text>
-            <Text fontWeight="600" color="app.text" style={{ fontVariantNumeric: 'tabular-nums' }}>
+            <Text
+              fontWeight="600"
+              color="app.text"
+              style={{ fontVariantNumeric: 'tabular-nums' }}
+            >
               {new Date(item.estimatedDeliveryDate).toLocaleDateString('pt-BR')}
             </Text>
           </Flex>

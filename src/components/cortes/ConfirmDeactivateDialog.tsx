@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   Box,
   Button,
@@ -11,23 +10,22 @@ import {
 import React from 'react';
 import { FaTrash } from 'react-icons/fa';
 
+import type { OrderSummary } from '@/types';
+
 type ConfirmDeactivateDialogProps = {
-  order: any | null;
+  order: OrderSummary | null;
   onCancel: () => void;
   onConfirm: (id: string) => void;
   loading: boolean;
 };
 
-export const ConfirmDeactivateDialog: React.FC<ConfirmDeactivateDialogProps> = ({
-  order,
-  onCancel,
-  onConfirm,
-  loading,
-}) => {
+export const ConfirmDeactivateDialog: React.FC<
+  ConfirmDeactivateDialogProps
+> = ({ order, onCancel, onConfirm, loading }) => {
   return (
     <Dialog.Root
       open={!!order}
-      onOpenChange={(e) => {
+      onOpenChange={e => {
         if (!e.open && !loading) onCancel();
       }}
       placement="center"
@@ -52,8 +50,8 @@ export const ConfirmDeactivateDialog: React.FC<ConfirmDeactivateDialogProps> = (
                     <Text as="span" fontWeight="bold">
                       desativar
                     </Text>{' '}
-                    este pedido? Ele deixará de aparecer na lista, mas continuará
-                    acessível pela busca.
+                    este pedido? Ele deixará de aparecer na lista, mas
+                    continuará acessível pela busca.
                   </Text>
                   <Box
                     bg="gray.50"

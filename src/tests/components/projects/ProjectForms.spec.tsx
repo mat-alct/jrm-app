@@ -9,7 +9,11 @@ import { createProjectSchema } from '@/utils/yup/projetosValidations';
 import { fireEvent, render, screen, waitFor } from '../../testUtils';
 
 /** Pagina de novo projeto reduzida ao essencial: form + array de itens. */
-function NewProjectHarness({ onSubmit }: { onSubmit: (values: unknown) => void }) {
+function NewProjectHarness({
+  onSubmit,
+}: {
+  onSubmit: (values: unknown) => void;
+}) {
   const {
     register,
     control,
@@ -29,7 +33,7 @@ function NewProjectHarness({ onSubmit }: { onSubmit: (values: unknown) => void }
   const { fields, append, remove } = useFieldArray({ control, name: 'items' });
 
   return (
-    <form onSubmit={handleSubmit(onSubmit as never)}>
+    <form onSubmit={event => void handleSubmit(onSubmit as never)(event)}>
       <ProjectForm register={register} errors={errors as never} />
 
       {fields.map((field, index) => (
@@ -43,7 +47,10 @@ function NewProjectHarness({ onSubmit }: { onSubmit: (values: unknown) => void }
         />
       ))}
 
-      <button type="button" onClick={() => append({ name: '', environment: '' })}>
+      <button
+        type="button"
+        onClick={() => append({ name: '', environment: '' })}
+      >
         Adicionar item
       </button>
       <button type="submit">Criar projeto</button>
@@ -82,7 +89,9 @@ describe('ProjectForm + ProjectItemForm', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Criar projeto' }));
 
-    expect(await screen.findByText('Nome do cliente é obrigatório')).toBeInTheDocument();
+    expect(
+      await screen.findByText('Nome do cliente é obrigatório'),
+    ).toBeInTheDocument();
     expect(screen.getByText('Telefone é obrigatório')).toBeInTheDocument();
     expect(screen.getByText('E-mail é obrigatório')).toBeInTheDocument();
     expect(screen.getByText('Endereço é obrigatório')).toBeInTheDocument();
@@ -102,17 +111,19 @@ describe('ProjectForm + ProjectItemForm', () => {
     // entao o yup nem chega a rodar. Vale registrar: o `.email()` do yup e permissivo
     // (aceita ate "joao@empresa"), entao quem barra e-mail malformado aqui e a
     // validacao nativa do HTML, nao o schema.
-    await waitFor(() =>
-      expect(screen.getByLabelText('E-mail')).toBeInvalid(),
-    );
+    await waitFor(() => expect(screen.getByLabelText('E-mail')).toBeInvalid());
     expect(onSubmit).not.toHaveBeenCalled();
-    expect(screen.queryByText('Digite um e-mail válido')).not.toBeInTheDocument();
+    expect(
+      screen.queryByText('Digite um e-mail válido'),
+    ).not.toBeInTheDocument();
   });
 
   it('nao permite remover quando ha um unico item', () => {
     render(<NewProjectHarness onSubmit={jest.fn()} />);
 
-    expect(screen.queryByRole('button', { name: 'Remover' })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Remover' }),
+    ).not.toBeInTheDocument();
   });
 
   it('adiciona e remove itens dinamicamente', () => {
@@ -139,7 +150,9 @@ describe('ProjectForm + ProjectItemForm', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Criar projeto' }));
 
     // Apenas o item 2, que ficou vazio, acusa erro.
-    expect(await screen.findByText('Nome do item é obrigatório')).toBeInTheDocument();
+    expect(
+      await screen.findByText('Nome do item é obrigatório'),
+    ).toBeInTheDocument();
     expect(screen.getAllByText('Nome do item é obrigatório')).toHaveLength(1);
   });
 
@@ -173,7 +186,10 @@ describe('ProjectForm + ProjectItemForm', () => {
         customerEmail: 'cliente@alpha.com',
         customerAddress: 'Rua A, 1',
         items: [
-          expect.objectContaining({ name: 'Cozinha planejada', environment: 'Cozinha' }),
+          expect.objectContaining({
+            name: 'Cozinha planejada',
+            environment: 'Cozinha',
+          }),
           expect.objectContaining({ name: 'Armario', environment: 'Quarto' }),
         ],
       }),

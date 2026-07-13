@@ -8,7 +8,9 @@ import { calculateCutlistPrice } from '@/utils/cutlist/calculatePrice';
 const material = { width: 1000, height: 1000, price: 100 };
 
 /** Peca de 1000x2000 => area 2.000.000 => 2x a area da chapa. */
-function piece(overrides: Partial<Parameters<typeof calculateCutlistPrice>[1]> = {}) {
+function piece(
+  overrides: Partial<Parameters<typeof calculateCutlistPrice>[1]> = {},
+) {
   return {
     amount: 1,
     sideA: 1000,
@@ -54,26 +56,29 @@ describe('calculateCutlistPrice', () => {
 
     it('soma as duas bordas quando ambas existem', () => {
       // 350 + 3 + 6 = 359
-      expect(calculateCutlistPrice(material, piece({ borderA: 1, borderB: 1 }))).toBe(
-        359,
-      );
+      expect(
+        calculateCutlistPrice(material, piece({ borderA: 1, borderB: 1 })),
+      ).toBe(359);
     });
   });
 
   describe('adicionais por peca', () => {
     it('cobra R$5 por furo de dobradica', () => {
-      expect(calculateCutlistPrice(material, piece({ hingeHolesQuantity: 3 }))).toBe(
-        365,
-      );
+      expect(
+        calculateCutlistPrice(material, piece({ hingeHolesQuantity: 3 })),
+      ).toBe(365);
     });
 
     it('cobra R$5 por canto boleado, multiplicado pela quantidade de pecas', () => {
-      expect(calculateCutlistPrice(material, piece({ roundedCornersCount: 2 }))).toBe(
-        360,
-      );
+      expect(
+        calculateCutlistPrice(material, piece({ roundedCornersCount: 2 })),
+      ).toBe(360);
       // 2 pecas x (350 + 10) = 720
       expect(
-        calculateCutlistPrice(material, piece({ amount: 2, roundedCornersCount: 2 })),
+        calculateCutlistPrice(
+          material,
+          piece({ amount: 2, roundedCornersCount: 2 }),
+        ),
       ).toBe(720);
     });
 
@@ -125,12 +130,17 @@ describe('calculateCutlistPrice', () => {
     it('devolve 0 quando a quantidade e 0', () => {
       expect(calculateCutlistPrice(material, piece({ amount: 0 }))).toBe(0);
       expect(
-        calculateCutlistPrice(material, piece({ amount: 0, hasDrawerSlot: true })),
+        calculateCutlistPrice(
+          material,
+          piece({ amount: 0, hasDrawerSlot: true }),
+        ),
       ).toBe(0);
     });
 
     it('devolve 0 quando as medidas da peca sao 0', () => {
-      expect(calculateCutlistPrice(material, piece({ sideA: 0, sideB: 0 }))).toBe(0);
+      expect(
+        calculateCutlistPrice(material, piece({ sideA: 0, sideB: 0 })),
+      ).toBe(0);
     });
 
     it('devolve 0 quando o material custa 0 e nao ha adicionais', () => {

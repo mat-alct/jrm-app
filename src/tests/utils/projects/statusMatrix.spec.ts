@@ -53,9 +53,12 @@ const ALLOWED_FOR_NON_ADMIN: Record<ProjectItemStatus, ProjectItemStatus[]> = {
 };
 
 /** Pares (from, to) da matriz completa, incluindo from === to. */
-const ALL_PAIRS: Array<[ProjectItemStatus, ProjectItemStatus]> = ALL_STATUSES.flatMap(
-  from => ALL_STATUSES.map(to => [from, to] as [ProjectItemStatus, ProjectItemStatus]),
-);
+const ALL_PAIRS: Array<[ProjectItemStatus, ProjectItemStatus]> =
+  ALL_STATUSES.flatMap(from =>
+    ALL_STATUSES.map(
+      to => [from, to] as [ProjectItemStatus, ProjectItemStatus],
+    ),
+  );
 
 describe('canTransition — matriz integral (13 x 13)', () => {
   describe('usuario nao admin', () => {
@@ -106,9 +109,9 @@ describe('canTransition — matriz integral (13 x 13)', () => {
     });
 
     it('pode reabrir um item finalizado (poder de correcao, nao um bug)', () => {
-      expect(canTransition('finalizado', 'projeto_criado', { isAdmin: true })).toBe(
-        true,
-      );
+      expect(
+        canTransition('finalizado', 'projeto_criado', { isAdmin: true }),
+      ).toBe(true);
       expect(canTransition('finalizado', 'projeto_criado')).toBe(false);
     });
   });
@@ -141,7 +144,9 @@ describe('rotulos de status', () => {
     // Producao e montagem interna aparecem como um unico estagio para o cliente.
     expect(getClientStatusLabel('em_producao')).toBe('Em produção');
     expect(getClientStatusLabel('pronto_para_montagem')).toBe('Em produção');
-    expect(getClientStatusLabel('montagem_concluida')).toBe('Montagem concluída');
+    expect(getClientStatusLabel('montagem_concluida')).toBe(
+      'Montagem concluída',
+    );
     expect(getClientStatusLabel('aguardando_pagamento_montador')).toBe(
       'Montagem concluída',
     );

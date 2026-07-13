@@ -3,7 +3,9 @@ import { AssemblerAssignment } from '@/types/projects';
 
 import { render, screen } from '../../testUtils';
 
-function assignment(overrides: Partial<AssemblerAssignment> = {}): AssemblerAssignment {
+function assignment(
+  overrides: Partial<AssemblerAssignment> = {},
+): AssemblerAssignment {
   return {
     id: 'assembler-1',
     projectId: 'project-1',
@@ -28,7 +30,11 @@ describe('AssemblerAssignmentsPanel', () => {
       <AssemblerAssignmentsPanel
         assignments={[
           assignment(),
-          assignment({ id: 'assembler-2', assemblerName: 'Montador Dois', paymentStatus: 'pago' }),
+          assignment({
+            id: 'assembler-2',
+            assemblerName: 'Montador Dois',
+            paymentStatus: 'pago',
+          }),
         ]}
         canViewValues
       />,
@@ -41,14 +47,19 @@ describe('AssemblerAssignmentsPanel', () => {
   });
 
   it('mostra o valor a receber quando permitido', () => {
-    render(<AssemblerAssignmentsPanel assignments={[assignment()]} canViewValues />);
+    render(
+      <AssemblerAssignmentsPanel assignments={[assignment()]} canViewValues />,
+    );
 
     expect(screen.getByText(/250,00/)).toBeInTheDocument();
   });
 
   it('esconde o valor a receber de quem nao pode ver', () => {
     render(
-      <AssemblerAssignmentsPanel assignments={[assignment()]} canViewValues={false} />,
+      <AssemblerAssignmentsPanel
+        assignments={[assignment()]}
+        canViewValues={false}
+      />,
     );
 
     expect(screen.getByText('Montador Um')).toBeInTheDocument();

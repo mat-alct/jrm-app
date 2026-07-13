@@ -27,7 +27,14 @@ export const StatusPill: React.FC<StatusPillProps> = ({
     w="fit-content"
     {...rest}
   >
-    <Box as="span" w="6px" h="6px" rounded="full" bg="colorPalette.500" flexShrink={0} />
+    <Box
+      as="span"
+      w="6px"
+      h="6px"
+      rounded="full"
+      bg="colorPalette.500"
+      flexShrink={0}
+    />
     {label}
   </Flex>
 );

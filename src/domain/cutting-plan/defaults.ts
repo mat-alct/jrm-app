@@ -1,6 +1,8 @@
 import { CuttingPlanSettings } from './types';
 
-export const CUTTING_PLAN_ALGORITHM_VERSION = 'guillotine-v3';
+export const CUTTING_PLAN_ALGORITHM_VERSION = 'guillotine-v5';
+
+export const CUTTING_PLAN_OPTIMIZATION_MODE = 'best_yield' as const;
 
 // O campo de fase do arquivo .AC tem um caractere e o perfil giben-cortecloud-v1
 // só aceita os dígitos 2 a 5. Cada nível equivale a uma mudança de direção da

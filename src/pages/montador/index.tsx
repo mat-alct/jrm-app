@@ -43,7 +43,9 @@ export default function AssemblerHomePage() {
   const router = useRouter();
   const { user } = useAuth();
   const { data: appUser, isLoading: isUserLoading } = useAppUser();
-  const [assignments, setAssignments] = React.useState<AssemblerAssignment[]>([]);
+  const [assignments, setAssignments] = React.useState<AssemblerAssignment[]>(
+    [],
+  );
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -90,10 +92,16 @@ export default function AssemblerHomePage() {
         <Header pageTitle="Minha montagem" />
         <VStack align="stretch" gap={5} maxW="980px" mx="auto">
           <VStack align="stretch" gap={1}>
-            <Heading as="h1" fontSize={{ base: '2xl', md: '3xl' }} fontWeight="600">
+            <Heading
+              as="h1"
+              fontSize={{ base: '2xl', md: '3xl' }}
+              fontWeight="600"
+            >
               Minha montagem
             </Heading>
-            <Text color="app.textSecondary">Itens atribuídos para execução.</Text>
+            <Text color="app.textSecondary">
+              Itens atribuídos para execução.
+            </Text>
           </VStack>
 
           {error ? (
@@ -114,65 +122,71 @@ export default function AssemblerHomePage() {
             <SimpleGrid columns={{ base: 1, md: 2 }} gap={4}>
               {orderedAssignments.map(assignment => (
                 <AppCard key={assignment.id} interactive>
-                <VStack align="stretch" gap={3}>
-                  <Flex justify="space-between" gap={3}>
-                    <VStack align="stretch" gap={1}>
-                      <Text fontSize="lg" fontWeight="600" color="app.text">
-                        {assignment.customerName ?? 'Cliente'}
-                      </Text>
-                      <Text color="app.textSecondary">
-                        {assignment.itemEnvironment ?? 'Ambiente'}
-                      </Text>
-                    </VStack>
-                    <StatusPill
-                      palette={isLate(assignment) ? 'red' : 'green'}
-                      label={isLate(assignment) ? 'Atrasado' : 'No prazo'}
-                    />
-                  </Flex>
+                  <VStack align="stretch" gap={3}>
+                    <Flex justify="space-between" gap={3}>
+                      <VStack align="stretch" gap={1}>
+                        <Text fontSize="lg" fontWeight="600" color="app.text">
+                          {assignment.customerName ?? 'Cliente'}
+                        </Text>
+                        <Text color="app.textSecondary">
+                          {assignment.itemEnvironment ?? 'Ambiente'}
+                        </Text>
+                      </VStack>
+                      <StatusPill
+                        palette={isLate(assignment) ? 'red' : 'green'}
+                        label={isLate(assignment) ? 'Atrasado' : 'No prazo'}
+                      />
+                    </Flex>
 
-                  <Text fontWeight="600" color="app.text">
-                    {assignment.itemName ?? 'Item de montagem'}
-                  </Text>
-                  <Flex justify="space-between" gap={3}>
-                    <Text color="app.textSecondary">Status</Text>
                     <Text fontWeight="600" color="app.text">
-                      {assignment.itemStatus}
+                      {assignment.itemName ?? 'Item de montagem'}
                     </Text>
-                  </Flex>
-                  <Flex justify="space-between" gap={3}>
-                    <Text color="app.textSecondary">Prazo</Text>
-                    <Text fontWeight="600" color="app.text" style={{ fontVariantNumeric: 'tabular-nums' }}>
-                      {assignment.dueAt
-                        ? assignment.dueAt.toDate().toLocaleDateString('pt-BR')
-                        : 'Sem prazo'}
-                    </Text>
-                  </Flex>
-                  <Flex justify="space-between" gap={3}>
-                    <Text color="app.textSecondary">A receber</Text>
-                    <Text
+                    <Flex justify="space-between" gap={3}>
+                      <Text color="app.textSecondary">Status</Text>
+                      <Text fontWeight="600" color="app.text">
+                        {assignment.itemStatus}
+                      </Text>
+                    </Flex>
+                    <Flex justify="space-between" gap={3}>
+                      <Text color="app.textSecondary">Prazo</Text>
+                      <Text
+                        fontWeight="600"
+                        color="app.text"
+                        style={{ fontVariantNumeric: 'tabular-nums' }}
+                      >
+                        {assignment.dueAt
+                          ? assignment.dueAt
+                              .toDate()
+                              .toLocaleDateString('pt-BR')
+                          : 'Sem prazo'}
+                      </Text>
+                    </Flex>
+                    <Flex justify="space-between" gap={3}>
+                      <Text color="app.textSecondary">A receber</Text>
+                      <Text
+                        fontWeight="600"
+                        color="app.text"
+                        style={{ fontVariantNumeric: 'tabular-nums' }}
+                      >
+                        {formatCurrency(assignment.amountToReceive)}
+                      </Text>
+                    </Flex>
+                    <Button
+                      bg="app.ink"
+                      color="white"
+                      rounded="lg"
                       fontWeight="600"
-                      color="app.text"
-                      style={{ fontVariantNumeric: 'tabular-nums' }}
+                      _hover={{ bg: 'app.inkHover' }}
+                      _focusVisible={{ shadow: 'focus', outline: 'none' }}
+                      onClick={() => {
+                        void router.push(
+                          `/montador/item/${assignment.projectId}/${assignment.itemId}`,
+                        );
+                      }}
                     >
-                      {formatCurrency(assignment.amountToReceive)}
-                    </Text>
-                  </Flex>
-                  <Button
-                    bg="app.ink"
-                    color="white"
-                    rounded="lg"
-                    fontWeight="600"
-                    _hover={{ bg: 'app.inkHover' }}
-                    _focusVisible={{ shadow: 'focus', outline: 'none' }}
-                    onClick={() => {
-                      void router.push(
-                        `/montador/item/${assignment.projectId}/${assignment.itemId}`,
-                      );
-                    }}
-                  >
-                    Abrir item
-                  </Button>
-                </VStack>
+                      Abrir item
+                    </Button>
+                  </VStack>
                 </AppCard>
               ))}
             </SimpleGrid>

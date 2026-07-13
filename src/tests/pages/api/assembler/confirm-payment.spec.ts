@@ -27,7 +27,9 @@ describe('pages/api/assembler/confirm-payment', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockedAdminAuth.verifySessionCookie.mockResolvedValue({ uid: 'assembler-1' } as never);
+    mockedAdminAuth.verifySessionCookie.mockResolvedValue({
+      uid: 'assembler-1',
+    } as never);
     mockedAdminDb.doc.mockImplementation((path: string) => {
       if (path === 'users/assembler-1') {
         return {
@@ -55,7 +57,10 @@ describe('pages/api/assembler/confirm-payment', () => {
           update: paymentUpdate,
         } as never;
       }
-      if (path === 'projects/project-1/items/item-1/assemblerAssignments/assembler-1') {
+      if (
+        path ===
+        'projects/project-1/items/item-1/assemblerAssignments/assembler-1'
+      ) {
         return { update: assignmentUpdate } as never;
       }
       throw new Error(`Unexpected doc ${path}`);

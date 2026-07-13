@@ -4,7 +4,7 @@ import { auth } from '@/services/firebase';
 import { adminDb } from '@/services/firebaseAdmin';
 import { getSellerByPassword } from '@/services/sellers';
 import { resetEmulator } from '@/tests/helpers/emulator';
-import { seedEmulator, SEED_USER_PASSWORD } from '@/tests/helpers/seedEmulator';
+import { SEED_USER_PASSWORD, seedEmulator } from '@/tests/helpers/seedEmulator';
 
 async function signInAs(email: string): Promise<void> {
   await signInWithEmailAndPassword(auth, email, SEED_USER_PASSWORD);

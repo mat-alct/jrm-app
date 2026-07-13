@@ -3,8 +3,8 @@ import React from 'react';
 
 import { AccessGate } from '@/components/auth/AccessGate';
 import { useAppUser } from '@/services/projects/users.service';
-import { AppUser, UserRole } from '@/types/projects';
 import { fakeAuthUser, TestAuthProvider } from '@/tests/helpers/authTestUtils';
+import { AppUser, UserRole } from '@/types/projects';
 
 import { render, screen } from '../../testUtils';
 

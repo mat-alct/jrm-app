@@ -51,7 +51,13 @@ async function seedPayment(
     ...overrides,
   });
   await adminDb
-    .doc(itemAssemblerAssignmentPath(PROJECT_ID, ASSIGNED_ITEM_ID, 'seed-assembler'))
+    .doc(
+      itemAssemblerAssignmentPath(
+        PROJECT_ID,
+        ASSIGNED_ITEM_ID,
+        'seed-assembler',
+      ),
+    )
     .update({ paymentStatus: 'pago', paymentId });
 }
 
@@ -109,7 +115,11 @@ describe('api/assembler integration', () => {
       const assignment = (
         await adminDb
           .doc(
-            itemAssemblerAssignmentPath(PROJECT_ID, ASSIGNED_ITEM_ID, 'seed-assembler'),
+            itemAssemblerAssignmentPath(
+              PROJECT_ID,
+              ASSIGNED_ITEM_ID,
+              'seed-assembler',
+            ),
           )
           .get()
       ).data();
@@ -117,17 +127,25 @@ describe('api/assembler integration', () => {
       expect(assignment?.completedAt).toBeDefined();
 
       const history = (
-        await adminDb.collection(itemStatusHistoryPath(PROJECT_ID, ASSIGNED_ITEM_ID)).get()
+        await adminDb
+          .collection(itemStatusHistoryPath(PROJECT_ID, ASSIGNED_ITEM_ID))
+          .get()
       ).docs.map(doc => doc.data());
       expect(history).toHaveLength(2);
       expect(history.map(entry => entry.toStatus).sort()).toEqual([
         'montagem_concluida',
         'pronto_para_montagem',
       ]);
-      expect(history.every(entry => entry.changedByRole === 'assembler')).toBe(true);
-      expect(history.every(entry => entry.changedBy === 'seed-assembler')).toBe(true);
+      expect(history.every(entry => entry.changedByRole === 'assembler')).toBe(
+        true,
+      );
+      expect(history.every(entry => entry.changedBy === 'seed-assembler')).toBe(
+        true,
+      );
 
-      const project = (await adminDb.doc(`projects/${PROJECT_ID}`).get()).data();
+      const project = (
+        await adminDb.doc(`projects/${PROJECT_ID}`).get()
+      ).data();
       expect(project?.itemSummary).toMatchObject({ total: 2, emProducao: 0 });
     });
 
@@ -151,8 +169,11 @@ describe('api/assembler integration', () => {
         'aguardando_aprovacao_cliente',
       );
       expect(
-        (await adminDb.collection(itemStatusHistoryPath(PROJECT_ID, UNASSIGNED_ITEM_ID)).get())
-          .size,
+        (
+          await adminDb
+            .collection(itemStatusHistoryPath(PROJECT_ID, UNASSIGNED_ITEM_ID))
+            .get()
+        ).size,
       ).toBe(0);
     });
 
@@ -242,7 +263,9 @@ describe('api/assembler integration', () => {
       expect(res.statusCode).toBe(200);
       expect(res.body).toEqual({ status: true });
 
-      const payment = (await adminDb.doc(paymentPath('payment-1')).get()).data();
+      const payment = (
+        await adminDb.doc(paymentPath('payment-1')).get()
+      ).data();
       expect(payment).toMatchObject({
         status: 'confirmado_pelo_montador',
         amount: 250,
@@ -253,7 +276,11 @@ describe('api/assembler integration', () => {
       const assignment = (
         await adminDb
           .doc(
-            itemAssemblerAssignmentPath(PROJECT_ID, ASSIGNED_ITEM_ID, 'seed-assembler'),
+            itemAssemblerAssignmentPath(
+              PROJECT_ID,
+              ASSIGNED_ITEM_ID,
+              'seed-assembler',
+            ),
           )
           .get()
       ).data();
@@ -278,7 +305,8 @@ describe('api/assembler integration', () => {
 
       expect(res.statusCode).toBe(403);
       expect(
-        (await adminDb.doc(paymentPath('payment-de-outro')).get()).data()?.status,
+        (await adminDb.doc(paymentPath('payment-de-outro')).get()).data()
+          ?.status,
       ).toBe('pago');
     });
 
@@ -297,7 +325,8 @@ describe('api/assembler integration', () => {
 
       expect(res.statusCode).toBe(403);
       expect(
-        (await adminDb.doc(paymentPath('payment-pendente')).get()).data()?.status,
+        (await adminDb.doc(paymentPath('payment-pendente')).get()).data()
+          ?.status,
       ).toBe('aguardando_liberacao');
     });
 

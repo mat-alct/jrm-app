@@ -15,12 +15,19 @@ const ALL_ROLES: UserRole[] = [
 ];
 
 function isValidRoles(roles: unknown): roles is UserRole[] {
-  return (
-    Array.isArray(roles) &&
-    roles.length > 0 &&
-    roles.every(role => ALL_ROLES.includes(role))
+  if (!Array.isArray(roles) || roles.length === 0) return false;
+
+  const candidateRoles: unknown[] = roles;
+  return candidateRoles.every(
+    role => typeof role === 'string' && ALL_ROLES.includes(role as UserRole),
   );
 }
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+const isNonEmptyString = (value: unknown): value is string =>
+  typeof value === 'string' && value.trim().length > 0;
 
 async function getRequestingAdminUid(
   req: NextApiRequest,
@@ -43,9 +50,19 @@ async function getRequestingAdminUid(
 }
 
 async function handleCreate(req: NextApiRequest, res: NextApiResponse) {
-  const { name, email, phone, password, roles } = req.body ?? {};
+  const body: unknown = req.body;
+  if (!isRecord(body)) {
+    return res.status(400).json({ error: 'Dados inválidos.' });
+  }
+  const { name, email, phone, password, roles } = body;
 
-  if (!name || !email || !password || !isValidRoles(roles)) {
+  if (
+    !isNonEmptyString(name) ||
+    !isNonEmptyString(email) ||
+    !isNonEmptyString(password) ||
+    !isValidRoles(roles) ||
+    (phone !== undefined && typeof phone !== 'string')
+  ) {
     return res.status(400).json({ error: 'Dados inválidos.' });
   }
 
@@ -57,21 +74,19 @@ async function handleCreate(req: NextApiRequest, res: NextApiResponse) {
     });
 
     const now = Timestamp.now();
-    await adminDb
-      .doc(userPath(userRecord.uid))
-      .set({
-        name,
-        email,
-        ...(phone ? { phone: toE164BR(phone) ?? phone.trim() } : {}),
-        roles,
-        active: true,
-        createdAt: now,
-        updatedAt: now,
-      });
+    await adminDb.doc(userPath(userRecord.uid)).set({
+      name,
+      email,
+      ...(phone ? { phone: toE164BR(phone) ?? phone.trim() } : {}),
+      roles,
+      active: true,
+      createdAt: now,
+      updatedAt: now,
+    });
 
     return res.status(201).json({ id: userRecord.uid });
   } catch (error: unknown) {
-    const code = (error as { code?: string })?.code;
+    const code = isRecord(error) ? error.code : undefined;
     if (code === 'auth/email-already-exists') {
       return res
         .status(409)
@@ -92,21 +107,34 @@ async function handleCreate(req: NextApiRequest, res: NextApiResponse) {
 }
 
 async function handleUpdate(req: NextApiRequest, res: NextApiResponse) {
-  const { id, name, phone, roles, active } = req.body ?? {};
+  const body: unknown = req.body;
+  if (!isRecord(body)) {
+    return res.status(400).json({ error: 'Dados inválidos.' });
+  }
+  const { id, name, phone, roles, active } = body;
 
-  if (!id) {
+  if (!isNonEmptyString(id)) {
     return res.status(400).json({ error: 'id é obrigatório.' });
   }
 
   if (roles !== undefined && !isValidRoles(roles)) {
     return res.status(400).json({ error: 'roles inválidos.' });
   }
+  if (name !== undefined && typeof name !== 'string') {
+    return res.status(400).json({ error: 'name inválido.' });
+  }
+  if (phone !== undefined && typeof phone !== 'string') {
+    return res.status(400).json({ error: 'phone inválido.' });
+  }
+  if (active !== undefined && typeof active !== 'boolean') {
+    return res.status(400).json({ error: 'active inválido.' });
+  }
 
   const update: Record<string, unknown> = { updatedAt: Timestamp.now() };
   if (name !== undefined) update.name = name;
   if (phone !== undefined) update.phone = toE164BR(phone) ?? phone.trim();
   if (roles !== undefined) update.roles = roles;
-  if (active !== undefined) update.active = !!active;
+  if (active !== undefined) update.active = active;
 
   try {
     if (name !== undefined) {

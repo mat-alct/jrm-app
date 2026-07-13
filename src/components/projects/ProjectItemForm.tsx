@@ -1,6 +1,6 @@
 import { Box, Button, Heading, HStack } from '@chakra-ui/react';
 import React from 'react';
-import { FieldError, UseFormRegister } from 'react-hook-form';
+import { FieldError, Path, UseFormRegister } from 'react-hook-form';
 
 import { FormInput } from '../Form/Input';
 
@@ -20,23 +20,28 @@ type ProjectItemFieldErrors = Partial<
   Record<keyof ProjectItemFormValues, FieldError>
 >;
 
-interface ProjectItemFormProps {
+interface ProjectItemFormProps<
+  TFieldValues extends ProjectItemFormParentValues,
+> {
   index: number;
-  register: UseFormRegister<any>;
+  register: UseFormRegister<TFieldValues>;
   errors: Partial<Record<'items', ProjectItemFieldErrors[]>>;
   onRemove: () => void;
   canRemove: boolean;
 }
 
-export function ProjectItemForm({
+export function ProjectItemForm<
+  TFieldValues extends ProjectItemFormParentValues,
+>({
   index,
   register,
   errors,
   onRemove,
   canRemove,
-}: ProjectItemFormProps) {
+}: ProjectItemFormProps<TFieldValues>) {
   const itemErrors = errors.items?.[index];
-  const field = (suffix: string) => `items.${index}.${suffix}`;
+  const field = <T extends keyof ProjectItemFormValues>(suffix: T) =>
+    `items.${index}.${suffix}` as Path<TFieldValues>;
 
   return (
     <Box
@@ -51,7 +56,12 @@ export function ProjectItemForm({
       <HStack justify="space-between">
         <Heading size="sm">Item {index + 1}</Heading>
         {canRemove && (
-          <Button size="xs" variant="outline" colorScheme="red" onClick={onRemove}>
+          <Button
+            size="xs"
+            variant="outline"
+            colorScheme="red"
+            onClick={onRemove}
+          >
             Remover
           </Button>
         )}

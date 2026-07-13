@@ -12,8 +12,8 @@ import {
 
 import { ProjectItem, ProjectItemVersion } from '@/types/projects';
 
-import { uploadAttachment } from './attachment.service';
 import { db } from '../firebase';
+import { uploadAttachment } from './attachment.service';
 import { itemVersionsPath } from './paths';
 import { updateProjectItem } from './projectItem.service';
 import { StatusActor, updateItemStatus } from './status.service';
@@ -81,7 +81,6 @@ export async function submitDesignerVersion(
 
   const attachmentIds: string[] = [];
   for (const file of files) {
-    // eslint-disable-next-line no-await-in-loop
     const attachment = await uploadAttachment({
       projectId,
       itemId,

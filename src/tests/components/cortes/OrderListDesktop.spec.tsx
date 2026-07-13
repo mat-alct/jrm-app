@@ -1,5 +1,6 @@
 import { OrderListDesktop } from '@/components/cortes/OrderListDesktop';
 import { OrderListCallbacks } from '@/components/cortes/OrderListTypes';
+import type { EstimateDocument, OrderDocument } from '@/types';
 
 import { fireEvent, render, screen } from '../../testUtils';
 
@@ -23,8 +24,14 @@ function orderItem(overrides: Record<string, unknown> = {}) {
     customer: { name: 'Pedro Silva' },
     cutlist: [],
     orderPrice: 1000,
+    deliveryType: 'Retirada',
+    paymentType: 'Dinheiro',
+    seller: 'Vendedor',
+    deliveryDate: Timestamp.now(),
+    createdAt: Timestamp.now(),
+    updatedAt: Timestamp.now(),
     ...overrides,
-  };
+  } as OrderDocument;
 }
 
 function estimateItem(overrides: Record<string, unknown> = {}) {
@@ -34,8 +41,11 @@ function estimateItem(overrides: Record<string, unknown> = {}) {
     // A linha de orcamento mostra `name`, nao `customer.name`.
     name: 'Ana Souza',
     cutlist: [],
+    estimatePrice: 1000,
+    createdAt: Timestamp.now(),
+    updatedAt: Timestamp.now(),
     ...overrides,
-  };
+  } as EstimateDocument;
 }
 
 function renderList(
@@ -240,3 +250,4 @@ describe('OrderListDesktop', () => {
     expect(screen.getByText('Cliente Removido')).toBeInTheDocument();
   });
 });
+import { Timestamp } from 'firebase/firestore';

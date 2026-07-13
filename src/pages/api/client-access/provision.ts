@@ -1,13 +1,16 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 
+import { adminDb } from '@/services/firebaseAdmin';
 import {
   generateClientCredentials,
   hashAccessCode,
   resetClientAccessAttempts,
 } from '@/services/projects/clientAccess.service';
-import { ApiAuthError, requireInternalUser } from '@/services/projects/internalAuth.server';
+import {
+  ApiAuthError,
+  requireInternalUser,
+} from '@/services/projects/internalAuth.server';
 import { projectPath } from '@/services/projects/paths';
-import { adminDb } from '@/services/firebaseAdmin';
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {

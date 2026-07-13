@@ -20,6 +20,7 @@ import {
 } from '@chakra-ui/react';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useQuery } from '@tanstack/react-query';
+import Image from 'next/image';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Resolver, SubmitHandler, useForm } from 'react-hook-form';
 import {
@@ -32,6 +33,16 @@ import {
   FaTimesCircle,
   FaTrash,
 } from 'react-icons/fa';
+
+const ARROW_NAV_FIELDS = [
+  'materialId',
+  'amount',
+  'sideA',
+  'borderA',
+  'sideB',
+  'borderB',
+  'addCutBtn',
+] as const;
 import { v4 } from 'uuid';
 
 import {
@@ -146,11 +157,11 @@ const CutlistRow = React.memo<CutlistRowProps>(props => {
             />
           </Box>
         ) : (
-          <img
+          <Image
             src={avatar.src}
             alt="Tag"
-            width="35px"
-            height="35px"
+            width={35}
+            height={35}
             style={{
               borderRadius: '4px',
               border: '1px solid #eee',
@@ -582,18 +593,8 @@ export const Cutlist = ({
   // Navegação por setas: → próximo campo, ← campo anterior.
   // Em inputs de texto só pula se o cursor estiver na borda (não atrapalha edição).
   // Em selects (react-select) pula direto — ArrowDown continua abrindo o menu.
-  const arrowNavFields = [
-    'materialId',
-    'amount',
-    'sideA',
-    'borderA',
-    'sideB',
-    'borderB',
-    'addCutBtn',
-  ];
-
   const focusFieldByIdx = useCallback((idx: number) => {
-    const id = arrowNavFields[idx];
+    const id = ARROW_NAV_FIELDS[idx];
     if (!id) return;
     const el = document.getElementById(id);
     el?.focus();
@@ -604,7 +605,9 @@ export const Cutlist = ({
       if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
       const active = document.activeElement as HTMLElement | null;
       if (!active) return;
-      const idx = arrowNavFields.indexOf(active.id);
+      const idx = ARROW_NAV_FIELDS.indexOf(
+        active.id as (typeof ARROW_NAV_FIELDS)[number],
+      );
       if (idx === -1) return;
 
       // Boundary check: para inputs de texto, só pula se cursor estiver na borda.
@@ -630,7 +633,7 @@ export const Cutlist = ({
       }
 
       const target = idx + (e.key === 'ArrowRight' ? 1 : -1);
-      if (target < 0 || target >= arrowNavFields.length) return;
+      if (target < 0 || target >= ARROW_NAV_FIELDS.length) return;
       e.preventDefault();
       e.stopPropagation();
       focusFieldByIdx(target);

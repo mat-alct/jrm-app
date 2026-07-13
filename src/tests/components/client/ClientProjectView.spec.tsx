@@ -39,7 +39,13 @@ function renderView(overrides: Partial<ClientProjectDTO> = {}, isBusy = false) {
     onRequestChange: jest.fn(),
   };
 
-  render(<ClientProjectView project={project(overrides)} isBusy={isBusy} {...handlers} />);
+  render(
+    <ClientProjectView
+      project={project(overrides)}
+      isBusy={isBusy}
+      {...handlers}
+    />,
+  );
   return handlers;
 }
 
@@ -69,7 +75,9 @@ describe('ClientProjectView', () => {
   it('avisa que ha itens aguardando decisao', () => {
     renderView();
 
-    expect(screen.getByText('Existem itens aguardando sua decisão.')).toBeInTheDocument();
+    expect(
+      screen.getByText('Existem itens aguardando sua decisão.'),
+    ).toBeInTheDocument();
   });
 
   it('esconde "Aprovar tudo" quando nao ha item pendente', () => {
@@ -87,15 +95,21 @@ describe('ClientProjectView', () => {
       ],
     });
 
-    expect(screen.queryByRole('button', { name: 'Aprovar tudo' })).not.toBeInTheDocument();
-    expect(screen.getByText('Todos os itens já foram avaliados.')).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Aprovar tudo' }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByText('Todos os itens já foram avaliados.'),
+    ).toBeInTheDocument();
   });
 
   it('aprova o item apos confirmacao', async () => {
     const { onApproveItem } = renderView();
 
     fireEvent.click(
-      within(itemCard('Cozinha planejada')).getByRole('button', { name: 'Aprovar item' }),
+      within(itemCard('Cozinha planejada')).getByRole('button', {
+        name: 'Aprovar item',
+      }),
     );
 
     expect(confirmSpy).toHaveBeenCalledWith('Confirmar aprovação deste item?');
@@ -106,7 +120,9 @@ describe('ClientProjectView', () => {
     const { onRejectItem } = renderView();
 
     fireEvent.click(
-      within(itemCard('Cozinha planejada')).getByRole('button', { name: 'Recusar' }),
+      within(itemCard('Cozinha planejada')).getByRole('button', {
+        name: 'Recusar',
+      }),
     );
 
     await waitFor(() => expect(onRejectItem).toHaveBeenCalledWith('item-1'));
@@ -116,7 +132,9 @@ describe('ClientProjectView', () => {
     const { onRequestChange } = renderView();
 
     fireEvent.click(
-      within(itemCard('Cozinha planejada')).getByRole('button', { name: 'Pedir alteração' }),
+      within(itemCard('Cozinha planejada')).getByRole('button', {
+        name: 'Pedir alteração',
+      }),
     );
 
     await waitFor(() => expect(onRequestChange).toHaveBeenCalledWith('item-1'));
@@ -127,7 +145,9 @@ describe('ClientProjectView', () => {
     const { onApproveItem, onApproveAll } = renderView();
 
     fireEvent.click(
-      within(itemCard('Cozinha planejada')).getByRole('button', { name: 'Aprovar item' }),
+      within(itemCard('Cozinha planejada')).getByRole('button', {
+        name: 'Aprovar item',
+      }),
     );
     fireEvent.click(screen.getByRole('button', { name: 'Aprovar tudo' }));
 
@@ -150,7 +170,9 @@ describe('ClientProjectView', () => {
     renderView();
 
     expect(
-      within(itemCard('Armario de quarto')).getByRole('button', { name: 'Aprovar item' }),
+      within(itemCard('Armario de quarto')).getByRole('button', {
+        name: 'Aprovar item',
+      }),
     ).toBeDisabled();
   });
 

@@ -16,7 +16,7 @@ export const useBoolean = (initialValue = false) => {
     () => ({
       on: () => setValue(true),
       off: () => setValue(false),
-      toggle: () => setValue((prev) => !prev),
+      toggle: () => setValue(prev => !prev),
     }),
     [],
   );

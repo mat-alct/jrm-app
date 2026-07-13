@@ -1,19 +1,22 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import type { EstimateDocument, OrderDocument, OrderListItem } from '@/types';
+
 export type OrderListCallbacks = {
-  onPrintResume: (data: any, type: 'order' | 'estimate') => void;
-  onPrintLabels: (data: any) => void;
-  onPrintCuttingPlan: (data: any) => void;
-  onDownloadMachineFiles: (data: any) => void;
+  onPrintResume: (data: OrderListItem, type: 'order' | 'estimate') => void;
+  onPrintLabels: (data: OrderDocument) => void;
+  onPrintCuttingPlan: (data: OrderDocument) => void;
+  onDownloadMachineFiles: (data: OrderDocument) => void;
   onApproveEstimate: (id: string) => void;
-  onShowHistory: (item: any) => void;
-  onConfirmStatus: (item: any) => void;
+  onShowHistory: (item: OrderDocument) => void;
+  onConfirmStatus: (item: OrderDocument) => void;
   onEdit: (id: string) => void;
-  onDeactivate: (item: any) => void;
+  onDeactivate: (item: OrderDocument) => void;
 };
 
 export type OrderListProps = OrderListCallbacks & {
-  items: any[];
+  items: OrderListItem[];
   isEstimateList: boolean;
   isLoading: boolean;
   searchQuery?: string;
 };
+
+export type { EstimateDocument, OrderDocument };

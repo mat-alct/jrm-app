@@ -77,7 +77,11 @@ describe('services/projects/designer.service', () => {
       const result = await getDesignerQueue('designer-1');
 
       expect(mockedCollectionGroup).toHaveBeenCalledWith({}, 'items');
-      expect(mockedWhere).toHaveBeenCalledWith('designerId', '==', 'designer-1');
+      expect(mockedWhere).toHaveBeenCalledWith(
+        'designerId',
+        '==',
+        'designer-1',
+      );
       expect(result).toEqual([{ id: 'i1', name: 'Cozinha' }]);
     });
   });
@@ -88,13 +92,7 @@ describe('services/projects/designer.service', () => {
     it('numbers the first version as 1 when there are no previous versions', async () => {
       mockedGetDocs.mockResolvedValue({ docs: [] });
 
-      const id = await submitDesignerVersion(
-        'p1',
-        'i1',
-        [],
-        undefined,
-        actor,
-      );
+      const id = await submitDesignerVersion('p1', 'i1', [], undefined, actor);
 
       expect(id).toBe('new-version-id');
       expect(mockedSetDoc).toHaveBeenCalledWith(
@@ -123,10 +121,7 @@ describe('services/projects/designer.service', () => {
       mockedGetDocs.mockResolvedValue({ docs: [] });
       mockedUploadAttachment.mockResolvedValueOnce({ id: 'att-1' });
       mockedUploadAttachment.mockResolvedValueOnce({ id: 'att-2' });
-      const files = [
-        new File(['a'], 'a.png'),
-        new File(['b'], 'b.png'),
-      ];
+      const files = [new File(['a'], 'a.png'), new File(['b'], 'b.png')];
 
       await submitDesignerVersion('p1', 'i1', files, 'nova versao', actor);
 

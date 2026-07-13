@@ -1,21 +1,21 @@
 import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { getBytes, getMetadata, ref } from 'firebase/storage';
 
-import { deleteAttachment } from '@/services/projects/attachmentAdmin';
+import { auth, storage } from '@/services/firebase';
+import { adminDb, adminStorage } from '@/services/firebaseAdmin';
 import {
   listAttachments,
   uploadAttachment,
 } from '@/services/projects/attachment.service';
+import { deleteAttachment } from '@/services/projects/attachmentAdmin';
 import {
   itemAttachmentPath,
   itemAttachmentStoragePath,
   projectAttachmentPath,
   projectAttachmentStoragePath,
 } from '@/services/projects/paths';
-import { auth, storage } from '@/services/firebase';
-import { adminDb, adminStorage } from '@/services/firebaseAdmin';
 import { resetEmulator, TEST_STORAGE_BUCKET } from '@/tests/helpers/emulator';
-import { seedEmulator, SEED_USER_PASSWORD } from '@/tests/helpers/seedEmulator';
+import { SEED_USER_PASSWORD, seedEmulator } from '@/tests/helpers/seedEmulator';
 import type { Attachment } from '@/types/projects';
 
 async function signInAs(email: string): Promise<void> {

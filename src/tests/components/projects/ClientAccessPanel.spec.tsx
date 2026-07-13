@@ -25,7 +25,9 @@ describe('ClientAccessPanel', () => {
   it('gera o acesso e exibe link e senha', async () => {
     respondWith({ publicId: 'Abc123', accessCode: 'K7M2P9' });
 
-    render(<ClientAccessPanel projectId="project-1" baseUrl="https://jrm.test" />);
+    render(
+      <ClientAccessPanel projectId="project-1" baseUrl="https://jrm.test" />,
+    );
 
     fireEvent.click(screen.getByRole('button', { name: 'Gerar senha' }));
 
@@ -35,23 +37,31 @@ describe('ClientAccessPanel', () => {
       body: JSON.stringify({ projectId: 'project-1' }),
     });
 
-    expect(await screen.findByText('https://jrm.test/cliente/Abc123')).toBeInTheDocument();
+    expect(
+      await screen.findByText('https://jrm.test/cliente/Abc123'),
+    ).toBeInTheDocument();
     expect(screen.getByText('K7M2P9')).toBeInTheDocument();
   });
 
   it('troca o rotulo do botao para regenerar apos gerar', async () => {
     respondWith({ publicId: 'Abc123', accessCode: 'K7M2P9' });
 
-    render(<ClientAccessPanel projectId="project-1" baseUrl="https://jrm.test" />);
+    render(
+      <ClientAccessPanel projectId="project-1" baseUrl="https://jrm.test" />,
+    );
     fireEvent.click(screen.getByRole('button', { name: 'Gerar senha' }));
 
-    expect(await screen.findByRole('button', { name: 'Regenerar senha' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('button', { name: 'Regenerar senha' }),
+    ).toBeInTheDocument();
   });
 
   it('copia o link para a area de transferencia', async () => {
     respondWith({ publicId: 'Abc123', accessCode: 'K7M2P9' });
 
-    render(<ClientAccessPanel projectId="project-1" baseUrl="https://jrm.test" />);
+    render(
+      <ClientAccessPanel projectId="project-1" baseUrl="https://jrm.test" />,
+    );
     fireEvent.click(screen.getByRole('button', { name: 'Gerar senha' }));
 
     fireEvent.click(await screen.findByRole('button', { name: 'Copiar link' }));
@@ -86,7 +96,9 @@ describe('ClientAccessPanel', () => {
     expect(
       await screen.findByText('Acesso restrito a administradores.'),
     ).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Copiar link' })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Copiar link' }),
+    ).not.toBeInTheDocument();
   });
 
   it('exibe erro generico quando a rede falha', async () => {
@@ -102,6 +114,8 @@ describe('ClientAccessPanel', () => {
     render(<ClientAccessPanel projectId="project-1" />);
 
     expect(screen.queryByText('Senha exibida uma vez')).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Copiar link' })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Copiar link' }),
+    ).not.toBeInTheDocument();
   });
 });

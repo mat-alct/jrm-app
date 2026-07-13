@@ -2,11 +2,12 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { renderHook, waitFor } from '@testing-library/react';
 import React, { ReactNode } from 'react';
 
-import { createProject, getProject, listProjects, updateProject } from '@/services/projects/project.service';
 import {
-  getProjectItem,
-  listProjectItems,
-} from '@/services/projects/projectItem.service';
+  createProject,
+  getProject,
+  listProjects,
+  updateProject,
+} from '@/services/projects/project.service';
 import {
   useCreateProject,
   useProject,
@@ -15,6 +16,10 @@ import {
   useProjects,
   useUpdateProject,
 } from '@/services/projects/projectHooks';
+import {
+  getProjectItem,
+  listProjectItems,
+} from '@/services/projects/projectItem.service';
 import { Project, ProjectItem } from '@/types/projects';
 
 jest.mock('@/services/projects/project.service', () => ({
@@ -39,7 +44,9 @@ function makeWrapper() {
   });
 
   function Wrapper({ children }: { children: ReactNode }) {
-    return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+    return (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
   }
 
   return { Wrapper, queryClient };
@@ -54,7 +61,9 @@ describe('useProjects', () => {
     const { Wrapper, queryClient } = makeWrapper();
 
     const filters = { sellerId: 'seller-1' };
-    const { result } = renderHook(() => useProjects(filters), { wrapper: Wrapper });
+    const { result } = renderHook(() => useProjects(filters), {
+      wrapper: Wrapper,
+    });
 
     await waitFor(() => expect(result.current.data).toEqual(projects));
     expect(listProjects).toHaveBeenCalledWith(filters);
@@ -70,7 +79,9 @@ describe('useProject e useProjectItems', () => {
     jest.mocked(getProject).mockResolvedValue(project);
     const { Wrapper } = makeWrapper();
 
-    const { result } = renderHook(() => useProject('project-1'), { wrapper: Wrapper });
+    const { result } = renderHook(() => useProject('project-1'), {
+      wrapper: Wrapper,
+    });
 
     await waitFor(() => expect(result.current.data).toEqual(project));
     expect(getProject).toHaveBeenCalledWith('project-1');
@@ -117,13 +128,17 @@ describe('mutações de projeto', () => {
     const { Wrapper, queryClient } = makeWrapper();
     const invalidate = jest.spyOn(queryClient, 'invalidateQueries');
 
-    const { result } = renderHook(() => useCreateProject(), { wrapper: Wrapper });
+    const { result } = renderHook(() => useCreateProject(), {
+      wrapper: Wrapper,
+    });
 
     const params = {
       input: { customerName: 'Cliente' },
       actor: { uid: 'user-1' },
     } as never;
-    await expect(result.current.mutateAsync(params)).resolves.toBe('project-novo');
+    await expect(result.current.mutateAsync(params)).resolves.toBe(
+      'project-novo',
+    );
 
     await waitFor(() =>
       expect(invalidate).toHaveBeenCalledWith({ queryKey: ['projects'] }),
@@ -131,11 +146,15 @@ describe('mutações de projeto', () => {
   });
 
   it('useCreateProject não invalida quando o service falha', async () => {
-    jest.mocked(createProject).mockRejectedValue(new Error('permission-denied'));
+    jest
+      .mocked(createProject)
+      .mockRejectedValue(new Error('permission-denied'));
     const { Wrapper, queryClient } = makeWrapper();
     const invalidate = jest.spyOn(queryClient, 'invalidateQueries');
 
-    const { result } = renderHook(() => useCreateProject(), { wrapper: Wrapper });
+    const { result } = renderHook(() => useCreateProject(), {
+      wrapper: Wrapper,
+    });
 
     await expect(result.current.mutateAsync({} as never)).rejects.toThrow(
       'permission-denied',

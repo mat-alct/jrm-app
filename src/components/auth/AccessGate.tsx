@@ -26,12 +26,12 @@ export const AccessGate: React.FC<AccessGateProps> = ({ children }) => {
     if (publicRoute) return;
 
     if (user === null) {
-      router.replace('/login');
+      void router.replace('/login');
       return;
     }
 
     if (user && !isLoadingAppUser && appUser && !allowed) {
-      router.replace(getDefaultRouteForRoles(appUser.roles));
+      void router.replace(getDefaultRouteForRoles(appUser.roles));
     }
   }, [allowed, appUser, isLoadingAppUser, publicRoute, router, user]);
 

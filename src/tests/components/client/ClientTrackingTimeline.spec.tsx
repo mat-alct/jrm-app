@@ -29,13 +29,16 @@ describe('ClientTrackingTimeline', () => {
     const finished = screen.getByText('Finalizado');
 
     expect(
-      budget.compareDocumentPosition(production) & Node.DOCUMENT_POSITION_FOLLOWING,
+      budget.compareDocumentPosition(production) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
     expect(
       production.compareDocumentPosition(finished) &
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
     expect(screen.getByLabelText('Etapa atual')).toBeInTheDocument();
-    expect(screen.getByText('Próxima previsão: 10/08/2026')).toBeInTheDocument();
+    expect(
+      screen.getByText('Próxima previsão: 10/08/2026'),
+    ).toBeInTheDocument();
   });
 });

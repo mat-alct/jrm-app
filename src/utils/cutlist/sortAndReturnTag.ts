@@ -9,10 +9,12 @@ import G2P1 from '../../../public/images/tags/G2P1.svg';
 import G2P2 from '../../../public/images/tags/G2P2.svg';
 
 interface AvatarProps {
-  src: string;
-  width: string;
-  height: string;
+  src: StaticImageData['src'];
+  width: number;
+  height: number;
 }
+
+const asAvatar = (image: unknown): AvatarProps => image as AvatarProps;
 
 type sortCutlistDataProps = {
   sideA: number;
@@ -56,34 +58,34 @@ export const sortCutlistData = ({
   const avatarString = `G${gborder}P${pborder}`;
   switch (avatarString) {
     case 'G0P0':
-      avatar = G0P0;
+      avatar = asAvatar(G0P0);
       break;
     case 'G0P1':
-      avatar = G0P1;
+      avatar = asAvatar(G0P1);
       break;
     case 'G0P2':
-      avatar = G0P2;
+      avatar = asAvatar(G0P2);
       break;
     case 'G1P0':
-      avatar = G1P0;
+      avatar = asAvatar(G1P0);
       break;
     case 'G1P1':
-      avatar = G1P1;
+      avatar = asAvatar(G1P1);
       break;
     case 'G1P2':
-      avatar = G1P2;
+      avatar = asAvatar(G1P2);
       break;
     case 'G2P0':
-      avatar = G2P0;
+      avatar = asAvatar(G2P0);
       break;
     case 'G2P1':
-      avatar = G2P1;
+      avatar = asAvatar(G2P1);
       break;
     case 'G2P2':
-      avatar = G2P2;
+      avatar = asAvatar(G2P2);
       break;
     default:
-      avatar = G0P0;
+      avatar = asAvatar(G0P0);
       break;
   }
 
@@ -93,3 +95,4 @@ export const sortCutlistData = ({
     avatar,
   };
 };
+import type { StaticImageData } from 'next/image';

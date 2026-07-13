@@ -1,11 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import 'react-datepicker/dist/react-datepicker.css';
 
-import {
-  Box,
-  Fieldset
-} from '@chakra-ui/react';
+import { Box, Fieldset } from '@chakra-ui/react';
 import { addDays, getDay, isWeekend } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import dynamic from 'next/dynamic';
 import React, { type FC } from 'react';
 import type { DatePickerProps as ReactDatePickerProps } from 'react-datepicker';
@@ -13,9 +11,10 @@ import { Control, useController } from 'react-hook-form';
 
 const DatePicker = dynamic(
   () =>
-    import('react-datepicker') as unknown as Promise<{
-      default: FC<ReactDatePickerProps>;
-    }>,
+    import('react-datepicker').then(module => {
+      module.registerLocale('pt-BR', ptBR);
+      return module.default as unknown as FC<ReactDatePickerProps>;
+    }),
   { ssr: false },
 );
 
@@ -40,21 +39,21 @@ export const FormDatePicker: React.FC<DatePickerProps> = ({
     name,
     defaultValue,
   });
+  const rawValue: unknown = field.value;
+  const selected = rawValue instanceof Date ? rawValue : null;
 
   const isWeekday = (date: Date) => {
     const day = getDay(date);
     return day !== 0 && day !== 6;
   };
 
-  // registerLocale('ptBR', ptBR);
-
   return (
     <Fieldset.Root display="flex" flexDirection="row" invalid={!!errors[name]}>
       <Box>
         <DatePicker
-          selected={field.value}
+          selected={selected}
           onChange={(date: Date | null) => field.onChange(date)}
-          locale="ptBR"
+          locale="pt-BR"
           dateFormat="dd/MM/yyyy"
           filterDate={isWeekday}
           name={name}

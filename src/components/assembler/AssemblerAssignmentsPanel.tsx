@@ -51,10 +51,18 @@ export function AssemblerAssignmentsPanel({
                 <Text fontWeight="600" color="app.text">
                   {assignment.assemblerName ?? assignment.assemblerId}
                 </Text>
-                <StatusPill mt={2} palette="gray" label={assignment.paymentStatus} />
+                <StatusPill
+                  mt={2}
+                  palette="gray"
+                  label={assignment.paymentStatus}
+                />
               </Box>
               {canViewValues ? (
-                <Text fontWeight="600" color="app.text" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                <Text
+                  fontWeight="600"
+                  color="app.text"
+                  style={{ fontVariantNumeric: 'tabular-nums' }}
+                >
                   {formatCurrency(assignment.amountToReceive)}
                 </Text>
               ) : null}

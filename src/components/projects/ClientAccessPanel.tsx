@@ -19,15 +19,13 @@ export function ClientAccessPanel({
   baseUrl,
   expiresAt,
 }: ClientAccessPanelProps) {
-  const [credentials, setCredentials] = React.useState<ProvisionResponse | null>(
-    null,
-  );
+  const [credentials, setCredentials] =
+    React.useState<ProvisionResponse | null>(null);
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
   const origin =
-    baseUrl ??
-    (typeof window !== 'undefined' ? window.location.origin : '');
+    baseUrl ?? (typeof window !== 'undefined' ? window.location.origin : '');
   const clientLink = credentials
     ? `${origin}/cliente/${credentials.publicId}`
     : '';
@@ -41,7 +39,9 @@ export function ClientAccessPanel({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ projectId }),
       });
-      const data = (await response.json()) as ProvisionResponse & { error?: string };
+      const data = (await response.json()) as ProvisionResponse & {
+        error?: string;
+      };
       if (!response.ok) {
         throw new Error(data.error ?? 'Nao foi possivel gerar o acesso.');
       }

@@ -5,13 +5,16 @@ import { useRouter } from 'next/router';
 import React from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 
-import { ProjectForm, ProjectFormValues } from '@/components/projects/ProjectForm';
+import {
+  ProjectForm,
+  ProjectFormValues,
+} from '@/components/projects/ProjectForm';
 import {
   ProjectItemForm,
   ProjectItemFormValues,
 } from '@/components/projects/ProjectItemForm';
-import { createProjectItem } from '@/services/projects/projectItem.service';
 import { useCreateProject } from '@/services/projects/projectHooks';
+import { createProjectItem } from '@/services/projects/projectItem.service';
 import { useAppUser } from '@/services/projects/users.service';
 import { createProjectSchema } from '@/utils/yup/projetosValidations';
 
@@ -40,7 +43,7 @@ const NovoProjeto = () => {
   const createProject = useCreateProject();
 
   React.useEffect(() => {
-    if (user === null) router.push('/login');
+    if (user === null) void router.push('/login');
   }, [user, router]);
 
   const {
@@ -76,7 +79,6 @@ const NovoProjeto = () => {
       });
 
       for (const item of values.items) {
-        // eslint-disable-next-line no-await-in-loop
         await createProjectItem(
           projectId,
           {
@@ -91,7 +93,7 @@ const NovoProjeto = () => {
       }
 
       toaster.create({ type: 'success', description: 'Projeto criado.' });
-      router.push(`/projetos/${projectId}`);
+      void router.push(`/projetos/${projectId}`);
     } catch (error) {
       toaster.create({
         type: 'error',
@@ -115,12 +117,18 @@ const NovoProjeto = () => {
 
         <Box
           as="form"
-          onSubmit={handleSubmit(onSubmit)}
+          onSubmit={event => void handleSubmit(onSubmit)(event)}
           display="flex"
           flexDirection="column"
           gap={6}
         >
-          <Box bg="white" borderWidth="1px" borderColor="gray.200" borderRadius="md" p={4}>
+          <Box
+            bg="white"
+            borderWidth="1px"
+            borderColor="gray.200"
+            borderRadius="md"
+            p={4}
+          >
             <Heading size="md" mb={4}>
               Dados do cliente
             </Heading>

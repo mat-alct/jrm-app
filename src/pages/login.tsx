@@ -1,23 +1,16 @@
-import { Toaster, toaster } from '@/components/ui/toaster';
-import {
-  Box,
-  Button,
-  Flex,
-  Image,
-  Stack,
-  chakra,
-  VStack,
-} from '@chakra-ui/react';
+import { Box, Button, chakra, Flex, Image, VStack } from '@chakra-ui/react';
 import { yupResolver } from '@hookform/resolvers/yup';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 
+import { toaster } from '@/components/ui/toaster';
+
 import { FormInput } from '../components/Form/Input';
 import { Loader } from '../components/Loader';
-import { loginSchema } from '../utils/yup/pages/login';
 import { useAuth } from '../hooks/authContext'; // Importando o novo hook
+import { loginSchema } from '../utils/yup/pages/login';
 
 interface LoginProps {
   email: string;
@@ -25,7 +18,6 @@ interface LoginProps {
 }
 
 const Login = () => {
-  const toast = toaster;
   const router = useRouter();
   const { signIn, user } = useAuth(); // Usando o novo hook
 
@@ -40,8 +32,8 @@ const Login = () => {
   const onSubmit = async ({ email, password }: LoginProps) => {
     try {
       await signIn(email, password);
-      router.push('/');
-    } catch (err) {
+      void router.push('/');
+    } catch {
       toaster.create({
         type: 'error',
         title: 'Erro de autenticação',
@@ -53,7 +45,7 @@ const Login = () => {
   // Redireciona se o usuário já estiver logado
   useEffect(() => {
     if (user) {
-      router.push('/');
+      void router.push('/');
     }
   }, [user, router]);
 
@@ -86,7 +78,7 @@ const Login = () => {
             as="form"
             direction="column"
             w={['300px', '350px']}
-            onSubmit={handleSubmit(onSubmit)}
+            onSubmit={event => void handleSubmit(onSubmit)(event)}
             noValidate
           >
             <Image src="images/cm.png" alt="Logotipo" mb={[8, 16]} />

@@ -7,7 +7,9 @@ import { updateItemStatus } from '@/services/projects/status.service';
 
 import { fireEvent, render, screen, waitFor } from '../../testUtils';
 
-jest.mock('@/services/projects/adminUsers', () => ({ useUsersByRole: jest.fn() }));
+jest.mock('@/services/projects/adminUsers', () => ({
+  useUsersByRole: jest.fn(),
+}));
 jest.mock('@/services/projects/deadline.service', () => ({
   ...jest.requireActual('@/services/projects/deadline.service'),
   getDeadlineDefaults: jest.fn(),
@@ -15,8 +17,12 @@ jest.mock('@/services/projects/deadline.service', () => ({
 jest.mock('@/services/projects/projectItem.service', () => ({
   updateProjectItem: jest.fn(),
 }));
-jest.mock('@/services/projects/status.service', () => ({ updateItemStatus: jest.fn() }));
-jest.mock('@/components/ui/toaster', () => ({ toaster: { create: jest.fn() } }));
+jest.mock('@/services/projects/status.service', () => ({
+  updateItemStatus: jest.fn(),
+}));
+jest.mock('@/components/ui/toaster', () => ({
+  toaster: { create: jest.fn() },
+}));
 
 const actor = { uid: 'seller-1', name: 'Vendedor', role: 'seller' as const };
 
@@ -80,7 +86,9 @@ describe('AssignDesignerModal', () => {
 
     // 15/01 + desenhoDias (5) = 20/01.
     await waitFor(() =>
-      expect(document.querySelector('input[type="date"]')).toHaveValue('2026-01-20'),
+      expect(document.querySelector('input[type="date"]')).toHaveValue(
+        '2026-01-20',
+      ),
     );
   });
 
@@ -89,7 +97,9 @@ describe('AssignDesignerModal', () => {
 
     selectDesigner('designer-1');
     await waitFor(() =>
-      expect(document.querySelector('input[type="date"]')).toHaveValue('2026-01-20'),
+      expect(document.querySelector('input[type="date"]')).toHaveValue(
+        '2026-01-20',
+      ),
     );
 
     fireEvent.click(screen.getByRole('button', { name: 'Atribuir' }));
@@ -135,7 +145,9 @@ describe('AssignDesignerModal', () => {
   });
 
   it('mostra o erro do service e nao fecha o modal', async () => {
-    jest.mocked(updateItemStatus).mockRejectedValue(new Error('Transicao nao permitida'));
+    jest
+      .mocked(updateItemStatus)
+      .mockRejectedValue(new Error('Transicao nao permitida'));
     const onClose = renderModal();
 
     selectDesigner('designer-2');

@@ -10,7 +10,7 @@ import { requireClientProject } from '@/services/projects/clientPortal.server';
 import { requireInternalUser } from '@/services/projects/internalAuth.server';
 import { projectPath } from '@/services/projects/paths';
 import { resetEmulator } from '@/tests/helpers/emulator';
-import { seedEmulator, SEED_USER_PASSWORD } from '@/tests/helpers/seedEmulator';
+import { SEED_USER_PASSWORD, seedEmulator } from '@/tests/helpers/seedEmulator';
 
 type JsonResponse = {
   statusCode?: number;
@@ -22,7 +22,9 @@ async function signInAs(email: string) {
   return signInWithEmailAndPassword(auth, email, SEED_USER_PASSWORD);
 }
 
-async function internalSessionCookie(email = 'admin@seed.jrm'): Promise<string> {
+async function internalSessionCookie(
+  email = 'admin@seed.jrm',
+): Promise<string> {
   const credential = await signInAs(email);
   const idToken = await credential.user.getIdToken();
   return adminAuth.createSessionCookie(idToken, { expiresIn: 60 * 60 * 1000 });

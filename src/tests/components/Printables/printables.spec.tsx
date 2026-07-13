@@ -1,7 +1,7 @@
 import { Timestamp } from 'firebase/firestore';
 
-import { EstimateResume } from '@/components/Printables/EstimateResume';
 import { CuttingPlanPrint } from '@/components/Printables/CuttingPlanPrint';
+import { EstimateResume } from '@/components/Printables/EstimateResume';
 import { OrderResume } from '@/components/Printables/OrderResume';
 import { Tags } from '@/components/Printables/Tags';
 import {
@@ -9,7 +9,7 @@ import {
   cutlistToCuttingPlanInput,
   generateCuttingPlan,
 } from '@/domain/cutting-plan';
-import type { Cutlist } from '@/types';
+import type { Cutlist, EstimateDocument, OrderDocument } from '@/types';
 
 import { render, screen } from '../../testUtils';
 
@@ -74,7 +74,7 @@ const cutlist = [
   },
 ];
 
-const order = {
+const order: OrderDocument = {
   id: 'order-1',
   orderCode: 42,
   customer,
@@ -84,8 +84,10 @@ const order = {
   deliveryType: 'Entrega',
   paymentType: 'Dinheiro',
   seller: 'Vendedor Seed',
+  orderStatus: 'Em Produção',
   ps: 'Entregar pela manha',
   createdAt: ts('2026-01-15T12:00:00.000Z'),
+  updatedAt: ts('2026-01-15T12:00:00.000Z'),
   deliveryDate: ts('2026-01-25T12:00:00.000Z'),
 };
 
@@ -102,7 +104,7 @@ const cuttingPlan = buildCuttingPlan({
   ),
 });
 
-const orderWithPlan = {
+const orderWithPlan: OrderDocument = {
   ...order,
   serviceType: 'cutting_plan',
   orderPrice: cuttingPlan.pricing.totalCost,
@@ -110,7 +112,7 @@ const orderWithPlan = {
 };
 
 // O orcamento guarda nome/telefone na raiz (nao em `customer`, como o pedido).
-const estimate = {
+const estimate: EstimateDocument = {
   id: 'estimate-1',
   estimateCode: 7,
   name: 'Pedro Silva',
@@ -119,7 +121,7 @@ const estimate = {
   estimatePrice: 470,
   freightPrice: 0,
   createdAt: ts('2026-01-15T12:00:00.000Z'),
-  seller: 'Vendedor Seed',
+  updatedAt: ts('2026-01-15T12:00:00.000Z'),
 };
 
 describe('OrderResume', () => {

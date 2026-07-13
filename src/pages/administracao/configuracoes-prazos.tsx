@@ -1,4 +1,11 @@
-import { Button, chakra, Heading, SimpleGrid, Text, VStack } from '@chakra-ui/react';
+import {
+  Button,
+  chakra,
+  Heading,
+  SimpleGrid,
+  Text,
+  VStack,
+} from '@chakra-ui/react';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import Head from 'next/head';

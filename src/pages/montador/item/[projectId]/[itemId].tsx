@@ -39,10 +39,7 @@ import {
   ProjectItemStatus,
 } from '@/types/projects';
 import { isModel3DAttachment } from '@/utils/projects/attachments';
-import {
-  canAccessRoles,
-  isAdmin,
-} from '@/utils/projects/permissions';
+import { canAccessRoles, isAdmin } from '@/utils/projects/permissions';
 
 const ASSEMBLER_FLOW: ProjectItemStatus[] = [
   'em_producao',
@@ -74,7 +71,7 @@ export default function AssemblerItemPage() {
   const [isSaving, setIsSaving] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
-  async function load() {
+  const load = React.useCallback(async () => {
     if (!user?.uid || !appUser || !projectId || !itemId) return;
     setIsLoading(true);
     setError(null);
@@ -105,7 +102,7 @@ export default function AssemblerItemPage() {
     } finally {
       setIsLoading(false);
     }
-  }
+  }, [appUser, itemId, projectId, user]);
 
   React.useEffect(() => {
     if (user === null) {
@@ -113,7 +110,7 @@ export default function AssemblerItemPage() {
       return;
     }
     void load();
-  }, [appUser, user, projectId, itemId]);
+  }, [load, router, user]);
 
   async function advanceStatus() {
     if (!assignment?.itemStatus || !user?.uid) return;
@@ -228,10 +225,16 @@ export default function AssemblerItemPage() {
             <AppCard>
               <VStack align="stretch" gap={4}>
                 <Box>
-                  <Heading as="h1" fontSize={{ base: '2xl', md: '3xl' }} fontWeight="600">
+                  <Heading
+                    as="h1"
+                    fontSize={{ base: '2xl', md: '3xl' }}
+                    fontWeight="600"
+                  >
                     {assignment.itemName ?? 'Item de montagem'}
                   </Heading>
-                  <Text color="app.textSecondary">{assignment.customerName}</Text>
+                  <Text color="app.textSecondary">
+                    {assignment.customerName}
+                  </Text>
                 </Box>
 
                 <Stack direction={{ base: 'column', md: 'row' }} gap={3}>
@@ -297,7 +300,9 @@ export default function AssemblerItemPage() {
                       void advanceStatus();
                     }}
                   >
-                    {next ? `Atualizar etapa para ${next}` : 'Sem próxima etapa'}
+                    {next
+                      ? `Atualizar etapa para ${next}`
+                      : 'Sem próxima etapa'}
                   </Button>
                 )}
 

@@ -41,35 +41,35 @@ export function ModelViewerPreview({
         h={compact ? '220px' : { base: '280px', md: '420px' }}
         minH={compact ? '220px' : '280px'}
       >
-        {canRender
-          ? React.createElement('model-viewer', {
-              src,
-              alt: `Modelo 3D - ${fileName}`,
-              'camera-controls': true,
-              'auto-rotate': true,
-              ar: true,
-              exposure: '0.9',
-              'shadow-intensity': '0.8',
-              style: {
-                width: '100%',
-                height: '100%',
-                backgroundColor: '#f7fafc',
-              },
-            })
-          : (
-            <Box
-              alignItems="center"
-              display="flex"
-              h="100%"
-              justifyContent="center"
-              p={4}
-              textAlign="center"
-            >
-              <Text color="gray.600" fontSize="sm">
-                Carregando visualizador 3D...
-              </Text>
-            </Box>
-          )}
+        {canRender ? (
+          React.createElement('model-viewer', {
+            src,
+            alt: `Modelo 3D - ${fileName}`,
+            'camera-controls': true,
+            'auto-rotate': true,
+            ar: true,
+            exposure: '0.9',
+            'shadow-intensity': '0.8',
+            style: {
+              width: '100%',
+              height: '100%',
+              backgroundColor: '#f7fafc',
+            },
+          })
+        ) : (
+          <Box
+            alignItems="center"
+            display="flex"
+            h="100%"
+            justifyContent="center"
+            p={4}
+            textAlign="center"
+          >
+            <Text color="gray.600" fontSize="sm">
+              Carregando visualizador 3D...
+            </Text>
+          </Box>
+        )}
       </Box>
       <Box
         alignItems={{ base: 'stretch', sm: 'center' }}

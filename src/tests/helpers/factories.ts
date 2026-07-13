@@ -1,6 +1,6 @@
 import { Timestamp } from 'firebase/firestore';
 
-import type { Material, Order, Estimate } from '@/types';
+import type { Estimate, Material, Order } from '@/types';
 import type {
   AppUser,
   AssemblerAssignment,

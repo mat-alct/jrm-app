@@ -3,7 +3,10 @@ import { NextApiRequest, NextApiResponse } from 'next';
 
 import { adminDb } from '@/services/firebaseAdmin';
 import { canAssemblerTransition } from '@/services/projects/assembler.service';
-import { ApiAuthError, requireInternalUser } from '@/services/projects/internalAuth.server';
+import {
+  ApiAuthError,
+  requireInternalUser,
+} from '@/services/projects/internalAuth.server';
 import {
   itemAssemblerAssignmentPath,
   itemStatusHistoryPath,
@@ -63,7 +66,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       ...(nextStatus === 'montagem_concluida' ? { completedAt: now } : {}),
     });
 
-    const historyRef = adminDb.collection(itemStatusHistoryPath(projectId, itemId)).doc();
+    const historyRef = adminDb
+      .collection(itemStatusHistoryPath(projectId, itemId))
+      .doc();
     await historyRef.set({
       id: historyRef.id,
       projectId,

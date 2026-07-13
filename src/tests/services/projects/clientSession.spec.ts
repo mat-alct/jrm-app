@@ -55,7 +55,9 @@ describe('services/projects/clientSession', () => {
 
   it('rejects malformed tokens', () => {
     expect(verifyClientSession(undefined, { secret, now })).toBeNull();
-    expect(verifyClientSession('missing-signature', { secret, now })).toBeNull();
+    expect(
+      verifyClientSession('missing-signature', { secret, now }),
+    ).toBeNull();
     expect(verifyClientSession('a.b.c', { secret, now })).toBeNull();
   });
 

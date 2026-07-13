@@ -95,7 +95,9 @@ export const DelayedItemsTable: React.FC<DelayedItemsTableProps> = ({
                   </Table.Cell>
                   <Table.Cell color="red.600" fontWeight="600">
                     {item.deadlineCurrent
-                      ? item.deadlineCurrent.toDate().toLocaleDateString('pt-BR')
+                      ? item.deadlineCurrent
+                          .toDate()
+                          .toLocaleDateString('pt-BR')
                       : '—'}
                   </Table.Cell>
                 </Table.Row>

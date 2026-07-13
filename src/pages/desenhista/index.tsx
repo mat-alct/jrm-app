@@ -25,7 +25,11 @@ const DesenhistaFila = () => {
   }, [user, router]);
 
   React.useEffect(() => {
-    if (!isLoadingAppUser && appUser && !canAccessRoles(appUser.roles, ['designer'])) {
+    if (
+      !isLoadingAppUser &&
+      appUser &&
+      !canAccessRoles(appUser.roles, ['designer'])
+    ) {
       void router.push('/');
     }
   }, [appUser, isLoadingAppUser, router]);

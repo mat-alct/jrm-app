@@ -112,9 +112,7 @@ describe('pages/api/admin/users', () => {
     it('creates the user in Auth and Firestore on success', async () => {
       const adminDoc = mockAdminDoc({ roles: ['admin'] });
       const newUserDoc = mockAdminDoc(undefined);
-      mockedDoc
-        .mockReturnValueOnce(adminDoc)
-        .mockReturnValueOnce(newUserDoc);
+      mockedDoc.mockReturnValueOnce(adminDoc).mockReturnValueOnce(newUserDoc);
       mockedCreateUser.mockResolvedValue({ uid: 'new-uid' });
 
       const req = mockReq({
@@ -143,9 +141,7 @@ describe('pages/api/admin/users', () => {
     it('creates the user with a masked phone converted to E.164 in Firestore', async () => {
       const adminDoc = mockAdminDoc({ roles: ['admin'] });
       const newUserDoc = mockAdminDoc(undefined);
-      mockedDoc
-        .mockReturnValueOnce(adminDoc)
-        .mockReturnValueOnce(newUserDoc);
+      mockedDoc.mockReturnValueOnce(adminDoc).mockReturnValueOnce(newUserDoc);
       mockedCreateUser.mockResolvedValue({ uid: 'new-uid' });
 
       const req = mockReq({

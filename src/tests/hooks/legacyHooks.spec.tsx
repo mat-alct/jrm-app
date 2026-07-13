@@ -2,12 +2,12 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { ReactNode } from 'react';
 
+import { toaster } from '@/components/ui/toaster';
 import { MaterialProvider, useMaterial } from '@/hooks/material';
 import { OrderProvider, useOrder } from '@/hooks/order';
 import * as materialsService from '@/services/materials.service';
 import * as ordersService from '@/services/orders.service';
 import { queryClient } from '@/services/queryClient';
-import { toaster } from '@/components/ui/toaster';
 
 jest.mock('@/services/orders.service');
 jest.mock('@/services/materials.service');
@@ -23,14 +23,19 @@ jest.mock('@/components/ui/toaster', () => ({
 }));
 
 const mockedOrders = ordersService as jest.Mocked<typeof ordersService>;
-const mockedMaterials = materialsService as jest.Mocked<typeof materialsService>;
+const mockedMaterials = materialsService as jest.Mocked<
+  typeof materialsService
+>;
 const mockedInvalidate = queryClient.invalidateQueries as jest.Mock;
 const mockedToast = toaster.create as jest.Mock;
 
 function wrapperFor(provider: 'order' | 'material') {
   return function Wrapper({ children }: { children: ReactNode }) {
     const client = new QueryClient({
-      defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false },
+      },
     });
 
     const content =
@@ -79,7 +84,9 @@ describe('legacy hooks', () => {
 
     await expect(
       act(async () => {
-        await result.current.createOrder({ customer: { name: 'Pedro' } } as any);
+        await result.current.createOrder({
+          customer: { name: 'Pedro' },
+        } as any);
       }),
     ).rejects.toThrow('boom');
 
@@ -126,7 +133,9 @@ describe('legacy hooks', () => {
 
   it('wraps material mutations with invalidation and exposes material queries', async () => {
     mockedMaterials.createMaterial.mockResolvedValue(undefined);
-    mockedMaterials.getMaterials.mockResolvedValue([{ id: 'm1', name: 'MDF' } as any]);
+    mockedMaterials.getMaterials.mockResolvedValue([
+      { id: 'm1', name: 'MDF' } as any,
+    ]);
     const { result } = renderHook(() => useMaterial(), {
       wrapper: wrapperFor('material'),
     });
@@ -135,7 +144,9 @@ describe('legacy hooks', () => {
       await result.current.createMaterial({ name: 'MDF' } as any);
     });
     await waitFor(() =>
-      expect(mockedInvalidate).toHaveBeenCalledWith({ queryKey: ['materials'] }),
+      expect(mockedInvalidate).toHaveBeenCalledWith({
+        queryKey: ['materials'],
+      }),
     );
     await expect(result.current.getMaterials('MDF')).resolves.toEqual([
       expect.objectContaining({ id: 'm1' }),

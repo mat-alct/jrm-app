@@ -58,7 +58,11 @@ describe('services/projects/budget.service', () => {
       customerAmount: 500,
       suggestedAssemblerAmount: 150,
     };
-    const actor = { id: 'seller-1', name: 'Vendedor', roles: ['seller' as const] };
+    const actor = {
+      id: 'seller-1',
+      name: 'Vendedor',
+      roles: ['seller' as const],
+    };
 
     it('rejects a role without permission', async () => {
       await expect(
@@ -78,17 +82,17 @@ describe('services/projects/budget.service', () => {
         data: () => ({ status: 'aguardando_desenho' }),
       });
 
-      await expect(
-        saveItemBudget('p1', 'i1', input, actor),
-      ).rejects.toThrow(BudgetServiceError);
+      await expect(saveItemBudget('p1', 'i1', input, actor)).rejects.toThrow(
+        BudgetServiceError,
+      );
     });
 
     it('rejects an item that does not exist', async () => {
       mockedGetDoc.mockResolvedValue({ exists: () => false });
 
-      await expect(
-        saveItemBudget('p1', 'i1', input, actor),
-      ).rejects.toThrow('nao encontrado');
+      await expect(saveItemBudget('p1', 'i1', input, actor)).rejects.toThrow(
+        'nao encontrado',
+      );
     });
 
     it('saves the budget with computed total cost', async () => {

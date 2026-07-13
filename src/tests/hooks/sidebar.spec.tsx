@@ -1,4 +1,10 @@
-import { act, fireEvent, render, renderHook, screen } from '@testing-library/react';
+import {
+  act,
+  fireEvent,
+  render,
+  renderHook,
+  screen,
+} from '@testing-library/react';
 import { ReactNode } from 'react';
 
 import { SidebarDrawerProvider, useSidebarDrawer } from '@/hooks/sidebar';
@@ -40,7 +46,9 @@ describe('SidebarDrawerProvider', () => {
   });
 
   it('fecha sozinho quando a rota muda', () => {
-    const { result, rerender } = renderHook(() => useSidebarDrawer(), { wrapper });
+    const { result, rerender } = renderHook(() => useSidebarDrawer(), {
+      wrapper,
+    });
 
     act(() => result.current.onOpen());
     expect(result.current.isOpen).toBe(true);
@@ -54,7 +62,11 @@ describe('SidebarDrawerProvider', () => {
   it('compartilha o mesmo estado entre consumidores distintos', () => {
     function Toggler() {
       const { onToggle } = useSidebarDrawer();
-      return <button type="button" onClick={onToggle}>alternar</button>;
+      return (
+        <button type="button" onClick={onToggle}>
+          alternar
+        </button>
+      );
     }
     function Display() {
       const { isOpen } = useSidebarDrawer();

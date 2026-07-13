@@ -1,6 +1,12 @@
 import { Badge, Box, Button, HStack, Text, VStack } from '@chakra-ui/react';
 import React from 'react';
-import { FaCube, FaFileAlt, FaFileImage, FaFilePdf, FaTrash } from 'react-icons/fa';
+import {
+  FaCube,
+  FaFileAlt,
+  FaFileImage,
+  FaFilePdf,
+  FaTrash,
+} from 'react-icons/fa';
 
 import { EmptyState } from '@/components/ui/empty-state';
 import {
@@ -85,7 +91,12 @@ export const AttachmentList: React.FC<AttachmentListProps> = ({
                     <HStack gap={2} minW="0">
                       <Icon />
                       <Box minW="0">
-                        <Text fontSize="sm" truncate color="app.text" fontWeight="500">
+                        <Text
+                          fontSize="sm"
+                          truncate
+                          color="app.text"
+                          fontWeight="500"
+                        >
                           {attachment.originalFileName}
                         </Text>
                         <Text fontSize="xs" color="app.textMuted">

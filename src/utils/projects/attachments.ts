@@ -13,12 +13,20 @@ function extensionFromFileName(fileName: string): string {
 }
 
 export function isModel3DAttachment(
-  input: Pick<Attachment, 'fileName' | 'originalFileName' | 'mimeType' | 'fileKind'>,
+  input: Pick<
+    Attachment,
+    'fileName' | 'originalFileName' | 'mimeType' | 'fileKind'
+  >,
 ): boolean {
   if (input.fileKind === 'model_3d') return true;
-  const extension = extensionFromFileName(input.originalFileName || input.fileName);
+  const extension = extensionFromFileName(
+    input.originalFileName || input.fileName,
+  );
   if (!MODEL_3D_EXTENSIONS.has(extension)) return false;
-  return MODEL_3D_MIME_TYPES.has(input.mimeType) || input.mimeType.startsWith('model/');
+  return (
+    MODEL_3D_MIME_TYPES.has(input.mimeType) ||
+    input.mimeType.startsWith('model/')
+  );
 }
 
 export function inferAttachmentFileKind(file: {

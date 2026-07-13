@@ -1,5 +1,9 @@
 import { defineConfig, devices } from '@playwright/test';
 
+// O Playwright habilita cores nos processos filhos. Evita o warning do Node
+// quando o ambiente do terminal também define NO_COLOR.
+delete process.env.NO_COLOR;
+
 const emulatorEnv = {
   NEXT_DIST_DIR: '.next-emulator',
   NEXT_PUBLIC_USE_FIREBASE_EMULATORS: '1',

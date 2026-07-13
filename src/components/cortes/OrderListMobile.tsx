@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   Box,
   Button,
@@ -26,10 +25,15 @@ import {
 
 import { formatBRL } from '@/utils/formatBRL';
 
-import type { OrderListCallbacks, OrderListProps } from './OrderListTypes';
+import type {
+  EstimateDocument,
+  OrderDocument,
+  OrderListCallbacks,
+  OrderListProps,
+} from './OrderListTypes';
 
 type EstimateCardProps = {
-  item: any;
+  item: EstimateDocument;
 } & Pick<OrderListCallbacks, 'onPrintResume' | 'onApproveEstimate'>;
 
 const EstimateCard = React.memo<EstimateCardProps>(
@@ -90,7 +94,7 @@ const EstimateCard = React.memo<EstimateCardProps>(
 EstimateCard.displayName = 'EstimateCard';
 
 type OrderCardProps = {
-  item: any;
+  item: OrderDocument;
 } & Pick<
   OrderListCallbacks,
   | 'onPrintResume'
@@ -121,6 +125,7 @@ const OrderCard = React.memo<OrderCardProps>(
       item?.serviceType === 'cutting_plan' &&
       item?.cuttingPlan &&
       item.cuttingPlan.status !== 'outdated';
+    const edits = item.edits ?? [];
     const statusBg = isDeactivated
       ? 'gray.200'
       : item.orderStatus === 'Concluído'
@@ -178,7 +183,7 @@ const OrderCard = React.memo<OrderCardProps>(
           >
             {isUrgent && <FaExclamationTriangle />}
             {isDeactivated ? 'Desativado' : item.orderStatus}
-            {item.edits?.length > 0 && <FaHistory />}
+            {edits.length > 0 && <FaHistory />}
           </Box>
         </Flex>
 
@@ -237,7 +242,7 @@ const OrderCard = React.memo<OrderCardProps>(
               <FaFileArchive /> Máquina
             </Button>
           )}
-          {item.edits?.length > 0 && (
+          {edits.length > 0 && (
             <IconButton
               size="md"
               variant="outline"
@@ -311,7 +316,6 @@ OrderCard.displayName = 'OrderCard';
 
 const OrderListMobileImpl: React.FC<OrderListProps> = ({
   items,
-  isEstimateList,
   isLoading,
   searchQuery,
   onPrintResume,
@@ -353,8 +357,8 @@ const OrderListMobileImpl: React.FC<OrderListProps> = ({
       <Text fontSize="xs" color="gray.500" px={1}>
         {`${items.length} registro(s) ${searchQuery ? 'encontrados' : 'nesta página'}`}
       </Text>
-      {items.map((item: any) =>
-        isEstimateList ? (
+      {items.map(item =>
+        'estimateCode' in item ? (
           <EstimateCard
             key={item.id}
             item={item}

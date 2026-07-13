@@ -1,6 +1,6 @@
-import { fireEvent, render, screen, waitFor } from '../../testUtils';
-
 import ClientPortalPage from '@/pages/cliente/[publicId]';
+
+import { fireEvent, render, screen, waitFor } from '../../testUtils';
 
 jest.mock('next/router', () => ({
   useRouter: () => ({
@@ -75,6 +75,8 @@ describe('ClientPortalPage', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: 'Entrar' }));
 
-    expect(await screen.findByText('Credenciais invalidas.')).toBeInTheDocument();
+    expect(
+      await screen.findByText('Credenciais invalidas.'),
+    ).toBeInTheDocument();
   });
 });

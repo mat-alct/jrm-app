@@ -18,9 +18,7 @@ function attachment(
 describe('services/projects/attachment.service', () => {
   describe('sanitizeFileName', () => {
     it('removes accents and replaces unsafe characters', () => {
-      expect(sanitizeFileName('projeção final.pdf')).toBe(
-        'projecao_final.pdf',
-      );
+      expect(sanitizeFileName('projeção final.pdf')).toBe('projecao_final.pdf');
     });
 
     it('keeps already-safe file names untouched', () => {

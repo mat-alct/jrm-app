@@ -28,7 +28,13 @@ export const DesignerUploadPanel: React.FC<DesignerUploadPanelProps> = ({
 
   const submit = useMutation({
     mutationFn: () =>
-      submitDesignerVersion(projectId, itemId, files, description || undefined, actor),
+      submitDesignerVersion(
+        projectId,
+        itemId,
+        files,
+        description || undefined,
+        actor,
+      ),
     onSuccess: () => {
       void queryClient.invalidateQueries({
         queryKey: ['projects', projectId, 'items', itemId],

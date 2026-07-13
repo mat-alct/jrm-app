@@ -1,10 +1,9 @@
 import type { GibenExportProfileSettings } from '../../machine-settings';
-
 import {
-  FixedWidthLine,
   assertLength,
   fixedTenths,
   fixedText,
+  FixedWidthLine,
   formatAdDate,
   formatLabelDimensionSignature,
   formatLabelMm,

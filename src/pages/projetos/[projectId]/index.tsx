@@ -24,7 +24,7 @@ const ProjectDetail = () => {
   const projectId = router.query.projectId as string;
 
   React.useEffect(() => {
-    if (user === null) router.push('/login');
+    if (user === null) void router.push('/login');
   }, [user, router]);
 
   const { data: appUser } = useAppUser();
@@ -40,9 +40,7 @@ const ProjectDetail = () => {
     return (
       <Dashboard>
         <Header pageTitle="Projeto não encontrado" />
-        <Text color="gray.500">
-          Este projeto não existe ou foi removido.
-        </Text>
+        <Text color="gray.500">Este projeto não existe ou foi removido.</Text>
       </Dashboard>
     );
   }
@@ -56,15 +54,29 @@ const ProjectDetail = () => {
         <Header pageTitle={project.customerName} />
 
         <Stack gap={6}>
-          <Box bg="white" borderWidth="1px" borderColor="gray.200" borderRadius="md" p={4}>
+          <Box
+            bg="white"
+            borderWidth="1px"
+            borderColor="gray.200"
+            borderRadius="md"
+            p={4}
+          >
             <Heading size="md" mb={3}>
               Dados do cliente
             </Heading>
             <Stack gap={1} fontSize="sm">
-              <Text><b>Telefone:</b> {project.customerPhone}</Text>
-              <Text><b>E-mail:</b> {project.customerEmail}</Text>
-              <Text><b>Endereço:</b> {project.customerAddress}</Text>
-              <Text><b>Vendedor:</b> {project.sellerName ?? '—'}</Text>
+              <Text>
+                <b>Telefone:</b> {project.customerPhone}
+              </Text>
+              <Text>
+                <b>E-mail:</b> {project.customerEmail}
+              </Text>
+              <Text>
+                <b>Endereço:</b> {project.customerAddress}
+              </Text>
+              <Text>
+                <b>Vendedor:</b> {project.sellerName ?? '—'}
+              </Text>
             </Stack>
           </Box>
 
@@ -81,7 +93,11 @@ const ProjectDetail = () => {
             </Heading>
             <Stack gap={3}>
               {items?.map(item => (
-                <ProjectItemCard key={item.id} projectId={projectId} item={item} />
+                <ProjectItemCard
+                  key={item.id}
+                  projectId={projectId}
+                  item={item}
+                />
               ))}
               {!isLoadingItems && items?.length === 0 && (
                 <Text color="gray.500">Nenhum item cadastrado.</Text>
@@ -89,7 +105,13 @@ const ProjectDetail = () => {
             </Stack>
           </Box>
 
-          <Box bg="white" borderWidth="1px" borderColor="gray.200" borderRadius="md" p={4}>
+          <Box
+            bg="white"
+            borderWidth="1px"
+            borderColor="gray.200"
+            borderRadius="md"
+            p={4}
+          >
             <Heading size="md" mb={3}>
               Anexos do projeto
             </Heading>
@@ -101,7 +123,7 @@ const ProjectDetail = () => {
                   uploadedByRole={
                     appUser?.roles && isAdmin(appUser.roles)
                       ? 'admin'
-                      : appUser?.roles?.[0] ?? 'seller'
+                      : (appUser?.roles?.[0] ?? 'seller')
                   }
                   categorySuggestions={Array.from(
                     new Set((attachments ?? []).map(a => a.category)),

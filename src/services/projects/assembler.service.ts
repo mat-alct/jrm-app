@@ -53,7 +53,9 @@ export class AssemblerServiceError extends Error {
 
 function assertAdmin(actorRoles: UserRole[] | undefined): void {
   if (!actorRoles?.includes('admin')) {
-    throw new AssemblerServiceError('Apenas administradores podem alterar atribuicoes.');
+    throw new AssemblerServiceError(
+      'Apenas administradores podem alterar atribuicoes.',
+    );
   }
 }
 
@@ -92,7 +94,8 @@ export function sortAssignmentsByDueDate(
 ): AssemblerAssignment[] {
   return [...assignments].sort((left, right) => {
     const leftTime = left.dueAt?.toDate().getTime() ?? Number.MAX_SAFE_INTEGER;
-    const rightTime = right.dueAt?.toDate().getTime() ?? Number.MAX_SAFE_INTEGER;
+    const rightTime =
+      right.dueAt?.toDate().getTime() ?? Number.MAX_SAFE_INTEGER;
     return leftTime - rightTime;
   });
 }
@@ -146,10 +149,7 @@ export async function assignAssemblers(
   await Promise.all(
     createdAssignments.map(assignment =>
       setDoc(
-        doc(
-          db,
-          itemAssemblerAssignmentPath(projectId, itemId, assignment.id),
-        ),
+        doc(db, itemAssemblerAssignmentPath(projectId, itemId, assignment.id)),
         assignment,
       ),
     ),
@@ -224,6 +224,8 @@ export async function listItemAssemblerAssignments(
   projectId: string,
   itemId: string,
 ): Promise<AssemblerAssignment[]> {
-  const snap = await getDocs(collection(db, itemAssemblerAssignmentsPath(projectId, itemId)));
+  const snap = await getDocs(
+    collection(db, itemAssemblerAssignmentsPath(projectId, itemId)),
+  );
   return snap.docs.map(d => ({ id: d.id, ...d.data() }) as AssemblerAssignment);
 }

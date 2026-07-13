@@ -18,10 +18,7 @@ import {
 import { AssemblerAssignment } from '@/types/projects';
 
 jest.mock('uuid', () => ({
-  v4: jest
-    .fn()
-    .mockReturnValueOnce('payment-1')
-    .mockReturnValueOnce('proof-1'),
+  v4: jest.fn().mockReturnValueOnce('payment-1').mockReturnValueOnce('proof-1'),
 }));
 
 jest.mock('firebase/firestore', () => {

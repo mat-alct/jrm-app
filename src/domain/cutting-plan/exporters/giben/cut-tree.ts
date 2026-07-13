@@ -5,7 +5,6 @@ import type {
   CuttingPlanRegion,
   CuttingPlanSheet,
 } from '../../types';
-
 import type {
   GibenCutAxis,
   GibenCutGroup,

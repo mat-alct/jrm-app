@@ -1,7 +1,8 @@
 // pages/api/login.ts
 
-import { NextApiRequest, NextApiResponse } from 'next';
 import { serialize } from 'cookie';
+import { NextApiRequest, NextApiResponse } from 'next';
+
 import { adminAuth } from '../../services/firebaseAdmin';
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
@@ -10,7 +11,14 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   }
 
   try {
-    const { token } = req.body;
+    const body: unknown = req.body;
+    const token =
+      typeof body === 'object' &&
+      body !== null &&
+      'token' in body &&
+      typeof body.token === 'string'
+        ? body.token
+        : null;
 
     if (!token) {
       return res.status(400).json({ error: 'Token is required.' });
@@ -33,11 +41,15 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     };
 
     // Define o cookie no header da resposta
-    res.setHeader('Set-Cookie', serialize('session', sessionCookie, cookieOptions));
+    res.setHeader(
+      'Set-Cookie',
+      serialize('session', sessionCookie, cookieOptions),
+    );
 
-    return res.status(200).json({ status: true, message: 'Logged in successfully.' });
-  } catch (error) {
-    console.error('Login API Error:', error);
+    return res
+      .status(200)
+      .json({ status: true, message: 'Logged in successfully.' });
+  } catch {
     return res.status(401).json({ error: 'Authentication failed.' });
   }
 };

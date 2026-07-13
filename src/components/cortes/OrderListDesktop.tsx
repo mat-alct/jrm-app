@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   Box,
   Center,
@@ -28,7 +27,12 @@ import {
 
 import { formatBRL } from '@/utils/formatBRL';
 
-import type { OrderListCallbacks, OrderListProps } from './OrderListTypes';
+import type {
+  EstimateDocument,
+  OrderDocument,
+  OrderListCallbacks,
+  OrderListProps,
+} from './OrderListTypes';
 
 type RowVisualProps = {
   bg: string;
@@ -36,7 +40,7 @@ type RowVisualProps = {
 };
 
 type EstimateRowProps = {
-  item: any;
+  item: EstimateDocument;
 } & RowVisualProps &
   Pick<OrderListCallbacks, 'onPrintResume' | 'onApproveEstimate'>;
 
@@ -91,7 +95,7 @@ const EstimateRow = React.memo<EstimateRowProps>(
 EstimateRow.displayName = 'EstimateRow';
 
 type OrderRowProps = {
-  item: any;
+  item: OrderDocument;
 } & RowVisualProps &
   Pick<
     OrderListCallbacks,
@@ -125,6 +129,7 @@ const OrderRow = React.memo<OrderRowProps>(
       item?.serviceType === 'cutting_plan' &&
       item?.cuttingPlan &&
       item.cuttingPlan.status !== 'outdated';
+    const edits = item.edits ?? [];
     return (
       <Table.Row
         bg={bg}
@@ -178,10 +183,10 @@ const OrderRow = React.memo<OrderRowProps>(
           >
             {isUrgent && <FaExclamationTriangle />}
             {isDeactivated ? 'Desativado' : item.orderStatus}
-            {item.edits?.length > 0 && (
+            {edits.length > 0 && (
               <Box
                 as="span"
-                title={`Editado ${item.edits.length}× — última: ${item.edits[item.edits.length - 1]?.editedBy}`}
+                title={`Editado ${edits.length}× — última: ${edits[edits.length - 1]?.editedBy}`}
                 ml={1}
                 display="inline-flex"
                 alignItems="center"
@@ -225,14 +230,14 @@ const OrderRow = React.memo<OrderRowProps>(
                 <FaFileArchive />
               </IconButton>
             )}
-            {item.edits?.length > 0 && (
+            {edits.length > 0 && (
               <IconButton
                 aria-label="Histórico de edições"
                 variant="ghost"
                 colorScheme="purple"
                 size="sm"
                 onClick={() => onShowHistory(item)}
-                title={`${item.edits.length} edição(ões)`}
+                title={`${edits.length} edição(ões)`}
               >
                 <FaHistory />
               </IconButton>
@@ -311,7 +316,8 @@ const OrderListDesktopImpl: React.FC<OrderListProps> = ({
   onEdit,
   onDeactivate,
 }) => {
-  const tableSize = useBreakpointValue(['sm', 'md'], { fallback: 'sm' });
+  const tableSize =
+    useBreakpointValue<'sm' | 'md'>(['sm', 'md'], { fallback: 'sm' }) ?? 'sm';
 
   return (
     <Box
@@ -329,7 +335,6 @@ const OrderListDesktopImpl: React.FC<OrderListProps> = ({
         <Table.Root
           variant="line"
           colorScheme="orange"
-          // @ts-ignore
           size={tableSize}
           whiteSpace="nowrap"
         >
@@ -353,10 +358,11 @@ const OrderListDesktopImpl: React.FC<OrderListProps> = ({
             </Table.Row>
           </Table.Header>
           <Table.Body>
-            {items.map((item: any, index: number) => {
+            {items.map((item, index) => {
               const isEven = index % 2 === 0;
-              const isUrgent = item?.isUrgent;
-              const isDeactivated = item?.isDeactivated === true;
+              const isOrder = 'orderCode' in item;
+              const isUrgent = isOrder && item.isUrgent;
+              const isDeactivated = isOrder && item.isDeactivated === true;
               let bg = isEven ? 'white' : 'gray.50';
               let hoverBg = isEven ? 'gray.50' : 'gray.100';
 
@@ -369,7 +375,7 @@ const OrderListDesktopImpl: React.FC<OrderListProps> = ({
                 hoverBg = 'gray.200';
               }
 
-              return isEstimateList ? (
+              return 'estimateCode' in item ? (
                 <EstimateRow
                   key={item.id}
                   item={item}

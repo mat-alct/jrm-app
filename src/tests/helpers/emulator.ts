@@ -6,7 +6,10 @@ export const TEST_STORAGE_BUCKET = 'demo-jrm.appspot.com';
 const FIRESTORE_EMULATOR_ORIGIN = 'http://127.0.0.1:8080';
 const AUTH_EMULATOR_ORIGIN = 'http://127.0.0.1:9099';
 
-async function deleteEmulatorData(url: string, init?: RequestInit): Promise<void> {
+async function deleteEmulatorData(
+  url: string,
+  init?: RequestInit,
+): Promise<void> {
   const response = await fetch(url, { method: 'DELETE', ...init });
   if (!response.ok) {
     const body = await response.text();

@@ -1,10 +1,7 @@
 // src/types/index.ts
 import { Timestamp } from 'firebase/firestore';
 
-import type {
-  CuttingPlan,
-  GrainDirection,
-} from '../domain/cutting-plan/types';
+import type { CuttingPlan, GrainDirection } from '../domain/cutting-plan/types';
 
 export interface Area {
   name: string;
@@ -92,6 +89,12 @@ export interface Estimate {
   updatedAt: Timestamp;
 }
 
+export interface EstimateDocument extends Estimate {
+  id: string;
+  estimateCode: number;
+  estimatePrice: number;
+}
+
 export interface OrderEdit {
   editedAt: Timestamp;
   editedBy: string;
@@ -128,6 +131,22 @@ export interface Order {
   isDeactivated?: boolean;
   serviceType?: 'standard' | 'cutting_plan';
   cuttingPlan?: CuttingPlan;
+}
+
+export interface OrderDocument extends Order {
+  id: string;
+  orderCode: number;
+  orderPrice: number;
+  deactivatedAt?: Timestamp;
+  releasedAt?: Timestamp;
+}
+
+export type OrderListItem = OrderDocument | EstimateDocument;
+export interface OrderSummary {
+  customer: OrderDocument['customer'];
+  id: string;
+  orderCode: number | string;
+  orderStatus: string;
 }
 
 export interface MaterialRequest {

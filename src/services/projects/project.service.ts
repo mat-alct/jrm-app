@@ -15,7 +15,7 @@ import {
 import { Project } from '@/types/projects';
 
 import { db } from '../firebase';
-import { PROJECTS_COLLECTION, projectPath } from './paths';
+import { projectPath, PROJECTS_COLLECTION } from './paths';
 
 export interface CreateProjectInput {
   customerName: string;

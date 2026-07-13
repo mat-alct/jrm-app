@@ -5,15 +5,14 @@
 import {
   Box,
   Button,
-  HStack,
-  Icon,
   Table,
   TableCaption,
   useDisclosure,
-  VStack,
 } from '@chakra-ui/react';
 // Resolvedor do Yup para integração com react-hook-form
 import { yupResolver } from '@hookform/resolvers/yup';
+// Hook useQuery do TanStack React Query para data fetching
+import { useQuery } from '@tanstack/react-query';
 // Funções e tipos do Firebase v9+ para interagir com o banco de dados
 import { collection, doc, getDocs, setDoc } from 'firebase/firestore';
 // Hooks e tipos do Next.js e React
@@ -21,19 +20,16 @@ import Head from 'next/head';
 import { useRouter } from 'next/router';
 import React from 'react';
 import { useForm } from 'react-hook-form';
-// Ícones
-import { FaUserPlus } from 'react-icons/fa';
-// Hook useQuery do TanStack React Query para data fetching
-import { useQuery } from '@tanstack/react-query';
 
-// --- Bloco de Importações Internas do Projeto ---
-// Hooks e componentes customizados do seu projeto
-import { useAuth } from '../../hooks/authContext';
+// Ícones
 import { Dashboard } from '../../components/Dashboard';
 import { Header } from '../../components/Dashboard/Content/Header';
 import { FormInput } from '../../components/Form/Input';
 import { FormModal } from '../../components/Form/Modal';
 import { Loader } from '../../components/Loader';
+// --- Bloco de Importações Internas do Projeto ---
+// Hooks e componentes customizados do seu projeto
+import { useAuth } from '../../hooks/authContext';
 // Instância do banco de dados Firestore
 import { db } from '../../services/firebase';
 import {
@@ -68,7 +64,7 @@ const Vendedores = () => {
   // Efeito que executa quando o 'user' muda. Se não houver usuário, redireciona para o login.
   React.useEffect(() => {
     if (user === null) {
-      router.push('/login');
+      void router.push('/login');
     }
   }, [user, router]);
 
@@ -81,13 +77,19 @@ const Vendedores = () => {
   const getSellers = async () => {
     const sellersCollection = collection(db, 'sellers');
     const sellersSnapshot = await getDocs(sellersCollection);
-    const sellersList = sellersSnapshot.docs.map(
-      document =>
-        ({
-          id: document.id,
-          name: document.data().name,
-        }) as Seller,
-    );
+    const sellersList = sellersSnapshot.docs.flatMap(document => {
+      const sellerData: unknown = document.data();
+      if (
+        typeof sellerData !== 'object' ||
+        sellerData === null ||
+        !('name' in sellerData) ||
+        typeof sellerData.name !== 'string'
+      ) {
+        return [];
+      }
+
+      return [{ id: document.id, name: sellerData.name } satisfies Seller];
+    });
     return sellersList;
   };
 
@@ -177,7 +179,7 @@ const Vendedores = () => {
           isOpen={open}
           title="Novo Vendedor"
           onClose={onClose}
-          onSubmit={createSellerHandleSubmit(handleCreateSeller)}
+          onSubmit={() => void createSellerHandleSubmit(handleCreateSeller)()}
         >
           <Box as="form" gap={4} mx="auto">
             <FormInput

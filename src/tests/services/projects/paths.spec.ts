@@ -3,17 +3,17 @@ import {
   itemAssemblerAssignmentPath,
   itemAssemblerAssignmentsPath,
   itemAttachmentPath,
-  itemAttachmentStoragePath,
   itemAttachmentsPath,
+  itemAttachmentStoragePath,
   itemStatusHistoryPath,
   itemVersionPath,
-  itemVersionStoragePath,
   itemVersionsPath,
+  itemVersionStoragePath,
   paymentPath,
   paymentProofStoragePath,
   projectAttachmentPath,
-  projectAttachmentStoragePath,
   projectAttachmentsPath,
+  projectAttachmentStoragePath,
   projectItemPath,
   projectItemsPath,
   projectPath,
@@ -53,9 +53,7 @@ describe('services/projects/paths', () => {
     expect(itemStatusHistoryPath('p1', 'i1')).toBe(
       'projects/p1/items/i1/statusHistory',
     );
-    expect(itemVersionsPath('p1', 'i1')).toBe(
-      'projects/p1/items/i1/versions',
-    );
+    expect(itemVersionsPath('p1', 'i1')).toBe('projects/p1/items/i1/versions');
     expect(itemVersionPath('p1', 'i1', 'v1')).toBe(
       'projects/p1/items/i1/versions/v1',
     );
@@ -77,9 +75,9 @@ describe('services/projects/paths', () => {
     expect(
       itemAttachmentStoragePath('p1', 'i1', 'medidas', 'a1', 'foto.png'),
     ).toBe('projects/p1/items/i1/medidas/a1_foto.png');
-    expect(
-      itemVersionStoragePath('p1', 'i1', 'v1', 'a1', 'foto.png'),
-    ).toBe('projects/p1/items/i1/versions/v1/a1_foto.png');
+    expect(itemVersionStoragePath('p1', 'i1', 'v1', 'a1', 'foto.png')).toBe(
+      'projects/p1/items/i1/versions/v1/a1_foto.png',
+    );
     expect(paymentProofStoragePath('pay1', 'a1', 'comprovante.pdf')).toBe(
       'payments/pay1/a1_comprovante.pdf',
     );

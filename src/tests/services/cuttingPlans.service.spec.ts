@@ -13,9 +13,10 @@ jest.mock('firebase/firestore', () => ({
   doc: jest.fn(() => ({ path: 'orders/order-1' })),
   getDoc: jest.fn(),
   updateDoc: jest.fn(),
-  Timestamp: jest.requireActual<typeof import('firebase/firestore')>(
-    'firebase/firestore',
-  ).Timestamp,
+  Timestamp:
+    jest.requireActual<typeof import('firebase/firestore')>(
+      'firebase/firestore',
+    ).Timestamp,
 }));
 
 const timestamp = Timestamp.fromDate(new Date('2026-07-10T12:00:00.000Z'));
@@ -55,7 +56,8 @@ describe('cuttingPlans.service', () => {
   });
 
   it('retorna null para pedido ausente ou sem plano', async () => {
-    jest.mocked(getDoc)
+    jest
+      .mocked(getDoc)
       .mockResolvedValueOnce({ exists: () => false } as never)
       .mockResolvedValueOnce({ exists: () => true, data: () => ({}) } as never);
     await expect(getCuttingPlan('missing')).resolves.toBeNull();
@@ -91,9 +93,11 @@ describe('cuttingPlans.service', () => {
     await expect(approveStoredCuttingPlan('order-1')).resolves.toMatchObject({
       status: 'approved',
     });
-    await expect(invalidateStoredCuttingPlan('order-1')).resolves.toMatchObject({
-      status: 'outdated',
-    });
+    await expect(invalidateStoredCuttingPlan('order-1')).resolves.toMatchObject(
+      {
+        status: 'outdated',
+      },
+    );
   });
 
   it('não aprova nem invalida quando não existe plano', async () => {

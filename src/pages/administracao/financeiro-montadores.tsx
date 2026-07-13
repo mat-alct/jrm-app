@@ -18,7 +18,9 @@ import { AssemblerAssignment, AssemblerPayment } from '@/types/projects';
 
 export default function AdminAssemblerFinancePage() {
   const { data: appUser, isLoading: isUserLoading } = useAppUser();
-  const [assignments, setAssignments] = React.useState<AssemblerAssignment[]>([]);
+  const [assignments, setAssignments] = React.useState<AssemblerAssignment[]>(
+    [],
+  );
   const [payments, setPayments] = React.useState<AssemblerPayment[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [isSaving, setIsSaving] = React.useState(false);
@@ -35,7 +37,9 @@ export default function AdminAssemblerFinancePage() {
       setAssignments(pending);
       setPayments(history);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao carregar financeiro.');
+      setError(
+        err instanceof Error ? err.message : 'Erro ao carregar financeiro.',
+      );
     } finally {
       setIsLoading(false);
     }
@@ -68,7 +72,9 @@ export default function AdminAssemblerFinancePage() {
       );
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao registrar pagamento.');
+      setError(
+        err instanceof Error ? err.message : 'Erro ao registrar pagamento.',
+      );
     } finally {
       setIsSaving(false);
     }
@@ -94,10 +100,16 @@ export default function AdminAssemblerFinancePage() {
       <Box minH="100vh" bg="app.canvas" p={{ base: 4, md: 8 }}>
         <VStack align="stretch" gap={5} maxW="1100px" mx="auto">
           <Box>
-            <Heading as="h1" fontSize={{ base: '2xl', md: '3xl' }} fontWeight="600">
+            <Heading
+              as="h1"
+              fontSize={{ base: '2xl', md: '3xl' }}
+              fontWeight="600"
+            >
               Financeiro dos montadores
             </Heading>
-            <Text color="app.textSecondary">Pendências liberadas e histórico.</Text>
+            <Text color="app.textSecondary">
+              Pendências liberadas e histórico.
+            </Text>
           </Box>
 
           {error ? (

@@ -32,8 +32,14 @@ generateCuttingPlan({ pieces, materials, settings, optimizationMode });
 
 Cada peça ocupa um canto de uma região livre e gera divisões completas, de modo
 que o resultado permaneça guilhotinável. O algoritmo compara candidatos
-determinísticos para menos movimentos, melhor aproveitamento ou equilíbrio por
-pesos configuráveis.
+determinísticos e escolhe uma única solução: primeiro a de menor número de
+chapas, depois a de menos movimentos e, por fim, a de menor perda de processo.
+
+Na interface, essa comparação roda em um Web Worker. Depois dos candidatos
+determinísticos, a busca continua variando a ordem das peças, a escolha das
+regiões livres, as rotações e a direção das divisões. O melhor resultado é
+preservado durante toda a execução. A busca termina após 10 segundos sem melhora
+e possui limite absoluto de 60 segundos; a thread da interface permanece livre.
 
 O veio da chapa percorre sempre seu comprimento de 2750 mm:
 

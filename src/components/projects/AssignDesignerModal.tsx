@@ -1,10 +1,4 @@
-import {
-  Button,
-  CloseButton,
-  Dialog,
-  Portal,
-  Text,
-} from '@chakra-ui/react';
+import { Button, CloseButton, Dialog, Portal, Text } from '@chakra-ui/react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { Timestamp } from 'firebase/firestore';
@@ -61,7 +55,10 @@ export const AssignDesignerModal: React.FC<AssignDesignerModalProps> = ({
   const handleSubmit = async () => {
     const designer = designers?.find(d => d.id === designerId);
     if (!designer) {
-      toaster.create({ type: 'error', description: 'Selecione um desenhista.' });
+      toaster.create({
+        type: 'error',
+        description: 'Selecione um desenhista.',
+      });
       return;
     }
 
@@ -74,7 +71,11 @@ export const AssignDesignerModal: React.FC<AssignDesignerModalProps> = ({
           designerId: designer.id,
           designerName: designer.name,
           ...(deadline
-            ? { deadlineCurrent: Timestamp.fromDate(new Date(`${deadline}T00:00:00`)) }
+            ? {
+                deadlineCurrent: Timestamp.fromDate(
+                  new Date(`${deadline}T00:00:00`),
+                ),
+              }
             : {}),
         },
         actor.uid,
@@ -89,7 +90,9 @@ export const AssignDesignerModal: React.FC<AssignDesignerModalProps> = ({
       toaster.create({
         type: 'error',
         description:
-          error instanceof Error ? error.message : 'Erro ao atribuir desenhista.',
+          error instanceof Error
+            ? error.message
+            : 'Erro ao atribuir desenhista.',
       });
     } finally {
       setIsSubmitting(false);
@@ -142,7 +145,7 @@ export const AssignDesignerModal: React.FC<AssignDesignerModalProps> = ({
                 colorScheme="orange"
                 mr={3}
                 loading={isSubmitting}
-                onClick={handleSubmit}
+                onClick={() => void handleSubmit()}
               >
                 Atribuir
               </Button>

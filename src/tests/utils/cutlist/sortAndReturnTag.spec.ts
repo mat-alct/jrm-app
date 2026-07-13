@@ -33,7 +33,8 @@ describe('sortCutlistData', () => {
 
   it('sempre devolve uma etiqueta, inclusive para bordas fora do dominio 0..2', () => {
     expect(
-      sortCutlistData({ sideA: 900, sideB: 100, borderA: 7, borderB: 9 }).avatar,
+      sortCutlistData({ sideA: 900, sideB: 100, borderA: 7, borderB: 9 })
+        .avatar,
     ).toBeDefined();
   });
 
@@ -48,7 +49,12 @@ describe('sortCutlistData', () => {
     [2, 1],
     [2, 2],
   ])('resolve a etiqueta para a combinacao G%iP%i', (borderA, borderB) => {
-    const result = sortCutlistData({ sideA: 900, sideB: 100, borderA, borderB });
+    const result = sortCutlistData({
+      sideA: 900,
+      sideB: 100,
+      borderA,
+      borderB,
+    });
 
     expect(result.avatar).toBeDefined();
     expect(result).toMatchObject({ gside: 900, pside: 100 });

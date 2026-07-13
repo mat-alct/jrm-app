@@ -27,7 +27,9 @@ describe('utils/yup/deadlineDefaultsValidations', () => {
   });
 
   it('rejects missing fields', async () => {
-    const { desenhoDias, ...rest } = valid;
+    const rest = Object.fromEntries(
+      Object.entries(valid).filter(([key]) => key !== 'desenhoDias'),
+    );
     await expect(deadlineDefaultsSchema.validate(rest)).rejects.toThrow();
   });
 });

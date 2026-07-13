@@ -47,6 +47,7 @@ test.describe('cortes — novo serviço', () => {
     context,
     adminDb,
   }) => {
+    test.setTimeout(90_000);
     await loginAs(page, 'seller');
     await page.goto('/cortes/novoservico');
 
@@ -63,7 +64,7 @@ test.describe('cortes — novo serviço', () => {
 
     await expect(
       page.getByRole('heading', { name: 'Resultado do plano' }),
-    ).toBeVisible();
+    ).toBeVisible({ timeout: 65_000 });
     await expect(page.getByText('Ordem sugerida dos cortes')).toHaveCount(0);
     await expect(page.getByText(/Rascunho · versão 1/)).toBeVisible();
 

@@ -13,7 +13,7 @@ import {
 import { userPath } from '@/services/projects/paths';
 import { getAppUser } from '@/services/projects/users.service';
 import { resetEmulator } from '@/tests/helpers/emulator';
-import { seedEmulator, SEED_USER_PASSWORD } from '@/tests/helpers/seedEmulator';
+import { SEED_USER_PASSWORD, seedEmulator } from '@/tests/helpers/seedEmulator';
 
 type JsonResponse = {
   statusCode?: number;
@@ -117,13 +117,15 @@ describe('services/projects/users.service and adminUsers integration', () => {
       email: 'integracao@seed.jrm',
       displayName: 'Usuaria Integracao',
     });
-    expect((await adminDb.doc(userPath(createdId)).get()).data()).toMatchObject({
-      name: 'Usuaria Integracao',
-      email: 'integracao@seed.jrm',
-      phone: '+5511999990000',
-      roles: ['seller'],
-      active: true,
-    });
+    expect((await adminDb.doc(userPath(createdId)).get()).data()).toMatchObject(
+      {
+        name: 'Usuaria Integracao',
+        email: 'integracao@seed.jrm',
+        phone: '+5511999990000',
+        roles: ['seller'],
+        active: true,
+      },
+    );
 
     const updateRes = mockRes();
     await handler(
@@ -142,12 +144,14 @@ describe('services/projects/users.service and adminUsers integration', () => {
     await expect(adminAuth.getUser(createdId)).resolves.toMatchObject({
       displayName: 'Usuaria Editada',
     });
-    expect((await adminDb.doc(userPath(createdId)).get()).data()).toMatchObject({
-      name: 'Usuaria Editada',
-      phone: '+5521988887777',
-      roles: ['designer'],
-      active: false,
-    });
+    expect((await adminDb.doc(userPath(createdId)).get()).data()).toMatchObject(
+      {
+        name: 'Usuaria Editada',
+        phone: '+5521988887777',
+        roles: ['designer'],
+        active: false,
+      },
+    );
   });
 
   it('routes adminUsers create/update helpers through the admin API endpoint', async () => {

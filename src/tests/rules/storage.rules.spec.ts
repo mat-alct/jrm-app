@@ -6,6 +6,7 @@ import {
   initializeTestEnvironment,
   RulesTestEnvironment,
 } from '@firebase/rules-unit-testing';
+import { setLogLevel } from 'firebase/firestore';
 
 type RoleName =
   | 'admin'
@@ -40,6 +41,7 @@ describe('storage.rules', () => {
   let testEnv: RulesTestEnvironment;
 
   beforeAll(async () => {
+    setLogLevel('silent');
     testEnv = await initializeTestEnvironment({
       projectId: 'demo-jrm',
       firestore: {
@@ -93,7 +95,9 @@ describe('storage.rules', () => {
         name: 'Item Alpha',
       });
       await db
-        .doc(`projects/project-1/items/item-1/assemblerAssignments/${uid.assembler}`)
+        .doc(
+          `projects/project-1/items/item-1/assemblerAssignments/${uid.assembler}`,
+        )
         .set({
           projectId: 'project-1',
           itemId: 'item-1',
@@ -117,7 +121,9 @@ describe('storage.rules', () => {
   }
 
   function uploadAs(role: RoleName, path: string): Promise<unknown> {
-    return storageAs(role).ref(path).put(bytes()) as unknown as Promise<unknown>;
+    return storageAs(role)
+      .ref(path)
+      .put(bytes()) as unknown as Promise<unknown>;
   }
 
   function uploadAnon(path: string): Promise<unknown> {
@@ -138,9 +144,13 @@ describe('storage.rules', () => {
         await assertSucceeds(storageAs(role).ref(path).getMetadata());
       }
 
-      await assertSucceeds(uploadAs('seller', 'projects/project-1/general/seller.pdf'));
+      await assertSucceeds(
+        uploadAs('seller', 'projects/project-1/general/seller.pdf'),
+      );
 
-      await assertFails(uploadAs('designer', 'projects/project-1/general/designer.pdf'));
+      await assertFails(
+        uploadAs('designer', 'projects/project-1/general/designer.pdf'),
+      );
       await assertFails(storageAs('assembler').ref(path).getMetadata());
       await assertFails(storageAs('woodworker').ref(path).getMetadata());
       await assertFails(storageAs('seller').ref(path).delete());
@@ -157,10 +167,18 @@ describe('storage.rules', () => {
     it('permite read/write para admin/seller/designer e montador atribuido', async () => {
       await putAs('admin', path);
 
-      for (const role of ['admin', 'seller', 'designer', 'assembler'] as const) {
+      for (const role of [
+        'admin',
+        'seller',
+        'designer',
+        'assembler',
+      ] as const) {
         await assertSucceeds(storageAs(role).ref(path).getMetadata());
         await assertSucceeds(
-          uploadAs(role, `projects/project-1/items/item-1/assembler/${role}.jpg`),
+          uploadAs(
+            role,
+            `projects/project-1/items/item-1/assembler/${role}.jpg`,
+          ),
         );
       }
 

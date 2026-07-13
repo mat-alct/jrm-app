@@ -4,17 +4,17 @@ import {
   Center,
   Flex,
   Grid,
-  HStack,
   Heading,
+  HStack,
   Icon,
   Spinner,
   Stack,
   Text,
 } from '@chakra-ui/react';
+import { useQuery } from '@tanstack/react-query';
 import { differenceInCalendarDays, format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
-  Timestamp,
   collection,
   doc,
   getCountFromServer,
@@ -23,6 +23,7 @@ import {
   limit,
   orderBy,
   query,
+  Timestamp,
   updateDoc,
   where,
 } from 'firebase/firestore';
@@ -47,12 +48,13 @@ import {
   FaTruck,
   FaUserTie,
 } from 'react-icons/fa';
-import { useQuery } from '@tanstack/react-query';
+
+import { toaster } from '@/components/ui/toaster';
+import type { OrderDocument, OrderSummary } from '@/types';
 
 import { Dashboard } from '../components/Dashboard';
 import { Header } from '../components/Dashboard/Content/Header';
 import { Loader } from '../components/Loader';
-import { toaster } from '@/components/ui/toaster';
 import { useAuth } from '../hooks/authContext';
 import { db } from '../services/firebase';
 import { queryClient } from '../services/queryClient';
@@ -153,7 +155,9 @@ const StatCard: React.FC<StatCardProps> = ({
             }
           : undefined
       }
-      onClick={() => href && router.push(href)}
+      onClick={() => {
+        if (href) void router.push(href);
+      }}
     >
       <Flex align="center" justify="space-between" mb={3.5}>
         <Flex
@@ -219,7 +223,9 @@ interface DeadlineItem {
   isUrgent?: boolean;
 }
 
-const formatAddress = (customer: any): string | null => {
+const formatAddress = (
+  customer: OrderDocument['customer'] | undefined,
+): string | null => {
   if (!customer) return null;
   const parts = [customer.address, customer.area].filter(Boolean);
   return parts.length ? parts.join(' — ') : null;
@@ -236,9 +242,8 @@ const Home = () => {
   const router = useRouter();
   const toast = toaster;
   const [deadlineFilter, setDeadlineFilter] = useState<DeadlineFilter>('all');
-  const [confirmingStatusOrder, setConfirmingStatusOrder] = useState<any | null>(
-    null,
-  );
+  const [confirmingStatusOrder, setConfirmingStatusOrder] =
+    useState<OrderSummary | null>(null);
   const [advancingStatus, setAdvancingStatus] = useState(false);
 
   const updateOrderStatus = useCallback(
@@ -248,7 +253,7 @@ const Home = () => {
         const orderRef = doc(db, 'orders', id);
         const orderSnap = await getDoc(orderRef);
         if (!orderSnap.exists()) return;
-        const order = orderSnap.data() as any;
+        const order = orderSnap.data() as Omit<OrderDocument, 'id'>;
         let nextState: string | null = null;
         if (order.orderStatus === 'Em Produção') {
           nextState = 'Liberado para Transporte';
@@ -288,7 +293,7 @@ const Home = () => {
 
   useEffect(() => {
     if (user === null) {
-      router.push('/login');
+      void router.push('/login');
     }
   }, [user, router]);
 
@@ -363,7 +368,7 @@ const Home = () => {
       const events: TimelineEvent[] = [];
 
       ordersSnap.docs.forEach(d => {
-        const data = d.data() as any;
+        const data = d.data() as Omit<OrderDocument, 'id'>;
         const customerName = data.customer?.name ?? 'Cliente';
         const orderCode = data.orderCode ?? '—';
 
@@ -380,7 +385,7 @@ const Home = () => {
           });
         }
 
-        (data.edits ?? []).forEach((e: any, i: number) => {
+        (data.edits ?? []).forEach((e, i) => {
           const editedAt = e.editedAt?.seconds
             ? new Date(e.editedAt.seconds * 1000)
             : null;
@@ -389,7 +394,8 @@ const Home = () => {
           const diff = e.priceDifference ?? 0;
           let diffText = '';
           if (e.shouldCharge && diff !== 0) {
-            const verb = diff > 0 ? 'a receber do cliente' : 'a devolver ao cliente';
+            const verb =
+              diff > 0 ? 'a receber do cliente' : 'a devolver ao cliente';
             diffText = `, com ${formatBRL(Math.abs(diff))} ${verb}`;
           }
           events.push({
@@ -456,12 +462,9 @@ const Home = () => {
         ),
       ]);
 
-      return [
-        ...emProducaoSnap.docs,
-        ...liberadoSnap.docs,
-      ]
+      return [...emProducaoSnap.docs, ...liberadoSnap.docs]
         .map(d => {
-          const data = d.data() as any;
+          const data = d.data() as Omit<OrderDocument, 'id'>;
           if (!data.deliveryDate?.seconds) return null;
           if (data.isDeactivated === true) return null;
           return {
@@ -518,7 +521,7 @@ const Home = () => {
           <ConfirmStatusDialog
             order={confirmingStatusOrder}
             onCancel={() => setConfirmingStatusOrder(null)}
-            onConfirm={updateOrderStatus}
+            onConfirm={id => void updateOrderStatus(id)}
             loading={advancingStatus}
           />
         )}
@@ -549,19 +552,19 @@ const Home = () => {
               <QuickShortcut
                 variant="primary"
                 icon={FaPlus}
-                onClick={() => router.push('/cortes/novoservico')}
+                onClick={() => void router.push('/cortes/novoservico')}
               >
                 Novo serviço
               </QuickShortcut>
               <QuickShortcut
                 icon={FaClipboardList}
-                onClick={() => router.push('/cortes/listadecortes')}
+                onClick={() => void router.push('/cortes/listadecortes')}
               >
                 Listar
               </QuickShortcut>
               <QuickShortcut
                 icon={FaThLarge}
-                onClick={() => router.push('/cortes/materiais')}
+                onClick={() => void router.push('/cortes/materiais')}
               >
                 Materiais
               </QuickShortcut>
@@ -628,7 +631,7 @@ const Home = () => {
               cursor="pointer"
               transition="background 0.15s"
               _hover={{ bg: '#FEE2E2' }}
-              onClick={() => router.push('/cortes/listadecortes')}
+              onClick={() => void router.push('/cortes/listadecortes')}
             >
               <Flex
                 w="30px"
@@ -644,13 +647,18 @@ const Home = () => {
               </Flex>
               <Box flex="1">
                 <Text fontSize="13px" fontWeight="semibold" color="#B91C1C">
-                  {stats!.urgentes} pedido(s) urgente(s) em produção
+                  {stats?.urgentes} pedido(s) urgente(s) em produção
                 </Text>
                 <Text fontSize="11.5px" color="#DC2626" opacity={0.75} mt={0.5}>
                   Confira a lista de cortes para priorizar o atendimento.
                 </Text>
               </Box>
-              <Icon as={FaArrowRight} boxSize={3.5} color="#DC2626" opacity={0.55} />
+              <Icon
+                as={FaArrowRight}
+                boxSize={3.5}
+                color="#DC2626"
+                opacity={0.55}
+              />
             </Flex>
           )}
 
@@ -734,7 +742,9 @@ const Home = () => {
                       gap={3}
                       px={5}
                       py={3.5}
-                      borderBottomWidth={idx === timeline.length - 1 ? 0 : '1px'}
+                      borderBottomWidth={
+                        idx === timeline.length - 1 ? 0 : '1px'
+                      }
                       borderColor={BORDER}
                       bg={isEdit ? 'rgba(217,119,6,0.05)' : undefined}
                       transition="background 0.12s"
@@ -785,307 +795,298 @@ const Home = () => {
             borderRadius="xl"
             shadow="sm"
           >
-              <Flex
-                align="center"
-                justify="space-between"
-                px={5}
-                pt={4}
-                pb={3.5}
-                borderBottomWidth="1px"
-                borderColor={BORDER}
-                gap={2}
-                flexWrap={['wrap', 'wrap', 'nowrap']}
-              >
-                <Box>
-                  <Text
-                    fontSize="13.5px"
-                    fontWeight="semibold"
-                    color={TEXT_PRIMARY}
-                    letterSpacing="-0.01em"
-                  >
-                    Próximos prazos
-                  </Text>
-                  <Text fontSize="11.5px" color={TEXT_TERTIARY} mt={0.5}>
-                    {deadlineFilter === 'delivery_all'
-                      ? 'Apenas pedidos para entrega'
-                      : deadlineFilter === 'delivery_released'
-                        ? 'Entregas liberadas para transporte'
-                        : deadlineFilter === 'shop_released'
-                          ? 'Retiradas na loja já liberadas'
-                          : 'Pedidos em produção e liberados'}
-                  </Text>
-                </Box>
-                <HStack
-                  gap="1"
-                  bg={SURFACE}
-                  p="0.5"
-                  borderRadius="md"
-                  borderWidth="1px"
-                  borderColor={BORDER}
-                  flexWrap="wrap"
-                >
-                  {(
-                    [
-                      { id: 'all', label: 'Todos' },
-                      { id: 'delivery_all', label: 'Entregas (Todas)' },
-                      { id: 'delivery_released', label: 'Entregas (Liberados)' },
-                      { id: 'shop_released', label: 'Loja (Liberados)' },
-                    ] as { id: DeadlineFilter; label: string }[]
-                  ).map(opt => {
-                    const active = deadlineFilter === opt.id;
-                    return (
-                      <Button
-                        key={opt.id}
-                        size="xs"
-                        variant="ghost"
-                        px="2.5"
-                        h="26px"
-                        fontSize="11.5px"
-                        fontWeight="semibold"
-                        color={active ? 'white' : TEXT_SECONDARY}
-                        bg={active ? DARK : 'transparent'}
-                        _hover={{ bg: active ? DARK_2 : SURFACE_2 }}
-                        onClick={() => setDeadlineFilter(opt.id)}
-                      >
-                        {opt.label}
-                      </Button>
-                    );
-                  })}
-                </HStack>
-              </Flex>
-
-              {deadlinesLoading ? (
-                <Center py={6}>
-                  <Spinner size="sm" color={GOLD} />
-                </Center>
-              ) : !filteredDeadlines.length ? (
+            <Flex
+              align="center"
+              justify="space-between"
+              px={5}
+              pt={4}
+              pb={3.5}
+              borderBottomWidth="1px"
+              borderColor={BORDER}
+              gap={2}
+              flexWrap={['wrap', 'wrap', 'nowrap']}
+            >
+              <Box>
                 <Text
-                  fontSize="13px"
-                  color={TEXT_TERTIARY}
-                  py={6}
-                  px={5}
-                  textAlign="center"
+                  fontSize="13.5px"
+                  fontWeight="semibold"
+                  color={TEXT_PRIMARY}
+                  letterSpacing="-0.01em"
                 >
-                  {deadlineFilter === 'delivery_all'
-                    ? 'Nenhum pedido marcado como entrega.'
-                    : deadlineFilter === 'delivery_released'
-                      ? 'Nenhuma entrega liberada para transporte.'
-                      : deadlineFilter === 'shop_released'
-                        ? 'Nenhuma retirada na loja liberada.'
-                        : 'Nenhum pedido com prazo cadastrado.'}
+                  Próximos prazos
                 </Text>
-              ) : (
-                <Box maxH="520px" overflowY="auto" py={1}>
-                  {filteredDeadlines.map((d, idx) => {
-                    const isLast = idx === filteredDeadlines.length - 1;
-                    const isDelivery = d.deliveryType === 'Entrega';
-                    const isReleased =
-                      d.orderStatus === 'Liberado para Transporte';
-                    const advanceLabel = isReleased ? 'Concluir' : 'Liberar';
-                    return (
-                      <Flex
-                        key={d.id}
-                        align="center"
-                        gap={3}
-                        px={5}
-                        py={2.5}
-                        borderBottomWidth={isLast ? 0 : '1px'}
-                        borderColor={BORDER}
-                        transition="background 0.12s"
-                        _hover={{ bg: SURFACE }}
+                <Text fontSize="11.5px" color={TEXT_TERTIARY} mt={0.5}>
+                  {deadlineFilter === 'delivery_all'
+                    ? 'Apenas pedidos para entrega'
+                    : deadlineFilter === 'delivery_released'
+                      ? 'Entregas liberadas para transporte'
+                      : deadlineFilter === 'shop_released'
+                        ? 'Retiradas na loja já liberadas'
+                        : 'Pedidos em produção e liberados'}
+                </Text>
+              </Box>
+              <HStack
+                gap="1"
+                bg={SURFACE}
+                p="0.5"
+                borderRadius="md"
+                borderWidth="1px"
+                borderColor={BORDER}
+                flexWrap="wrap"
+              >
+                {(
+                  [
+                    { id: 'all', label: 'Todos' },
+                    { id: 'delivery_all', label: 'Entregas (Todas)' },
+                    { id: 'delivery_released', label: 'Entregas (Liberados)' },
+                    { id: 'shop_released', label: 'Loja (Liberados)' },
+                  ] as { id: DeadlineFilter; label: string }[]
+                ).map(opt => {
+                  const active = deadlineFilter === opt.id;
+                  return (
+                    <Button
+                      key={opt.id}
+                      size="xs"
+                      variant="ghost"
+                      px="2.5"
+                      h="26px"
+                      fontSize="11.5px"
+                      fontWeight="semibold"
+                      color={active ? 'white' : TEXT_SECONDARY}
+                      bg={active ? DARK : 'transparent'}
+                      _hover={{ bg: active ? DARK_2 : SURFACE_2 }}
+                      onClick={() => setDeadlineFilter(opt.id)}
+                    >
+                      {opt.label}
+                    </Button>
+                  );
+                })}
+              </HStack>
+            </Flex>
+
+            {deadlinesLoading ? (
+              <Center py={6}>
+                <Spinner size="sm" color={GOLD} />
+              </Center>
+            ) : !filteredDeadlines.length ? (
+              <Text
+                fontSize="13px"
+                color={TEXT_TERTIARY}
+                py={6}
+                px={5}
+                textAlign="center"
+              >
+                {deadlineFilter === 'delivery_all'
+                  ? 'Nenhum pedido marcado como entrega.'
+                  : deadlineFilter === 'delivery_released'
+                    ? 'Nenhuma entrega liberada para transporte.'
+                    : deadlineFilter === 'shop_released'
+                      ? 'Nenhuma retirada na loja liberada.'
+                      : 'Nenhum pedido com prazo cadastrado.'}
+              </Text>
+            ) : (
+              <Box maxH="520px" overflowY="auto" py={1}>
+                {filteredDeadlines.map((d, idx) => {
+                  const isLast = idx === filteredDeadlines.length - 1;
+                  const isDelivery = d.deliveryType === 'Entrega';
+                  const isReleased =
+                    d.orderStatus === 'Liberado para Transporte';
+                  const advanceLabel = isReleased ? 'Concluir' : 'Liberar';
+                  return (
+                    <Flex
+                      key={d.id}
+                      align="center"
+                      gap={3}
+                      px={5}
+                      py={2.5}
+                      borderBottomWidth={isLast ? 0 : '1px'}
+                      borderColor={BORDER}
+                      transition="background 0.12s"
+                      _hover={{ bg: SURFACE }}
+                    >
+                      <Text
+                        fontFamily="mono"
+                        fontSize="11px"
+                        fontWeight="medium"
+                        color={TEXT_TERTIARY}
+                        w="48px"
+                        flexShrink={0}
                       >
-                        <Text
-                          fontFamily="mono"
-                          fontSize="11px"
-                          fontWeight="medium"
-                          color={TEXT_TERTIARY}
-                          w="48px"
-                          flexShrink={0}
-                        >
-                          #{d.orderCode}
-                        </Text>
+                        #{d.orderCode}
+                      </Text>
 
-                        <Box flex="1" minW={0}>
-                          <HStack gap={2} align="center">
-                            <Text
-                              fontSize="13px"
-                              fontWeight="semibold"
-                              color={TEXT_PRIMARY}
-                              lineClamp={1}
-                            >
-                              {d.customerName}
-                            </Text>
-                            {d.isUrgent && (
-                              <Box
-                                display="inline-flex"
-                                alignItems="center"
-                                gap="1"
-                                fontSize="9.5px"
-                                fontWeight="bold"
-                                px="1.5"
-                                py="0.5"
-                                borderRadius="full"
-                                letterSpacing="0.04em"
-                                textTransform="uppercase"
-                                bg="rgba(224,60,60,0.12)"
-                                color={RED}
-                                flexShrink={0}
-                              >
-                                <Icon
-                                  as={FaExclamationTriangle}
-                                  boxSize={2}
-                                />
-                                Urgente
-                              </Box>
-                            )}
-                          </HStack>
-                          <HStack
-                            gap={3}
-                            mt={0.5}
-                            fontSize="11px"
-                            color={TEXT_SECONDARY}
-                            flexWrap="wrap"
-                            rowGap={0.5}
-                          >
-                            {d.seller && (
-                              <HStack gap={1} minW={0}>
-                                <Icon
-                                  as={FaUserTie}
-                                  boxSize={2.5}
-                                  color={TEXT_TERTIARY}
-                                />
-                                <Text lineClamp={1}>{d.seller}</Text>
-                              </HStack>
-                            )}
-                            {d.customerTelephone && (
-                              <HStack gap={1} minW={0}>
-                                <Icon
-                                  as={FaPhone}
-                                  boxSize={2.5}
-                                  color={TEXT_TERTIARY}
-                                />
-                                <Text lineClamp={1}>
-                                  {d.customerTelephone}
-                                </Text>
-                              </HStack>
-                            )}
-                            {isDelivery && d.customerAddress && (
-                              <HStack gap={1} minW={0}>
-                                <Icon
-                                  as={FaMapMarkerAlt}
-                                  boxSize={2.5}
-                                  color={TEXT_TERTIARY}
-                                />
-                                <Text lineClamp={1}>{d.customerAddress}</Text>
-                              </HStack>
-                            )}
-                          </HStack>
-                        </Box>
-
-                        <HStack
-                          gap={1}
-                          flexShrink={0}
-                          display={['none', 'none', 'flex']}
-                        >
-                          <Box
-                            display="inline-flex"
-                            alignItems="center"
-                            fontSize="10px"
-                            fontWeight="semibold"
-                            px="1.5"
-                            py="0.5"
-                            borderRadius="full"
-                            letterSpacing="0.02em"
-                            bg={
-                              isReleased
-                                ? 'rgba(37,99,235,0.10)'
-                                : 'rgba(245,184,32,0.14)'
-                            }
-                            color={isReleased ? BLUE : '#92700a'}
-                          >
-                            {isReleased ? 'Liberado' : 'Em produção'}
-                          </Box>
-                          <Box
-                            display="inline-flex"
-                            alignItems="center"
-                            fontSize="10px"
-                            fontWeight="semibold"
-                            px="1.5"
-                            py="0.5"
-                            borderRadius="full"
-                            letterSpacing="0.02em"
-                            bg={SURFACE_2}
-                            color={TEXT_SECONDARY}
-                          >
-                            {isDelivery ? 'Entrega' : 'Loja'}
-                          </Box>
-                        </HStack>
-
-                        <Box
-                          textAlign="right"
-                          flexShrink={0}
-                          minW="60px"
-                        >
+                      <Box flex="1" minW={0}>
+                        <HStack gap={2} align="center">
                           <Text
-                            fontFamily="mono"
-                            fontSize="12px"
+                            fontSize="13px"
                             fontWeight="semibold"
                             color={TEXT_PRIMARY}
+                            lineClamp={1}
                           >
-                            {format(d.deliveryDate, 'dd/MM')}
+                            {d.customerName}
                           </Text>
-                          <Text fontSize="10px" color={TEXT_TERTIARY}>
-                            {deliveryRelativeLabel(d.deliveryDate)}
-                          </Text>
-                        </Box>
-
-                        <HStack
-                          gap={1}
-                          flexShrink={0}
-                          display={['none', 'none', 'flex']}
-                        >
-                          <Button
-                            size="xs"
-                            h="26px"
-                            px="2.5"
-                            fontSize="11px"
-                            fontWeight="semibold"
-                            bg={DARK}
-                            color="white"
-                            _hover={{ bg: DARK_2 }}
-                            onClick={() =>
-                              setConfirmingStatusOrder({
-                                id: d.id,
-                                orderCode: d.orderCode,
-                                orderStatus: d.orderStatus,
-                                customer: { name: d.customerName },
-                              })
-                            }
-                          >
-                            <Icon as={FaCheckCircle} boxSize={2.5} mr="1" />
-                            {advanceLabel}
-                          </Button>
-                          <Button
-                            size="xs"
-                            h="26px"
-                            px="2"
-                            variant="ghost"
-                            color={TEXT_SECONDARY}
-                            _hover={{ bg: SURFACE_2, color: TEXT_PRIMARY }}
-                            onClick={() =>
-                              router.push(`/cortes/editar/${d.id}`)
-                            }
-                            aria-label="Editar pedido"
-                          >
-                            <Icon as={FaPen} boxSize={2.5} />
-                          </Button>
+                          {d.isUrgent && (
+                            <Box
+                              display="inline-flex"
+                              alignItems="center"
+                              gap="1"
+                              fontSize="9.5px"
+                              fontWeight="bold"
+                              px="1.5"
+                              py="0.5"
+                              borderRadius="full"
+                              letterSpacing="0.04em"
+                              textTransform="uppercase"
+                              bg="rgba(224,60,60,0.12)"
+                              color={RED}
+                              flexShrink={0}
+                            >
+                              <Icon as={FaExclamationTriangle} boxSize={2} />
+                              Urgente
+                            </Box>
+                          )}
                         </HStack>
-                      </Flex>
-                    );
-                  })}
-                </Box>
-              )}
-            </Box>
+                        <HStack
+                          gap={3}
+                          mt={0.5}
+                          fontSize="11px"
+                          color={TEXT_SECONDARY}
+                          flexWrap="wrap"
+                          rowGap={0.5}
+                        >
+                          {d.seller && (
+                            <HStack gap={1} minW={0}>
+                              <Icon
+                                as={FaUserTie}
+                                boxSize={2.5}
+                                color={TEXT_TERTIARY}
+                              />
+                              <Text lineClamp={1}>{d.seller}</Text>
+                            </HStack>
+                          )}
+                          {d.customerTelephone && (
+                            <HStack gap={1} minW={0}>
+                              <Icon
+                                as={FaPhone}
+                                boxSize={2.5}
+                                color={TEXT_TERTIARY}
+                              />
+                              <Text lineClamp={1}>{d.customerTelephone}</Text>
+                            </HStack>
+                          )}
+                          {isDelivery && d.customerAddress && (
+                            <HStack gap={1} minW={0}>
+                              <Icon
+                                as={FaMapMarkerAlt}
+                                boxSize={2.5}
+                                color={TEXT_TERTIARY}
+                              />
+                              <Text lineClamp={1}>{d.customerAddress}</Text>
+                            </HStack>
+                          )}
+                        </HStack>
+                      </Box>
+
+                      <HStack
+                        gap={1}
+                        flexShrink={0}
+                        display={['none', 'none', 'flex']}
+                      >
+                        <Box
+                          display="inline-flex"
+                          alignItems="center"
+                          fontSize="10px"
+                          fontWeight="semibold"
+                          px="1.5"
+                          py="0.5"
+                          borderRadius="full"
+                          letterSpacing="0.02em"
+                          bg={
+                            isReleased
+                              ? 'rgba(37,99,235,0.10)'
+                              : 'rgba(245,184,32,0.14)'
+                          }
+                          color={isReleased ? BLUE : '#92700a'}
+                        >
+                          {isReleased ? 'Liberado' : 'Em produção'}
+                        </Box>
+                        <Box
+                          display="inline-flex"
+                          alignItems="center"
+                          fontSize="10px"
+                          fontWeight="semibold"
+                          px="1.5"
+                          py="0.5"
+                          borderRadius="full"
+                          letterSpacing="0.02em"
+                          bg={SURFACE_2}
+                          color={TEXT_SECONDARY}
+                        >
+                          {isDelivery ? 'Entrega' : 'Loja'}
+                        </Box>
+                      </HStack>
+
+                      <Box textAlign="right" flexShrink={0} minW="60px">
+                        <Text
+                          fontFamily="mono"
+                          fontSize="12px"
+                          fontWeight="semibold"
+                          color={TEXT_PRIMARY}
+                        >
+                          {format(d.deliveryDate, 'dd/MM')}
+                        </Text>
+                        <Text fontSize="10px" color={TEXT_TERTIARY}>
+                          {deliveryRelativeLabel(d.deliveryDate)}
+                        </Text>
+                      </Box>
+
+                      <HStack
+                        gap={1}
+                        flexShrink={0}
+                        display={['none', 'none', 'flex']}
+                      >
+                        <Button
+                          size="xs"
+                          h="26px"
+                          px="2.5"
+                          fontSize="11px"
+                          fontWeight="semibold"
+                          bg={DARK}
+                          color="white"
+                          _hover={{ bg: DARK_2 }}
+                          onClick={() =>
+                            setConfirmingStatusOrder({
+                              id: d.id,
+                              orderCode: d.orderCode,
+                              orderStatus: d.orderStatus,
+                              customer: { name: d.customerName },
+                            })
+                          }
+                        >
+                          <Icon as={FaCheckCircle} boxSize={2.5} mr="1" />
+                          {advanceLabel}
+                        </Button>
+                        <Button
+                          size="xs"
+                          h="26px"
+                          px="2"
+                          variant="ghost"
+                          color={TEXT_SECONDARY}
+                          _hover={{ bg: SURFACE_2, color: TEXT_PRIMARY }}
+                          onClick={() =>
+                            void router.push(`/cortes/editar/${d.id}`)
+                          }
+                          aria-label="Editar pedido"
+                        >
+                          <Icon as={FaPen} boxSize={2.5} />
+                        </Button>
+                      </HStack>
+                    </Flex>
+                  );
+                })}
+              </Box>
+            )}
+          </Box>
         </Stack>
       </Dashboard>
     </>
@@ -1130,11 +1131,7 @@ const QuickShortcut: React.FC<QuickShortcutProps> = ({
       }}
       onClick={onClick}
     >
-      <Icon
-        as={icon}
-        boxSize={3}
-        color={isPrimary ? GOLD : TEXT_TERTIARY}
-      />
+      <Icon as={icon} boxSize={3} color={isPrimary ? GOLD : TEXT_TERTIARY} />
       <Box>{children}</Box>
     </Flex>
   );

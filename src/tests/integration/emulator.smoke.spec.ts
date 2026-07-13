@@ -1,10 +1,10 @@
 import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
-import { ref, uploadBytes, getBytes } from 'firebase/storage';
+import { getBytes, ref, uploadBytes } from 'firebase/storage';
 
 import { auth } from '@/services/firebase';
 import { storage } from '@/services/firebase';
 import { resetEmulator, TEST_STORAGE_BUCKET } from '@/tests/helpers/emulator';
-import { seedEmulator, SEED_USER_PASSWORD } from '@/tests/helpers/seedEmulator';
+import { SEED_USER_PASSWORD, seedEmulator } from '@/tests/helpers/seedEmulator';
 
 describe('Firebase Emulator integration smoke', () => {
   beforeEach(async () => {
@@ -22,7 +22,10 @@ describe('Firebase Emulator integration smoke', () => {
       'vendedor@seed.jrm',
       SEED_USER_PASSWORD,
     );
-    const fileRef = ref(storage, 'projects/seed-project-1/general/storage-upload.txt');
+    const fileRef = ref(
+      storage,
+      'projects/seed-project-1/general/storage-upload.txt',
+    );
     const bytes = new TextEncoder().encode('storage emulator smoke');
 
     const result = await uploadBytes(fileRef, bytes, {

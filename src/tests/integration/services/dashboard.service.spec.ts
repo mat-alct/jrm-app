@@ -1,16 +1,16 @@
 import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
 
-import {
-  computeDashboardCounts,
-  filterDashboardItems,
-  listAllProjectItems,
-  countPendingAssemblerPayments,
-} from '@/services/projects/dashboard.service';
 import { auth } from '@/services/firebase';
 import { adminDb } from '@/services/firebaseAdmin';
-import { Project } from '@/types/projects';
+import {
+  computeDashboardCounts,
+  countPendingAssemblerPayments,
+  filterDashboardItems,
+  listAllProjectItems,
+} from '@/services/projects/dashboard.service';
 import { resetEmulator } from '@/tests/helpers/emulator';
-import { seedEmulator, SEED_USER_PASSWORD } from '@/tests/helpers/seedEmulator';
+import { SEED_USER_PASSWORD, seedEmulator } from '@/tests/helpers/seedEmulator';
+import { Project } from '@/types/projects';
 
 async function signInAs(email: string): Promise<void> {
   await signInWithEmailAndPassword(auth, email, SEED_USER_PASSWORD);
@@ -65,7 +65,10 @@ describe('services/projects/dashboard.service integration', () => {
     const items = await listAllProjectItems();
     const projectsSnap = await adminDb.collection('projects').get();
     const projectsById = Object.fromEntries(
-      projectsSnap.docs.map(doc => [doc.id, { id: doc.id, ...doc.data() } as Project]),
+      projectsSnap.docs.map(doc => [
+        doc.id,
+        { id: doc.id, ...doc.data() } as Project,
+      ]),
     );
 
     const filtered = filterDashboardItems(

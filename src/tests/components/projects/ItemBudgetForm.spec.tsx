@@ -31,9 +31,12 @@ describe('Component: ItemBudgetForm', () => {
     fireEvent.change(screen.getByLabelText('Valor cobrado do cliente'), {
       target: { value: '500' },
     });
-    fireEvent.change(screen.getByLabelText('Sugestão de valor para o montador'), {
-      target: { value: '150' },
-    });
+    fireEvent.change(
+      screen.getByLabelText('Sugestão de valor para o montador'),
+      {
+        target: { value: '150' },
+      },
+    );
 
     fireEvent.click(screen.getByRole('button', { name: 'Salvar orçamento' }));
 

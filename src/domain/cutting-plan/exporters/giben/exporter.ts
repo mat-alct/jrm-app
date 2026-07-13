@@ -1,5 +1,4 @@
 import type { CuttingPlan } from '../../types';
-
 import {
   buildAcCut,
   buildAcHeader,

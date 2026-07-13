@@ -57,7 +57,13 @@ export const UserForm: React.FC<UserFormProps> = ({
   });
 
   return (
-    <Box as="form" onSubmit={submit} display="flex" flexDirection="column" gap={4}>
+    <Box
+      as="form"
+      onSubmit={event => void submit(event)}
+      display="flex"
+      flexDirection="column"
+      gap={4}
+    >
       <FormInput
         {...register('name')}
         name="name"
@@ -90,10 +96,7 @@ export const UserForm: React.FC<UserFormProps> = ({
         render={({ field }) => (
           <Fieldset.Root invalid={!!errors.roles}>
             <Fieldset.Legend>Papéis</Fieldset.Legend>
-            <CheckboxGroup
-              value={field.value}
-              onValueChange={field.onChange}
-            >
+            <CheckboxGroup value={field.value} onValueChange={field.onChange}>
               <HStack wrap="wrap" gap={4}>
                 {ROLE_OPTIONS.map(option => (
                   <Checkbox.Root key={option.value} value={option.value}>

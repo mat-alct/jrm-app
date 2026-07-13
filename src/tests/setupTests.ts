@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-var-requires */
 // require() em vez de import: imports ES são hoisteados pelo transform e
 // rodariam antes destes polyfills, quebrando a ordem de inicialização do jsdom.
 const {
@@ -14,7 +13,8 @@ if (typeof globalThis.TextDecoder !== 'function') {
   globalThis.TextDecoder = NodeTextDecoder;
 }
 if (typeof globalThis.structuredClone !== 'function') {
-  globalThis.structuredClone = <T>(value: T): T => deserialize(serialize(value));
+  globalThis.structuredClone = <T>(value: T): T =>
+    deserialize(serialize(value));
 }
 if (typeof globalThis.fetch !== 'function') {
   require('whatwg-fetch');

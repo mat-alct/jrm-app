@@ -29,7 +29,9 @@ export function AssemblerPaymentsTable({
   isBusy = false,
   onPay,
 }: AssemblerPaymentsTableProps) {
-  const [files, setFiles] = React.useState<Record<string, File | undefined>>({});
+  const [files, setFiles] = React.useState<Record<string, File | undefined>>(
+    {},
+  );
 
   return (
     <VStack align="stretch" gap={4}>
@@ -49,7 +51,11 @@ export function AssemblerPaymentsTable({
                 <Text fontSize="lg" fontWeight="600" color="app.text">
                   {group.assemblerName ?? group.assemblerId}
                 </Text>
-                <Text fontWeight="600" color="app.text" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                <Text
+                  fontWeight="600"
+                  color="app.text"
+                  style={{ fontVariantNumeric: 'tabular-nums' }}
+                >
                   {formatCurrency(group.total)}
                 </Text>
               </Flex>
@@ -68,7 +74,11 @@ export function AssemblerPaymentsTable({
                     <Text fontWeight="600" color="app.text">
                       {assignment.customerName} · {assignment.itemName}
                     </Text>
-                    <Text color="app.textSecondary" fontSize="sm" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                    <Text
+                      color="app.textSecondary"
+                      fontSize="sm"
+                      style={{ fontVariantNumeric: 'tabular-nums' }}
+                    >
                       {formatCurrency(assignment.amountToReceive)}
                     </Text>
                   </VStack>

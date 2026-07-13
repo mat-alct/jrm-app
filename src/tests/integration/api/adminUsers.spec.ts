@@ -9,7 +9,7 @@ import {
   signOutClient,
 } from '@/tests/helpers/apiTest';
 import { resetEmulator } from '@/tests/helpers/emulator';
-import { seedEmulator, SEED_USER_PASSWORD } from '@/tests/helpers/seedEmulator';
+import { SEED_USER_PASSWORD, seedEmulator } from '@/tests/helpers/seedEmulator';
 
 describe('api/admin/users integration', () => {
   beforeEach(async () => {
@@ -80,7 +80,9 @@ describe('api/admin/users integration', () => {
     );
 
     expect(res.statusCode).toBe(200);
-    expect((await adminDb.doc(userPath('seed-designer')).get()).data()).toMatchObject({
+    expect(
+      (await adminDb.doc(userPath('seed-designer')).get()).data(),
+    ).toMatchObject({
       name: 'Desenhista Renomeado',
       roles: ['designer', 'seller'],
       phone: '+5524988887777',
@@ -119,7 +121,9 @@ describe('api/admin/users integration', () => {
     );
     expect(sellerRes.statusCode).toBe(403);
 
-    await expect(adminAuth.getUserByEmail('invasor@seed.jrm')).rejects.toThrow();
+    await expect(
+      adminAuth.getUserByEmail('invasor@seed.jrm'),
+    ).rejects.toThrow();
   });
 
   it('valida payload: campos faltando, papel invalido, email duplicado e senha curta', async () => {
@@ -181,7 +185,9 @@ describe('api/admin/users integration', () => {
     expect(shortPasswordRes.statusCode).toBe(400);
 
     await expect(adminAuth.getUserByEmail('papel@seed.jrm')).rejects.toThrow();
-    await expect(adminAuth.getUserByEmail('senha.curta@seed.jrm')).rejects.toThrow();
+    await expect(
+      adminAuth.getUserByEmail('senha.curta@seed.jrm'),
+    ).rejects.toThrow();
   });
 
   it('exige id no PATCH e recusa papeis invalidos', async () => {
@@ -205,7 +211,9 @@ describe('api/admin/users integration', () => {
     );
     expect(invalidRolesRes.statusCode).toBe(400);
 
-    expect((await adminDb.doc(userPath('seed-designer')).get()).data()).toMatchObject({
+    expect(
+      (await adminDb.doc(userPath('seed-designer')).get()).data(),
+    ).toMatchObject({
       name: 'Desenhista Seed',
       roles: ['designer'],
     });

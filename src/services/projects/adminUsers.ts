@@ -31,13 +31,28 @@ async function postAdminUsers(
     body: JSON.stringify(body),
   });
 
-  const data = await response.json();
+  const data: unknown = await response.json();
 
   if (!response.ok) {
-    throw new Error(data?.error || 'Erro ao processar usuário.');
+    const message =
+      typeof data === 'object' &&
+      data !== null &&
+      'error' in data &&
+      typeof data.error === 'string'
+        ? data.error
+        : 'Erro ao processar usuário.';
+    throw new Error(message);
   }
 
-  return data;
+  if (
+    typeof data !== 'object' ||
+    data === null ||
+    !('id' in data) ||
+    typeof data.id !== 'string'
+  ) {
+    throw new Error('Resposta inválida ao processar usuário.');
+  }
+  return { id: data.id };
 }
 
 export function createAdminUser(input: CreateUserInput) {

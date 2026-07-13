@@ -1,6 +1,7 @@
 import { Timestamp } from 'firebase-admin/firestore';
 
 import { adminDb } from '@/services/firebaseAdmin';
+
 import { ensureAuthUser } from './emulator';
 import { seedUsers } from './factories';
 

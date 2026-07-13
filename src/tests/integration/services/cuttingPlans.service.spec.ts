@@ -11,10 +11,7 @@ import {
 import { auth } from '@/services/firebase';
 import { adminDb } from '@/services/firebaseAdmin';
 import { resetEmulator } from '@/tests/helpers/emulator';
-import {
-  SEED_USER_PASSWORD,
-  seedEmulator,
-} from '@/tests/helpers/seedEmulator';
+import { SEED_USER_PASSWORD, seedEmulator } from '@/tests/helpers/seedEmulator';
 
 const timestamp = Timestamp.fromDate(new Date('2026-07-10T12:00:00.000Z'));
 const plan = {
@@ -61,9 +58,11 @@ describe('cutting plan persistence integration', () => {
     await expect(approveStoredCuttingPlan('order-1')).resolves.toMatchObject({
       status: 'approved',
     });
-    await expect(invalidateStoredCuttingPlan('order-1')).resolves.toMatchObject({
-      status: 'outdated',
-    });
+    await expect(invalidateStoredCuttingPlan('order-1')).resolves.toMatchObject(
+      {
+        status: 'outdated',
+      },
+    );
     expect((await adminDb.doc('orders/order-1').get()).data()).toMatchObject({
       serviceType: 'cutting_plan',
       cuttingPlan: { status: 'outdated' },

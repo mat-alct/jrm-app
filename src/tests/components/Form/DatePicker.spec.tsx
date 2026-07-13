@@ -6,11 +6,15 @@ import { FormDatePicker } from '@/components/Form/DatePicker';
 
 import { fireEvent, render, screen, waitFor } from '../../testUtils';
 
-function Harness({ onSubmit }: { onSubmit: (values: { deliveryDate: Date }) => void }) {
+function Harness({
+  onSubmit,
+}: {
+  onSubmit: (values: { deliveryDate: Date }) => void;
+}) {
   const { control, handleSubmit } = useForm<{ deliveryDate: Date }>();
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)}>
+    <form onSubmit={event => void handleSubmit(onSubmit)(event)}>
       <FormDatePicker name="deliveryDate" control={control} />
       <button type="submit">Salvar</button>
     </form>
@@ -18,7 +22,9 @@ function Harness({ onSubmit }: { onSubmit: (values: { deliveryDate: Date }) => v
 }
 
 function dateField(): HTMLInputElement {
-  return document.querySelector('input[name="deliveryDate"]') as HTMLInputElement;
+  return document.querySelector(
+    'input[name="deliveryDate"]',
+  ) as HTMLInputElement;
 }
 
 describe('FormDatePicker', () => {
@@ -63,16 +69,15 @@ describe('FormDatePicker', () => {
       /--(saturday|sunday|weekend)/.test(day.className),
     );
     const weekdays = days.filter(
-      day =>
-        !/--(saturday|sunday|weekend|outside-month)/.test(day.className),
+      day => !/--(saturday|sunday|weekend|outside-month)/.test(day.className),
     );
 
     expect(weekendDays.length).toBeGreaterThan(0);
-    expect(
-      weekendDays.every(day => day.className.includes('--disabled')),
-    ).toBe(true);
-    expect(
-      weekdays.some(day => !day.className.includes('--disabled')),
-    ).toBe(true);
+    expect(weekendDays.every(day => day.className.includes('--disabled'))).toBe(
+      true,
+    );
+    expect(weekdays.some(day => !day.className.includes('--disabled'))).toBe(
+      true,
+    );
   });
 });

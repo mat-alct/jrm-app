@@ -1,6 +1,11 @@
 import { doc, getDoc, Timestamp, updateDoc } from 'firebase/firestore';
 
-import { AppUser, ItemBudget, ItemBudgetLine, ProjectItem } from '@/types/projects';
+import {
+  AppUser,
+  ItemBudget,
+  ItemBudgetLine,
+  ProjectItem,
+} from '@/types/projects';
 import { isAdmin } from '@/utils/projects/permissions';
 
 import { db } from '../firebase';
@@ -20,9 +25,7 @@ export interface SaveItemBudgetInput {
   suggestedAssemblerAmount: number;
 }
 
-function assertCanManageBudget(
-  actorRoles: AppUser['roles'] | undefined,
-): void {
+function assertCanManageBudget(actorRoles: AppUser['roles'] | undefined): void {
   if (!isAdmin(actorRoles) && !actorRoles?.includes('seller')) {
     throw new BudgetServiceError(
       'Apenas administradores ou vendedores podem editar o orçamento.',

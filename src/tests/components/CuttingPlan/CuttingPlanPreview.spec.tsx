@@ -67,7 +67,7 @@ describe('CuttingPlanPreview', () => {
     );
     expect(
       drawing.querySelector('[data-waste-reason="internal_trim"]'),
-    ).toBeInTheDocument();
+    ).not.toBeInTheDocument();
   });
 
   it('não expõe a ordem sugerida nem numeração dos cortes', () => {

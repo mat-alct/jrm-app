@@ -15,12 +15,15 @@ import { ProjectItemStatusBadge } from '@/components/projects/ProjectItemStatusB
 import { ProjectItemTimeline } from '@/components/projects/ProjectItemTimeline';
 import { useUsersByRole } from '@/services/projects/adminUsers';
 import {
-  assignAssemblers,
   AssignAssemblerInput,
+  assignAssemblers,
   listItemAssemblerAssignments,
 } from '@/services/projects/assembler.service';
 import { useAttachments } from '@/services/projects/attachmentHooks';
-import { saveItemBudget, sendBudgetToClient } from '@/services/projects/budget.service';
+import {
+  saveItemBudget,
+  sendBudgetToClient,
+} from '@/services/projects/budget.service';
 import { useItemVersions } from '@/services/projects/designer.service';
 import {
   useItemStatusHistory,
@@ -73,7 +76,7 @@ const ProjectItemDetail = () => {
   const itemId = router.query.itemId as string;
 
   React.useEffect(() => {
-    if (user === null) router.push('/login');
+    if (user === null) void router.push('/login');
   }, [user, router]);
 
   const { data: appUser } = useAppUser();
@@ -86,7 +89,8 @@ const ProjectItemDetail = () => {
   const { data: versions } = useItemVersions(projectId, itemId);
   const updateStatus = useUpdateItemStatus(projectId, itemId);
   const [isAssignDesignerOpen, setIsAssignDesignerOpen] = React.useState(false);
-  const [isAssignAssemblerOpen, setIsAssignAssemblerOpen] = React.useState(false);
+  const [isAssignAssemblerOpen, setIsAssignAssemblerOpen] =
+    React.useState(false);
 
   const queryClient = useQueryClient();
   const { data: assemblers } = useUsersByRole('assembler');
@@ -105,10 +109,19 @@ const ProjectItemDetail = () => {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ['projects', projectId, 'items', itemId, 'assemblerAssignments'],
+      void queryClient.invalidateQueries({
+        queryKey: [
+          'projects',
+          projectId,
+          'items',
+          itemId,
+          'assemblerAssignments',
+        ],
       });
-      toaster.create({ type: 'success', description: 'Montadores atribuídos.' });
+      toaster.create({
+        type: 'success',
+        description: 'Montadores atribuídos.',
+      });
       setIsAssignAssemblerOpen(false);
     },
     onError: (error: Error) => {
@@ -133,7 +146,7 @@ const ProjectItemDetail = () => {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: ['projects', projectId, 'items', itemId],
       });
       toaster.create({ type: 'success', description: 'Orçamento salvo.' });
@@ -157,7 +170,7 @@ const ProjectItemDetail = () => {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: ['projects', projectId, 'items', itemId],
       });
       toaster.create({
@@ -179,7 +192,11 @@ const ProjectItemDetail = () => {
     try {
       await updateStatus.mutateAsync({
         next,
-        actor: { uid: user.uid, name: appUser.name, role: actorRole(appUser.roles) },
+        actor: {
+          uid: user.uid,
+          name: appUser.name,
+          role: actorRole(appUser.roles),
+        },
       });
       toaster.create({ type: 'success', description: 'Status atualizado.' });
     } catch (error) {
@@ -215,8 +232,7 @@ const ProjectItemDetail = () => {
           canTransition(item.status, status, { isAdmin: admin }),
       )
     : [];
-  const canApproveAssembly =
-    admin && item.status === 'montagem_concluida';
+  const canApproveAssembly = admin && item.status === 'montagem_concluida';
 
   return (
     <>
@@ -227,18 +243,39 @@ const ProjectItemDetail = () => {
         <Header pageTitle={item.name} />
 
         <Stack gap={6}>
-          <Box bg="white" borderWidth="1px" borderColor="gray.200" borderRadius="md" p={4}>
+          <Box
+            bg="white"
+            borderWidth="1px"
+            borderColor="gray.200"
+            borderRadius="md"
+            p={4}
+          >
             <HStack justify="space-between" mb={3}>
               <Heading size="md">Status atual</Heading>
               <ProjectItemStatusBadge status={item.status} />
             </HStack>
             <Stack gap={1} fontSize="sm">
-              <Text><b>Ambiente:</b> {item.environment}</Text>
-              {item.material && <Text><b>Material:</b> {item.material}</Text>}
-              {item.description && <Text><b>Descrição:</b> {item.description}</Text>}
-              {item.notes && <Text><b>Observações:</b> {item.notes}</Text>}
+              <Text>
+                <b>Ambiente:</b> {item.environment}
+              </Text>
+              {item.material && (
+                <Text>
+                  <b>Material:</b> {item.material}
+                </Text>
+              )}
+              {item.description && (
+                <Text>
+                  <b>Descrição:</b> {item.description}
+                </Text>
+              )}
+              {item.notes && (
+                <Text>
+                  <b>Observações:</b> {item.notes}
+                </Text>
+              )}
               <Text color="gray.500">
-                Acabamento, medidas e preço ficam nos anexos e no orçamento do item.
+                Acabamento, medidas e preço ficam nos anexos e no orçamento do
+                item.
               </Text>
             </Stack>
 
@@ -255,7 +292,7 @@ const ProjectItemDetail = () => {
                       variant="outline"
                       colorScheme="orange"
                       loading={updateStatus.isPending}
-                      onClick={() => handleTransition(status)}
+                      onClick={() => void handleTransition(status)}
                     >
                       <ProjectItemStatusBadge status={status} />
                     </Button>
@@ -270,7 +307,9 @@ const ProjectItemDetail = () => {
                   size="sm"
                   colorScheme="orange"
                   loading={updateStatus.isPending}
-                  onClick={() => handleTransition('aguardando_pagamento_montador')}
+                  onClick={() =>
+                    void handleTransition('aguardando_pagamento_montador')
+                  }
                 >
                   Aprovar montagem
                 </Button>
@@ -279,7 +318,13 @@ const ProjectItemDetail = () => {
           </Box>
 
           {canSeePrice && !hasRole(appUser?.roles, 'assembler') && (
-            <Box bg="white" borderWidth="1px" borderColor="gray.200" borderRadius="md" p={4}>
+            <Box
+              bg="white"
+              borderWidth="1px"
+              borderColor="gray.200"
+              borderRadius="md"
+              p={4}
+            >
               <Heading size="md" mb={3}>
                 Orçamento
               </Heading>
@@ -293,8 +338,12 @@ const ProjectItemDetail = () => {
                 />
               ) : item.budget ? (
                 <Stack gap={1} fontSize="sm">
-                  <Text><b>Valor ao cliente:</b> {item.budget.customerAmount}</Text>
-                  <Text><b>Custo interno:</b> {item.budget.totalCost}</Text>
+                  <Text>
+                    <b>Valor ao cliente:</b> {item.budget.customerAmount}
+                  </Text>
+                  <Text>
+                    <b>Custo interno:</b> {item.budget.totalCost}
+                  </Text>
                   <Text>
                     <b>Sugestão para o montador:</b>{' '}
                     {item.budget.suggestedAssemblerAmount}
@@ -319,67 +368,89 @@ const ProjectItemDetail = () => {
             </Box>
           )}
 
-          <Box bg="white" borderWidth="1px" borderColor="gray.200" borderRadius="md" p={4}>
-              <HStack justify="space-between" mb={3}>
-                <Heading size="md">Desenho</Heading>
-                {canAssignDesigner(appUser?.roles) && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    colorScheme="orange"
-                    onClick={() => setIsAssignDesignerOpen(true)}
-                  >
-                    {item.designerId ? 'Reatribuir desenhista' : 'Atribuir desenhista'}
-                  </Button>
-                )}
-              </HStack>
-              <Stack gap={1} fontSize="sm" mb={3}>
-                <Text><b>Desenhista:</b> {item.designerName ?? '—'}</Text>
-                <Text>
-                  <b>Prazo:</b>{' '}
-                  {item.deadlineCurrent
-                    ? item.deadlineCurrent.toDate().toLocaleDateString('pt-BR')
-                    : '—'}
-                </Text>
-              </Stack>
-
-              {user &&
-                appUser &&
-                item.designerId === user.uid &&
-                item.status === 'aguardando_desenho' && (
-                  <DesignerUploadPanel
-                    projectId={projectId}
-                    itemId={itemId}
-                    actor={{ uid: user.uid, name: appUser?.name, role: 'designer' }}
-                  />
-                )}
-
-              {versions && versions.length > 0 && (
-                <Stack gap={2} mt={4}>
-                  <Text fontWeight="semibold" fontSize="sm">
-                    Versões
-                  </Text>
-                  {versions.map(version => (
-                    <Box
-                      key={version.id}
-                      borderWidth="1px"
-                      borderColor="gray.200"
-                      borderRadius="md"
-                      p={2}
-                      fontSize="sm"
-                    >
-                      <Text fontWeight="medium">Versão {version.versionNumber}</Text>
-                      {version.description && <Text>{version.description}</Text>}
-                      <Text color="gray.500" fontSize="xs">
-                        {version.attachmentIds.length} arquivo(s)
-                      </Text>
-                    </Box>
-                  ))}
-                </Stack>
+          <Box
+            bg="white"
+            borderWidth="1px"
+            borderColor="gray.200"
+            borderRadius="md"
+            p={4}
+          >
+            <HStack justify="space-between" mb={3}>
+              <Heading size="md">Desenho</Heading>
+              {canAssignDesigner(appUser?.roles) && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  colorScheme="orange"
+                  onClick={() => setIsAssignDesignerOpen(true)}
+                >
+                  {item.designerId
+                    ? 'Reatribuir desenhista'
+                    : 'Atribuir desenhista'}
+                </Button>
               )}
+            </HStack>
+            <Stack gap={1} fontSize="sm" mb={3}>
+              <Text>
+                <b>Desenhista:</b> {item.designerName ?? '—'}
+              </Text>
+              <Text>
+                <b>Prazo:</b>{' '}
+                {item.deadlineCurrent
+                  ? item.deadlineCurrent.toDate().toLocaleDateString('pt-BR')
+                  : '—'}
+              </Text>
+            </Stack>
+
+            {user &&
+              appUser &&
+              item.designerId === user.uid &&
+              item.status === 'aguardando_desenho' && (
+                <DesignerUploadPanel
+                  projectId={projectId}
+                  itemId={itemId}
+                  actor={{
+                    uid: user.uid,
+                    name: appUser?.name,
+                    role: 'designer',
+                  }}
+                />
+              )}
+
+            {versions && versions.length > 0 && (
+              <Stack gap={2} mt={4}>
+                <Text fontWeight="semibold" fontSize="sm">
+                  Versões
+                </Text>
+                {versions.map(version => (
+                  <Box
+                    key={version.id}
+                    borderWidth="1px"
+                    borderColor="gray.200"
+                    borderRadius="md"
+                    p={2}
+                    fontSize="sm"
+                  >
+                    <Text fontWeight="medium">
+                      Versão {version.versionNumber}
+                    </Text>
+                    {version.description && <Text>{version.description}</Text>}
+                    <Text color="gray.500" fontSize="xs">
+                      {version.attachmentIds.length} arquivo(s)
+                    </Text>
+                  </Box>
+                ))}
+              </Stack>
+            )}
           </Box>
 
-          <Box bg="white" borderWidth="1px" borderColor="gray.200" borderRadius="md" p={4}>
+          <Box
+            bg="white"
+            borderWidth="1px"
+            borderColor="gray.200"
+            borderRadius="md"
+            p={4}
+          >
             <HStack justify="space-between" mb={3}>
               <Heading size="md">Montadores</Heading>
               {canAssignAssembler(appUser?.roles) && (
@@ -411,14 +482,26 @@ const ProjectItemDetail = () => {
             />
           </Box>
 
-          <Box bg="white" borderWidth="1px" borderColor="gray.200" borderRadius="md" p={4}>
+          <Box
+            bg="white"
+            borderWidth="1px"
+            borderColor="gray.200"
+            borderRadius="md"
+            p={4}
+          >
             <Heading size="md" mb={3}>
               Histórico
             </Heading>
             <ProjectItemTimeline history={history ?? []} />
           </Box>
 
-          <Box bg="white" borderWidth="1px" borderColor="gray.200" borderRadius="md" p={4}>
+          <Box
+            bg="white"
+            borderWidth="1px"
+            borderColor="gray.200"
+            borderRadius="md"
+            p={4}
+          >
             <Heading size="md" mb={3}>
               Anexos do item
             </Heading>
@@ -429,7 +512,9 @@ const ProjectItemDetail = () => {
                   itemId={itemId}
                   uploadedBy={user.uid}
                   uploadedByName={appUser?.name}
-                  uploadedByRole={admin ? 'admin' : appUser?.roles?.[0] ?? 'seller'}
+                  uploadedByRole={
+                    admin ? 'admin' : (appUser?.roles?.[0] ?? 'seller')
+                  }
                   categorySuggestions={Array.from(
                     new Set((attachments ?? []).map(a => a.category)),
                   )}
@@ -451,7 +536,11 @@ const ProjectItemDetail = () => {
             onClose={() => setIsAssignDesignerOpen(false)}
             projectId={projectId}
             itemId={itemId}
-            actor={{ uid: user.uid, name: appUser?.name, role: actorRole(appUser?.roles) }}
+            actor={{
+              uid: user.uid,
+              name: appUser?.name,
+              role: actorRole(appUser?.roles),
+            }}
           />
         )}
       </Dashboard>

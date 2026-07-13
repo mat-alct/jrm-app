@@ -28,7 +28,11 @@ describe('Pagination', () => {
 
   it('limita o fim do intervalo ao total quando ha menos registros que uma pagina', () => {
     render(
-      <Pagination totalCountOfRegisters={4} currentPage={1} onPageChange={jest.fn()} />,
+      <Pagination
+        totalCountOfRegisters={4}
+        currentPage={1}
+        onPageChange={jest.fn()}
+      />,
     );
 
     expect(screen.getAllByText('4').length).toBeGreaterThan(0);
@@ -37,7 +41,11 @@ describe('Pagination', () => {
 
   it('na primeira pagina nao mostra paginas anteriores', () => {
     render(
-      <Pagination totalCountOfRegisters={100} currentPage={1} onPageChange={jest.fn()} />,
+      <Pagination
+        totalCountOfRegisters={100}
+        currentPage={1}
+        onPageChange={jest.fn()}
+      />,
     );
 
     expect(visiblePages()).toEqual(['1', '2', '10']);
@@ -57,7 +65,11 @@ describe('Pagination', () => {
 
   it('no meio mostra vizinhos, primeira e ultima pagina com reticencias', () => {
     render(
-      <Pagination totalCountOfRegisters={100} currentPage={5} onPageChange={jest.fn()} />,
+      <Pagination
+        totalCountOfRegisters={100}
+        currentPage={5}
+        onPageChange={jest.fn()}
+      />,
     );
 
     expect(visiblePages()).toEqual(['1', '4', '5', '6', '10']);
@@ -66,7 +78,11 @@ describe('Pagination', () => {
 
   it('nao mostra reticencias quando as paginas sao adjacentes', () => {
     render(
-      <Pagination totalCountOfRegisters={40} currentPage={2} onPageChange={jest.fn()} />,
+      <Pagination
+        totalCountOfRegisters={40}
+        currentPage={2}
+        onPageChange={jest.fn()}
+      />,
     );
 
     expect(screen.queryByText('...')).not.toBeInTheDocument();
@@ -75,7 +91,11 @@ describe('Pagination', () => {
   it('avisa a pagina escolhida ao clicar', () => {
     const onPageChange = jest.fn();
     render(
-      <Pagination totalCountOfRegisters={100} currentPage={5} onPageChange={onPageChange} />,
+      <Pagination
+        totalCountOfRegisters={100}
+        currentPage={5}
+        onPageChange={onPageChange}
+      />,
     );
 
     fireEvent.click(screen.getByRole('button', { name: '10' }));
@@ -100,7 +120,11 @@ describe('Pagination', () => {
 
   it('mostra apenas a pagina atual quando ha uma unica pagina', () => {
     render(
-      <Pagination totalCountOfRegisters={5} currentPage={1} onPageChange={jest.fn()} />,
+      <Pagination
+        totalCountOfRegisters={5}
+        currentPage={1}
+        onPageChange={jest.fn()}
+      />,
     );
 
     expect(visiblePages()).toEqual(['1']);

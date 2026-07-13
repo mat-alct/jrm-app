@@ -7,9 +7,15 @@ import { fireEvent, render, screen, waitFor } from '../../testUtils';
 jest.mock('@/services/projects/designer.service', () => ({
   submitDesignerVersion: jest.fn(),
 }));
-jest.mock('@/components/ui/toaster', () => ({ toaster: { create: jest.fn() } }));
+jest.mock('@/components/ui/toaster', () => ({
+  toaster: { create: jest.fn() },
+}));
 
-const actor = { uid: 'designer-1', name: 'Desenhista', role: 'designer' as const };
+const actor = {
+  uid: 'designer-1',
+  name: 'Desenhista',
+  role: 'designer' as const,
+};
 const mockedSubmit = jest.mocked(submitDesignerVersion);
 
 function renderPanel() {
@@ -22,7 +28,8 @@ function fileInput(container: HTMLElement): HTMLInputElement {
   return container.querySelector('input[type="file"]') as HTMLInputElement;
 }
 
-const glb = () => new File(['glb'], 'armario.glb', { type: 'model/gltf-binary' });
+const glb = () =>
+  new File(['glb'], 'armario.glb', { type: 'model/gltf-binary' });
 
 describe('DesignerUploadPanel', () => {
   beforeEach(() => {
@@ -34,9 +41,12 @@ describe('DesignerUploadPanel', () => {
     const { container } = renderPanel();
 
     fireEvent.change(fileInput(container), { target: { files: [glb()] } });
-    fireEvent.change(screen.getByPlaceholderText('Descrição da versão (opcional)'), {
-      target: { value: 'Primeira versão' },
-    });
+    fireEvent.change(
+      screen.getByPlaceholderText('Descrição da versão (opcional)'),
+      {
+        target: { value: 'Primeira versão' },
+      },
+    );
     fireEvent.click(screen.getByRole('button', { name: 'Enviar versão' }));
 
     await waitFor(() => expect(mockedSubmit).toHaveBeenCalled());
@@ -69,14 +79,20 @@ describe('DesignerUploadPanel', () => {
     const { container } = renderPanel();
 
     fireEvent.change(fileInput(container), { target: { files: [glb()] } });
-    fireEvent.change(screen.getByPlaceholderText('Descrição da versão (opcional)'), {
-      target: { value: 'Versão A' },
-    });
+    fireEvent.change(
+      screen.getByPlaceholderText('Descrição da versão (opcional)'),
+      {
+        target: { value: 'Versão A' },
+      },
+    );
     fireEvent.click(screen.getByRole('button', { name: 'Enviar versão' }));
 
     await waitFor(() =>
       expect(toaster.create).toHaveBeenCalledWith(
-        expect.objectContaining({ type: 'success', description: 'Versão enviada.' }),
+        expect.objectContaining({
+          type: 'success',
+          description: 'Versão enviada.',
+        }),
       ),
     );
     expect(
@@ -85,7 +101,9 @@ describe('DesignerUploadPanel', () => {
   });
 
   it('mostra a mensagem de erro do service', async () => {
-    mockedSubmit.mockRejectedValue(new Error('Item nao atribuido ao desenhista'));
+    mockedSubmit.mockRejectedValue(
+      new Error('Item nao atribuido ao desenhista'),
+    );
     const { container } = renderPanel();
 
     fireEvent.change(fileInput(container), { target: { files: [glb()] } });
@@ -105,7 +123,12 @@ describe('DesignerUploadPanel', () => {
     const { container } = renderPanel();
 
     fireEvent.change(fileInput(container), {
-      target: { files: [glb(), new File(['pdf'], 'planta.pdf', { type: 'application/pdf' })] },
+      target: {
+        files: [
+          glb(),
+          new File(['pdf'], 'planta.pdf', { type: 'application/pdf' }),
+        ],
+      },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Enviar versão' }));
 

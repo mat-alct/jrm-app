@@ -1,12 +1,15 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 
+import { adminDb } from '@/services/firebaseAdmin';
 import {
   ClientPortalAuthError,
   requireClientProject,
 } from '@/services/projects/clientPortal.server';
-import { itemAttachmentsPath, projectItemsPath } from '@/services/projects/paths';
+import {
+  itemAttachmentsPath,
+  projectItemsPath,
+} from '@/services/projects/paths';
 import { getSignedReadUrl } from '@/services/projects/storageSignedUrl.server';
-import { adminDb } from '@/services/firebaseAdmin';
 import {
   Attachment,
   ClientAttachmentDTO,
@@ -35,12 +38,15 @@ async function clientAttachmentsForItem(
   projectId: string,
   itemId: string,
 ): Promise<ClientAttachmentDTO[]> {
-  const snap = await adminDb.collection(itemAttachmentsPath(projectId, itemId)).get();
+  const snap = await adminDb
+    .collection(itemAttachmentsPath(projectId, itemId))
+    .get();
   const attachments = snap.docs
     .map(doc => ({ id: doc.id, ...doc.data() }) as Attachment)
     .filter(
       attachment =>
-        attachment.visibility === 'client' && attachment.clientVisible !== false,
+        attachment.visibility === 'client' &&
+        attachment.clientVisible !== false,
     );
 
   return Promise.all(
@@ -63,7 +69,9 @@ async function clientAttachmentsForItem(
 async function buildClientProjectDTO(
   project: Project,
 ): Promise<ClientProjectDTO> {
-  const itemsSnap = await adminDb.collection(projectItemsPath(project.id)).get();
+  const itemsSnap = await adminDb
+    .collection(projectItemsPath(project.id))
+    .get();
   const items = await Promise.all(
     itemsSnap.docs.map(async itemDoc => {
       const item = { id: itemDoc.id, ...itemDoc.data() } as ProjectItem;

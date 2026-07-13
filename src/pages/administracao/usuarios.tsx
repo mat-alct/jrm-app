@@ -24,10 +24,7 @@ import {
   useUsers,
 } from '@/services/projects/adminUsers';
 import { useAppUser } from '@/services/projects/users.service';
-import {
-  isAdmin,
-  ROLE_LABELS,
-} from '@/utils/projects/permissions';
+import { isAdmin, ROLE_LABELS } from '@/utils/projects/permissions';
 
 import { Dashboard } from '../../components/Dashboard';
 import { Header } from '../../components/Dashboard/Content/Header';
@@ -95,10 +92,7 @@ const Usuarios = () => {
         <title>Usuários | JRM Compensados</title>
       </Head>
       <Dashboard>
-        <Header
-          pageTitle="Usuários"
-          isLoading={isFetching && !isLoading}
-        >
+        <Header pageTitle="Usuários" isLoading={isFetching && !isLoading}>
           <Button
             bg="app.ink"
             color="white"
@@ -147,90 +141,96 @@ const Usuarios = () => {
 
         <AppCard>
           <Box overflowX="auto">
-          <Table.Root whiteSpace="nowrap">
-            <Table.Header>
-              <Table.Row>
-                <Table.ColumnHeader
-                  bg="app.sunken"
-                  color="app.textMuted"
-                  fontSize="11px"
-                  fontWeight="600"
-                  textTransform="uppercase"
-                  letterSpacing="0.05em"
-                >
-                  Nome
-                </Table.ColumnHeader>
-                <Table.ColumnHeader
-                  bg="app.sunken"
-                  color="app.textMuted"
-                  fontSize="11px"
-                  fontWeight="600"
-                  textTransform="uppercase"
-                  letterSpacing="0.05em"
-                >
-                  E-mail
-                </Table.ColumnHeader>
-                <Table.ColumnHeader
-                  bg="app.sunken"
-                  color="app.textMuted"
-                  fontSize="11px"
-                  fontWeight="600"
-                  textTransform="uppercase"
-                  letterSpacing="0.05em"
-                >
-                  Papéis
-                </Table.ColumnHeader>
-                <Table.ColumnHeader
-                  bg="app.sunken"
-                  color="app.textMuted"
-                  fontSize="11px"
-                  fontWeight="600"
-                  textTransform="uppercase"
-                  letterSpacing="0.05em"
-                >
-                  Ativo
-                </Table.ColumnHeader>
-              </Table.Row>
-            </Table.Header>
-            <Table.Body>
-              {users?.map(appUserRow => (
-                <Table.Row key={appUserRow.id} borderColor="app.border">
-                  <Table.Cell color="app.text" fontWeight="500">
-                    {appUserRow.name}
-                  </Table.Cell>
-                  <Table.Cell color="app.textSecondary">{appUserRow.email}</Table.Cell>
-                  <Table.Cell>
-                    <HStack wrap="wrap" gap={1}>
-                      {appUserRow.roles.map(role => (
-                        <Badge key={role} colorPalette="gray" borderRadius="full">
-                          {ROLE_LABELS[role]}
-                        </Badge>
-                      ))}
-                    </HStack>
-                  </Table.Cell>
-                  <Table.Cell>
-                    <Switch.Root
-                      checked={appUserRow.active}
-                      onCheckedChange={e => {
-                        void handleToggleActive(appUserRow.id, e.checked);
-                      }}
-                    >
-                      <Switch.HiddenInput />
-                      <Switch.Control />
-                    </Switch.Root>
-                  </Table.Cell>
+            <Table.Root whiteSpace="nowrap">
+              <Table.Header>
+                <Table.Row>
+                  <Table.ColumnHeader
+                    bg="app.sunken"
+                    color="app.textMuted"
+                    fontSize="11px"
+                    fontWeight="600"
+                    textTransform="uppercase"
+                    letterSpacing="0.05em"
+                  >
+                    Nome
+                  </Table.ColumnHeader>
+                  <Table.ColumnHeader
+                    bg="app.sunken"
+                    color="app.textMuted"
+                    fontSize="11px"
+                    fontWeight="600"
+                    textTransform="uppercase"
+                    letterSpacing="0.05em"
+                  >
+                    E-mail
+                  </Table.ColumnHeader>
+                  <Table.ColumnHeader
+                    bg="app.sunken"
+                    color="app.textMuted"
+                    fontSize="11px"
+                    fontWeight="600"
+                    textTransform="uppercase"
+                    letterSpacing="0.05em"
+                  >
+                    Papéis
+                  </Table.ColumnHeader>
+                  <Table.ColumnHeader
+                    bg="app.sunken"
+                    color="app.textMuted"
+                    fontSize="11px"
+                    fontWeight="600"
+                    textTransform="uppercase"
+                    letterSpacing="0.05em"
+                  >
+                    Ativo
+                  </Table.ColumnHeader>
                 </Table.Row>
-              ))}
-            </Table.Body>
-          </Table.Root>
-          {!isLoading && users?.length === 0 && (
-            <EmptyState
-              icon={FiUsers}
-              title="Nenhum usuário cadastrado"
-              description="Os perfis internos criados pela administração aparecem aqui."
-            />
-          )}
-        </Box>
+              </Table.Header>
+              <Table.Body>
+                {users?.map(appUserRow => (
+                  <Table.Row key={appUserRow.id} borderColor="app.border">
+                    <Table.Cell color="app.text" fontWeight="500">
+                      {appUserRow.name}
+                    </Table.Cell>
+                    <Table.Cell color="app.textSecondary">
+                      {appUserRow.email}
+                    </Table.Cell>
+                    <Table.Cell>
+                      <HStack wrap="wrap" gap={1}>
+                        {appUserRow.roles.map(role => (
+                          <Badge
+                            key={role}
+                            colorPalette="gray"
+                            borderRadius="full"
+                          >
+                            {ROLE_LABELS[role]}
+                          </Badge>
+                        ))}
+                      </HStack>
+                    </Table.Cell>
+                    <Table.Cell>
+                      <Switch.Root
+                        checked={appUserRow.active}
+                        onCheckedChange={e => {
+                          void handleToggleActive(appUserRow.id, e.checked);
+                        }}
+                      >
+                        <Switch.HiddenInput />
+                        <Switch.Control />
+                      </Switch.Root>
+                    </Table.Cell>
+                  </Table.Row>
+                ))}
+              </Table.Body>
+            </Table.Root>
+            {!isLoading && users?.length === 0 && (
+              <EmptyState
+                icon={FiUsers}
+                title="Nenhum usuário cadastrado"
+                description="Os perfis internos criados pela administração aparecem aqui."
+              />
+            )}
+          </Box>
         </AppCard>
       </Dashboard>
     </>

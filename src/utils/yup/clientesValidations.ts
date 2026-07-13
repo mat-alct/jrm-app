@@ -17,5 +17,5 @@ export const createCustomerSchema = Yup.object().shape({
 });
 
 export const searchCustomerSchema = Yup.object().shape({
-  customerName: Yup.string(),
+  customerName: Yup.string().defined().default(''),
 });

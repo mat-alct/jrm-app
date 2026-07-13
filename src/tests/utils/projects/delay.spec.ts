@@ -6,9 +6,9 @@ describe('utils/projects/delay', () => {
   const now = new Date('2026-07-08T12:00:00Z');
 
   it('is not delayed when there is no deadline', () => {
-    expect(isDelayed({ deadlineCurrent: undefined, status: 'em_producao' }, now)).toBe(
-      false,
-    );
+    expect(
+      isDelayed({ deadlineCurrent: undefined, status: 'em_producao' }, now),
+    ).toBe(false);
   });
 
   it('is delayed when the deadline is in the past and status is not final', () => {

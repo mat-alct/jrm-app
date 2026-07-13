@@ -9,7 +9,11 @@ export interface RevealProps {
 
 const MotionDiv = motion.div;
 
-export const Reveal: React.FC<RevealProps> = ({ children, index = 0, className }) => {
+export const Reveal: React.FC<RevealProps> = ({
+  children,
+  index = 0,
+  className,
+}) => {
   const shouldReduceMotion = useReducedMotion();
   const delay = Math.min(index, 10) * 0.04;
 
@@ -30,7 +34,10 @@ export interface RevealListProps {
   className?: string;
 }
 
-export const RevealList: React.FC<RevealListProps> = ({ children, className }) => (
+export const RevealList: React.FC<RevealListProps> = ({
+  children,
+  className,
+}) => (
   <>
     {React.Children.map(children, (child, index) => (
       <Reveal key={index} index={index} className={className}>

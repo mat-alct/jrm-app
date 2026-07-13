@@ -19,7 +19,9 @@ jest.mock('@/components/ui/toaster', () => ({
 const mockedUpload = jest.mocked(uploadAttachment);
 const mockedToast = jest.mocked(toaster.create);
 
-function renderUploader(props: Partial<React.ComponentProps<typeof AttachmentUploader>> = {}) {
+function renderUploader(
+  props: Partial<React.ComponentProps<typeof AttachmentUploader>> = {},
+) {
   return render(
     <AttachmentUploader
       projectId="project-1"
@@ -39,7 +41,8 @@ function selectFiles(container: HTMLElement, files: File[]) {
   fireEvent.change(fileInput(container), { target: { files } });
 }
 
-const pdf = () => new File(['conteudo'], 'planta.pdf', { type: 'application/pdf' });
+const pdf = () =>
+  new File(['conteudo'], 'planta.pdf', { type: 'application/pdf' });
 const model3d = () =>
   new File(['glb'], 'armario.glb', { type: 'model/gltf-binary' });
 
@@ -182,7 +185,10 @@ describe('AttachmentUploader', () => {
 
     await waitFor(() =>
       expect(mockedToast).toHaveBeenCalledWith(
-        expect.objectContaining({ type: 'error', description: 'Erro ao enviar arquivo.' }),
+        expect.objectContaining({
+          type: 'error',
+          description: 'Erro ao enviar arquivo.',
+        }),
       ),
     );
     expect(mockedToast).not.toHaveBeenCalledWith(
@@ -202,7 +208,10 @@ describe('AttachmentUploader', () => {
 
     await waitFor(() =>
       expect(mockedToast).toHaveBeenCalledWith(
-        expect.objectContaining({ type: 'success', description: 'Arquivos enviados.' }),
+        expect.objectContaining({
+          type: 'success',
+          description: 'Arquivos enviados.',
+        }),
       ),
     );
 

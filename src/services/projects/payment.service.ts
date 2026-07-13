@@ -93,7 +93,9 @@ async function finalizeItemIfFullyPaid(
 
 function assertAdmin(actorRoles: AppUser['roles'] | undefined): void {
   if (!actorRoles?.includes('admin')) {
-    throw new PaymentServiceError('Apenas administradores podem pagar montadores.');
+    throw new PaymentServiceError(
+      'Apenas administradores podem pagar montadores.',
+    );
   }
 }
 
@@ -188,7 +190,9 @@ export async function createAssemblerPayment(
     ...assignmentSnap.data(),
   } as AssemblerAssignment;
   if (!canCreateAssemblerPayment(assignment.paymentStatus, true)) {
-    throw new PaymentServiceError('Pagamento nao liberado para esta atribuicao.');
+    throw new PaymentServiceError(
+      'Pagamento nao liberado para esta atribuicao.',
+    );
   }
 
   const paymentId = v4();
@@ -251,9 +255,14 @@ export async function confirmAssemblerPayment(
     throw new PaymentServiceError('Pagamento nao encontrado.');
   }
 
-  const payment = { id: paymentSnap.id, ...paymentSnap.data() } as AssemblerPayment;
+  const payment = {
+    id: paymentSnap.id,
+    ...paymentSnap.data(),
+  } as AssemblerPayment;
   if (!canConfirmAssemblerPayment(payment, actor.id)) {
-    throw new PaymentServiceError('Pagamento nao pode ser confirmado por este usuario.');
+    throw new PaymentServiceError(
+      'Pagamento nao pode ser confirmado por este usuario.',
+    );
   }
 
   const now = Timestamp.now();

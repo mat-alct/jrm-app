@@ -16,8 +16,8 @@ import {
 import { useProjects } from '@/services/projects/projectHooks';
 import { useAppUser } from '@/services/projects/users.service';
 import { Project, ProjectItemStatus } from '@/types/projects';
-import { isAdmin } from '@/utils/projects/permissions';
 import { isDelayed } from '@/utils/projects/delay';
+import { isAdmin } from '@/utils/projects/permissions';
 import { INTERNAL_STATUS_LABELS } from '@/utils/projects/status';
 
 import { Dashboard } from '../../components/Dashboard';
@@ -43,12 +43,12 @@ const ProjetosDashboard = () => {
   const [delayedOnly, setDelayedOnly] = React.useState(false);
 
   React.useEffect(() => {
-    if (user === null) router.push('/login');
+    if (user === null) void router.push('/login');
   }, [user, router]);
 
   React.useEffect(() => {
     if (!isLoadingAppUser && appUser && !isAdmin(appUser.roles)) {
-      router.push('/');
+      void router.push('/');
     }
   }, [appUser, isLoadingAppUser, router]);
 
@@ -63,7 +63,10 @@ const ProjetosDashboard = () => {
   });
 
   const projectsById = React.useMemo<Record<string, Project>>(
-    () => Object.fromEntries((projects ?? []).map(project => [project.id, project])),
+    () =>
+      Object.fromEntries(
+        (projects ?? []).map(project => [project.id, project]),
+      ),
     [projects],
   );
 
@@ -144,7 +147,9 @@ const ProjetosDashboard = () => {
               </select>
               <select
                 value={status}
-                onChange={e => setStatus(e.target.value as ProjectItemStatus | '')}
+                onChange={e =>
+                  setStatus(e.target.value as ProjectItemStatus | '')
+                }
                 style={{ padding: '8px', borderRadius: '6px' }}
               >
                 <option value="">Todos os status</option>
@@ -154,7 +159,9 @@ const ProjetosDashboard = () => {
                   </option>
                 ))}
               </select>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <label
+                style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+              >
                 <input
                   type="checkbox"
                   checked={delayedOnly}
@@ -177,7 +184,10 @@ const ProjetosDashboard = () => {
             borderRadius="md"
             p={4}
           >
-            <DelayedItemsTable items={delayedItems} projectsById={projectsById} />
+            <DelayedItemsTable
+              items={delayedItems}
+              projectsById={projectsById}
+            />
           </Box>
         </Stack>
       </Dashboard>

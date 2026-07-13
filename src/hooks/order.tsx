@@ -16,12 +16,13 @@ import {
   createOrder as createOrderService,
   getOrders as getOrdersService,
   getOrdersBySearch as getOrdersBySearchService,
+  OrderCollection,
   PagedResult,
   updateOrderCutlist as updateOrderCutlistService,
   UpdateOrderCutlistResult,
 } from '../services/orders.service';
 import { queryClient } from '../services/queryClient';
-import { Cutlist, Estimate, Order } from '../types';
+import { Cutlist, Estimate, Order, OrderListItem } from '../types';
 
 interface OrderContext {
   createEstimate: (estimateData: Estimate) => Promise<void>;
@@ -33,8 +34,8 @@ interface OrderContext {
   // Busca otimizada recebe string e trata internamente
   getOrdersBySearch: (
     searchFilter: string | undefined,
-    type: string,
-  ) => Promise<(DocumentData & { id: string })[]>;
+    type: OrderCollection,
+  ) => Promise<OrderListItem[]>;
   updateOrderCutlist: (
     id: string,
     newCutlist: Cutlist[],
@@ -80,7 +81,6 @@ export const OrderProvider = ({ children }: OrderProviderProps) => {
           description: 'Orçamento criado com sucesso',
         });
       } catch (err) {
-        console.error(err);
         toaster.create({
           type: 'error',
           description: 'Erro ao criar orçamento.',
@@ -100,7 +100,6 @@ export const OrderProvider = ({ children }: OrderProviderProps) => {
           description: 'Pedido criado com sucesso',
         });
       } catch (err) {
-        console.error(err);
         toaster.create({
           type: 'error',
           description: 'Erro ao criar pedido.',
@@ -115,25 +114,28 @@ export const OrderProvider = ({ children }: OrderProviderProps) => {
 
   const getOrdersBySearch = useCallback(getOrdersBySearchService, []);
 
-  const updateOrderCutlist = useCallback(async (
-    id: string,
-    newCutlist: Cutlist[],
-    sellerPassword: string,
-    shouldCharge: boolean,
-    cuttingPlan?: CuttingPlan,
-  ): Promise<UpdateOrderCutlistResult> => {
-    const result = await updateOrderCutlistService(
-      id,
-      newCutlist,
-      sellerPassword,
-      shouldCharge,
-      cuttingPlan,
-    );
-    if (result.success) {
-      void queryClient.invalidateQueries({ queryKey: ['orders'] });
-    }
-    return result;
-  }, []);
+  const updateOrderCutlist = useCallback(
+    async (
+      id: string,
+      newCutlist: Cutlist[],
+      sellerPassword: string,
+      shouldCharge: boolean,
+      cuttingPlan?: CuttingPlan,
+    ): Promise<UpdateOrderCutlistResult> => {
+      const result = await updateOrderCutlistService(
+        id,
+        newCutlist,
+        sellerPassword,
+        shouldCharge,
+        cuttingPlan,
+      );
+      if (result.success) {
+        void queryClient.invalidateQueries({ queryKey: ['orders'] });
+      }
+      return result;
+    },
+    [],
+  );
 
   const value = useMemo<OrderContext>(
     () => ({

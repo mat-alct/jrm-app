@@ -38,9 +38,9 @@ describe('inferAttachmentFileKind', () => {
   });
 
   it('nao classifica como 3D um arquivo com extensao 3D mas mime incompativel', () => {
-    expect(inferAttachmentFileKind({ name: 'modelo.glb', type: 'image/png' })).toBe(
-      'image',
-    );
+    expect(
+      inferAttachmentFileKind({ name: 'modelo.glb', type: 'image/png' }),
+    ).toBe('image');
     expect(
       inferAttachmentFileKind({ name: 'modelo.glb', type: 'application/pdf' }),
     ).toBe('document');
@@ -48,14 +48,21 @@ describe('inferAttachmentFileKind', () => {
 
   it('nao classifica como 3D um mime 3D com extensao desconhecida', () => {
     expect(
-      inferAttachmentFileKind({ name: 'arquivo.bin', type: 'model/gltf-binary' }),
+      inferAttachmentFileKind({
+        name: 'arquivo.bin',
+        type: 'model/gltf-binary',
+      }),
     ).toBe('document');
   });
 
   it('assume octet-stream quando o mime vem vazio', () => {
     expect(inferAttachmentFileKind({ name: 'modelo.glb' })).toBe('model_3d');
-    expect(inferAttachmentFileKind({ name: 'arquivo.qualquer' })).toBe('document');
-    expect(inferAttachmentFileKind({ name: 'sem-extensao', type: '' })).toBe('document');
+    expect(inferAttachmentFileKind({ name: 'arquivo.qualquer' })).toBe(
+      'document',
+    );
+    expect(inferAttachmentFileKind({ name: 'sem-extensao', type: '' })).toBe(
+      'document',
+    );
   });
 });
 
@@ -113,7 +120,9 @@ describe('isModel3DAttachment', () => {
 
   it('recusa extensao 3D com mime incompativel', () => {
     expect(
-      isModel3DAttachment(attachment({ fileKind: undefined, mimeType: 'image/png' })),
+      isModel3DAttachment(
+        attachment({ fileKind: undefined, mimeType: 'image/png' }),
+      ),
     ).toBe(false);
   });
 

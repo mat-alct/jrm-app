@@ -1,9 +1,7 @@
 import {
   Alert,
-  Box,
   Button,
   chakra,
-  Heading,
   SimpleGrid,
   Text,
   VStack,
@@ -41,9 +39,6 @@ interface NumberField {
     | 'cutting.kerfMm'
     | 'cutting.movementPrice'
     | 'cutting.edgeBandPricePerMeter'
-    | 'cutting.balancedWeights.waste'
-    | 'cutting.balancedWeights.movementCount'
-    | 'cutting.balancedWeights.sheetCount'
     | 'exportProfile.defaultEdgeBandThicknessMm'
     | 'exportProfile.defaultEdgeBandHeightMm'
     | 'exportProfile.defaultAcHeaderFlag';
@@ -80,24 +75,6 @@ const COST_FIELDS: NumberField[] = [
     name: 'cutting.edgeBandPricePerMeter',
     label: 'Preço da fita por metro (R$)',
     step: 0.01,
-  },
-];
-
-const WEIGHT_FIELDS: NumberField[] = [
-  {
-    name: 'cutting.balancedWeights.waste',
-    label: 'Peso das sobras',
-    step: 0.05,
-  },
-  {
-    name: 'cutting.balancedWeights.movementCount',
-    label: 'Peso dos movimentos',
-    step: 0.05,
-  },
-  {
-    name: 'cutting.balancedWeights.sheetCount',
-    label: 'Peso das chapas',
-    step: 0.05,
   },
 ];
 
@@ -207,14 +184,12 @@ const MachineSettingsPage = () => {
           </AppCard>
 
           <AppCard title="Custos e otimização">
-            <VStack align="stretch" gap={5}>
+            <VStack align="stretch" gap={4}>
               {renderNumberFields(COST_FIELDS)}
-              <Box>
-                <Heading size="sm" mb={3}>
-                  Pesos do modo equilibrado
-                </Heading>
-                {renderNumberFields(WEIGHT_FIELDS)}
-              </Box>
+              <Text color="app.textSecondary">
+                A otimização é automática: primeiro reduz chapas, depois
+                movimentos e perdas de material.
+              </Text>
             </VStack>
           </AppCard>
 

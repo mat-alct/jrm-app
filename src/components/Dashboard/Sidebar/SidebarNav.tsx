@@ -18,7 +18,7 @@ import {
 } from 'react-icons/fa';
 
 import { useAppUser } from '@/services/projects/users.service';
-import { ROLE_LABELS, canAccessPage } from '@/utils/projects/permissions';
+import { canAccessPage, ROLE_LABELS } from '@/utils/projects/permissions';
 
 import { useAuth } from '../../../hooks/authContext';
 import { NavLink } from './NavLink';
@@ -204,7 +204,11 @@ export const SidebarNav: React.FC = () => {
           </NavSection>
         )}
         <NavSection title="Conta">
-          <NavLink icon={FaSignOutAlt} href="/login" onClick={() => signOut()}>
+          <NavLink
+            icon={FaSignOutAlt}
+            href="/login"
+            onClick={() => void signOut()}
+          >
             Sair
           </NavLink>
         </NavSection>

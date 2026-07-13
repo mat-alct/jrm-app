@@ -1,6 +1,12 @@
 import { Fieldset } from '@chakra-ui/react';
 import React from 'react';
-import { Control, useController } from 'react-hook-form';
+import {
+  Control,
+  FieldPath,
+  FieldPathValue,
+  FieldValues,
+  useController,
+} from 'react-hook-form';
 import Select from 'react-select';
 
 interface Options {
@@ -8,18 +14,18 @@ interface Options {
   label: string;
 }
 //
-interface FormSelectProps {
+interface FormSelectProps<TFieldValues extends FieldValues> {
   options: Options[];
-  name: string;
+  name: FieldPath<TFieldValues>;
   placeholder?: string;
-  defaultValue?: string | number;
+  defaultValue?: FieldPathValue<TFieldValues, FieldPath<TFieldValues>>;
   isClearable?: boolean;
   label?: string;
-  control: Control<any>;
+  control: Control<TFieldValues>;
   isDisabled?: boolean;
 }
 
-export const FormSelect: React.FC<FormSelectProps> = ({
+export const FormSelect = <TFieldValues extends FieldValues>({
   options,
   placeholder,
   isClearable = false,
@@ -28,7 +34,7 @@ export const FormSelect: React.FC<FormSelectProps> = ({
   control,
   defaultValue,
   isDisabled,
-}) => {
+}: FormSelectProps<TFieldValues>) => {
   const {
     field,
     formState: { errors },
@@ -37,6 +43,9 @@ export const FormSelect: React.FC<FormSelectProps> = ({
     name,
     defaultValue,
   });
+  const error = errors[name];
+  const errorMessage =
+    error && typeof error.message === 'string' ? error.message : undefined;
 
   return (
     <Fieldset.Root invalid={!!errors[name]}>
@@ -51,10 +60,8 @@ export const FormSelect: React.FC<FormSelectProps> = ({
         value={options.find(c => c.value === field.value)}
         onChange={val => field.onChange(val?.value)}
       />
-      {!!errors[name] && (
-        <Fieldset.ErrorText role="alert">
-          {(errors[name] as any).message}
-        </Fieldset.ErrorText>
+      {errorMessage && (
+        <Fieldset.ErrorText role="alert">{errorMessage}</Fieldset.ErrorText>
       )}
     </Fieldset.Root>
   );

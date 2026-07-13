@@ -79,11 +79,9 @@ describe('services/projects/assembler.service', () => {
     } as AssemblerAssignment;
     const noDate = { id: 'no-date' } as AssemblerAssignment;
 
-    expect(sortAssignmentsByDueDate([noDate, late, soon]).map(item => item.id)).toEqual([
-      'soon',
-      'late',
-      'no-date',
-    ]);
+    expect(
+      sortAssignmentsByDueDate([noDate, late, soon]).map(item => item.id),
+    ).toEqual(['soon', 'late', 'no-date']);
     expect(mapTelLink('(11) 99999-8888')).toBe('tel:11999998888');
     expect(mapAddressLink('Rua Teste, 123')).toBe(
       'https://www.google.com/maps/search/?api=1&query=Rua%20Teste%2C%20123',

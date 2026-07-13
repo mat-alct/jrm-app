@@ -1,4 +1,8 @@
-import { AssemblerPaymentStatus, ProjectItemStatus, UserRole } from '@/types/projects';
+import {
+  AssemblerPaymentStatus,
+  ProjectItemStatus,
+  UserRole,
+} from '@/types/projects';
 
 const TRANSITIONS: Record<ProjectItemStatus, ProjectItemStatus[]> = {
   projeto_criado: ['aguardando_desenho'],

@@ -1,17 +1,17 @@
 import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
 
+import { auth } from '@/services/firebase';
+import { adminDb } from '@/services/firebaseAdmin';
+import { projectItemPath, projectPath } from '@/services/projects/paths';
+import type { UpdateProjectItemInput } from '@/services/projects/projectItem.service';
 import {
   createProjectItem,
   getProjectItem,
   listProjectItems,
   updateProjectItem,
 } from '@/services/projects/projectItem.service';
-import { projectItemPath, projectPath } from '@/services/projects/paths';
-import { auth } from '@/services/firebase';
-import { adminDb } from '@/services/firebaseAdmin';
 import { resetEmulator } from '@/tests/helpers/emulator';
-import { seedEmulator, SEED_USER_PASSWORD } from '@/tests/helpers/seedEmulator';
-import type { UpdateProjectItemInput } from '@/services/projects/projectItem.service';
+import { SEED_USER_PASSWORD, seedEmulator } from '@/tests/helpers/seedEmulator';
 
 async function signInAs(email: string): Promise<void> {
   await signInWithEmailAndPassword(auth, email, SEED_USER_PASSWORD);
@@ -42,7 +42,9 @@ describe('services/projects/projectItem.service integration', () => {
       'seed-seller',
     );
 
-    const itemSnap = await adminDb.doc(projectItemPath('seed-project-1', itemId)).get();
+    const itemSnap = await adminDb
+      .doc(projectItemPath('seed-project-1', itemId))
+      .get();
     expect(itemSnap.exists).toBe(true);
     expect(itemSnap.data()).toMatchObject({
       projectId: 'seed-project-1',
@@ -57,7 +59,9 @@ describe('services/projects/projectItem.service integration', () => {
       updatedBy: 'seed-seller',
     });
 
-    await expect(getProjectItem('seed-project-1', itemId)).resolves.toMatchObject({
+    await expect(
+      getProjectItem('seed-project-1', itemId),
+    ).resolves.toMatchObject({
       id: itemId,
       name: 'Ilha gourmet',
       status: 'projeto_criado',
@@ -102,7 +106,12 @@ describe('services/projects/projectItem.service integration', () => {
       },
     } as UpdateProjectItemInput;
 
-    await updateProjectItem('seed-project-1', 'seed-item-1', update, 'seed-seller');
+    await updateProjectItem(
+      'seed-project-1',
+      'seed-item-1',
+      update,
+      'seed-seller',
+    );
 
     await expect(
       getProjectItem('seed-project-1', 'seed-item-1'),

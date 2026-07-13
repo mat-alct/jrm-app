@@ -13,10 +13,11 @@ import {
   TableCaption,
   useBreakpointValue,
   useDisclosure,
-  VStack,
 } from '@chakra-ui/react';
 // Importa o resolvedor do Yup para integração com o react-hook-form.
 import { yupResolver } from '@hookform/resolvers/yup';
+// Importa o hook useQuery para data fetching e cache.
+import { useQuery } from '@tanstack/react-query';
 // Importa a função Timestamp do Firebase para lidar com datas.
 import { Timestamp } from 'firebase/firestore';
 // Importa o hook de roteamento do Next.js.
@@ -29,21 +30,19 @@ import { useForm } from 'react-hook-form';
 // Importa ícones da biblioteca react-icons.
 import { FaEdit, FaTrash } from 'react-icons/fa';
 import { RiAddLine, RiRefreshLine } from 'react-icons/ri';
-// Importa o hook useQuery para data fetching e cache.
-import { useQuery } from '@tanstack/react-query';
 
-// --- Bloco de Importações Internas do Projeto ---
-// Hooks e componentes customizados do seu projeto.
-import { useAuth } from '../../hooks/authContext';
-import { useMaterial } from '../../hooks/material';
 import { Dashboard } from '../../components/Dashboard';
 import { Header } from '../../components/Dashboard/Content/Header';
 import { FormInput } from '../../components/Form/Input';
 import { FormModal } from '../../components/Form/Modal';
 import { FormRadio } from '../../components/Form/Radio';
 import { Loader } from '../../components/Loader';
-import { Material } from '../../types';
+// --- Bloco de Importações Internas do Projeto ---
+// Hooks e componentes customizados do seu projeto.
+import { useAuth } from '../../hooks/authContext';
+import { useMaterial } from '../../hooks/material';
 import {
+  CreateMaterialFormData,
   createMaterialSchema,
   updatePriceSchema,
 } from '../../utils/yup/materiaisValidations';
@@ -74,14 +73,15 @@ const Materiais = () => {
   // Efeito que roda quando o estado 'user' muda. Se não houver usuário, redireciona para o login.
   React.useEffect(() => {
     if (user === null) {
-      router.push('/login');
+      void router.push('/login');
     }
   }, [user, router]);
 
   // Hook do Chakra para definir tamanhos de componentes responsivamente.
-  const buttonSize = useBreakpointValue(['sm', 'sm', 'sm', 'md'], {
-    fallback: 'sm',
-  });
+  const buttonSize =
+    useBreakpointValue<'sm' | 'md'>(['sm', 'sm', 'sm', 'md'], {
+      fallback: 'sm',
+    }) ?? 'sm';
 
   // Estado para guardar o ID do material que está sendo editado.
   const [updatingMaterialId, setUpdatingMaterialId] = useState('');
@@ -89,13 +89,8 @@ const Materiais = () => {
   const [materialFilter, setMaterialFilter] = useState('MDF');
 
   // Hook customizado para obter as funções de manipulação de materiais (criar, buscar, remover, etc.).
-  const {
-    createMaterial,
-    getMaterials,
-    getAllMaterials,
-    removeMaterial,
-    updateMaterialPrice,
-  } = useMaterial();
+  const { createMaterial, getMaterials, removeMaterial, updateMaterialPrice } =
+    useMaterial();
 
   // Hooks 'useDisclosure' do Chakra para controlar a abertura/fechamento dos modais.
   // Um para o modal de atualizar preço.
@@ -128,8 +123,8 @@ const Materiais = () => {
       errors: createMaterialErrors,
       isSubmitting: createMaterialIsSubmitting,
     },
-  } = useForm<Material>({
-    resolver: yupResolver(createMaterialSchema as any),
+  } = useForm<CreateMaterialFormData>({
+    resolver: yupResolver(createMaterialSchema),
   });
 
   // Configuração do react-hook-form para o formulário de ATUALIZAÇÃO de preço.
@@ -147,7 +142,7 @@ const Materiais = () => {
   // --- Bloco de Funções de Manipulação (Handlers) ---
 
   // Função chamada ao submeter o formulário de criação de material.
-  const handleCreateMaterial = async (formData: Material) => {
+  const handleCreateMaterial = async (formData: CreateMaterialFormData) => {
     onClose(); // Fecha o modal.
     // Chama a função do contexto para criar o material, adicionando timestamps.
     await createMaterial({
@@ -199,12 +194,11 @@ const Materiais = () => {
           {/* Botão para forçar a atualização da lista de materiais. */}
           <Button
             colorScheme="gray"
-            onClick={() => refetch()}
+            onClick={() => void refetch()}
             disabled={createMaterialIsSubmitting || isFetching}
-            leftIcon={<Icon as={RiRefreshLine} fontSize="20" />}
-            // @ts-ignore
             size={buttonSize}
           >
+            <Icon as={RiRefreshLine} fontSize="20" />
             Atualizar
           </Button>
           {/* Botão para abrir o modal de criação de novo material. */}
@@ -212,10 +206,9 @@ const Materiais = () => {
             colorScheme="orange"
             onClick={onOpen}
             disabled={createMaterialIsSubmitting || isFetching}
-            leftIcon={<Icon as={RiAddLine} fontSize="20" />}
-            // @ts-ignore
             size={buttonSize}
           >
+            <Icon as={RiAddLine} fontSize="20" />
             Novo Material
           </Button>
         </Header>
@@ -225,7 +218,9 @@ const Materiais = () => {
           isOpen={open}
           title="Novo Material"
           onClose={onClose}
-          onSubmit={createMaterialHandleSubmit(handleCreateMaterial)}
+          onSubmit={() =>
+            void createMaterialHandleSubmit(handleCreateMaterial)()
+          }
         >
           <Box as="form" gap={4} mx="auto">
             {/* Inputs do formulário de criação. */}
@@ -271,7 +266,7 @@ const Materiais = () => {
           isOpen={isOpenPrice}
           title="Atualizar Preço"
           onClose={onClosePrice}
-          onSubmit={updatePriceHandleSubmit(handleUpdatePrice)}
+          onSubmit={() => void updatePriceHandleSubmit(handleUpdatePrice)()}
         >
           <Box as="form" gap={4} mx="auto">
             <FormInput
@@ -353,7 +348,7 @@ const Materiais = () => {
                           aria-label="Remover"
                           onClick={() => {
                             if (material.id) {
-                              handleRemoveMaterial(material.id);
+                              void handleRemoveMaterial(material.id);
                             }
                           }}
                           disabled={updatePriceIsSubmitting}

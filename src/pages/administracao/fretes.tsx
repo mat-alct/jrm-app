@@ -16,25 +16,26 @@ import {
   Text,
   useDisclosure,
 } from '@chakra-ui/react';
-import { toaster } from '@/components/ui/toaster';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { FaCheck, FaTrash } from 'react-icons/fa';
 
-import { useAuth } from '../../hooks/authContext';
-import {
-  useAreas,
-  useAddArea,
-  useRemoveArea,
-  useUpdateAreaFreight,
-} from '../../hooks/useAreas';
+import { toaster } from '@/components/ui/toaster';
+
 import { Dashboard } from '../../components/Dashboard';
 import { Header } from '../../components/Dashboard/Content/Header';
 import { FormInput } from '../../components/Form/Input';
 import { FormModal } from '../../components/Form/Modal';
 import { Loader } from '../../components/Loader';
+import { useAuth } from '../../hooks/authContext';
+import {
+  useAddArea,
+  useAreas,
+  useRemoveArea,
+  useUpdateAreaFreight,
+} from '../../hooks/useAreas';
 import { Area } from '../../types';
 
 interface NewAreaForm {
@@ -62,7 +63,7 @@ const Fretes = () => {
 
   React.useEffect(() => {
     if (user === null) {
-      router.push('/login');
+      void router.push('/login');
     }
   }, [user, router]);
 
@@ -125,8 +126,7 @@ const Fretes = () => {
         delete copy[area.name];
         return copy;
       });
-    } catch (err) {
-      console.error(err);
+    } catch {
       toaster.create({ type: 'error', description: 'Erro ao salvar frete.' });
     } finally {
       setSavingName(null);
@@ -147,10 +147,11 @@ const Fretes = () => {
       });
       reset({ name: '', freight: '' });
       closeAdd();
-    } catch (err: any) {
+    } catch (error: unknown) {
       toaster.create({
         type: 'error',
-        description: err?.message || 'Erro ao adicionar bairro.',
+        description:
+          error instanceof Error ? error.message : 'Erro ao adicionar bairro.',
       });
     }
   };
@@ -164,8 +165,7 @@ const Fretes = () => {
         description: `${confirmRemove.name} removido.`,
       });
       setConfirmRemove(null);
-    } catch (err) {
-      console.error(err);
+    } catch {
       toaster.create({ type: 'error', description: 'Erro ao remover bairro.' });
     }
   };
@@ -206,7 +206,9 @@ const Fretes = () => {
                 <Table.Header>
                   <Table.Row>
                     <Table.ColumnHeader>Bairro</Table.ColumnHeader>
-                    <Table.ColumnHeader w="220px">Frete (R$)</Table.ColumnHeader>
+                    <Table.ColumnHeader w="220px">
+                      Frete (R$)
+                    </Table.ColumnHeader>
                     <Table.ColumnHeader w="160px" textAlign="right">
                       Ações
                     </Table.ColumnHeader>
@@ -233,7 +235,9 @@ const Fretes = () => {
                                 handleDraftChange(area.name, e.target.value)
                               }
                               onKeyDown={e => {
-                                if (e.key === 'Enter') handleSaveFreight(area);
+                                if (e.key === 'Enter') {
+                                  void handleSaveFreight(area);
+                                }
                               }}
                               size="sm"
                               borderColor={dirty ? 'yellow.500' : 'gray.300'}
@@ -245,7 +249,7 @@ const Fretes = () => {
                                 aria-label="Salvar"
                                 size="sm"
                                 colorScheme="orange"
-                                onClick={() => handleSaveFreight(area)}
+                                onClick={() => void handleSaveFreight(area)}
                                 loading={isSaving}
                               >
                                 <FaCheck />
@@ -294,14 +298,14 @@ const Fretes = () => {
             reset({ name: '', freight: '' });
             closeAdd();
           }}
-          onSubmit={handleSubmit(handleAdd)}
+          onSubmit={() => void handleSubmit(handleAdd)()}
         >
           <Stack gap={4} as="form">
             <FormInput
               {...register('name', { required: 'Nome obrigatório' })}
               name="name"
               label="Nome do bairro"
-              error={errors.name as any}
+              error={errors.name}
               disabled={isSubmitting}
             />
             <FormInput
@@ -309,7 +313,7 @@ const Fretes = () => {
               name="freight"
               label="Frete (R$)"
               placeholder="Ex: 25,00"
-              error={errors.freight as any}
+              error={errors.freight}
               disabled={isSubmitting}
             />
           </Stack>
@@ -364,7 +368,7 @@ const Fretes = () => {
                     </Button>
                     <Button
                       colorScheme="red"
-                      onClick={handleRemove}
+                      onClick={() => void handleRemove()}
                       loading={removeArea.isPending}
                     >
                       <FaTrash /> Remover

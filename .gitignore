@@ -49,3 +49,6 @@ scripts/old-firebase-key.json
 
 # generated repo snapshots
 repomix-output.xml
+
+# material de referencia do plano de corte, mantido fora do versionamento
+/*.pdf

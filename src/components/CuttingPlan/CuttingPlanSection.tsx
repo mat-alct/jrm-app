@@ -5,7 +5,6 @@ import {
   Button,
   Flex,
   Heading,
-  RadioGroup,
   Spinner,
   Stack,
   Text,
@@ -13,33 +12,37 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { Timestamp } from 'firebase/firestore';
 import Link from 'next/link';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   FaCheck,
   FaExclamationTriangle,
   FaExternalLinkAlt,
   FaSave,
   FaSyncAlt,
+  FaTimes,
 } from 'react-icons/fa';
 import { v4 } from 'uuid';
 
-import type {
-  CuttingPlan,
-  CuttingPlanOptimizationMode,
-} from '@/domain/cutting-plan';
+import type { CuttingPlan } from '@/domain/cutting-plan';
+import type { CuttingPlanSearchProgress } from '@/domain/cutting-plan';
 import {
   approveCuttingPlan,
   buildCuttingPlan,
   cutlistToCuttingPlanInput,
   cutlistToCuttingPlanPieces,
+  CUTTING_PLAN_OPTIMIZATION_MODE,
   cuttingPlanMatchesPieces,
-  generateCuttingPlan,
   markCuttingPlanOutdated,
 } from '@/domain/cutting-plan';
 import {
   CUTTING_MACHINE_QUERY_KEY,
   getCuttingMachineConfiguration,
 } from '@/services/cuttingMachine.service';
+import {
+  CuttingPlanOptimizationCancelledError,
+  type CuttingPlanOptimizationJob,
+  startCuttingPlanOptimization,
+} from '@/services/cuttingPlanOptimizer.service';
 import type { Cutlist } from '@/types';
 import { openCuttingPlanViewer } from '@/utils/cuttingPlanViewer';
 
@@ -72,10 +75,11 @@ export const CuttingPlanSection = ({
   plan,
   required = false,
 }: CuttingPlanSectionProps) => {
-  const [optimizationMode, setOptimizationMode] =
-    useState<CuttingPlanOptimizationMode>(plan?.optimizationMode ?? 'balanced');
   const [generating, setGenerating] = useState(false);
+  const [searchProgress, setSearchProgress] =
+    useState<CuttingPlanSearchProgress | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const optimizationJobRef = useRef<CuttingPlanOptimizationJob | null>(null);
   const {
     data: machineConfiguration,
     isLoading: isLoadingConfiguration,
@@ -89,6 +93,17 @@ export const CuttingPlanSection = ({
   const settingsFingerprint = machineConfiguration
     ? JSON.stringify(machineConfiguration.cutting)
     : '';
+
+  useEffect(
+    () => () => {
+      optimizationJobRef.current?.cancel();
+    },
+    [],
+  );
+
+  useEffect(() => {
+    optimizationJobRef.current?.cancel();
+  }, [piecesFingerprint, settingsFingerprint]);
 
   useEffect(() => {
     const settingsChanged =
@@ -109,28 +124,27 @@ export const CuttingPlanSection = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [piecesFingerprint, settingsFingerprint, plan?.id, plan?.status]);
 
-  const changeOptimizationMode = (value: CuttingPlanOptimizationMode) => {
-    setOptimizationMode(value);
-    if (plan && plan.status !== 'outdated' && value !== plan.optimizationMode) {
-      onPlanChange(
-        markCuttingPlanOutdated(plan, Timestamp.fromDate(new Date())),
-      );
-    }
-  };
-
   const generate = async () => {
     if (!machineConfiguration) return;
     setGenerating(true);
+    setSearchProgress(null);
     setError(null);
     try {
       await new Promise<void>(resolve => setTimeout(resolve, 0));
-      const result = generateCuttingPlan(
+      const job = startCuttingPlanOptimization(
         cutlistToCuttingPlanInput({
           cutlist,
-          optimizationMode,
+          optimizationMode: CUTTING_PLAN_OPTIMIZATION_MODE,
           settings: machineConfiguration.cutting,
         }),
+        {
+          maxDurationMs: 60_000,
+          stagnationMs: 10_000,
+          onProgress: setSearchProgress,
+        },
       );
+      optimizationJobRef.current = job;
+      const result = await job.promise;
       onPlanChange(
         buildCuttingPlan({
           id: v4(),
@@ -141,14 +155,22 @@ export const CuttingPlanSection = ({
         }),
       );
     } catch (generationError) {
+      if (generationError instanceof CuttingPlanOptimizationCancelledError) {
+        return;
+      }
       setError(
         generationError instanceof Error
           ? generationError.message
           : 'Não foi possível gerar o plano de corte.',
       );
     } finally {
+      optimizationJobRef.current = null;
       setGenerating(false);
     }
+  };
+
+  const cancelGeneration = () => {
+    optimizationJobRef.current?.cancel();
   };
 
   const saveDraft = () => {
@@ -230,42 +252,14 @@ export const CuttingPlanSection = ({
         )}
 
         <Box>
-          <Text fontSize="sm" fontWeight="700" mb={2}>
-            Estratégia de otimização
+          <Text fontSize="sm" fontWeight="700" mb={1}>
+            Otimização automática
           </Text>
-          <RadioGroup.Root
-            value={optimizationMode}
-            onValueChange={event => {
-              if (event.value) {
-                changeOptimizationMode(
-                  event.value as CuttingPlanOptimizationMode,
-                );
-              }
-            }}
-            colorScheme="orange"
-          >
-            <Flex gap={3} wrap="wrap">
-              {[
-                ['fewer_cuts', 'Menos movimentos'],
-                ['best_yield', 'Maior aproveitamento'],
-                ['balanced', 'Equilibrado'],
-              ].map(([value, label]) => (
-                <RadioGroup.Item
-                  key={value}
-                  value={value}
-                  borderWidth="1px"
-                  borderColor="gray.300"
-                  borderRadius="md"
-                  px={3}
-                  py={2}
-                >
-                  <RadioGroup.ItemHiddenInput />
-                  <RadioGroup.ItemIndicator />
-                  <RadioGroup.ItemText>{label}</RadioGroup.ItemText>
-                </RadioGroup.Item>
-              ))}
-            </Flex>
-          </RadioGroup.Root>
+          <Text fontSize="sm" color="gray.600">
+            O otimizador testa diferentes combinações em background e conserva
+            sempre a melhor. Ele para após 10 segundos sem melhora ou, no
+            máximo, em 1 minuto.
+          </Text>
           <Text fontSize="xs" color="gray.500" mt={2}>
             Margens, serra e custos vêm dos{' '}
             <Link href="/cortes/configuracoes-maquina">
@@ -293,9 +287,23 @@ export const CuttingPlanSection = ({
             gap={3}
             py={8}
             color="orange.700"
+            direction="column"
           >
-            <Spinner color="orange.500" />
-            <Text fontWeight="700">Calculando o melhor plano...</Text>
+            <Flex align="center" gap={3}>
+              <Spinner color="orange.500" />
+              <Text fontWeight="700">Calculando o melhor plano...</Text>
+            </Flex>
+            <Text fontSize="sm" color="gray.600" textAlign="center">
+              {searchProgress
+                ? `${searchProgress.candidatesTested} combinações testadas · melhor: ${searchProgress.bestMetrics.sheetCount} chapa(s), ${searchProgress.bestMetrics.movementCount} movimentos · ${Math.ceil(searchProgress.elapsedMs / 1000)}s`
+                : 'Preparando a busca em background…'}
+            </Text>
+            <Text fontSize="xs" color="gray.500">
+              Você pode continuar preenchendo os demais dados enquanto isso.
+            </Text>
+            <Button size="sm" variant="outline" onClick={cancelGeneration}>
+              <FaTimes /> Cancelar otimização
+            </Button>
           </Flex>
         )}
 

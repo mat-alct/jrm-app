@@ -14,12 +14,15 @@ import { AppCard } from '@/components/ui/card';
 interface ClientLoginWithCodeProps {
   error?: string;
   isSubmitting?: boolean;
+  /** Trava o envio enquanto o publicId da rota nao esta disponivel. */
+  disabled?: boolean;
   onSubmit: (accessCode: string) => Promise<void> | void;
 }
 
 export function ClientLoginWithCode({
   error,
   isSubmitting = false,
+  disabled = false,
   onSubmit,
 }: ClientLoginWithCodeProps) {
   const [accessCode, setAccessCode] = React.useState('');
@@ -45,11 +48,16 @@ export function ClientLoginWithCode({
               Acesso ao projeto
             </Heading>
             <Text color="app.textSecondary">
-              Informe a senha enviada pela equipe para consultar e aprovar os itens.
+              Informe a senha enviada pela equipe para consultar e aprovar os
+              itens.
             </Text>
           </VStack>
           <Field.Root invalid={Boolean(error)}>
-            <Field.Label fontSize="13px" fontWeight="500" color="app.textSecondary">
+            <Field.Label
+              fontSize="13px"
+              fontWeight="500"
+              color="app.textSecondary"
+            >
               Senha de acesso
             </Field.Label>
             <Input
@@ -78,7 +86,7 @@ export function ClientLoginWithCode({
           <Button
             type="submit"
             loading={isSubmitting}
-            disabled={!accessCode.trim()}
+            disabled={disabled || !accessCode.trim()}
             bg="app.ink"
             color="white"
             rounded="lg"

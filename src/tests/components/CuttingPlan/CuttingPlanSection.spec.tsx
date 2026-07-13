@@ -96,14 +96,15 @@ describe('CuttingPlanSection', () => {
     ).toBeEnabled();
   });
 
-  it('permite escolher a estratégia e aprovar', async () => {
+  it('usa uma única otimização automática e permite aprovar', async () => {
     render(<Harness />);
 
-    fireEvent.click(screen.getByText('Maior aproveitamento'));
+    expect(screen.getByText('Otimização automática')).toBeInTheDocument();
+    expect(screen.getByText(/10 segundos sem melhora/)).toBeInTheDocument();
+    expect(screen.getByText(/máximo, em 1 minuto/)).toBeInTheDocument();
+    expect(screen.queryByText('Menos movimentos')).not.toBeInTheDocument();
+    expect(screen.queryByText('Equilibrado')).not.toBeInTheDocument();
     await generate();
-    expect(screen.getAllByText('Maior aproveitamento').length).toBeGreaterThan(
-      0,
-    );
 
     fireEvent.click(screen.getByRole('button', { name: /Aprovar plano/i }));
     expect(screen.getByText(/Aprovado · versão 1/)).toBeInTheDocument();

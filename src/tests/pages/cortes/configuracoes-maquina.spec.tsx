@@ -1,9 +1,9 @@
+import { DEFAULT_CUTTING_MACHINE_CONFIGURATION } from '@/domain/cutting-plan';
 import MachineSettingsPage from '@/pages/cortes/configuracoes-maquina';
 import {
   getCuttingMachineConfiguration,
   saveCuttingMachineConfiguration,
 } from '@/services/cuttingMachine.service';
-import { DEFAULT_CUTTING_MACHINE_CONFIGURATION } from '@/domain/cutting-plan';
 
 import { fireEvent, render, screen, waitFor } from '../../testUtils';
 

@@ -28,7 +28,9 @@ function activeStepIndex(project: ClientProjectDTO): number {
   return indexes.length ? Math.min(...indexes) : 0;
 }
 
-export function ClientTrackingTimeline({ project }: ClientTrackingTimelineProps) {
+export function ClientTrackingTimeline({
+  project,
+}: ClientTrackingTimelineProps) {
   const activeIndex = activeStepIndex(project);
   const nextDate = project.items
     .map(item => item.estimatedDeliveryDate)
@@ -39,7 +41,11 @@ export function ClientTrackingTimeline({ project }: ClientTrackingTimelineProps)
     <AppCard>
       <VStack align="stretch" gap={5}>
         <Box>
-          <Heading as="h1" fontSize={{ base: '2xl', md: '3xl' }} fontWeight="600">
+          <Heading
+            as="h1"
+            fontSize={{ base: '2xl', md: '3xl' }}
+            fontWeight="600"
+          >
             Acompanhamento
           </Heading>
           <Text color="app.textSecondary">{project.customerName}</Text>
@@ -59,7 +65,8 @@ export function ClientTrackingTimeline({ project }: ClientTrackingTimelineProps)
             >
               <FaRegCalendar size={12} />
               <Text fontSize="sm">
-                Próxima previsão: {new Date(nextDate).toLocaleDateString('pt-BR')}
+                Próxima previsão:{' '}
+                {new Date(nextDate).toLocaleDateString('pt-BR')}
               </Text>
             </Flex>
           ) : null}

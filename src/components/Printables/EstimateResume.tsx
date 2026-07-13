@@ -2,23 +2,22 @@
 import {
   Box,
   Flex,
+  Grid,
   IconButton,
+  Image,
   Table,
   Text,
-  Grid,
   VStack,
-  Image,
 } from '@chakra-ui/react';
 import { format } from 'date-fns';
-import { DocumentData } from 'firebase/firestore';
-import React, { useRef, useEffect } from 'react';
-import { FaRegFileAlt, FaWhatsapp, FaMapMarkerAlt } from 'react-icons/fa';
+import React, { useEffect, useRef } from 'react';
+import { FaMapMarkerAlt, FaRegFileAlt, FaWhatsapp } from 'react-icons/fa';
 import { useReactToPrint } from 'react-to-print';
 
+import type { EstimateDocument } from '@/types';
+
 interface EstimateResumeProps {
-  estimate: DocumentData & {
-    id: string;
-  };
+  estimate: EstimateDocument;
   variant?: 'outline' | 'solid' | 'subtle' | 'surface' | 'ghost' | 'plain';
   size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '2xs' | 'xs';
   colorScheme?: string;
@@ -48,7 +47,7 @@ export const EstimateResume: React.FC<EstimateResumeProps> = ({
     if (autoPrint) {
       handlePrint();
     }
-  }, [autoPrint]);
+  }, [autoPrint, handlePrint]);
 
   const Separator = () => (
     <Box w="100%" borderBottomWidth="1px" borderColor="black" my={1} />
@@ -194,7 +193,7 @@ export const EstimateResume: React.FC<EstimateResumeProps> = ({
                 </Table.Row>
               </Table.Header>
               <Table.Body>
-                {estimate.cutlist.map((cut: any, idx: number) => (
+                {estimate.cutlist.map((cut, idx) => (
                   <Table.Row key={cut.id || idx}>
                     <Table.Cell fontSize="xs" py={1} px={1} fontWeight="bold">
                       {cut.amount}
@@ -255,8 +254,7 @@ export const EstimateResume: React.FC<EstimateResumeProps> = ({
                 </Text>
                 <Text fontSize="2xl" fontWeight="black" color="black">
                   R${' '}
-                  {(estimate.estimatePrice ?? 0) +
-                    (estimate.freightPrice ?? 0)}
+                  {(estimate.estimatePrice ?? 0) + (estimate.freightPrice ?? 0)}
                   ,00
                 </Text>
               </Flex>

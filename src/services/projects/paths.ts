@@ -37,10 +37,7 @@ export function projectAttachmentPath(
   return `${projectAttachmentsPath(projectId)}/${attachmentId}`;
 }
 
-export function itemAttachmentsPath(
-  projectId: string,
-  itemId: string,
-): string {
+export function itemAttachmentsPath(projectId: string, itemId: string): string {
   return `${projectItemPath(projectId, itemId)}/${ATTACHMENTS_SUBCOLLECTION}`;
 }
 

@@ -1,6 +1,8 @@
-import { Timestamp } from 'firebase-admin/firestore';
 import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
+import { Timestamp } from 'firebase-admin/firestore';
 
+import { auth } from '@/services/firebase';
+import { adminDb } from '@/services/firebaseAdmin';
 import {
   assignAssemblers,
   listItemAssemblerAssignments,
@@ -12,10 +14,8 @@ import {
 } from '@/services/projects/deadline.service';
 import { saveDeadlineDefaults } from '@/services/projects/deadlineAdmin';
 import { projectItemPath } from '@/services/projects/paths';
-import { auth } from '@/services/firebase';
-import { adminDb } from '@/services/firebaseAdmin';
 import { resetEmulator } from '@/tests/helpers/emulator';
-import { seedEmulator, SEED_USER_PASSWORD } from '@/tests/helpers/seedEmulator';
+import { SEED_USER_PASSWORD, seedEmulator } from '@/tests/helpers/seedEmulator';
 
 async function signInAs(email: string): Promise<void> {
   await signInWithEmailAndPassword(auth, email, SEED_USER_PASSWORD);
@@ -64,7 +64,10 @@ describe('services/projects/deadline integration', () => {
       montagemDias: 6,
     });
 
-    const snap = await adminDb.collection('settings').doc('deadlineDefaults').get();
+    const snap = await adminDb
+      .collection('settings')
+      .doc('deadlineDefaults')
+      .get();
     expect(snap.data()).toMatchObject({
       desenhoDias: 4,
       orcamentoDias: 3,

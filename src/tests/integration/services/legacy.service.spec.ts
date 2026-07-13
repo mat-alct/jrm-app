@@ -1,15 +1,21 @@
 import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
-import { Timestamp as AdminTimestamp } from 'firebase-admin/firestore';
 import { Timestamp } from 'firebase/firestore';
+import { Timestamp as AdminTimestamp } from 'firebase-admin/firestore';
 
 import {
   buildCuttingPlan,
   cutlistToCuttingPlanInput,
   generateCuttingPlan,
 } from '@/domain/cutting-plan';
-
 import { auth } from '@/services/firebase';
 import { adminDb } from '@/services/firebaseAdmin';
+import {
+  createMaterial,
+  getAllMaterials,
+  getMaterials,
+  removeMaterial,
+  updateMaterialPrice,
+} from '@/services/materials.service';
 import {
   createEstimate,
   createOrder,
@@ -18,20 +24,13 @@ import {
   stripUndefined,
   updateOrderCutlist,
 } from '@/services/orders.service';
-import {
-  createMaterial,
-  getAllMaterials,
-  getMaterials,
-  removeMaterial,
-  updateMaterialPrice,
-} from '@/services/materials.service';
-import { Cutlist, Estimate, Material, Order } from '@/types';
 import { resetEmulator } from '@/tests/helpers/emulator';
 import {
-  seedEmulator,
   SEED_MATERIAL_NAME,
   SEED_USER_PASSWORD,
+  seedEmulator,
 } from '@/tests/helpers/seedEmulator';
+import { Cutlist, Estimate, Material, Order } from '@/types';
 
 async function signInAs(email: string): Promise<void> {
   await signInWithEmailAndPassword(auth, email, SEED_USER_PASSWORD);
@@ -206,14 +205,18 @@ describe('legacy orders/materials services integration', () => {
 
     const firstPage = await getOrders('Concluído');
     expect(firstPage.totalCount).toBe(25);
-    expect(firstPage.data.map(item => item.orderCode)).toEqual(
-      Array.from({ length: 20 }, (_, index) => 25 - index),
-    );
+    expect(
+      firstPage.data.map(item =>
+        'orderCode' in item ? item.orderCode : undefined,
+      ),
+    ).toEqual(Array.from({ length: 20 }, (_, index) => 25 - index));
 
     const secondPage = await getOrders('Concluído', firstPage.lastDoc);
-    expect(secondPage.data.map(item => item.orderCode)).toEqual([
-      5, 4, 3, 2, 1,
-    ]);
+    expect(
+      secondPage.data.map(item =>
+        'orderCode' in item ? item.orderCode : undefined,
+      ),
+    ).toEqual([5, 4, 3, 2, 1]);
 
     await expect(getOrdersBySearch('pedro silva', 'orders')).resolves.toEqual([
       expect.objectContaining({

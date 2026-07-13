@@ -26,8 +26,9 @@ import { seedEmulator } from '@/tests/helpers/seedEmulator';
 // service account e nao funciona contra o emulador (PLANO-DE-TESTES.md, secao 14.2).
 // Firestore, Storage, sessoes e transicoes de status rodam de verdade.
 jest.mock('@/services/projects/storageSignedUrl.server', () => ({
-  getSignedReadUrl: jest.fn(async (storagePath: string) =>
-    `https://signed.test/${storagePath}?assinatura=fake`,
+  getSignedReadUrl: jest.fn(
+    async (storagePath: string) =>
+      `https://signed.test/${storagePath}?assinatura=fake`,
   ),
 }));
 
@@ -43,7 +44,9 @@ async function itemStatus(itemId: string): Promise<string> {
 }
 
 async function statusHistory(itemId: string) {
-  const snap = await adminDb.collection(itemStatusHistoryPath(PROJECT_ID, itemId)).get();
+  const snap = await adminDb
+    .collection(itemStatusHistoryPath(PROJECT_ID, itemId))
+    .get();
   return snap.docs.map(doc => doc.data());
 }
 
@@ -123,7 +126,9 @@ describe('api/client-access integration', () => {
         changedByRole: 'client',
       });
 
-      const project = (await adminDb.doc(`projects/${PROJECT_ID}`).get()).data();
+      const project = (
+        await adminDb.doc(`projects/${PROJECT_ID}`).get()
+      ).data();
       expect(project?.itemSummary).toMatchObject({
         total: 2,
         aguardandoAprovacao: 0,
@@ -180,7 +185,9 @@ describe('api/client-access integration', () => {
       );
       expect(wrongMethodRes.statusCode).toBe(405);
 
-      expect(await itemStatus(PENDING_ITEM_ID)).toBe('aguardando_aprovacao_cliente');
+      expect(await itemStatus(PENDING_ITEM_ID)).toBe(
+        'aguardando_aprovacao_cliente',
+      );
       expect(await statusHistory(PENDING_ITEM_ID)).toHaveLength(0);
     });
   });
@@ -294,7 +301,9 @@ describe('api/client-access integration', () => {
       );
       expect(wrongMethodRes.statusCode).toBe(405);
 
-      expect(await itemStatus(PENDING_ITEM_ID)).toBe('aguardando_aprovacao_cliente');
+      expect(await itemStatus(PENDING_ITEM_ID)).toBe(
+        'aguardando_aprovacao_cliente',
+      );
     });
   });
 
@@ -324,7 +333,10 @@ describe('api/client-access integration', () => {
 
     it('devolve somente itens e anexos visiveis ao cliente', async () => {
       const res = mockRes();
-      await projectHandler(mockReq({ method: 'GET', cookie: clientCookie }), res);
+      await projectHandler(
+        mockReq({ method: 'GET', cookie: clientCookie }),
+        res,
+      );
 
       expect(res.statusCode).toBe(200);
       const dto = res.body as {
@@ -344,7 +356,9 @@ describe('api/client-access integration', () => {
         PRODUCTION_ITEM_ID,
       ]);
 
-      const pendingItem = dto.items.find(item => item.itemId === PENDING_ITEM_ID)!;
+      const pendingItem = dto.items.find(
+        item => item.itemId === PENDING_ITEM_ID,
+      )!;
       expect(pendingItem.customerAmount).toBe(1200);
 
       const fileNames = pendingItem.attachments.map(a => a.fileName);

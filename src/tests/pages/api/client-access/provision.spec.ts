@@ -64,7 +64,11 @@ describe('pages/api/client-access/provision', () => {
     const res = createResponse();
 
     await handler(
-      { method: 'POST', headers: {}, body: { projectId: 'project-1' } } as never,
+      {
+        method: 'POST',
+        headers: {},
+        body: { projectId: 'project-1' },
+      } as never,
       res as never,
     );
 

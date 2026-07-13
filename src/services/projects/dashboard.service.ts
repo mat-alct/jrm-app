@@ -1,9 +1,4 @@
-import {
-  collectionGroup,
-  getDocs,
-  query,
-  where,
-} from 'firebase/firestore';
+import { collectionGroup, getDocs, query, where } from 'firebase/firestore';
 
 import { Project, ProjectItem, ProjectItemStatus } from '@/types/projects';
 import { isDelayed } from '@/utils/projects/delay';
@@ -103,8 +98,9 @@ export function computeDashboardCounts(
   return {
     projetosEmAberto: projects.filter(project => !project.completedAt).length,
     atrasados: items.filter(item => isDelayed(item, now)).length,
-    aguardandoDesenho: items.filter(item => item.status === 'aguardando_desenho')
-      .length,
+    aguardandoDesenho: items.filter(
+      item => item.status === 'aguardando_desenho',
+    ).length,
     aguardandoOrcamento: items.filter(
       item => item.status === 'aguardando_orcamento',
     ).length,
@@ -115,7 +111,8 @@ export function computeDashboardCounts(
       item => item.status === 'aguardando_atribuicao_montador',
     ).length,
     emProducao: items.filter(
-      item => item.status === 'em_producao' || item.status === 'pronto_para_montagem',
+      item =>
+        item.status === 'em_producao' || item.status === 'pronto_para_montagem',
     ).length,
     emMontagem: items.filter(
       item =>

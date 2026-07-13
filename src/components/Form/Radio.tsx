@@ -1,17 +1,23 @@
 'use client';
 
 // --- 1. Bloco de Importações ---
-import { Field, RadioGroup, Stack } from '@chakra-ui/react';
+import { Box, Field, Stack } from '@chakra-ui/react';
 import React from 'react';
-import { Control, FieldValues, useController } from 'react-hook-form';
+import {
+  Control,
+  FieldPath,
+  FieldPathValue,
+  FieldValues,
+  useController,
+} from 'react-hook-form';
 
 // --- 2. Interface de Props ---
 interface FormRadioProps<TFieldValues extends FieldValues> {
-  name: string;
-  control: Control<any, any, TFieldValues>;
+  name: FieldPath<TFieldValues>;
+  control: Control<TFieldValues>;
   options: string[];
   label?: string;
-  defaultValue?: string;
+  defaultValue?: FieldPathValue<TFieldValues, FieldPath<TFieldValues>>;
   isHorizontal?: boolean; // Controla a direção dos botões (RadioGroup)
   isLabelHorizontal?: boolean; // Controla a direção do Label vs RadioGroup
 }
@@ -35,6 +41,10 @@ export const FormRadio = <TFieldValues extends FieldValues>({
     control,
     defaultValue,
   });
+  const labelId = `${name}-label`;
+  const error = errors[name];
+  const errorMessage =
+    error && typeof error.message === 'string' ? error.message : undefined;
 
   // --- 5. Renderização do Componente (JSX) ---
   return (
@@ -47,7 +57,7 @@ export const FormRadio = <TFieldValues extends FieldValues>({
       >
         {label && (
           <Field.Label
-            htmlFor={name}
+            id={labelId}
             mb={0} // Remove margem inferior padrão quando estiver na horizontal
             minW={isLabelHorizontal ? 'fit-content' : undefined}
           >
@@ -55,27 +65,40 @@ export const FormRadio = <TFieldValues extends FieldValues>({
           </Field.Label>
         )}
 
-        <RadioGroup.Root
-          value={field.value}
-          onValueChange={e => field.onChange(e.value)}
-          colorScheme="yellow"
+        <Stack
+          aria-labelledby={label ? labelId : undefined}
+          aria-label={label ? undefined : name}
+          role="radiogroup"
+          gap={4}
+          direction={isHorizontal ? 'row' : 'column'}
         >
-          <Stack gap={4} direction={isHorizontal ? 'row' : 'column'}>
-            {options.map(option => (
-              <RadioGroup.Item key={option} value={option}>
-                <RadioGroup.ItemHiddenInput />
-                <RadioGroup.ItemIndicator />
-                <RadioGroup.ItemText>{option}</RadioGroup.ItemText>
-              </RadioGroup.Item>
-            ))}
-          </Stack>
-        </RadioGroup.Root>
+          {options.map(option => (
+            <Box
+              as="label"
+              key={option}
+              display="inline-flex"
+              alignItems="center"
+              cursor="pointer"
+              gap={2}
+            >
+              <input
+                type="radio"
+                name={field.name}
+                value={option}
+                checked={field.value === option}
+                onBlur={field.onBlur}
+                onChange={() => field.onChange(option)}
+                ref={field.ref}
+                style={{ accentColor: '#B8860B' }}
+              />
+              <span>{option}</span>
+            </Box>
+          ))}
+        </Stack>
       </Stack>
 
-      {!!errors[name] && (
-        <Field.ErrorText role="alert">
-          {(errors[name] as any).message}
-        </Field.ErrorText>
+      {errorMessage && (
+        <Field.ErrorText role="alert">{errorMessage}</Field.ErrorText>
       )}
     </Field.Root>
   );

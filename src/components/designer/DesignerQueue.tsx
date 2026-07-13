@@ -46,12 +46,22 @@ export const DesignerQueue: React.FC<DesignerQueueProps> = ({ items }) => {
         >
           <AppCard
             interactive
-            borderColor={item.status === 'alteracao_solicitada' ? 'brand.200' : 'app.border'}
-            bg={item.status === 'alteracao_solicitada' ? 'app.accentSubtle' : 'app.surface'}
+            borderColor={
+              item.status === 'alteracao_solicitada'
+                ? 'brand.200'
+                : 'app.border'
+            }
+            bg={
+              item.status === 'alteracao_solicitada'
+                ? 'app.accentSubtle'
+                : 'app.surface'
+            }
           >
             <HStack justify="space-between" wrap="wrap" gap={2}>
               <VStack align="stretch" gap={1}>
-                <Text fontWeight="600" color="app.text">{item.name}</Text>
+                <Text fontWeight="600" color="app.text">
+                  {item.name}
+                </Text>
                 <Text fontSize="sm" color="app.textMuted">
                   {item.environment}
                 </Text>
@@ -60,7 +70,9 @@ export const DesignerQueue: React.FC<DesignerQueueProps> = ({ items }) => {
                 {item.status === 'alteracao_solicitada' && (
                   <StatusPill palette="orange" label="Alteração solicitada" />
                 )}
-                {isDelayed(item) && <StatusPill palette="red" label="Atrasado" />}
+                {isDelayed(item) && (
+                  <StatusPill palette="red" label="Atrasado" />
+                )}
               </HStack>
             </HStack>
           </AppCard>

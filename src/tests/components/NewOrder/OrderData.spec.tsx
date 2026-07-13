@@ -22,6 +22,9 @@ jest.mock('@/hooks/useAreas', () => ({
 jest.mock('@/components/ui/toaster', () => ({
   toaster: { create: jest.fn() },
 }));
+jest.mock('@/components/Form/DatePicker', () => ({
+  FormDatePicker: () => null,
+}));
 
 const createOrder = jest.fn();
 const createEstimate = jest.fn();

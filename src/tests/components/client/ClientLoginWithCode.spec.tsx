@@ -32,7 +32,9 @@ describe('ClientLoginWithCode', () => {
   });
 
   it('exibe a mensagem de erro de codigo invalido', () => {
-    render(<ClientLoginWithCode onSubmit={jest.fn()} error="Código inválido" />);
+    render(
+      <ClientLoginWithCode onSubmit={jest.fn()} error="Código inválido" />,
+    );
 
     expect(screen.getByText('Código inválido')).toBeInTheDocument();
   });
@@ -41,20 +43,28 @@ describe('ClientLoginWithCode', () => {
     render(<ClientLoginWithCode onSubmit={jest.fn()} error="Link expirado" />);
 
     expect(
-      screen.getByText('Entre em contato com a loja para liberar um novo acesso.'),
+      screen.getByText(
+        'Entre em contato com a loja para liberar um novo acesso.',
+      ),
     ).toBeInTheDocument();
   });
 
   it('nao mostra a orientacao de contato para outros erros', () => {
-    render(<ClientLoginWithCode onSubmit={jest.fn()} error="Código inválido" />);
+    render(
+      <ClientLoginWithCode onSubmit={jest.fn()} error="Código inválido" />,
+    );
 
     expect(
-      screen.queryByText('Entre em contato com a loja para liberar um novo acesso.'),
+      screen.queryByText(
+        'Entre em contato com a loja para liberar um novo acesso.',
+      ),
     ).not.toBeInTheDocument();
   });
 
   it('desabilita o envio enquanto submete', () => {
-    const { container } = render(<ClientLoginWithCode onSubmit={jest.fn()} isSubmitting />);
+    const { container } = render(
+      <ClientLoginWithCode onSubmit={jest.fn()} isSubmitting />,
+    );
 
     fireEvent.change(codeInput(), { target: { value: 'A2B3C4' } });
 

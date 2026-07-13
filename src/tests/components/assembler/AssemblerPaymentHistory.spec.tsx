@@ -26,7 +26,14 @@ describe('AssemblerPaymentHistory', () => {
   it('mostra valor e status de cada pagamento', () => {
     render(
       <AssemblerPaymentHistory
-        payments={[payment(), payment({ id: 'payment-2', amount: 400, status: 'confirmado_pelo_montador' })]}
+        payments={[
+          payment(),
+          payment({
+            id: 'payment-2',
+            amount: 400,
+            status: 'confirmado_pelo_montador',
+          }),
+        ]}
       />,
     );
 
@@ -70,7 +77,9 @@ describe('AssemblerPaymentHistory', () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Confirmar recebimento' }));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Confirmar recebimento' }),
+    );
 
     await waitFor(() => expect(onConfirm).toHaveBeenCalledWith('payment-42'));
   });
@@ -78,7 +87,9 @@ describe('AssemblerPaymentHistory', () => {
   it('indica quando ha comprovante anexado', () => {
     render(
       <AssemblerPaymentHistory
-        payments={[payment({ proofStoragePath: 'payments/payment-1/comprovante.pdf' })]}
+        payments={[
+          payment({ proofStoragePath: 'payments/payment-1/comprovante.pdf' }),
+        ]}
       />,
     );
 
@@ -93,7 +104,11 @@ describe('AssemblerPaymentHistory', () => {
 
   it('desabilita a confirmacao enquanto ha requisicao em curso', () => {
     const { container } = render(
-      <AssemblerPaymentHistory payments={[payment()]} onConfirm={jest.fn()} isBusy />,
+      <AssemblerPaymentHistory
+        payments={[payment()]}
+        onConfirm={jest.fn()}
+        isBusy
+      />,
     );
 
     // Em `loading` o Chakra troca o rotulo por um spinner.

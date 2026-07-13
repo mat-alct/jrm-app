@@ -1,6 +1,8 @@
 import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { getBytes, ref } from 'firebase/storage';
 
+import { auth, storage } from '@/services/firebase';
+import { adminDb } from '@/services/firebaseAdmin';
 import {
   getDesignerQueue,
   listItemVersions,
@@ -11,10 +13,8 @@ import {
   itemVersionPath,
   projectItemPath,
 } from '@/services/projects/paths';
-import { auth, storage } from '@/services/firebase';
-import { adminDb } from '@/services/firebaseAdmin';
 import { resetEmulator } from '@/tests/helpers/emulator';
-import { seedEmulator, SEED_USER_PASSWORD } from '@/tests/helpers/seedEmulator';
+import { SEED_USER_PASSWORD, seedEmulator } from '@/tests/helpers/seedEmulator';
 
 async function signInAs(email: string): Promise<void> {
   await signInWithEmailAndPassword(auth, email, SEED_USER_PASSWORD);

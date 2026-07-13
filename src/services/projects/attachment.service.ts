@@ -1,4 +1,3 @@
-import { v4 } from 'uuid';
 import {
   collection,
   doc,
@@ -7,12 +6,9 @@ import {
   Timestamp,
 } from 'firebase/firestore';
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
+import { v4 } from 'uuid';
 
-import {
-  Attachment,
-  AttachmentVisibility,
-  UserRole,
-} from '@/types/projects';
+import { Attachment, AttachmentVisibility, UserRole } from '@/types/projects';
 
 import { inferAttachmentFileKind } from '../../utils/projects/attachments';
 import { canViewAttachment } from '../../utils/projects/permissions';
@@ -78,7 +74,13 @@ export async function uploadAttachment({
   const mimeType = file.type || 'application/octet-stream';
 
   const storagePath = itemId
-    ? itemAttachmentStoragePath(projectId, itemId, category, attachmentId, fileName)
+    ? itemAttachmentStoragePath(
+        projectId,
+        itemId,
+        category,
+        attachmentId,
+        fileName,
+      )
     : projectAttachmentStoragePath(projectId, attachmentId, fileName);
 
   const storageRef = ref(storage, storagePath);

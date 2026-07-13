@@ -48,7 +48,13 @@ export function ItemBudgetForm({
   });
 
   return (
-    <Box as="form" onSubmit={submit} display="flex" flexDirection="column" gap={4}>
+    <Box
+      as="form"
+      onSubmit={event => void submit(event)}
+      display="flex"
+      flexDirection="column"
+      gap={4}
+    >
       <Text fontWeight="700">Linhas de custo</Text>
       <VStack align="stretch" gap={3}>
         {fields.map((field, index) => (

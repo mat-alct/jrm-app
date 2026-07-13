@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   Button,
   CloseButton,
@@ -11,16 +10,20 @@ import {
 import { format } from 'date-fns';
 import React from 'react';
 
+import type { OrderDocument, OrderEdit } from '@/types';
 import { formatBRL } from '@/utils/formatBRL';
 
 type HistoryDialogProps = {
-  order: any | null;
+  order: OrderDocument | null;
   onClose: () => void;
-  onSelectVersion: (versionSnapshot: any) => void;
+  onSelectVersion: (versionSnapshot: OrderDocument) => void;
 };
 
-const buildVersionSnapshot = (order: any, versionIndex: number) => {
-  const edits: any[] = order.edits ?? [];
+const buildVersionSnapshot = (
+  order: OrderDocument,
+  versionIndex: number,
+): OrderDocument => {
+  const edits: OrderEdit[] = order.edits ?? [];
   if (versionIndex === 0) {
     return {
       ...order,
@@ -64,7 +67,7 @@ export const HistoryDialog: React.FC<HistoryDialogProps> = ({
               {order && (
                 <VStack gap={2} align="stretch">
                   {(() => {
-                    const edits: any[] = order.edits ?? [];
+                    const edits: OrderEdit[] = order.edits ?? [];
                     const versionCount = edits.length + 1;
                     const items: React.ReactNode[] = [];
                     for (let v = 0; v < versionCount; v++) {

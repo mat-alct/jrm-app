@@ -44,7 +44,9 @@ describe('pages/cliente/[publicId]/acompanhar', () => {
 
     // A timeline resume o projeto pelos rotulos de status do cliente,
     // sem listar o nome de cada item.
-    await waitFor(() => expect(screen.getByText('Em produção')).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByText('Em produção')).toBeInTheDocument(),
+    );
     expect(fetchMock).toHaveBeenCalledWith('/api/client-access/project');
   });
 
@@ -56,9 +58,13 @@ describe('pages/cliente/[publicId]/acompanhar', () => {
 
     render(<ClientTrackingPage />);
 
-    expect(await screen.findByText('Sessao do cliente invalida.')).toBeInTheDocument();
     expect(
-      screen.getByText('Entre em contato com a loja se o acesso estiver expirado.'),
+      await screen.findByText('Sessao do cliente invalida.'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Entre em contato com a loja se o acesso estiver expirado.',
+      ),
     ).toBeInTheDocument();
   });
 
@@ -83,7 +89,10 @@ describe('pages/cliente/[publicId]/acompanhar', () => {
 
     render(<ClientTrackingPage />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Voltar para aprovação' }));
+    await screen.findByText('Em produção');
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Voltar para aprovação' }),
+    );
 
     expect(push).toHaveBeenCalledWith('/cliente/Abc123');
   });
@@ -94,10 +103,9 @@ describe('pages/cliente/[publicId]/acompanhar', () => {
     render(<ClientTrackingPage />);
 
     await waitFor(() =>
-      expect(screen.getByRole('link', { name: /\+5524999990000/ })).toHaveAttribute(
-        'href',
-        'tel:+5524999990000',
-      ),
+      expect(
+        screen.getByRole('link', { name: /\+5524999990000/ }),
+      ).toHaveAttribute('href', 'tel:+5524999990000'),
     );
   });
 });

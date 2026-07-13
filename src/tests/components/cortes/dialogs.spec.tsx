@@ -1,6 +1,7 @@
 import { ConfirmDeactivateDialog } from '@/components/cortes/ConfirmDeactivateDialog';
 import { ConfirmStatusDialog } from '@/components/cortes/ConfirmStatusDialog';
 import { HistoryDialog } from '@/components/cortes/HistoryDialog';
+import type { OrderDocument } from '@/types';
 
 import { fireEvent, render, screen } from '../../testUtils';
 
@@ -12,32 +13,48 @@ function order(overrides: Record<string, unknown> = {}) {
     customer: { name: 'Pedro Silva' },
     cutlist: [],
     orderPrice: 1000,
+    deliveryType: 'Retirada',
+    paymentType: 'Dinheiro',
+    seller: 'Vendedor',
+    deliveryDate: Timestamp.now(),
+    createdAt: Timestamp.now(),
+    updatedAt: Timestamp.now(),
     ...overrides,
-  };
+  } as OrderDocument;
 }
 
 describe('ConfirmStatusDialog', () => {
-  const baseProps = { onCancel: jest.fn(), onConfirm: jest.fn(), loading: false };
+  const baseProps = {
+    onCancel: jest.fn(),
+    onConfirm: jest.fn(),
+    loading: false,
+  };
 
   beforeEach(() => jest.clearAllMocks());
 
   it('fica fechado quando nao ha pedido selecionado', () => {
     render(<ConfirmStatusDialog {...baseProps} order={null} />);
 
-    expect(screen.queryByText('Confirmar alteração de status')).not.toBeInTheDocument();
+    expect(
+      screen.queryByText('Confirmar alteração de status'),
+    ).not.toBeInTheDocument();
   });
 
   it('mostra o pedido, o cliente e o status atual', () => {
     render(<ConfirmStatusDialog {...baseProps} order={order()} />);
 
-    expect(screen.getByText('Confirmar alteração de status')).toBeInTheDocument();
+    expect(
+      screen.getByText('Confirmar alteração de status'),
+    ).toBeInTheDocument();
     expect(screen.getByText('Pedido #42')).toBeInTheDocument();
     expect(screen.getByText('Pedro Silva')).toBeInTheDocument();
     expect(screen.getByText('Em Produção')).toBeInTheDocument();
   });
 
   it('anuncia a proxima transicao a partir do status atual', () => {
-    const { rerender } = render(<ConfirmStatusDialog {...baseProps} order={order()} />);
+    const { rerender } = render(
+      <ConfirmStatusDialog {...baseProps} order={order()} />,
+    );
     expect(screen.getByText('liberar para transporte')).toBeInTheDocument();
 
     rerender(
@@ -73,14 +90,20 @@ describe('ConfirmStatusDialog', () => {
   });
 
   it('cai em "Cliente Removido" quando o pedido nao tem cliente', () => {
-    render(<ConfirmStatusDialog {...baseProps} order={order({ customer: null })} />);
+    render(
+      <ConfirmStatusDialog {...baseProps} order={order({ customer: null })} />,
+    );
 
     expect(screen.getByText('Cliente Removido')).toBeInTheDocument();
   });
 });
 
 describe('ConfirmDeactivateDialog', () => {
-  const baseProps = { onCancel: jest.fn(), onConfirm: jest.fn(), loading: false };
+  const baseProps = {
+    onCancel: jest.fn(),
+    onConfirm: jest.fn(),
+    loading: false,
+  };
 
   beforeEach(() => jest.clearAllMocks());
 
@@ -94,7 +117,9 @@ describe('ConfirmDeactivateDialog', () => {
     render(<ConfirmDeactivateDialog {...baseProps} order={order()} />);
 
     expect(screen.getByText('Desativar pedido')).toBeInTheDocument();
-    expect(screen.getByText(/continuará\s+acessível pela busca/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/continuará\s+acessível pela busca/),
+    ).toBeInTheDocument();
     expect(screen.getByText('Pedido #42')).toBeInTheDocument();
   });
 
@@ -126,14 +151,24 @@ describe('HistoryDialog', () => {
   });
 
   it('fica fechado sem pedido', () => {
-    render(<HistoryDialog order={null} onClose={jest.fn()} onSelectVersion={jest.fn()} />);
+    render(
+      <HistoryDialog
+        order={null}
+        onClose={jest.fn()}
+        onSelectVersion={jest.fn()}
+      />,
+    );
 
     expect(screen.queryByText(/Histórico do Pedido/)).not.toBeInTheDocument();
   });
 
   it('mostra apenas a versao original quando nunca houve edicao', () => {
     render(
-      <HistoryDialog order={order()} onClose={jest.fn()} onSelectVersion={jest.fn()} />,
+      <HistoryDialog
+        order={order()}
+        onClose={jest.fn()}
+        onSelectVersion={jest.fn()}
+      />,
     );
 
     expect(screen.getByText('Histórico do Pedido #42')).toBeInTheDocument();
@@ -176,3 +211,4 @@ describe('HistoryDialog', () => {
     );
   });
 });
+import { Timestamp } from 'firebase/firestore';

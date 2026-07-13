@@ -1,8 +1,8 @@
 import { getDoc, setDoc } from 'firebase/firestore';
 
 import {
-  DEFAULT_CUTTING_MACHINE_CONFIGURATION,
   type CuttingMachineConfiguration,
+  DEFAULT_CUTTING_MACHINE_CONFIGURATION,
 } from '@/domain/cutting-plan';
 import {
   getCuttingMachineConfiguration,

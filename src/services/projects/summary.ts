@@ -1,4 +1,10 @@
-import { collection, doc, getDoc, getDocs, updateDoc } from 'firebase/firestore';
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  updateDoc,
+} from 'firebase/firestore';
 
 import { ProjectItem, ProjectItemSummary } from '@/types/projects';
 
@@ -20,7 +26,10 @@ export function computeItemSummary(
       if (item.status === 'aguardando_atribuicao_montador') {
         summary.aprovados += 1;
       }
-      if (item.status === 'em_producao' || item.status === 'pronto_para_montagem') {
+      if (
+        item.status === 'em_producao' ||
+        item.status === 'pronto_para_montagem'
+      ) {
         summary.emProducao += 1;
       }
       if (

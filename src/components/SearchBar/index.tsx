@@ -1,7 +1,7 @@
 import { Button, Flex, FlexProps } from '@chakra-ui/react';
 import { yupResolver } from '@hookform/resolvers/yup';
 import React from 'react';
-import { useForm, SubmitHandler } from 'react-hook-form';
+import { SubmitHandler, useForm } from 'react-hook-form';
 
 import { searchCustomerSchema } from '../../utils/yup/clientesValidations';
 import { FormInput } from '../Form/Input';
@@ -16,7 +16,7 @@ interface SearchBarProps extends FlexProps {
 // CORREÇÃO: 'customerName' agora é opcional (?) para casar com o schema do Yup
 // que não possui .required(). Isso resolve o erro de 'Resolver mismatch'.
 interface SearchFormValues {
-  customerName?: string;
+  customerName: string;
 }
 
 export const SearchBar: React.FC<SearchBarProps> = ({
@@ -30,9 +30,8 @@ export const SearchBar: React.FC<SearchBarProps> = ({
     handleSubmit: searchHandleSubmit,
     formState: { errors: searchErrors, isSubmitting: searchIsSubmitting },
   } = useForm<SearchFormValues>({
-    // O 'as any' aqui é seguro pois estamos importando o schema correto,
-    // e serve para evitar conflitos estritos de tipagem entre versões do Yup e RHF.
-    resolver: yupResolver(searchCustomerSchema as any),
+    resolver: yupResolver(searchCustomerSchema),
+    defaultValues: { customerName: '' },
   });
 
   // Função de submit
@@ -46,7 +45,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
     <Flex
       as="form"
       // O handleSubmit agora aceita nossa função sem erros de tipo
-      onSubmit={searchHandleSubmit(handleSearch)}
+      onSubmit={event => void searchHandleSubmit(handleSearch)(event)}
       maxW={[null, null, null, '300px']}
       {...rest}
     >

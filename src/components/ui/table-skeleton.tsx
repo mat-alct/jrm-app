@@ -5,7 +5,10 @@ export interface TableSkeletonProps {
   cols?: number;
 }
 
-export const TableSkeleton: React.FC<TableSkeletonProps> = ({ rows = 5, cols = 4 }) => (
+export const TableSkeleton: React.FC<TableSkeletonProps> = ({
+  rows = 5,
+  cols = 4,
+}) => (
   <>
     {Array.from({ length: rows }).map((_, rowIndex) => (
       <Table.Row key={rowIndex} borderColor="app.border">

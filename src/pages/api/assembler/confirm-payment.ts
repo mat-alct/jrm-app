@@ -2,8 +2,14 @@ import { Timestamp as AdminTimestamp } from 'firebase-admin/firestore';
 import { NextApiRequest, NextApiResponse } from 'next';
 
 import { adminDb } from '@/services/firebaseAdmin';
-import { ApiAuthError, requireInternalUser } from '@/services/projects/internalAuth.server';
-import { itemAssemblerAssignmentPath, paymentPath } from '@/services/projects/paths';
+import {
+  ApiAuthError,
+  requireInternalUser,
+} from '@/services/projects/internalAuth.server';
+import {
+  itemAssemblerAssignmentPath,
+  paymentPath,
+} from '@/services/projects/paths';
 import { AssemblerPayment } from '@/types/projects';
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -29,7 +35,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       ...paymentSnap.data(),
     } as AssemblerPayment;
     if (payment.assemblerId !== user.uid || payment.status !== 'pago') {
-      return res.status(403).json({ error: 'Pagamento nao pode ser confirmado.' });
+      return res
+        .status(403)
+        .json({ error: 'Pagamento nao pode ser confirmado.' });
     }
 
     const now = AdminTimestamp.now();

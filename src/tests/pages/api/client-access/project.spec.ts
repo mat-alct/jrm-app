@@ -159,7 +159,7 @@ describe('pages/api/client-access/project', () => {
     );
 
     expect(res.status).toHaveBeenCalledWith(200);
-    const dto = (res.json as jest.Mock).mock.calls[0][0];
+    const dto = res.json.mock.calls[0][0];
     expect(dto).toEqual({
       projectId: 'project-1',
       customerName: 'Cliente Teste',

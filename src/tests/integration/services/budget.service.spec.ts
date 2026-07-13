@@ -1,16 +1,16 @@
 import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
 
+import { auth } from '@/services/firebase';
+import { adminDb } from '@/services/firebaseAdmin';
 import {
   BudgetServiceError,
   saveItemBudget,
   sendBudgetToClient,
 } from '@/services/projects/budget.service';
-import { listItemStatusHistory } from '@/services/projects/projectItem.service';
 import { projectItemPath } from '@/services/projects/paths';
-import { auth } from '@/services/firebase';
-import { adminDb } from '@/services/firebaseAdmin';
+import { listItemStatusHistory } from '@/services/projects/projectItem.service';
 import { resetEmulator } from '@/tests/helpers/emulator';
-import { seedEmulator, SEED_USER_PASSWORD } from '@/tests/helpers/seedEmulator';
+import { SEED_USER_PASSWORD, seedEmulator } from '@/tests/helpers/seedEmulator';
 
 async function signInAs(email: string): Promise<void> {
   await signInWithEmailAndPassword(auth, email, SEED_USER_PASSWORD);
@@ -81,7 +81,9 @@ describe('services/projects/budget.service integration', () => {
       createdBy: 'seed-seller',
       createdByName: 'Vendedor Seed',
     });
-    expect(secondBudget.createdAt.toMillis()).toBe(firstBudget.createdAt.toMillis());
+    expect(secondBudget.createdAt.toMillis()).toBe(
+      firstBudget.createdAt.toMillis(),
+    );
     expect(secondBudget.updatedAt.toMillis()).toBeGreaterThanOrEqual(
       firstBudget.updatedAt.toMillis(),
     );

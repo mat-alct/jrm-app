@@ -41,7 +41,9 @@ describe('Component: ProjectItemTimeline', () => {
 
     render(<ProjectItemTimeline history={[older, newer]} />);
 
-    const labels = screen.getAllByText(/Aguardando desenho|Aguardando orçamento/);
+    const labels = screen.getAllByText(
+      /Aguardando desenho|Aguardando orçamento/,
+    );
     expect(labels[0]).toHaveTextContent('Aguardando orçamento');
     expect(labels[1]).toHaveTextContent('Aguardando desenho');
   });
@@ -58,7 +60,9 @@ describe('Component: ProjectItemTimeline', () => {
 
   it('falls back to the role label when the author name is missing', () => {
     render(
-      <ProjectItemTimeline history={[history({ changedByRole: 'designer' })]} />,
+      <ProjectItemTimeline
+        history={[history({ changedByRole: 'designer' })]}
+      />,
     );
 
     expect(screen.getByText(/Desenhista/)).toBeInTheDocument();

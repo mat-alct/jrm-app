@@ -1,6 +1,7 @@
 import { Timestamp as AdminTimestamp } from 'firebase-admin/firestore';
 import { NextApiRequest, NextApiResponse } from 'next';
 
+import { adminDb } from '@/services/firebaseAdmin';
 import {
   isClientAccessLocked,
   isLinkExpired,
@@ -12,7 +13,6 @@ import {
   issueClientSession,
   serializeClientSessionCookie,
 } from '@/services/projects/clientSession';
-import { adminDb } from '@/services/firebaseAdmin';
 import { Project } from '@/types/projects';
 
 function normalizeAttemptUpdate(
@@ -50,9 +50,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       .get();
 
     if (projectQuery.empty) {
-      console.warn('Client access verify failed: publicId not found', {
-        publicId,
-      });
       return res.status(401).json({ error: 'Credenciais invalidas.' });
     }
 
@@ -60,30 +57,18 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     const project = { id: projectSnap.id, ...projectSnap.data() } as Project;
 
     if (isLinkExpired(project)) {
-      console.warn('Client access verify blocked: expired link', {
-        projectId: project.id,
-        publicId,
-      });
       return res.status(410).json({ error: 'Link expirado.' });
     }
 
     if (isClientAccessLocked(project)) {
-      console.warn('Client access verify blocked: lockout active', {
-        projectId: project.id,
-        publicId,
-      });
-      return res.status(429).json({ error: 'Acesso temporariamente bloqueado.' });
+      return res
+        .status(429)
+        .json({ error: 'Acesso temporariamente bloqueado.' });
     }
 
     if (!verifyAccessCode(accessCode, project.clientAccessCodeHash)) {
       const attemptUpdate = registerFailedClientAccessAttempt(project);
       await projectSnap.ref.update(normalizeAttemptUpdate(attemptUpdate));
-      console.warn('Client access verify failed: invalid code', {
-        projectId: project.id,
-        publicId,
-        attempts: attemptUpdate.clientAccessAttempts,
-        locked: Boolean(attemptUpdate.clientAccessLockUntil),
-      });
       return res.status(401).json({ error: 'Credenciais invalidas.' });
     }
 

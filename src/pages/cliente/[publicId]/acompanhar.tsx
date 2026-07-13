@@ -87,7 +87,9 @@ export default function ClientTrackingPage() {
           </Alert.Root>
         ) : null}
 
-        {!isLoading && project ? <ClientTrackingTimeline project={project} /> : null}
+        {!isLoading && project ? (
+          <ClientTrackingTimeline project={project} />
+        ) : null}
       </VStack>
     </ClientLayout>
   );

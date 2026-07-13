@@ -1,5 +1,6 @@
 import {
   CUTTING_PLAN_ALGORITHM_VERSION,
+  CUTTING_PLAN_OPTIMIZATION_MODE,
   MAX_GUILLOTINE_CUT_LEVELS,
 } from './defaults';
 import {
@@ -31,15 +32,21 @@ type SortStrategy =
   | 'dimension_groups'
   | 'height_desc'
   | 'long_side_desc'
+  | 'randomized'
   | 'width_desc';
 
-type RegionSelection = 'best_area_fit' | 'best_short_side' | 'first_fit';
+type RegionSelection =
+  | 'best_area_fit'
+  | 'best_short_side'
+  | 'first_fit'
+  | 'randomized';
 
 type SplitPreference = 'horizontal_first' | 'vertical_first';
 
 interface CandidateConfiguration {
   id: string;
   regionSelection: RegionSelection;
+  seed?: number;
   sortStrategy: SortStrategy;
   splitPreferences: SplitPreference[];
 }
@@ -53,6 +60,9 @@ interface FreeRegion {
   // Direção e nível do corte que produziu esta região. A raiz não tem corte.
   cutAxis?: CuttingPlanCut['orientation'];
   cutLevel: number;
+  // Uma faixa que ainda atravessa toda a dimensão refilada da chapa conserva
+  // as duas bordas preparadas nessa direção e não precisa de novo acerto.
+  preparedAxes: CuttingPlanCut['orientation'][];
   region: CuttingPlanRegion;
 }
 
@@ -101,7 +111,17 @@ const cutLevelFor = (
 const needsInternalTrim = (
   parentAxis: CuttingPlanCut['orientation'] | undefined,
   orientation: CuttingPlanCut['orientation'],
-): boolean => parentAxis !== undefined && parentAxis !== orientation;
+  preparedAxes: CuttingPlanCut['orientation'][],
+): boolean =>
+  parentAxis !== undefined &&
+  parentAxis !== orientation &&
+  !preparedAxes.includes(orientation);
+
+const axesAfterCut = (
+  preparedAxes: CuttingPlanCut['orientation'][],
+  orientation: CuttingPlanCut['orientation'],
+): CuttingPlanCut['orientation'][] =>
+  preparedAxes.filter(axis => axis !== orientation);
 
 const CANDIDATE_CONFIGURATIONS: CandidateConfiguration[] = [
   {
@@ -169,6 +189,14 @@ const compareScoreArrays = (a: number[], b: number[]) => {
   return 0;
 };
 
+function seededUnit(seed: number, value: string): number {
+  let hash = seed | 0;
+  for (let index = 0; index < value.length; index += 1) {
+    hash = Math.imul(hash ^ value.charCodeAt(index), 16777619);
+  }
+  return (hash >>> 0) / 4294967296;
+}
+
 export function getPieceCompatibilityKey(piece: CuttingPlanPiece): string {
   return piece.materialId;
 }
@@ -221,6 +249,7 @@ function expandPieces(pieces: CuttingPlanPiece[]): ExpandedPiece[] {
 function sortExpandedPieces(
   pieces: ExpandedPiece[],
   strategy: SortStrategy,
+  seed = 0,
 ): ExpandedPiece[] {
   const result = [...pieces];
   result.sort((a, b) => {
@@ -232,7 +261,10 @@ function sortExpandedPieces(
     const bShort = Math.min(b.piece.widthMm, b.piece.lengthMm);
 
     let comparison = 0;
-    if (strategy === 'dimension_groups') {
+    if (strategy === 'randomized') {
+      comparison =
+        seededUnit(seed, a.instanceId) - seededUnit(seed, b.instanceId);
+    } else if (strategy === 'dimension_groups') {
       comparison = bLong - aLong || bShort - aShort || bArea - aArea;
     } else if (strategy === 'long_side_desc') {
       comparison = bLong - aLong || bShort - aShort || bArea - aArea;
@@ -244,11 +276,7 @@ function sortExpandedPieces(
       comparison = bArea - aArea || bLong - aLong;
     }
 
-    return (
-      comparison ||
-      a.piece.id.localeCompare(b.piece.id) ||
-      a.instanceId.localeCompare(b.instanceId)
-    );
+    return comparison || a.instanceId.localeCompare(b.instanceId);
   });
   return result;
 }
@@ -384,7 +412,11 @@ function simulatePlacement(input: {
   const firstRegionSize = firstIsVertical ? region.widthMm : region.heightMm;
   const firstNeedsCut = firstRegionSize - firstPieceSize > EPSILON;
   const firstLoss = cutLoss(
-    needsInternalTrim(freeRegion.cutAxis, firstOrientation),
+    needsInternalTrim(
+      freeRegion.cutAxis,
+      firstOrientation,
+      freeRegion.preparedAxes,
+    ),
     planInput,
   );
   if (
@@ -405,6 +437,9 @@ function simulatePlacement(input: {
   // corte ele incide sobre a própria região recebida.
   const secondPanelAxis = firstNeedsCut ? firstOrientation : freeRegion.cutAxis;
   const secondPanelLevel = firstNeedsCut ? firstCutLevel : freeRegion.cutLevel;
+  const secondPanelPreparedAxes = firstNeedsCut
+    ? axesAfterCut(freeRegion.preparedAxes, firstOrientation)
+    : freeRegion.preparedAxes;
   const secondCutLevel = cutLevelFor(
     secondPanelAxis,
     secondPanelLevel,
@@ -417,7 +452,11 @@ function simulatePlacement(input: {
   const secondPieceSize = firstIsVertical ? pieceHeight : pieceWidth;
   const secondNeedsCut = secondRegionSize - secondPieceSize > EPSILON;
   const secondLoss = cutLoss(
-    needsInternalTrim(secondPanelAxis, secondOrientation),
+    needsInternalTrim(
+      secondPanelAxis,
+      secondOrientation,
+      secondPanelPreparedAxes,
+    ),
     planInput,
   );
   if (
@@ -458,6 +497,7 @@ function simulatePlacement(input: {
         region: firstRemainder,
         cutAxis: firstOrientation,
         cutLevel: firstCutLevel,
+        preparedAxes: axesAfterCut(freeRegion.preparedAxes, firstOrientation),
       });
     }
 
@@ -529,6 +569,7 @@ function simulatePlacement(input: {
         region: secondRemainder,
         cutAxis: secondOrientation,
         cutLevel: secondCutLevel,
+        preparedAxes: axesAfterCut(secondPanelPreparedAxes, secondOrientation),
       });
     }
 
@@ -792,7 +833,13 @@ function createWorkingSheet(input: {
     placements: [],
     cuts: [],
     wasteRegions: [],
-    freeRegions: [{ region: usableArea, cutLevel: 0 }],
+    freeRegions: [
+      {
+        region: usableArea,
+        cutLevel: 0,
+        preparedAxes: ['horizontal', 'vertical'],
+      },
+    ],
   };
   return sheet;
 }
@@ -810,6 +857,17 @@ function placementOptionScore(input: {
     freeRegion.region.heightMm - simulation.placement.heightMm,
   );
 
+  if (configuration.regionSelection === 'randomized') {
+    return [
+      seededUnit(
+        configuration.seed ?? 0,
+        `${simulation.placement.pieceInstanceId}:${freeRegion.region.id}:${simulation.placement.rotated}:${simulation.cuts
+          .map(cut => cut.orientation)
+          .join(',')}`,
+      ),
+      simulation.cuts.length,
+    ];
+  }
   if (configuration.regionSelection === 'first_fit') {
     return [simulation.cuts.length];
   }
@@ -1037,6 +1095,7 @@ function runCandidate(
       const orderedPieces = sortExpandedPieces(
         groupedPieces,
         configuration.sortStrategy,
+        configuration.seed,
       );
 
       orderedPieces.forEach(expandedPiece => {
@@ -1144,7 +1203,7 @@ function runCandidate(
     configurationId: configuration.id,
     result: {
       algorithmVersion: CUTTING_PLAN_ALGORITHM_VERSION,
-      optimizationMode: input.optimizationMode,
+      optimizationMode: CUTTING_PLAN_OPTIMIZATION_MODE,
       settings: cloneSettings(input.settings),
       inputSnapshot: {
         pieces: input.pieces.map(clonePiece),
@@ -1158,67 +1217,116 @@ function runCandidate(
   };
 }
 
-function normalized(value: number, values: number[]): number {
-  const minimum = Math.min(...values);
-  const maximum = Math.max(...values);
-  return maximum - minimum <= EPSILON
-    ? 0
-    : (value - minimum) / (maximum - minimum);
+function selectCandidate(candidates: CandidateResult[]): CandidateResult {
+  return [...candidates].sort(compareCandidates)[0];
 }
 
-function selectCandidate(
-  candidates: CandidateResult[],
-  input: CuttingPlanInput,
-): CandidateResult {
-  if (input.optimizationMode === 'fewer_cuts') {
-    return [...candidates].sort((a, b) => {
-      return (
-        a.result.metrics.movementCount - b.result.metrics.movementCount ||
-        a.result.metrics.sheetCount - b.result.metrics.sheetCount ||
-        a.result.metrics.processLossAreaMm2 -
-          b.result.metrics.processLossAreaMm2 ||
-        a.configurationId.localeCompare(b.configurationId)
-      );
-    })[0];
-  }
+export const MAX_CUTTING_PLAN_SEARCH_DURATION_MS = 60_000;
 
-  if (input.optimizationMode === 'best_yield') {
-    return [...candidates].sort((a, b) => {
-      return (
-        a.result.metrics.sheetCount - b.result.metrics.sheetCount ||
-        a.result.metrics.processLossAreaMm2 -
-          b.result.metrics.processLossAreaMm2 ||
-        a.result.metrics.movementCount - b.result.metrics.movementCount ||
-        a.configurationId.localeCompare(b.configurationId)
-      );
-    })[0];
-  }
+export interface CuttingPlanSearchOptions {
+  maxCandidates?: number;
+  maxDurationMs?: number;
+  progressIntervalMs?: number;
+  seed?: number;
+  stagnationMs?: number;
+}
 
-  const sheetCounts = candidates.map(item => item.result.metrics.sheetCount);
-  const movements = candidates.map(item => item.result.metrics.movementCount);
-  const processLoss = candidates.map(
-    item => item.result.metrics.processLossAreaMm2,
+export interface CuttingPlanSearchProgress {
+  bestMetrics: CuttingPlanMetrics;
+  candidatesTested: number;
+  elapsedMs: number;
+  improved: boolean;
+}
+
+function compareCandidates(a: CandidateResult, b: CandidateResult): number {
+  return (
+    a.result.metrics.sheetCount - b.result.metrics.sheetCount ||
+    a.result.metrics.movementCount - b.result.metrics.movementCount ||
+    a.result.metrics.processLossAreaMm2 - b.result.metrics.processLossAreaMm2 ||
+    a.configurationId.localeCompare(b.configurationId)
   );
-  const weights = input.settings.balancedWeights;
-
-  return [...candidates].sort((a, b) => {
-    const score = (candidate: CandidateResult) =>
-      weights.sheetCount *
-        normalized(candidate.result.metrics.sheetCount, sheetCounts) +
-      weights.movementCount *
-        normalized(candidate.result.metrics.movementCount, movements) +
-      weights.waste *
-        normalized(candidate.result.metrics.processLossAreaMm2, processLoss);
-    return (
-      score(a) - score(b) || a.configurationId.localeCompare(b.configurationId)
-    );
-  })[0];
 }
 
-export function generateCuttingPlan(
+function createRandom(seed: number): () => number {
+  let state = seed >>> 0;
+  return () => {
+    state += 0x6d2b79f5;
+    let value = state;
+    value = Math.imul(value ^ (value >>> 15), value | 1);
+    value ^= value + Math.imul(value ^ (value >>> 7), value | 61);
+    return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function randomConfiguration(
+  iteration: number,
+  random: () => number,
+): CandidateConfiguration {
+  const deterministicSorts: SortStrategy[] = [
+    'area_desc',
+    'dimension_groups',
+    'height_desc',
+    'long_side_desc',
+    'width_desc',
+  ];
+  const deterministicRegions: RegionSelection[] = [
+    'best_area_fit',
+    'best_short_side',
+    'first_fit',
+  ];
+  const verticalFirst = random() < 0.5;
+  const tryBothSplits = random() < 0.65;
+  const firstSplit: SplitPreference = verticalFirst
+    ? 'vertical_first'
+    : 'horizontal_first';
+  const secondSplit: SplitPreference = verticalFirst
+    ? 'horizontal_first'
+    : 'vertical_first';
+  const seed = Math.floor(random() * 0x7fffffff);
+
+  return {
+    id: `search-${String(iteration).padStart(7, '0')}`,
+    seed,
+    sortStrategy:
+      random() < 0.55
+        ? 'randomized'
+        : deterministicSorts[Math.floor(random() * deterministicSorts.length)],
+    regionSelection:
+      random() < 0.55
+        ? 'randomized'
+        : deterministicRegions[
+            Math.floor(random() * deterministicRegions.length)
+          ],
+    splitPreferences: tryBothSplits ? [firstSplit, secondSplit] : [firstSplit],
+  };
+}
+
+/**
+ * Busca "anytime": parte dos candidatos determinísticos e continua testando
+ * combinações reproduzíveis até estagnar ou atingir o limite absoluto.
+ * Deve ser executada fora da thread principal do navegador.
+ */
+export function searchCuttingPlan(
   input: CuttingPlanInput,
+  options: CuttingPlanSearchOptions = {},
+  onProgress?: (progress: CuttingPlanSearchProgress) => void,
 ): CuttingPlanResult {
   validateInput(input);
+  const startedAt = Date.now();
+  const maxDurationMs = Math.max(
+    0,
+    Math.min(
+      options.maxDurationMs ?? MAX_CUTTING_PLAN_SEARCH_DURATION_MS,
+      MAX_CUTTING_PLAN_SEARCH_DURATION_MS,
+    ),
+  );
+  const stagnationMs = Math.max(
+    0,
+    Math.min(options.stagnationMs ?? 10_000, maxDurationMs),
+  );
+  const progressIntervalMs = Math.max(50, options.progressIntervalMs ?? 250);
+  const maxCandidates = Math.max(0, options.maxCandidates ?? Infinity);
+  const random = createRandom(options.seed ?? 0x4a524d);
   const candidates: CandidateResult[] = [];
   let lastError: unknown;
 
@@ -1238,5 +1346,64 @@ export function generateCuttingPlan(
     );
   }
 
-  return selectCandidate(candidates, input).result;
+  let best = selectCandidate(candidates);
+  let candidatesTested = candidates.length;
+  let lastImprovementAt = Date.now();
+  let lastProgressAt = 0;
+  onProgress?.({
+    bestMetrics: best.result.metrics,
+    candidatesTested,
+    elapsedMs: Date.now() - startedAt,
+    improved: true,
+  });
+
+  let iteration = 0;
+  while (
+    Date.now() - startedAt < maxDurationMs &&
+    Date.now() - lastImprovementAt < stagnationMs &&
+    candidatesTested < maxCandidates
+  ) {
+    iteration += 1;
+    let improved = false;
+    try {
+      const candidate = runCandidate(
+        input,
+        randomConfiguration(iteration, random),
+      );
+      candidatesTested += 1;
+      if (compareCandidates(candidate, best) < 0) {
+        best = candidate;
+        lastImprovementAt = Date.now();
+        improved = true;
+      }
+    } catch (error) {
+      lastError = error;
+      candidatesTested += 1;
+    }
+
+    const elapsedMs = Date.now() - startedAt;
+    if (improved || elapsedMs - lastProgressAt >= progressIntervalMs) {
+      lastProgressAt = elapsedMs;
+      onProgress?.({
+        bestMetrics: best.result.metrics,
+        candidatesTested,
+        elapsedMs,
+        improved,
+      });
+    }
+  }
+
+  onProgress?.({
+    bestMetrics: best.result.metrics,
+    candidatesTested,
+    elapsedMs: Date.now() - startedAt,
+    improved: false,
+  });
+  return best.result;
+}
+
+export function generateCuttingPlan(
+  input: CuttingPlanInput,
+): CuttingPlanResult {
+  return searchCuttingPlan(input, { maxDurationMs: 0 });
 }

@@ -6,11 +6,15 @@ describe('SearchBar', () => {
   it('usa o placeholder padrao quando nenhum e informado', () => {
     render(<SearchBar handleUpdateSearch={jest.fn()} />);
 
-    expect(screen.getByPlaceholderText('Digite o nome do cliente')).toBeInTheDocument();
+    expect(
+      screen.getByPlaceholderText('Digite o nome do cliente'),
+    ).toBeInTheDocument();
   });
 
   it('respeita o placeholder customizado', () => {
-    render(<SearchBar handleUpdateSearch={jest.fn()} placeholder="Buscar pedido" />);
+    render(
+      <SearchBar handleUpdateSearch={jest.fn()} placeholder="Buscar pedido" />,
+    );
 
     expect(screen.getByPlaceholderText('Buscar pedido')).toBeInTheDocument();
   });
@@ -24,7 +28,9 @@ describe('SearchBar', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: 'Buscar' }));
 
-    await waitFor(() => expect(handleUpdateSearch).toHaveBeenCalledWith('Pedro Silva'));
+    await waitFor(() =>
+      expect(handleUpdateSearch).toHaveBeenCalledWith('Pedro Silva'),
+    );
   });
 
   it('entrega string vazia quando o campo fica em branco (limpar busca)', async () => {

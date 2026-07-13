@@ -100,7 +100,10 @@ describe('services/projects/project.service', () => {
     });
 
     it('sets sellerName from the actor name when provided', async () => {
-      await createProject(validInput, { uid: 'admin-1', name: 'Fulano Vendedor' });
+      await createProject(validInput, {
+        uid: 'admin-1',
+        name: 'Fulano Vendedor',
+      });
 
       const [, payload] = mockedSetDoc.mock.calls[0];
       expect(payload).toHaveProperty('sellerName', 'Fulano Vendedor');

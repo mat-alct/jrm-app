@@ -222,8 +222,7 @@ export const OrderData = ({
         });
         localStorage.removeItem('app@jrmcompensados:cutlist');
         void router.push('/cortes/listadecortes');
-      } catch (err) {
-        console.error('Erro ao criar orçamento:', err);
+      } catch {
         toaster.create({
           type: 'error',
           description: 'Não foi possível criar o orçamento.',
@@ -258,8 +257,7 @@ export const OrderData = ({
       localStorage.removeItem('app@jrmcompensados:cutlist');
       if (estimateId) await deleteDoc(doc(db, 'estimates', estimateId));
       void router.push('/cortes/listadecortes');
-    } catch (err) {
-      console.error('Erro ao criar pedido:', err);
+    } catch {
       toaster.create({
         type: 'error',
         description: 'Não foi possível criar o pedido.',
