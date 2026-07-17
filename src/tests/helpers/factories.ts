@@ -91,11 +91,10 @@ export function buildAttachment(
     sizeBytes: 12,
     fileKind: 'document',
     category: 'contrato',
-    visibility: 'client',
+    audience: { seller: true, designer: true, assembler: true, client: true },
     uploadedBy: 'seller-uid',
     uploadedByName: 'Vendedor Teste',
     uploadedByRole: 'seller',
-    clientVisible: true,
     createdAt: now(),
     ...overrides,
   };

@@ -56,30 +56,46 @@ describe('utils/projects/permissions', () => {
   });
 
   describe('canViewAttachment', () => {
-    it('lets admin see everything', () => {
-      expect(canViewAttachment('internal', ['admin'])).toBe(true);
-      expect(canViewAttachment('designer', ['admin'])).toBe(true);
-      expect(canViewAttachment('assembler', ['admin'])).toBe(true);
+    const allTrue = {
+      seller: true,
+      designer: true,
+      assembler: true,
+      client: true,
+    };
+    const noneVisible = {
+      seller: false,
+      designer: false,
+      assembler: false,
+      client: false,
+    };
+
+    it('lets admin see everything, even when excluded from the audience', () => {
+      expect(canViewAttachment(noneVisible, ['admin'])).toBe(true);
     });
 
-    it('restricts designer-only attachments to designers', () => {
-      expect(canViewAttachment('designer', ['designer'])).toBe(true);
-      expect(canViewAttachment('designer', ['seller'])).toBe(false);
+    it('restricts by audience per role', () => {
+      expect(
+        canViewAttachment({ ...noneVisible, designer: true }, ['designer']),
+      ).toBe(true);
+      expect(
+        canViewAttachment({ ...noneVisible, designer: true }, ['seller']),
+      ).toBe(false);
+      expect(
+        canViewAttachment({ ...noneVisible, assembler: true }, ['assembler']),
+      ).toBe(true);
+      expect(
+        canViewAttachment({ ...noneVisible, seller: true }, ['seller']),
+      ).toBe(true);
     });
 
-    it('restricts assembler-only attachments to assemblers', () => {
-      expect(canViewAttachment('assembler', ['assembler'])).toBe(true);
-      expect(canViewAttachment('assembler', ['seller'])).toBe(false);
+    it('lets any role with a matching audience flag see the attachment', () => {
+      expect(canViewAttachment(allTrue, ['seller'])).toBe(true);
+      expect(canViewAttachment(allTrue, ['designer'])).toBe(true);
     });
 
-    it('lets any internal role see internal/client attachments', () => {
-      expect(canViewAttachment('internal', ['seller'])).toBe(true);
-      expect(canViewAttachment('client', ['designer'])).toBe(true);
-    });
-
-    it('blocks unauthenticated users from every visibility', () => {
-      expect(canViewAttachment('internal', undefined)).toBe(false);
-      expect(canViewAttachment('client', [])).toBe(false);
+    it('blocks unauthenticated users regardless of audience', () => {
+      expect(canViewAttachment(allTrue, undefined)).toBe(false);
+      expect(canViewAttachment(allTrue, [])).toBe(false);
     });
   });
 });

@@ -127,7 +127,7 @@ describe('services/projects/designer.service', () => {
 
       expect(mockedUploadAttachment).toHaveBeenCalledTimes(2);
       expect(mockedUploadAttachment).toHaveBeenCalledWith(
-        expect.objectContaining({ category: 'versao-1', visibility: 'client' }),
+        expect.objectContaining({ category: 'versao-1' }),
       );
       expect(mockedSetDoc).toHaveBeenCalledWith(
         { id: 'new-version-id' },

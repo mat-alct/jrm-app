@@ -157,7 +157,7 @@ describe('useUploadAttachment', () => {
     await result.current.mutateAsync({
       file: new File(['x'], 'a.pdf', { type: 'application/pdf' }),
       category: 'desenho',
-      visibility: 'internal',
+      audience: { seller: true, designer: true, assembler: true, client: true },
       uploadedBy: 'user-uid',
       uploadedByRole: 'seller',
     } as never);

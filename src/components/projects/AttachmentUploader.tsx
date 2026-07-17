@@ -1,18 +1,22 @@
-import { Box, Button, Input, Text } from '@chakra-ui/react';
+import { Box, Button, Checkbox, HStack, Input, Text } from '@chakra-ui/react';
 import React from 'react';
 
 import { AppCard } from '@/components/ui/card';
 import { useUploadAttachment } from '@/services/projects/attachmentHooks';
-import { AttachmentVisibility, UserRole } from '@/types/projects';
+import {
+  AttachmentAudience,
+  DEFAULT_ATTACHMENT_AUDIENCE,
+  UserRole,
+} from '@/types/projects';
 import { inferAttachmentFileKind } from '@/utils/projects/attachments';
 
 import { toaster } from '../ui/toaster';
 
-const VISIBILITY_OPTIONS: { value: AttachmentVisibility; label: string }[] = [
-  { value: 'internal', label: 'Interno' },
-  { value: 'client', label: 'Cliente' },
-  { value: 'designer', label: 'Desenhista' },
-  { value: 'assembler', label: 'Montador' },
+const AUDIENCE_OPTIONS: { key: keyof AttachmentAudience; label: string }[] = [
+  { key: 'seller', label: 'Vendedor' },
+  { key: 'designer', label: 'Desenhista' },
+  { key: 'assembler', label: 'Montador' },
+  { key: 'client', label: 'Cliente' },
 ];
 
 const ATTACHMENT_ACCEPT =
@@ -36,8 +40,9 @@ export const AttachmentUploader: React.FC<AttachmentUploaderProps> = ({
   categorySuggestions = [],
 }) => {
   const [category, setCategory] = React.useState('');
-  const [visibility, setVisibility] =
-    React.useState<AttachmentVisibility>('internal');
+  const [audience, setAudience] = React.useState<AttachmentAudience>(
+    DEFAULT_ATTACHMENT_AUDIENCE,
+  );
   const [files, setFiles] = React.useState<File[]>([]);
   const upload = useUploadAttachment(projectId, itemId);
 
@@ -66,7 +71,7 @@ export const AttachmentUploader: React.FC<AttachmentUploaderProps> = ({
         await upload.mutateAsync({
           file,
           category: category.trim(),
-          visibility,
+          audience,
           uploadedBy,
           uploadedByName,
           uploadedByRole,
@@ -109,28 +114,26 @@ export const AttachmentUploader: React.FC<AttachmentUploaderProps> = ({
 
         <Box>
           <Text fontSize="sm" fontWeight="500" color="app.textSecondary" mb={1}>
-            Visibilidade
+            Quem pode ver
           </Text>
-          <select
-            value={visibility}
-            onChange={e =>
-              setVisibility(e.target.value as AttachmentVisibility)
-            }
-            style={{
-              padding: '10px 12px',
-              borderRadius: '8px',
-              width: '100%',
-              border: '1px solid #D9D6D0',
-              background: '#FFFFFF',
-              color: '#23211D',
-            }}
-          >
-            {VISIBILITY_OPTIONS.map(option => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
+          <HStack gap={4} wrap="wrap">
+            {AUDIENCE_OPTIONS.map(option => (
+              <Checkbox.Root
+                key={option.key}
+                checked={audience[option.key]}
+                onCheckedChange={details =>
+                  setAudience(current => ({
+                    ...current,
+                    [option.key]: !!details.checked,
+                  }))
+                }
+              >
+                <Checkbox.HiddenInput />
+                <Checkbox.Control />
+                <Checkbox.Label>{option.label}</Checkbox.Label>
+              </Checkbox.Root>
             ))}
-          </select>
+          </HStack>
         </Box>
 
         <Box>

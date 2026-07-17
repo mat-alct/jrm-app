@@ -8,7 +8,12 @@ import {
 import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
 import { v4 } from 'uuid';
 
-import { Attachment, AttachmentVisibility, UserRole } from '@/types/projects';
+import {
+  Attachment,
+  AttachmentAudience,
+  DEFAULT_ATTACHMENT_AUDIENCE,
+  UserRole,
+} from '@/types/projects';
 
 import { inferAttachmentFileKind } from '../../utils/projects/attachments';
 import { canViewAttachment } from '../../utils/projects/permissions';
@@ -39,7 +44,7 @@ export function filterAttachmentsByRole(
   userRoles: UserRole[] | undefined,
 ): Attachment[] {
   return attachments.filter(attachment =>
-    canViewAttachment(attachment.visibility, userRoles),
+    canViewAttachment(attachment.audience, userRoles),
   );
 }
 
@@ -48,7 +53,7 @@ interface UploadAttachmentParams {
   itemId: string;
   file: File;
   category: string;
-  visibility: AttachmentVisibility;
+  audience?: AttachmentAudience;
   uploadedBy: string;
   uploadedByName?: string;
   uploadedByRole: UserRole;
@@ -59,7 +64,7 @@ export async function uploadAttachment({
   itemId,
   file,
   category,
-  visibility,
+  audience = DEFAULT_ATTACHMENT_AUDIENCE,
   uploadedBy,
   uploadedByName,
   uploadedByRole,
@@ -92,11 +97,10 @@ export async function uploadAttachment({
     sizeBytes: file.size,
     fileKind: inferAttachmentFileKind(file),
     category,
-    visibility,
+    audience,
     uploadedBy,
     ...(uploadedByName ? { uploadedByName } : {}),
     uploadedByRole,
-    clientVisible: visibility === 'client',
     createdAt: Timestamp.now(),
   };
 

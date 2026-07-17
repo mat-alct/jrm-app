@@ -1,4 +1,4 @@
-import { AttachmentVisibility, UserRole } from '@/types/projects';
+import { AttachmentAudience, UserRole } from '@/types/projects';
 
 export const ROLE_LABELS: Record<UserRole, string> = {
   admin: 'Administrador',
@@ -103,22 +103,20 @@ export function canManageUsers(userRoles: UserRole[] | undefined): boolean {
   return isAdmin(userRoles);
 }
 
+const AUDIENCE_ROLES: Partial<Record<UserRole, keyof AttachmentAudience>> = {
+  seller: 'seller',
+  designer: 'designer',
+  assembler: 'assembler',
+};
+
 export function canViewAttachment(
-  visibility: AttachmentVisibility,
+  audience: AttachmentAudience,
   userRoles: UserRole[] | undefined,
 ): boolean {
   if (isAdmin(userRoles)) return true;
 
-  switch (visibility) {
-    case 'internal':
-      return !!userRoles && userRoles.length > 0;
-    case 'client':
-      return !!userRoles && userRoles.length > 0;
-    case 'designer':
-      return hasRole(userRoles, 'designer');
-    case 'assembler':
-      return hasRole(userRoles, 'assembler');
-    default:
-      return false;
-  }
+  return !!userRoles?.some(role => {
+    const audienceKey = AUDIENCE_ROLES[role];
+    return audienceKey ? audience[audienceKey] : false;
+  });
 }

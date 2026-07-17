@@ -7,7 +7,10 @@ import {
   listAttachments,
   uploadAttachment,
 } from '@/services/projects/attachment.service';
-import { deleteAttachment } from '@/services/projects/attachmentAdmin';
+import {
+  deleteAttachment,
+  updateAttachmentAudience,
+} from '@/services/projects/attachmentAdmin';
 import {
   itemAttachmentPath,
   itemAttachmentStoragePath,
@@ -65,11 +68,10 @@ async function expectAttachmentDoc(
     sizeBytes: attachment.sizeBytes,
     fileKind: attachment.fileKind,
     category: attachment.category,
-    visibility: attachment.visibility,
+    audience: attachment.audience,
     uploadedBy: attachment.uploadedBy,
     uploadedByName: attachment.uploadedByName,
     uploadedByRole: attachment.uploadedByRole,
-    clientVisible: attachment.clientVisible,
   });
 }
 
@@ -83,7 +85,7 @@ describe('services/projects/attachment.service integration', () => {
     await signOut(auth);
   });
 
-  it('uploads, stores, downloads and lists an item-level attachment', async () => {
+  it('uploads, stores, downloads and lists an item-level attachment with the default audience', async () => {
     await signInAs('vendedor@seed.jrm');
     const contents = 'foto do item';
 
@@ -92,7 +94,6 @@ describe('services/projects/attachment.service integration', () => {
       itemId: 'seed-item-1',
       file: textFile('Foto Medição.png', contents, 'image/png'),
       category: 'medicao',
-      visibility: 'internal',
       uploadedBy: 'seed-seller',
       uploadedByName: 'Vendedor Seed',
       uploadedByRole: 'seller',
@@ -107,8 +108,7 @@ describe('services/projects/attachment.service integration', () => {
       sizeBytes: contents.length,
       fileKind: 'image',
       category: 'medicao',
-      visibility: 'internal',
-      clientVisible: false,
+      audience: { seller: true, designer: true, assembler: true, client: true },
     });
     expect(attachment.storagePath).toBe(
       itemAttachmentStoragePath(
@@ -135,9 +135,68 @@ describe('services/projects/attachment.service integration', () => {
         id: attachment.id,
         storagePath: attachment.storagePath,
         fileKind: 'image',
-        clientVisible: false,
+        audience: { seller: true, designer: true, assembler: true, client: true },
       }),
     ]);
+  });
+
+  it('uploads an attachment with a custom audience, excluding the assembler', async () => {
+    await signInAs('vendedor@seed.jrm');
+
+    const attachment = await uploadAttachment({
+      projectId: 'seed-project-1',
+      itemId: 'seed-item-1',
+      file: textFile('Orcamento.pdf', 'orcamento', 'application/pdf'),
+      category: 'orcamento',
+      audience: { seller: true, designer: true, assembler: false, client: true },
+      uploadedBy: 'seed-seller',
+      uploadedByName: 'Vendedor Seed',
+      uploadedByRole: 'seller',
+    });
+
+    expect(attachment.audience).toEqual({
+      seller: true,
+      designer: true,
+      assembler: false,
+      client: true,
+    });
+    await expectAttachmentDoc(
+      itemAttachmentPath('seed-project-1', 'seed-item-1', attachment.id),
+      attachment,
+    );
+  });
+
+  it('updates the audience of an existing attachment as admin', async () => {
+    await signInAs('vendedor@seed.jrm');
+    const attachment = await uploadAttachment({
+      projectId: 'seed-project-1',
+      itemId: 'seed-item-1',
+      file: textFile('Contrato.pdf', 'contrato', 'application/pdf'),
+      category: 'contrato',
+      uploadedBy: 'seed-seller',
+      uploadedByName: 'Vendedor Seed',
+      uploadedByRole: 'seller',
+    });
+    await signOut(auth);
+
+    await signInAs('admin@seed.jrm');
+    const newAudience = {
+      seller: true,
+      designer: false,
+      assembler: false,
+      client: true,
+    };
+    await updateAttachmentAudience(
+      'seed-project-1',
+      'seed-item-1',
+      attachment.id,
+      newAudience,
+    );
+
+    const snap = await adminDb
+      .doc(itemAttachmentPath('seed-project-1', 'seed-item-1', attachment.id))
+      .get();
+    expect(snap.data()).toMatchObject({ audience: newAudience });
   });
 
   it('deletes attachment metadata and object for an admin user', async () => {
@@ -147,7 +206,6 @@ describe('services/projects/attachment.service integration', () => {
       itemId: 'seed-item-1',
       file: textFile('Remover.txt', 'remover'),
       category: 'geral',
-      visibility: 'internal',
       uploadedBy: 'seed-seller',
       uploadedByName: 'Vendedor Seed',
       uploadedByRole: 'seller',

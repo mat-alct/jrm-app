@@ -45,11 +45,19 @@ export type AssemblerPaymentStatus =
   | 'pago'
   | 'confirmado_pelo_montador';
 
-export type AttachmentVisibility =
-  | 'internal'
-  | 'client'
-  | 'designer'
-  | 'assembler';
+export interface AttachmentAudience {
+  seller: boolean;
+  designer: boolean;
+  assembler: boolean;
+  client: boolean;
+}
+
+export const DEFAULT_ATTACHMENT_AUDIENCE: AttachmentAudience = {
+  seller: true,
+  designer: true,
+  assembler: true,
+  client: true,
+};
 
 export type AttachmentFileKind = 'document' | 'image' | 'model_3d';
 
@@ -158,13 +166,11 @@ export interface Attachment {
   fileKind?: AttachmentFileKind;
 
   category: string;
-  visibility: AttachmentVisibility;
+  audience: AttachmentAudience;
 
   uploadedBy: string;
   uploadedByName?: string;
   uploadedByRole: UserRole;
-
-  clientVisible: boolean;
 
   createdAt: Timestamp;
 }

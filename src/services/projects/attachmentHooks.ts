@@ -6,10 +6,10 @@ import {
   UseQueryResult,
 } from '@tanstack/react-query';
 
-import { Attachment } from '@/types/projects';
+import { Attachment, AttachmentAudience } from '@/types/projects';
 
 import { listAttachments, uploadAttachment } from './attachment.service';
-import { deleteAttachment } from './attachmentAdmin';
+import { deleteAttachment, updateAttachmentAudience } from './attachmentAdmin';
 
 function attachmentsQueryKey(projectId: string, itemId: string) {
   return ['projects', projectId, 'items', itemId, 'attachments'];
@@ -54,6 +54,27 @@ export function useDeleteAttachment(
 
   return useMutation({
     mutationFn: attachment => deleteAttachment(attachment),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: attachmentsQueryKey(projectId, itemId),
+      });
+    },
+  });
+}
+
+export function useUpdateAttachmentAudience(
+  projectId: string,
+  itemId: string,
+): UseMutationResult<
+  void,
+  Error,
+  { attachmentId: string; audience: AttachmentAudience }
+> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ attachmentId, audience }) =>
+      updateAttachmentAudience(projectId, itemId, attachmentId, audience),
     onSuccess: () => {
       void queryClient.invalidateQueries({
         queryKey: attachmentsQueryKey(projectId, itemId),

@@ -182,42 +182,57 @@ estar vazio.
   novo.
 - Commit: `refactor(projetos): remove anexos gerais do projeto`
 
-### Fase 4 — Anexos por audiência com desseleção
+### Fase 4 — Anexos por audiência com desseleção ✅ (2026-07-17)
 
 **Objetivo:** anexo é para todos por padrão (cliente incluído); desselecionar no upload;
 admin edita depois. Sem campo "para quem é".
 
-- [ ] Types: `Attachment.audience: { seller: boolean; designer: boolean;
-      assembler: boolean; client: boolean }`; remover `visibility`, `clientVisible` e o
+- [x] Types: `Attachment.audience: { seller: boolean; designer: boolean;
+      assembler: boolean; client: boolean }`; removidos `visibility`, `clientVisible` e o
       tipo `AttachmentVisibility`.
-- [ ] `uploadAttachment`: default tudo `true`; gravar `audience` recebido do form.
-- [ ] Novo `updateAttachmentAudience(projectId, itemId, attachmentId, audience)` —
-      admin-only (client SDK; rules update já são admin-only).
-- [ ] `canViewAttachment(audience, roles)` em `permissions.ts`: admin → sempre; senão
+- [x] `uploadAttachment`: default tudo `true` (`DEFAULT_ATTACHMENT_AUDIENCE`); grava
+      `audience` recebido do form.
+- [x] Novo `updateAttachmentAudience(projectId, itemId, attachmentId, audience)` —
+      admin-only (client SDK; rules update já eram admin-only).
+- [x] `canViewAttachment(audience, roles)` em `permissions.ts`: admin → sempre; senão
       `true` se algum papel do usuário tem `audience[papel] === true`.
-- [ ] Portal do cliente: filtrar por `audience.client` (substitui `clientVisible` em
-      `clientPortal.server.ts`/DTOs e queries).
-- [ ] `AttachmentUploader`: remover `<select>` de visibilidade; checkboxes "Quem pode
-      ver" (Vendedor, Desenhista, Montador, Cliente) todas marcadas. `category` continua.
-- [ ] `AttachmentList`: badge passa a mostrar exclusões ("Oculto para: Montador");
-      controle "Editar visibilidade" só para admin.
-- [ ] `submitDesignerVersion` e fotos de montagem do montador: audiência default
-      (tudo `true`).
-- [ ] `firestore.rules` + `storage.rules`: leitura por `audience.<papel> == true`
-      (mantendo os vínculos existentes de designer/montador atribuído até as fases 5/8
-      ajustarem); create valida shape do `audience` (4 chaves booleanas).
-- Testes (mexem nos 3 pontos de enforcement — cobrir os 3):
-  matriz de `canViewAttachment` reescrita em `permissionsMatrix.spec.ts`
-  (audiência × papel); `attachments.spec` util; uploader/list component specs
-  (checkboxes default marcadas, desselecionar montador); integração
-  `attachment.service.spec` (round-trip com audience) + `updateAttachmentAudience`;
-  rules firestore/storage (permitido + ≥2 negados por papel desselecionado);
-  portal: cliente não vê anexo com `client: false` (integração + e2e);
-  e2e: upload desmarcando Montador → montador não vê o arquivo em "Arquivos técnicos",
-  admin edita depois e o arquivo aparece.
-- Seed/factories: `buildAttachment` e `seedEmulator` migram para `audience`.
-- Prova de fogo: inverter o default (tudo `false`) no service → integração e component
-  vermelhos; remover a checagem de `audience.assembler` na rule → rules spec vermelho.
+- [x] Portal do cliente: filtra por `audience.client` (`src/pages/api/client-access/project.ts`).
+- [x] `AttachmentUploader`: removido o `<select>` de visibilidade; checkboxes "Quem pode
+      ver" (Vendedor, Desenhista, Montador, Cliente) todas marcadas por padrão.
+- [x] `AttachmentList`: badge de exclusões ("Oculto para: Montador"); "Editar
+      visibilidade" só para admin, com painel inline de checkboxes + Salvar/Cancelar.
+- [x] `submitDesignerVersion` e fotos de montagem do montador: audiência default
+      (tudo `true`, sem `visibility` fixo).
+- [x] `firestore.rules`: leitura por `audience.<papel> == true` (com acesso seguro via
+      `.get(chave, default)` — ver achado abaixo); create valida shape do `audience`
+      (`isValidAudienceShape`, 4 chaves booleanas). `storage.rules` não mudou — já era
+      agnóstico a visibilidade/audiência antes da Fase 4 (limitação pré-existente, fora
+      de escopo).
+- Testes: `permissionsMatrix.spec.ts` reescrita (audiência × papel);
+  `attachment.service.spec` (unit + integração, round-trip com audience);
+  `AttachmentUploader`/`AttachmentList` component specs (checkboxes default marcadas,
+  desselecionar Montador, editar audiência como admin); `updateAttachmentAudience`
+  (unit + integração); rules firestore (permitido + negados por papel desselecionado,
+  shape inválido); portal do cliente (`clientAccess.spec.ts` + `client-access/project.spec.ts`
+  migrados para `audience`); `dataHooks.spec.tsx`, `factories.ts`, `designer.service.spec.ts`
+  (unit + integração) migrados.
+- Resultados finais: unit 1231/1231, rules 26/26, integration 71/71, e2e 64/64.
+- Prova de fogo: `DEFAULT_ATTACHMENT_AUDIENCE` invertido para tudo `false` → 3 specs de
+  `AttachmentUploader` foram a vermelho; revertido. Removida a checagem de
+  `audience.assembler` na rule de leitura → rules spec foi a vermelho; revertido.
+- **Achado importante (fora do escopo desta fase, registrado para trabalho futuro):**
+  `listAttachments` (usado por `useAttachments` e pela página do montador) faz uma
+  query Firestore **sem `where`** na subcoleção de anexos do item. O Firestore não
+  consegue provar a segurança de um `list()` sem filtro quando a regra depende de
+  conteúdo do documento (`resource.data.audience.<papel>`) para papéis não-admin/
+  vendedor — a consulta inteira é negada para desenhista/montador sempre que a
+  subcoleção não estiver vazia, mesmo com a regra correta. Confirmado que essa mesma
+  limitação já existia no modelo antigo (`visibility`) antes da Fase 3/4 — nunca foi
+  pega porque o seed nunca populava anexos de item. Corrigido nesta fase apenas o
+  acesso inseguro ao campo (`.get(chave, {})` em vez de acesso direto, evitando um
+  crash de avaliação), mas a negação de `list()` em si permanece. **Fix correto exigiria
+  reestruturar `listAttachments` para usar `where('audience.<papel>', '==', true)`
+  quando o papel não for admin/vendedor** — escopo de uma fase própria, não Fase 4.
 - Commit: `feat(projetos): anexos com audiencia padrao total e desselecao`
 
 ### Fase 5 — Aprovação para desenho + fila compartilhada com claim

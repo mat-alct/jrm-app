@@ -64,6 +64,12 @@ service cloud.firestore {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys);
     }
 
+    function isValidAudienceShape(audience) {
+      return audience.keys().hasAll(['seller', 'designer', 'assembler', 'client'])
+        && audience.seller is bool && audience.designer is bool
+        && audience.assembler is bool && audience.client is bool;
+    }
+
     function assemblerConfirmsOwnPaymentOnly() {
       return isAssembler()
         && resource.data.assemblerId == request.auth.uid
@@ -167,18 +173,17 @@ service cloud.firestore {
         match /attachments/{attachmentId} {
           allow read: if isAdmin() || isSeller()
             || (isAssignedDesigner(projectId, itemId)
-                && resource.data.visibility in ['internal', 'client', 'designer'])
+                && resource.data.get('audience', {}).get('designer', false) == true)
             || (isAssignedAssembler(projectId, itemId)
-                && resource.data.visibility == 'assembler');
-          allow create: if isAdmin() || isSeller()
-            || (isAssignedDesigner(projectId, itemId)
-                && request.resource.data.visibility in ['client', 'designer']
-                && request.resource.data.uploadedBy == request.auth.uid
-                && request.resource.data.uploadedByRole == 'designer')
-            || (isAssignedAssembler(projectId, itemId)
-                && request.resource.data.visibility == 'assembler'
-                && request.resource.data.uploadedBy == request.auth.uid
-                && request.resource.data.uploadedByRole == 'assembler');
+                && resource.data.get('audience', {}).get('assembler', false) == true);
+          allow create: if isValidAudienceShape(request.resource.data.audience)
+            && (isAdmin() || isSeller()
+                || (isAssignedDesigner(projectId, itemId)
+                    && request.resource.data.uploadedBy == request.auth.uid
+                    && request.resource.data.uploadedByRole == 'designer')
+                || (isAssignedAssembler(projectId, itemId)
+                    && request.resource.data.uploadedBy == request.auth.uid
+                    && request.resource.data.uploadedByRole == 'assembler'));
           allow update, delete: if isAdmin();
         }
 

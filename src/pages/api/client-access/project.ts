@@ -43,11 +43,7 @@ async function clientAttachmentsForItem(
     .get();
   const attachments = snap.docs
     .map(doc => ({ id: doc.id, ...doc.data() }) as Attachment)
-    .filter(
-      attachment =>
-        attachment.visibility === 'client' &&
-        attachment.clientVisible !== false,
-    );
+    .filter(attachment => attachment.audience.client);
 
   return Promise.all(
     attachments.map(async attachment => {

@@ -318,15 +318,19 @@ describe('api/client-access integration', () => {
         fileName: 'projeto-final.pdf',
         originalFileName: 'projeto-final.pdf',
         mimeType: 'application/pdf',
-        visibility: 'client',
-        clientVisible: true,
+        audience: { seller: true, designer: true, assembler: true, client: true },
         storagePath: `projects/${PROJECT_ID}/items/${PENDING_ITEM_ID}/desenho/anexo-cliente_projeto-final.pdf`,
       });
       await attachments.doc('anexo-interno').set({
         fileName: 'custos-internos.pdf',
         originalFileName: 'custos-internos.pdf',
         mimeType: 'application/pdf',
-        visibility: 'internal',
+        audience: {
+          seller: true,
+          designer: true,
+          assembler: true,
+          client: false,
+        },
         storagePath: `projects/${PROJECT_ID}/items/${PENDING_ITEM_ID}/desenho/anexo-interno_custos-internos.pdf`,
       });
     });

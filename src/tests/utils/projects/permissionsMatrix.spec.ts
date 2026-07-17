@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { AttachmentVisibility, UserRole } from '@/types/projects';
+import { AttachmentAudience, UserRole } from '@/types/projects';
 import {
   canAccessPage,
   canAssignAssembler,
@@ -169,45 +169,51 @@ describe('getDefaultRouteForRoles — precedencia entre papeis', () => {
   });
 });
 
-describe('canViewAttachment — visibilidade x papel', () => {
-  const VISIBILITIES: AttachmentVisibility[] = [
-    'internal',
-    'client',
+describe('canViewAttachment — audiencia x papel', () => {
+  const AUDIENCE_KEYS: (keyof AttachmentAudience)[] = [
+    'seller',
     'designer',
     'assembler',
   ];
 
-  const EXPECTED: Record<AttachmentVisibility, UserRole[]> = {
-    internal: ['admin', 'seller', 'designer', 'assembler', 'woodworker'],
-    client: ['admin', 'seller', 'designer', 'assembler', 'woodworker'],
-    designer: ['admin', 'designer'],
-    assembler: ['admin', 'assembler'],
+  const NO_ONE: AttachmentAudience = {
+    seller: false,
+    designer: false,
+    assembler: false,
+    client: false,
   };
 
-  const PAIRS = VISIBILITIES.flatMap(visibility =>
-    ROLES.map(role => [visibility, role] as [AttachmentVisibility, UserRole]),
+  function audienceWithOnly(key: keyof AttachmentAudience): AttachmentAudience {
+    return { ...NO_ONE, [key]: true };
+  }
+
+  const EXPECTED: Record<keyof AttachmentAudience, UserRole[]> = {
+    seller: ['admin', 'seller'],
+    designer: ['admin', 'designer'],
+    assembler: ['admin', 'assembler'],
+    client: ['admin'],
+  };
+
+  const PAIRS = AUDIENCE_KEYS.flatMap(key =>
+    ROLES.map(role => [key, role] as [keyof AttachmentAudience, UserRole]),
   );
 
-  it.each(PAIRS)('anexo %s visto por %s', (visibility, role) => {
-    expect(canViewAttachment(visibility, [role])).toBe(
-      EXPECTED[visibility].includes(role),
+  it.each(PAIRS)('anexo visivel para %s visto por %s', (key, role) => {
+    expect(canViewAttachment(audienceWithOnly(key), [role])).toBe(
+      EXPECTED[key].includes(role),
     );
   });
 
   it('nega tudo para usuario sem papel', () => {
-    for (const visibility of VISIBILITIES) {
-      expect(canViewAttachment(visibility, [])).toBe(false);
-      expect(canViewAttachment(visibility, undefined)).toBe(false);
+    for (const key of AUDIENCE_KEYS) {
+      expect(canViewAttachment(audienceWithOnly(key), [])).toBe(false);
+      expect(canViewAttachment(audienceWithOnly(key), undefined)).toBe(false);
     }
   });
 
-  it('admin ve qualquer visibilidade, inclusive uma desconhecida', () => {
-    expect(
-      canViewAttachment('desconhecida' as AttachmentVisibility, ['admin']),
-    ).toBe(true);
-    expect(
-      canViewAttachment('desconhecida' as AttachmentVisibility, ['seller']),
-    ).toBe(false);
+  it('admin ve qualquer anexo, mesmo com audiencia toda desmarcada', () => {
+    expect(canViewAttachment(NO_ONE, ['admin'])).toBe(true);
+    expect(canViewAttachment(NO_ONE, ['seller'])).toBe(false);
   });
 });
 

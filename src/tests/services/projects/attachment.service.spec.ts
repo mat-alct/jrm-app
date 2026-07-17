@@ -3,16 +3,24 @@ import {
   formatFileSize,
   sanitizeFileName,
 } from '@/services/projects/attachment.service';
-import { Attachment } from '@/types/projects';
+import { Attachment, AttachmentAudience } from '@/types/projects';
 import {
   inferAttachmentFileKind,
   isModel3DAttachment,
 } from '@/utils/projects/attachments';
 
 function attachment(
-  visibility: Attachment['visibility'],
-): Pick<Attachment, 'visibility'> {
-  return { visibility };
+  audience: Partial<AttachmentAudience>,
+): Pick<Attachment, 'audience'> {
+  return {
+    audience: {
+      seller: false,
+      designer: false,
+      assembler: false,
+      client: false,
+      ...audience,
+    },
+  };
 }
 
 describe('services/projects/attachment.service', () => {
@@ -71,33 +79,23 @@ describe('services/projects/attachment.service', () => {
   });
 
   describe('filterAttachmentsByRole', () => {
-    const attachments = [
-      attachment('internal'),
-      attachment('client'),
-      attachment('designer'),
-      attachment('assembler'),
-    ] as Attachment[];
+    const sellerOnly = attachment({ seller: true });
+    const designerOnly = attachment({ designer: true });
+    const assemblerOnly = attachment({ assembler: true });
+    const attachments = [sellerOnly, designerOnly, assemblerOnly] as Attachment[];
 
-    it('lets admin see every visibility', () => {
-      expect(filterAttachmentsByRole(attachments, ['admin'])).toHaveLength(4);
+    it('lets admin see every attachment regardless of audience', () => {
+      expect(filterAttachmentsByRole(attachments, ['admin'])).toHaveLength(3);
     });
 
-    it('only lets designer see internal/client/designer attachments', () => {
+    it('only lets designer see attachments with audience.designer', () => {
       const result = filterAttachmentsByRole(attachments, ['designer']);
-      expect(result.map(a => a.visibility)).toEqual([
-        'internal',
-        'client',
-        'designer',
-      ]);
+      expect(result).toEqual([designerOnly]);
     });
 
-    it('only lets assembler see internal/client/assembler attachments', () => {
+    it('only lets assembler see attachments with audience.assembler', () => {
       const result = filterAttachmentsByRole(attachments, ['assembler']);
-      expect(result.map(a => a.visibility)).toEqual([
-        'internal',
-        'client',
-        'assembler',
-      ]);
+      expect(result).toEqual([assemblerOnly]);
     });
 
     it('blocks unauthenticated access to every attachment', () => {

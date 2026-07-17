@@ -95,11 +95,10 @@ describe('services/projects/designer.service integration', () => {
       fileName: 'Projeto_3D.glb',
       originalFileName: 'Projeto 3D.glb',
       category: 'versao-1',
-      visibility: 'client',
+      audience: { seller: true, designer: true, assembler: true, client: true },
       uploadedBy: 'seed-designer',
       uploadedByName: 'Desenhista Seed',
       uploadedByRole: 'designer',
-      clientVisible: true,
       fileKind: 'model_3d',
     });
 

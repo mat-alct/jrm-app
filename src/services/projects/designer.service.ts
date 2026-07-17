@@ -86,7 +86,6 @@ export async function submitDesignerVersion(
       itemId,
       file,
       category: `versao-${versionNumber}`,
-      visibility: 'client',
       uploadedBy: actor.uid,
       uploadedByName: actor.name,
       uploadedByRole: 'designer',

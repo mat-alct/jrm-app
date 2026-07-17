@@ -79,7 +79,6 @@ test.describe('jornada Via A — operação interna', () => {
     await page.goto(`/projetos/${projectId}/itens/${balcaoId}`);
 
     await page.getByPlaceholder('Ex: fotos do ambiente').fill('contrato');
-    await page.locator('select').first().selectOption('client');
     await page.locator('input[type="file"]').setInputFiles(PDF_FIXTURE);
     await page.getByRole('button', { name: 'Enviar' }).click();
 
@@ -95,7 +94,7 @@ test.describe('jornada Via A — operação interna', () => {
     const attachment = attachmentsSnap.docs[0].data();
     expect(attachment).toMatchObject({
       originalFileName: 'contrato-e2e.pdf',
-      visibility: 'client',
+      audience: { seller: true, designer: true, assembler: true, client: true },
       category: 'contrato',
     });
 

@@ -126,7 +126,12 @@ describe('firestore.rules', () => {
           'projects/project-1/items/designer-item/attachments/assembler-file',
         )
         .set({
-          visibility: 'assembler',
+          audience: {
+            seller: true,
+            designer: false,
+            assembler: true,
+            client: false,
+          },
           uploadedBy: uid.assembler,
           uploadedByRole: 'assembler',
         });
@@ -134,7 +139,12 @@ describe('firestore.rules', () => {
       await db
         .doc('projects/project-1/items/designer-item/attachments/internal-file')
         .set({
-          visibility: 'internal',
+          audience: {
+            seller: true,
+            designer: true,
+            assembler: false,
+            client: false,
+          },
           uploadedBy: uid.seller,
           uploadedByRole: 'seller',
         });
@@ -546,7 +556,14 @@ describe('firestore.rules', () => {
     const internalFile =
       'projects/project-1/items/designer-item/attachments/internal-file';
 
-    it('permite montador atribuido ler/criar apenas anexos assembler e admin controlar updates', async () => {
+    const fullAudience = {
+      seller: true,
+      designer: true,
+      assembler: true,
+      client: true,
+    };
+
+    it('le por audience.designer/audience.assembler e admin controla updates', async () => {
       await assertSucceeds(dbAs('admin').doc(assemblerFile).get());
       await assertSucceeds(dbAs('seller').doc(assemblerFile).get());
       await assertSucceeds(dbAs('assembler').doc(assemblerFile).get());
@@ -557,61 +574,6 @@ describe('firestore.rules', () => {
       await assertFails(dbAs('designer').doc(assemblerFile).get());
       await assertFails(anonDb().doc(assemblerFile).get());
 
-      const createPath =
-        'projects/project-1/items/designer-item/attachments/assembler-created';
-      await assertSucceeds(
-        dbAs('assembler').doc(createPath).set({
-          visibility: 'assembler',
-          uploadedBy: uid.assembler,
-          uploadedByRole: 'assembler',
-        }),
-      );
-      await assertFails(
-        dbAs('assembler').doc(`${createPath}-client`).set({
-          visibility: 'client',
-          uploadedBy: uid.assembler,
-          uploadedByRole: 'assembler',
-        }),
-      );
-      await assertFails(
-        dbAs('assembler').doc(`${createPath}-wrong-user`).set({
-          visibility: 'assembler',
-          uploadedBy: uid.otherAssembler,
-          uploadedByRole: 'assembler',
-        }),
-      );
-      await assertFails(
-        dbAs('assembler').doc(`${createPath}-wrong-role`).set({
-          visibility: 'assembler',
-          uploadedBy: uid.assembler,
-          uploadedByRole: 'seller',
-        }),
-      );
-
-      const designerCreatePath =
-        'projects/project-1/items/designer-item/attachments/designer-client';
-      await assertSucceeds(
-        dbAs('designer').doc(designerCreatePath).set({
-          visibility: 'client',
-          uploadedBy: uid.designer,
-          uploadedByRole: 'designer',
-        }),
-      );
-      await assertFails(
-        dbAs('designer').doc(`${designerCreatePath}-assembler`).set({
-          visibility: 'assembler',
-          uploadedBy: uid.designer,
-          uploadedByRole: 'designer',
-        }),
-      );
-      await assertFails(
-        dbAs('otherDesigner').doc(`${designerCreatePath}-other`).set({
-          visibility: 'client',
-          uploadedBy: uid.otherDesigner,
-          uploadedByRole: 'designer',
-        }),
-      );
-
       await assertSucceeds(
         dbAs('admin').doc(assemblerFile).update({ reviewed: true }),
       );
@@ -621,6 +583,87 @@ describe('firestore.rules', () => {
       );
       await assertFails(dbAs('assembler').doc(assemblerFile).delete());
       await assertFails(dbAs('inactive').doc(assemblerFile).get());
+    });
+
+    it('permite montador/desenhista atribuido criar anexo com audience valida e proprio uid/role', async () => {
+      const createPath =
+        'projects/project-1/items/designer-item/attachments/assembler-created';
+      await assertSucceeds(
+        dbAs('assembler').doc(createPath).set({
+          audience: fullAudience,
+          uploadedBy: uid.assembler,
+          uploadedByRole: 'assembler',
+        }),
+      );
+      await assertFails(
+        dbAs('assembler').doc(`${createPath}-wrong-user`).set({
+          audience: fullAudience,
+          uploadedBy: uid.otherAssembler,
+          uploadedByRole: 'assembler',
+        }),
+      );
+      await assertFails(
+        dbAs('assembler').doc(`${createPath}-wrong-role`).set({
+          audience: fullAudience,
+          uploadedBy: uid.assembler,
+          uploadedByRole: 'seller',
+        }),
+      );
+      await assertFails(
+        dbAs('assembler').doc(`${createPath}-bad-shape`).set({
+          audience: { seller: true, designer: true, assembler: true },
+          uploadedBy: uid.assembler,
+          uploadedByRole: 'assembler',
+        }),
+      );
+      await assertFails(
+        dbAs('assembler').doc(`${createPath}-bad-type`).set({
+          audience: { ...fullAudience, client: 'sim' },
+          uploadedBy: uid.assembler,
+          uploadedByRole: 'assembler',
+        }),
+      );
+
+      const designerCreatePath =
+        'projects/project-1/items/designer-item/attachments/designer-client';
+      await assertSucceeds(
+        dbAs('designer').doc(designerCreatePath).set({
+          audience: fullAudience,
+          uploadedBy: uid.designer,
+          uploadedByRole: 'designer',
+        }),
+      );
+      await assertFails(
+        dbAs('otherDesigner').doc(`${designerCreatePath}-other`).set({
+          audience: fullAudience,
+          uploadedBy: uid.otherDesigner,
+          uploadedByRole: 'designer',
+        }),
+      );
+    });
+
+    it('admin/seller criam anexo com qualquer audience valida', async () => {
+      await assertSucceeds(
+        dbAs('admin').doc('projects/project-1/items/designer-item/attachments/admin-created').set({
+          audience: fullAudience,
+          uploadedBy: uid.admin,
+          uploadedByRole: 'admin',
+        }),
+      );
+      await assertSucceeds(
+        dbAs('seller').doc('projects/project-1/items/designer-item/attachments/seller-created').set({
+          audience: fullAudience,
+          uploadedBy: uid.seller,
+          uploadedByRole: 'seller',
+        }),
+      );
+      await assertFails(
+        dbAs('admin').doc('projects/project-1/items/designer-item/attachments/admin-bad-shape').set({
+          audience: { seller: true },
+          uploadedBy: uid.admin,
+          uploadedByRole: 'admin',
+        }),
+      );
     });
   });
 

@@ -4,7 +4,7 @@ import { AttachmentUploader } from '@/components/projects/AttachmentUploader';
 import { toaster } from '@/components/ui/toaster';
 import { uploadAttachment } from '@/services/projects/attachment.service';
 
-import { fireEvent, render, screen, waitFor } from '../../testUtils';
+import { act, fireEvent, render, screen, waitFor } from '../../testUtils';
 
 // Camada de service: o hook real (useUploadAttachment) roda de verdade por cima.
 jest.mock('@/services/projects/attachment.service', () => ({
@@ -53,7 +53,7 @@ describe('AttachmentUploader', () => {
     mockedUpload.mockResolvedValue({ id: 'attachment-1' } as never);
   });
 
-  it('envia o arquivo com categoria, visibilidade e autor corretos', async () => {
+  it('envia o arquivo com categoria, audiencia padrao e autor corretos', async () => {
     const { container } = renderUploader();
 
     fireEvent.change(screen.getByPlaceholderText('Ex: fotos do ambiente'), {
@@ -68,7 +68,7 @@ describe('AttachmentUploader', () => {
         projectId: 'project-1',
         itemId: 'item-1',
         category: 'medicao',
-        visibility: 'internal',
+        audience: { seller: true, designer: true, assembler: true, client: true },
         uploadedBy: 'user-1',
         uploadedByName: 'Vendedor',
         uploadedByRole: 'seller',
@@ -92,24 +92,38 @@ describe('AttachmentUploader', () => {
     );
   });
 
-  it('usa a visibilidade escolhida', async () => {
+  it('desmarca um papel da audiencia antes de enviar', async () => {
     const { container } = renderUploader();
 
     fireEvent.change(screen.getByPlaceholderText('Ex: fotos do ambiente'), {
       target: { value: 'montagem' },
     });
-    // O input de categoria tem `list`, entao tambem expoe role combobox —
-    // por isso o select de visibilidade e buscado pela tag.
-    fireEvent.change(container.querySelector('select') as HTMLSelectElement, {
-      target: { value: 'assembler' },
+    const montadorCheckbox = screen.getByRole('checkbox', { name: 'Montador' });
+    await act(async () => {
+      fireEvent.click(montadorCheckbox);
     });
     selectFiles(container, [pdf()]);
     fireEvent.click(screen.getByRole('button', { name: 'Enviar' }));
 
     await waitFor(() => expect(mockedUpload).toHaveBeenCalled());
     expect(mockedUpload).toHaveBeenCalledWith(
-      expect.objectContaining({ visibility: 'assembler' }),
+      expect.objectContaining({
+        audience: {
+          seller: true,
+          designer: true,
+          assembler: false,
+          client: true,
+        },
+      }),
     );
+  });
+
+  it('checkboxes de audiencia comecam todas marcadas', () => {
+    renderUploader();
+
+    for (const label of ['Vendedor', 'Desenhista', 'Montador', 'Cliente']) {
+      expect(screen.getByRole('checkbox', { name: label })).toBeChecked();
+    }
   });
 
   it('envia um arquivo por vez quando ha varios selecionados', async () => {

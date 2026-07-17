@@ -37,7 +37,12 @@ test.describe('portal do cliente', () => {
         fileName: 'custos-internos.pdf',
         originalFileName: 'custos-internos.pdf',
         mimeType: 'application/pdf',
-        visibility: 'internal',
+        audience: {
+          seller: true,
+          designer: true,
+          assembler: true,
+          client: false,
+        },
         storagePath: `projects/${PROJECT_ID}/items/${PENDING_ITEM}/desenho/custos-internos.pdf`,
       });
   });
