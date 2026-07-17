@@ -5,6 +5,7 @@ import { fireEvent, render, screen, waitFor } from '../../testUtils';
 jest.mock('next/router', () => ({
   useRouter: () => ({
     query: { publicId: 'public-1' },
+    isReady: true,
     push: jest.fn(),
   }),
 }));
