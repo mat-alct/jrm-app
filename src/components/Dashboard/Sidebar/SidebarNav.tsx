@@ -7,7 +7,6 @@ import {
   FaHammer,
   FaHome,
   FaMoneyBillWave,
-  FaPencilRuler,
   FaPlusCircle,
   FaSignOutAlt,
   FaSlidersH,
@@ -125,8 +124,7 @@ export const SidebarNav: React.FC = () => {
         )}
         {(canAccess('/projetos/novo') ||
           canAccess('/projetos') ||
-          canAccess('/projetos/dashboard') ||
-          canAccess('/desenhista')) && (
+          canAccess('/projetos/dashboard')) && (
           <NavSection title="Projetos">
             {canAccess('/projetos/novo') && (
               <NavLink icon={FaHammer} href="/projetos/novo">
@@ -141,11 +139,6 @@ export const SidebarNav: React.FC = () => {
             {canAccess('/projetos/dashboard') && (
               <NavLink icon={FaChartLine} href="/projetos/dashboard">
                 Dashboard
-              </NavLink>
-            )}
-            {canAccess('/desenhista') && (
-              <NavLink icon={FaPencilRuler} href="/desenhista">
-                Minha fila
               </NavLink>
             )}
           </NavSection>

@@ -43,7 +43,6 @@ test.describe('permissões por perfil (usuários reais do seed)', () => {
       '/cortes/configuracoes-maquina',
       '/projetos/novo',
       '/projetos',
-      '/desenhista',
       '/montador',
       '/montador/financeiro',
       ...ADMIN_ONLY_ROUTES,
@@ -75,7 +74,6 @@ test.describe('permissões por perfil (usuários reais do seed)', () => {
       '/administracao/fretes',
     ]);
     await expectMissingLinks(page, [
-      '/desenhista',
       '/montador',
       '/montador/financeiro',
       ...ADMIN_ONLY_ROUTES,
@@ -110,7 +108,6 @@ test.describe('permissões por perfil (usuários reais do seed)', () => {
       '/cortes/materiais',
       '/projetos/novo',
       '/projetos',
-      '/desenhista',
       '/montador',
       '/administracao/fretes',
       ...ADMIN_ONLY_ROUTES,
@@ -135,28 +132,38 @@ test.describe('permissões por perfil (usuários reais do seed)', () => {
     await expectPath(page, '/');
   });
 
-  test('desenhista cai na própria fila e não acessa projetos', async ({ page }) => {
+  test('desenhista cai em /projetos, só na aba de desenhos pendentes', async ({
+    page,
+  }) => {
     await loginAs(page, 'designer');
-    await expectPath(page, '/desenhista');
+    await expectPath(page, '/projetos');
 
-    await expectVisibleLinks(page, ['/desenhista']);
+    await expectVisibleLinks(page, ['/projetos']);
     await expectMissingLinks(page, [
       '/',
       '/cortes/novoservico',
       '/cortes/listadecortes',
       '/cortes/configuracoes-maquina',
-      '/projetos',
+      '/projetos/novo',
       '/montador',
       ...ADMIN_ONLY_ROUTES,
     ]);
 
-    await expect(page.getByText('Minha Fila').first()).toBeVisible();
+    await expect(
+      page.getByRole('tab', { name: 'Desenhos pendentes' }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('tab', { name: 'Projetos' }),
+    ).toHaveCount(0);
+    await expect(
+      page.getByRole('button', { name: 'Novo Projeto' }),
+    ).toHaveCount(0);
 
     await page.goto('/');
-    await expectPath(page, '/desenhista');
+    await expectPath(page, '/projetos');
 
-    await page.goto('/projetos');
-    await expectPath(page, '/desenhista');
+    await page.goto('/projetos/novo');
+    await expectPath(page, '/projetos');
   });
 
   test('montador acessa somente seus dashboards específicos', async ({ page }) => {
@@ -169,7 +176,6 @@ test.describe('permissões por perfil (usuários reais do seed)', () => {
       '/cortes/listadecortes',
       '/cortes/configuracoes-maquina',
       '/projetos',
-      '/desenhista',
       ...ADMIN_ONLY_ROUTES,
     ]);
 

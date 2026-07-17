@@ -288,25 +288,35 @@ admin edita depois. Sem campo "para quem é".
   unit foi a vermelho; revertido.
 - Commit: `feat(projetos): aprovacao para desenho e fila compartilhada com claim`
 
-### Fase 6 — Aba "Desenhos pendentes" em Listar projetos
+### Fase 6 — Aba "Desenhos pendentes" em Listar projetos ✅ (2026-07-17)
 
 **Objetivo:** `/projetos` com abas; desenhista passa a usar essa tela.
 
-- [ ] `/projetos` (index) com abas: **"Projetos"** (admin/vendedor) e **"Desenhos
-      pendentes"** (admin/desenhista). Desenhista vê só a segunda; admin vê as duas.
-- [ ] Aba de desenhos lista a fila da Fase 5; clique abre
-      `/projetos/[projectId]/itens/[itemId]` (admin e desenhista têm acesso a todos os
-      anexos do item conforme audiência).
-- [ ] `PAGE_ACCESS['/projetos']` → `['admin','seller','designer']`;
-      `getDefaultRouteForRoles`: designer → `/projetos`; `/desenhista` vira redirect
-      (ou remoção da página + ajuste do `PAGE_ACCESS` e do meta-teste).
-- [ ] Sidebar: "Listar projetos" visível para desenhista; remover/ajustar "Minha fila".
-- Testes: `permissionsMatrix.spec.ts` (`EXPECTED_ACCESS` atualizado — o meta-teste
-  obriga); component spec das abas por papel; e2e `permissions.spec.ts` (novo destino
-  do desenhista) e fluxo: desenhista loga → cai em `/projetos` → vê só a aba de
-  desenhos → abre item da fila.
-- Prova de fogo: remover o gate da aba "Projetos" (mostrar para desenhista) → component
-  spec vermelho.
+- [x] `/projetos` (index) reescrito com `Tabs.Root/List/Trigger/Content` do Chakra v3:
+      aba **"Projetos"** (admin/vendedor) e **"Desenhos pendentes"** (admin/desenhista,
+      reaproveitando `DesignerQueue`+`useDesignQueue`+`useClaimDesignItem` da Fase 5).
+      Desenhista vê só a segunda aba (nenhuma aba "Projetos" renderizada, não só
+      escondida); admin vê as duas, com "Projetos" selecionada por padrão.
+- [x] Clique num item da fila abre `/projetos/[projectId]/itens/[itemId]` (já herdava
+      acesso por audiência da Fase 4/5, sem mudança adicional aqui).
+- [x] `PAGE_ACCESS['/projetos']` → `['admin','seller','designer']`;
+      `getDefaultRouteForRoles`: designer → `/projetos`. **Removida** a página
+      `/desenhista` (em vez de redirect) — sem sobra de rota morta; `EXPECTED_ACCESS`
+      e o `PAGE_ACCESS` real ajustados juntos (o meta-teste de páginas exige isso).
+- [x] Sidebar: link único "Listar projetos" agora serve todos os papéis com acesso;
+      removida a entrada separada "Minha fila" (e o ícone `FaPencilRuler`, sem mais uso).
+- Testes: `permissionsMatrix.spec.ts` (`EXPECTED_ACCESS`, tabela de precedência de
+  `getDefaultRouteForRoles`); novo `AccessGate.spec.tsx` ajustado (redirect do designer
+  agora é `/projetos`); novo `src/tests/pages/projetos/index.spec.tsx` (3 casos: admin
+  vê as duas abas, vendedor só "Projetos", desenhista só "Desenhos pendentes" com a
+  fila e sem o botão "Novo Projeto"); e2e `permissions.spec.ts` (desenhista cai em
+  `/projetos`, só a aba de desenhos, sidebar sem `/projetos/novo`), `designer-queue.spec.ts`,
+  `project-lifecycle.spec.ts` e `admin-users.spec.ts` migrados de `/desenhista`/"Minha Fila"
+  para `/projetos`/aba "Desenhos pendentes".
+- Resultados finais: unit 1237/1237, rules 29/29, integration 76/76, e2e 65/65.
+- Prova de fogo: gate da aba "Projetos" fixado em `true` (visível para todo mundo,
+  inclusive desenhista) → `index.spec.tsx` foi a vermelho (o teste do desenhista
+  falhou ao não achar a aba ausente); revertido.
 - Commit: `feat(projetos): aba de desenhos pendentes em listar projetos`
 
 ### Fase 7 — Pedir mais informações + aba de notificações

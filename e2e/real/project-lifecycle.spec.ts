@@ -186,7 +186,9 @@ test.describe('jornada Via A — operação interna', () => {
 
     // ---------- 4. desenhista vê a fila e envia a versão ----------
     await loginAs(page, 'designer');
-    await expect(page.getByText('Minha Fila').first()).toBeVisible();
+    await expect(
+      page.getByRole('tab', { name: 'Desenhos pendentes' }),
+    ).toBeVisible();
     await expect(page.getByText('Cozinha planejada')).toBeVisible();
 
     await page.goto(`/projetos/${projectId}/itens/${itemId}`);

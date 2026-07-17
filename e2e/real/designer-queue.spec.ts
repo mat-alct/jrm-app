@@ -44,9 +44,11 @@ test.describe('fila compartilhada de desenhos', () => {
     page,
   }) => {
     await loginAs(page, 'designer');
-    await expectPath(page, '/desenhista');
+    await expectPath(page, '/projetos');
 
-    await expect(page.getByText('Fila de desenhos').first()).toBeVisible();
+    await expect(
+      page.getByRole('tab', { name: 'Desenhos pendentes' }),
+    ).toBeVisible();
     await expect(page.getByText('Cozinha planejada')).toBeVisible();
     await expect(page.getByText('Rack de sala')).toBeVisible();
     await expect(page.getByText('Atribuído a Outro Desenhista')).toBeVisible();
@@ -76,7 +78,7 @@ test.describe('fila compartilhada de desenhos', () => {
     adminDb,
   }) => {
     await loginAs(page, 'designer');
-    await expectPath(page, '/desenhista');
+    await expectPath(page, '/projetos');
 
     const queueRow = page
       .locator('div', { has: page.getByText('Cozinha planejada') })

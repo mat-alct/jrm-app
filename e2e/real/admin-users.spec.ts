@@ -57,8 +57,10 @@ test.describe('administração de usuários', () => {
     await page.getByPlaceholder('Senha').fill(NEW_USER_PASSWORD);
     await page.getByRole('button', { name: 'Entrar' }).click();
 
-    await expectPath(page, '/desenhista');
-    await expect(page.getByText('Minha Fila').first()).toBeVisible();
+    await expectPath(page, '/projetos');
+    await expect(
+      page.getByRole('tab', { name: 'Desenhos pendentes' }),
+    ).toBeVisible();
   });
 
   test('e-mail duplicado é recusado sem criar nada', async ({ page, consoleErrors }) => {

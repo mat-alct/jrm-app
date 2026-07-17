@@ -39,12 +39,11 @@ const EXPECTED_ACCESS: Record<string, UserRole[]> = {
   '/administracao/usuarios': ['admin'],
   '/administracao/configuracoes-prazos': ['admin'],
   '/administracao/financeiro-montadores': ['admin'],
-  '/projetos': ['admin', 'seller'],
+  '/projetos': ['admin', 'seller', 'designer'],
   '/projetos/novo': ['admin', 'seller'],
   '/projetos/dashboard': ['admin'],
   '/projetos/[projectId]': ['admin', 'seller'],
   '/projetos/[projectId]/itens/[itemId]': ['admin', 'seller', 'designer'],
-  '/desenhista': ['admin', 'designer'],
   '/montador': ['admin', 'assembler'],
   '/montador/financeiro': ['admin', 'assembler'],
   '/montador/item/[projectId]/[itemId]': ['admin', 'assembler'],
@@ -140,7 +139,7 @@ describe('isPublicRoute', () => {
 
 describe('getDefaultRouteForRoles — precedencia entre papeis', () => {
   it.each([
-    [['designer'], '/desenhista'],
+    [['designer'], '/projetos'],
     [['assembler'], '/montador'],
     [['admin'], '/'],
     [['seller'], '/'],
@@ -152,9 +151,9 @@ describe('getDefaultRouteForRoles — precedencia entre papeis', () => {
 
   it('desenhista tem precedencia sobre montador e sobre admin', () => {
     expect(getDefaultRouteForRoles(['assembler', 'designer'])).toBe(
-      '/desenhista',
+      '/projetos',
     );
-    expect(getDefaultRouteForRoles(['admin', 'designer'])).toBe('/desenhista');
+    expect(getDefaultRouteForRoles(['admin', 'designer'])).toBe('/projetos');
   });
 
   it('montador tem precedencia sobre admin', () => {

@@ -36,7 +36,7 @@ export function canAccessRoles(
 export function getDefaultRouteForRoles(
   userRoles: UserRole[] | undefined,
 ): string {
-  if (hasRole(userRoles, 'designer')) return '/desenhista';
+  if (hasRole(userRoles, 'designer')) return '/projetos';
   if (hasRole(userRoles, 'assembler')) return '/montador';
   return '/';
 }
@@ -54,12 +54,11 @@ const PAGE_ACCESS: Record<string, UserRole[]> = {
   '/administracao/usuarios': ['admin'],
   '/administracao/configuracoes-prazos': ['admin'],
   '/administracao/financeiro-montadores': ['admin'],
-  '/projetos': ['admin', 'seller'],
+  '/projetos': ['admin', 'seller', 'designer'],
   '/projetos/novo': ['admin', 'seller'],
   '/projetos/dashboard': ['admin'],
   '/projetos/[projectId]': ['admin', 'seller'],
   '/projetos/[projectId]/itens/[itemId]': ['admin', 'seller', 'designer'],
-  '/desenhista': ['admin', 'designer'],
   '/montador': ['admin', 'assembler'],
   '/montador/financeiro': ['admin', 'assembler'],
   '/montador/item/[projectId]/[itemId]': ['admin', 'assembler'],

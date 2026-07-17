@@ -94,7 +94,7 @@ describe('AccessGate', () => {
 
     renderGate(fakeAuthUser());
 
-    expect(replace).toHaveBeenCalledWith('/desenhista');
+    expect(replace).toHaveBeenCalledWith('/projetos');
     expect(screen.queryByText('conteudo protegido')).not.toBeInTheDocument();
   });
 
