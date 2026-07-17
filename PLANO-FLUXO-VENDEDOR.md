@@ -235,42 +235,57 @@ admin edita depois. Sem campo "para quem é".
   quando o papel não for admin/vendedor** — escopo de uma fase própria, não Fase 4.
 - Commit: `feat(projetos): anexos com audiencia padrao total e desselecao`
 
-### Fase 5 — Aprovação para desenho + fila compartilhada com claim
+### Fase 5 — Aprovação para desenho + fila compartilhada com claim ✅ (2026-07-17)
 
 **Objetivo:** desacoplar aprovação de atribuição; fila única de desenhos pendentes.
 
-- [ ] Nova ação `approveItemForDesign(projectId, itemId, actor)` (admin/vendedor):
-      valida `projeto_criado → aguardando_desenho` via `canTransition`, computa
-      `deadlineCurrent` (`computeDeadline('aguardando_desenho', defaults)`), **não**
-      mexe em designer. Botão "Aprovar para desenho" no item (visível em
-      `projeto_criado`; na Fase 7 também em `aguardando_informacoes`).
-- [ ] Fila compartilhada em `designer.service.ts`: `getDesignQueue()` = collectionGroup
-      `items` com `status in ['aguardando_desenho','alteracao_solicitada']` (itens
-      assumidos continuam na lista, marcados "Atribuído a {designerName}").
-      Atualizar `firestore.indexes.json` se necessário + teste de contrato
-      `firestoreIndexes.spec.ts`.
-- [ ] Claim: `claimDesignItem` — desenhista grava `designerId/designerName = ele mesmo`
-      **somente se vazio**. Rule nova: designer pode dar update no item apenas nesse
-      formato (campo vazio → próprio uid).
-- [ ] Atribuição pelo admin: modal com opções fixas `DESIGNER_QUICK_OPTIONS =
-      ['Renato','Marcio']` + input "Outros"; casa com usuário designer ativo →
-      `designerId + designerName`; senão só `designerName`. Admin pode reatribuir.
-- [ ] `AssignDesignerModal` reescrito para esse formato (sem transição de status).
-- [ ] `DesignerUploadPanel`: exige claim (`item.designerId === uid`) — sem mudança na
-      condição, mas o caminho até ela muda.
-- [ ] Rules: leitura/list de item por designer ampliada — designer ativo lê itens com
-      status de fila (para avaliar antes de assumir) além dos já atribuídos a ele;
-      atualizar rule de collection-group list.
-- Testes: unit da nova ação e do claim (incluindo corrida: claim sobre item já assumido
-  falha); integração `designer.service` (fila retorna não-atribuídos; claim grava;
-  segundo claim rejeitado); rules (designer lê item da fila; designer não sobrescreve
-  claim alheio; update limitado aos campos do claim); `statusMatrix` **não muda** nesta
-  fase (transições iguais); adaptar `designer-queue.spec.ts` e2e — a premissa antiga
-  ("designer só vê os próprios itens") **inverte**: agora vê a fila toda, com
-  "Atribuído a" nos assumidos; `project-lifecycle` e2e: aprovar para desenho sem
-  desenhista → desenhista assume → envia versão.
-- Prova de fogo: permitir claim sobre item já atribuído no service → unit/integração
-  vermelhos.
+- [x] Nova ação `approveItemForDesign(projectId, itemId, actor)` (`designer.service.ts`,
+      admin/vendedor via `canAssignDesigner`): computa `deadlineCurrent` e chama
+      `updateItemStatus(...,'aguardando_desenho',...)` (validação `projeto_criado →
+      aguardando_desenho` já embutida em `canTransition`), **não** mexe em designer.
+      Botão "Aprovar para desenho" no item, visível só quando `status===projeto_criado`.
+- [x] Fila compartilhada: `getDesignQueue()` = collectionGroup `items` com
+      `status in ['aguardando_desenho','alteracao_solicitada']` (itens assumidos
+      continuam na lista, com badge "Atribuído a {designerName}" ou "Atribuído a você").
+      `firestore.indexes.json`: substituído o fieldOverride `items.designerId` (não usado
+      por nenhuma query mais) por `items.status`; `firestoreIndexes.spec.ts` atualizado.
+- [x] Claim: `claimDesignItem` grava `designerId/designerName` do próprio uid **somente
+      se vazio**, via `runTransaction` (evita corrida real, não só checagem otimista).
+      Rule `isValidDesignClaim()`: designer só atualiza quando `designerId` está ausente,
+      `null` ou `''`, só grava o próprio uid, e só nesses 4 campos.
+- [x] Atribuição pelo admin: `AssignDesignerModal` reescrito — `DESIGNER_QUICK_OPTIONS =
+      ['Renato','Marcio']` preenchem um campo de texto único (também aceita "Outros"
+      livre); `assignDesignerByName` casa por nome (case-insensitive) com um desenhista
+      ativo → grava `designerId+designerName`; sem match → só `designerName`, limpando
+      `designerId` anterior com `deleteField()`. Sem transição de status.
+- [x] `DesignerUploadPanel`: condição inalterada (`item.designerId === uid`); "Atribuir
+      desenhista" só aparece quando `status !== 'projeto_criado'` (depois de aprovado).
+- [x] Rules: `get`/`list` de item por designer ampliado — item na fila (mesmo sem
+      atribuição) fica legível para qualquer desenhista ativo, além dos já atribuídos;
+      leitura de anexos do item na fila também ampliada (`audience.designer`); rule de
+      `list` do collection-group `items` ganhou o branch de status de fila.
+- Testes: unit `approveItemForDesign`/`claimDesignItem` (corrida via transação
+  simulada)/`assignDesignerByName`; integração `designer.service` (fila,
+  aprovação, claim, atribuição por nome — todas contra o emulador real); rules
+  (leitura ampliada, claim válido/inválido, shape do update, collection-group);
+  `AssignDesignerModal.spec.tsx` reescrito para o novo formato; `designer-queue.spec.ts`
+  e2e invertido (fila toda visível, "Atribuído a", claim funcional);
+  `project-lifecycle.spec.ts` e2e: aprovar para desenho → atribuir por nome (cobre a
+  atribuição do admin); `designer-queue.spec.ts` cobre separadamente o self-claim pelo
+  desenhista — a jornada "aprova → desenhista assume → envia versão" ficou dividida
+  entre os dois arquivos em vez de um único teste, mas com a mesma cobertura.
+  `deadline-settings.spec.ts` também migrado (deadline agora é setado na aprovação, não
+  na atribuição).
+- Resultados finais: unit 1239/1239, rules 29/29, integration 76/76, e2e 65/65.
+- Armadilhas encontradas e corrigidas no caminho (não eram regressões, mas bloqueavam
+  os testes novos): (1) `designerId: null` (usado em vários setups de teste) não batia
+  com a checagem `== ''` da regra de claim — regra ajustada para tratar ausente/null/
+  vazio como equivalentes; (2) dois specs e2e usavam `getByText('Aguardando desenho')`
+  para sincronizar após a aprovação, mas esse texto também aparece nos botões de
+  "Alterar status" (sempre visíveis para admin) — trocado por polling direto no
+  Firestore ou por `toHaveCount(0)` no botão "Aprovar para desenho".
+- Prova de fogo: guard de corrida do claim desativado (`if (false && ...)`) → spec
+  unit foi a vermelho; revertido.
 - Commit: `feat(projetos): aprovacao para desenho e fila compartilhada com claim`
 
 ### Fase 6 — Aba "Desenhos pendentes" em Listar projetos

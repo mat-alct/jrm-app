@@ -64,6 +64,26 @@ service cloud.firestore {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys);
     }
 
+    function isDesignQueueStatus(status) {
+      return status in ['aguardando_desenho', 'alteracao_solicitada'];
+    }
+
+    // Desenhista pode "assumir" um item da fila: so grava designerId/designerName
+    // do proprio uid, e so quando o item ainda nao tem desenhista (campo ausente,
+    // null ou string vazia contam como "sem desenhista").
+    function hasNoDesigner() {
+      return resource.data.get('designerId', null) == null
+        || resource.data.get('designerId', '') == '';
+    }
+
+    function isValidDesignClaim() {
+      return isDesigner()
+        && hasNoDesigner()
+        && request.resource.data.designerId == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['designerId', 'designerName', 'updatedAt', 'updatedBy']);
+    }
+
     function isValidAudienceShape(audience) {
       return audience.keys().hasAll(['seller', 'designer', 'assembler', 'client'])
         && audience.seller is bool && audience.designer is bool
@@ -110,7 +130,9 @@ service cloud.firestore {
 
     match /{path=**}/items/{itemId} {
       allow list: if isAdmin() || isSeller()
-        || (isDesigner() && resource.data.get('designerId', '') == request.auth.uid);
+        || (isDesigner()
+            && (resource.data.get('designerId', '') == request.auth.uid
+                || isDesignQueueStatus(resource.data.get('status', ''))));
     }
 
     match /{path=**}/assemblerAssignments/{assignmentId} {
@@ -160,14 +182,17 @@ service cloud.firestore {
       allow delete: if isAdmin();
 
       match /items/{itemId} {
-        // Leitura/edicao do desenhista restrita aos proprios itens (fila em /desenhista) — VIA A.
+        // Desenhista le itens atribuidos a ele e itens na fila compartilhada
+        // (para avaliar antes de assumir) — VIA A.
         allow get: if isAdmin() || isSeller()
           || isAssignedDesigner(projectId, itemId)
-          || isAssignedAssembler(projectId, itemId);
+          || isAssignedAssembler(projectId, itemId)
+          || (isDesigner() && isDesignQueueStatus(resource.data.get('status', '')));
         allow list: if isAdmin() || isSeller() || isDesigner();
         allow create: if isAdmin() || isSeller();
         allow update: if isAdmin() || isSeller()
-          || isAssignedDesigner(projectId, itemId);
+          || isAssignedDesigner(projectId, itemId)
+          || isValidDesignClaim();
         allow delete: if isAdmin();
 
         match /attachments/{attachmentId} {
@@ -175,7 +200,11 @@ service cloud.firestore {
             || (isAssignedDesigner(projectId, itemId)
                 && resource.data.get('audience', {}).get('designer', false) == true)
             || (isAssignedAssembler(projectId, itemId)
-                && resource.data.get('audience', {}).get('assembler', false) == true);
+                && resource.data.get('audience', {}).get('assembler', false) == true)
+            || (isDesigner()
+                && isDesignQueueStatus(
+                     get(/databases/$(database)/documents/projects/$(projectId)/items/$(itemId)).data.status)
+                && resource.data.get('audience', {}).get('designer', false) == true);
           allow create: if isValidAudienceShape(request.resource.data.audience)
             && (isAdmin() || isSeller()
                 || (isAssignedDesigner(projectId, itemId)

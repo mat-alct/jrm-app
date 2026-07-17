@@ -1,28 +1,19 @@
-import { Button, CloseButton, Dialog, Portal, Text } from '@chakra-ui/react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { format } from 'date-fns';
-import { Timestamp } from 'firebase/firestore';
+import { Button, CloseButton, Dialog, HStack, Input, Portal, Text } from '@chakra-ui/react';
 import React from 'react';
 
 import { useUsersByRole } from '@/services/projects/adminUsers';
-import {
-  computeDeadline,
-  getDeadlineDefaults,
-} from '@/services/projects/deadline.service';
-import { updateProjectItem } from '@/services/projects/projectItem.service';
-import {
-  StatusActor,
-  updateItemStatus,
-} from '@/services/projects/status.service';
+import { useAssignDesignerByName } from '@/services/projects/designer.service';
 
 import { toaster } from '../ui/toaster';
+
+export const DESIGNER_QUICK_OPTIONS = ['Renato', 'Marcio'];
 
 interface AssignDesignerModalProps {
   isOpen: boolean;
   onClose: () => void;
   projectId: string;
   itemId: string;
-  actor: StatusActor;
+  actor: { uid: string };
 }
 
 export const AssignDesignerModal: React.FC<AssignDesignerModalProps> = ({
@@ -32,57 +23,23 @@ export const AssignDesignerModal: React.FC<AssignDesignerModalProps> = ({
   itemId,
   actor,
 }) => {
-  const queryClient = useQueryClient();
   const { data: designers } = useUsersByRole('designer');
-  const { data: defaults } = useQuery({
-    queryKey: ['projects', 'deadlineDefaults'],
-    queryFn: getDeadlineDefaults,
-  });
+  const assignDesigner = useAssignDesignerByName();
 
-  const [designerId, setDesignerId] = React.useState('');
-  const [deadline, setDeadline] = React.useState('');
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [name, setName] = React.useState('');
 
   React.useEffect(() => {
-    if (!designerId || !defaults) return;
-
-    const computed = computeDeadline('aguardando_desenho', defaults);
-    if (computed) {
-      setDeadline(format(computed.toDate(), 'yyyy-MM-dd'));
-    }
-  }, [designerId, defaults]);
+    if (isOpen) setName('');
+  }, [isOpen]);
 
   const handleSubmit = async () => {
-    const designer = designers?.find(d => d.id === designerId);
-    if (!designer) {
-      toaster.create({
-        type: 'error',
-        description: 'Selecione um desenhista.',
-      });
-      return;
-    }
-
-    setIsSubmitting(true);
     try {
-      await updateProjectItem(
+      await assignDesigner.mutateAsync({
         projectId,
         itemId,
-        {
-          designerId: designer.id,
-          designerName: designer.name,
-          ...(deadline
-            ? {
-                deadlineCurrent: Timestamp.fromDate(
-                  new Date(`${deadline}T00:00:00`),
-                ),
-              }
-            : {}),
-        },
-        actor.uid,
-      );
-      await updateItemStatus(projectId, itemId, 'aguardando_desenho', actor);
-      await queryClient.invalidateQueries({
-        queryKey: ['projects', projectId, 'items', itemId],
+        name,
+        activeDesigners: designers ?? [],
+        actor,
       });
       toaster.create({ type: 'success', description: 'Desenhista atribuído.' });
       onClose();
@@ -94,8 +51,6 @@ export const AssignDesignerModal: React.FC<AssignDesignerModalProps> = ({
             ? error.message
             : 'Erro ao atribuir desenhista.',
       });
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -117,34 +72,30 @@ export const AssignDesignerModal: React.FC<AssignDesignerModalProps> = ({
               <Text fontSize="sm" fontWeight="medium">
                 Desenhista
               </Text>
-              <select
-                value={designerId}
-                onChange={e => setDesignerId(e.target.value)}
-                style={{ padding: '8px', borderRadius: '6px', width: '100%' }}
-              >
-                <option value="">Selecione</option>
-                {designers?.map(designer => (
-                  <option key={designer.id} value={designer.id}>
-                    {designer.name}
-                  </option>
+              <HStack gap={2}>
+                {DESIGNER_QUICK_OPTIONS.map(option => (
+                  <Button
+                    key={option}
+                    size="sm"
+                    variant={name === option ? 'solid' : 'outline'}
+                    colorScheme="orange"
+                    onClick={() => setName(option)}
+                  >
+                    {option}
+                  </Button>
                 ))}
-              </select>
-
-              <Text fontSize="sm" fontWeight="medium">
-                Prazo
-              </Text>
-              <input
-                type="date"
-                value={deadline}
-                onChange={e => setDeadline(e.target.value)}
-                style={{ padding: '8px', borderRadius: '6px', width: '100%' }}
+              </HStack>
+              <Input
+                value={name}
+                onChange={e => setName(e.target.value)}
+                placeholder="Outros"
               />
             </Dialog.Body>
             <Dialog.Footer>
               <Button
                 colorScheme="orange"
                 mr={3}
-                loading={isSubmitting}
+                loading={assignDesigner.isPending}
                 onClick={() => void handleSubmit()}
               >
                 Atribuir

@@ -8,7 +8,7 @@ const PROJECT_ID = 'seed-project-1';
 const ITEM_ID = 'seed-item-1';
 
 test.describe('configurações de prazo', () => {
-  test('admin altera o prazo padrão e a nova atribuição de desenhista usa o valor novo', async ({
+  test('admin altera o prazo padrão e a nova aprovação para desenho usa o valor novo', async ({
     page,
     adminDb,
   }) => {
@@ -30,22 +30,26 @@ test.describe('configurações de prazo', () => {
       })
       .toBe(12);
 
-    // Uma atribuição nova deve calcular hoje + 12 dias.
+    // A aprovação para desenho deve calcular hoje + 12 dias.
     await page.goto(`/projetos/${PROJECT_ID}/itens/${ITEM_ID}`);
-    await page.getByRole('button', { name: 'Atribuir desenhista' }).click();
-
-    const dialog = page.getByRole('dialog', { name: 'Atribuir desenhista' });
-    await dialog.locator('select').selectOption('seed-designer');
+    await page.getByRole('button', { name: 'Aprovar para desenho' }).click();
+    await expect(
+      page.getByRole('button', { name: 'Aprovar para desenho' }),
+    ).toHaveCount(0);
 
     const expected = format(addDays(new Date(), 12), 'yyyy-MM-dd');
-    await expect(dialog.locator('input[type="date"]')).toHaveValue(expected);
-
-    await dialog.getByRole('button', { name: 'Atribuir' }).click();
-    await expect(dialog).toBeHidden();
-
-    const item = await adminDb.doc(`projects/${PROJECT_ID}/items/${ITEM_ID}`).get();
-    const deadline = item.data()?.deadlineCurrent.toDate() as Date;
-    expect(format(deadline, 'yyyy-MM-dd')).toBe(expected);
+    // A escrita e assincrona em relacao ao botao sumir: poll em vez de espera fixa.
+    await expect
+      .poll(async () => {
+        const snap = await adminDb
+          .doc(`projects/${PROJECT_ID}/items/${ITEM_ID}`)
+          .get();
+        const deadline = snap.data()?.deadlineCurrent?.toDate() as
+          | Date
+          | undefined;
+        return deadline && format(deadline, 'yyyy-MM-dd');
+      })
+      .toBe(expected);
   });
 
   test('o vendedor não acessa as configurações de prazo', async ({ page }) => {

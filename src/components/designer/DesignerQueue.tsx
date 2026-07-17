@@ -1,4 +1,4 @@
-import { HStack, Text, VStack } from '@chakra-ui/react';
+import { Button, HStack, Text, VStack } from '@chakra-ui/react';
 import Link from 'next/link';
 import React from 'react';
 import { FiPenTool } from 'react-icons/fi';
@@ -20,9 +20,17 @@ export function sortQueueByDeadline(items: ProjectItem[]): ProjectItem[] {
 
 interface DesignerQueueProps {
   items: ProjectItem[];
+  currentUserId?: string;
+  onClaim?: (item: ProjectItem) => void;
+  claimingItemId?: string;
 }
 
-export const DesignerQueue: React.FC<DesignerQueueProps> = ({ items }) => {
+export const DesignerQueue: React.FC<DesignerQueueProps> = ({
+  items,
+  currentUserId,
+  onClaim,
+  claimingItemId,
+}) => {
   const sorted = sortQueueByDeadline(items);
 
   if (sorted.length === 0) {
@@ -39,13 +47,13 @@ export const DesignerQueue: React.FC<DesignerQueueProps> = ({ items }) => {
 
   return (
     <VStack align="stretch" gap={3}>
-      {sorted.map(item => (
-        <Link
-          key={item.id}
-          href={`/projetos/${item.projectId}/itens/${item.id}`}
-        >
+      {sorted.map(item => {
+        const isClaimed = !!item.designerId;
+        const isOwnClaim = isClaimed && item.designerId === currentUserId;
+
+        return (
           <AppCard
-            interactive
+            key={item.id}
             borderColor={
               item.status === 'alteracao_solicitada'
                 ? 'brand.200'
@@ -58,14 +66,16 @@ export const DesignerQueue: React.FC<DesignerQueueProps> = ({ items }) => {
             }
           >
             <HStack justify="space-between" wrap="wrap" gap={2}>
-              <VStack align="stretch" gap={1}>
-                <Text fontWeight="600" color="app.text">
-                  {item.name}
-                </Text>
-                <Text fontSize="sm" color="app.textMuted">
-                  {item.environment}
-                </Text>
-              </VStack>
+              <Link href={`/projetos/${item.projectId}/itens/${item.id}`}>
+                <VStack align="stretch" gap={1}>
+                  <Text fontWeight="600" color="app.text">
+                    {item.name}
+                  </Text>
+                  <Text fontSize="sm" color="app.textMuted">
+                    {item.environment}
+                  </Text>
+                </VStack>
+              </Link>
               <HStack gap={2}>
                 {item.status === 'alteracao_solicitada' && (
                   <StatusPill palette="orange" label="Alteração solicitada" />
@@ -73,11 +83,36 @@ export const DesignerQueue: React.FC<DesignerQueueProps> = ({ items }) => {
                 {isDelayed(item) && (
                   <StatusPill palette="red" label="Atrasado" />
                 )}
+                {isClaimed ? (
+                  <StatusPill
+                    palette={isOwnClaim ? 'green' : 'gray'}
+                    label={
+                      isOwnClaim
+                        ? 'Atribuído a você'
+                        : `Atribuído a ${item.designerName ?? 'alguém'}`
+                    }
+                  />
+                ) : (
+                  onClaim && (
+                    <Button
+                      size="sm"
+                      colorScheme="orange"
+                      loading={claimingItemId === item.id}
+                      onClick={event => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        onClaim(item);
+                      }}
+                    >
+                      Assumir
+                    </Button>
+                  )
+                )}
               </HStack>
             </HStack>
           </AppCard>
-        </Link>
-      ))}
+        );
+      })}
     </VStack>
   );
 };

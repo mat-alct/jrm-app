@@ -70,9 +70,9 @@ const REQUIRED_COLLECTION_GROUP_FIELDS: Array<{
   fieldPath: string;
 }> = [
   {
-    origem: "designer.service: collectionGroup('items') + where('designerId')",
+    origem: "designer.service.getDesignQueue: collectionGroup('items') + where('status', 'in', [...])",
     collectionGroup: 'items',
-    fieldPath: 'designerId',
+    fieldPath: 'status',
   },
   {
     origem:

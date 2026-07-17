@@ -24,7 +24,10 @@ import {
   saveItemBudget,
   sendBudgetToClient,
 } from '@/services/projects/budget.service';
-import { useItemVersions } from '@/services/projects/designer.service';
+import {
+  approveItemForDesign,
+  useItemVersions,
+} from '@/services/projects/designer.service';
 import {
   useItemStatusHistory,
   useProjectItem,
@@ -186,6 +189,32 @@ const ProjectItemDetail = () => {
     },
   });
 
+  const approveForDesignMutation = useMutation({
+    mutationFn: () => {
+      if (!user || !appUser) throw new Error('Usuário não carregado.');
+      return approveItemForDesign(projectId, itemId, {
+        uid: user.uid,
+        name: appUser.name,
+        role: actorRole(appUser.roles),
+      });
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: ['projects', projectId, 'items', itemId],
+      });
+      toaster.create({
+        type: 'success',
+        description: 'Item aprovado para desenho.',
+      });
+    },
+    onError: (error: Error) => {
+      toaster.create({
+        type: 'error',
+        description: error.message || 'Erro ao aprovar para desenho.',
+      });
+    },
+  });
+
   const handleTransition = async (next: ProjectItemStatus) => {
     if (!user || !appUser) return;
 
@@ -233,6 +262,8 @@ const ProjectItemDetail = () => {
       )
     : [];
   const canApproveAssembly = admin && item.status === 'montagem_concluida';
+  const canApproveForDesign =
+    canAssignDesigner(appUser?.roles) && item.status === 'projeto_criado';
 
   return (
     <>
@@ -315,6 +346,19 @@ const ProjectItemDetail = () => {
                 </Button>
               </Box>
             )}
+
+            {canApproveForDesign && (
+              <Box mt={4}>
+                <Button
+                  size="sm"
+                  colorScheme="orange"
+                  loading={approveForDesignMutation.isPending}
+                  onClick={() => approveForDesignMutation.mutate()}
+                >
+                  Aprovar para desenho
+                </Button>
+              </Box>
+            )}
           </Box>
 
           {canSeePrice && !hasRole(appUser?.roles, 'assembler') && (
@@ -377,18 +421,19 @@ const ProjectItemDetail = () => {
           >
             <HStack justify="space-between" mb={3}>
               <Heading size="md">Desenho</Heading>
-              {canAssignDesigner(appUser?.roles) && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  colorScheme="orange"
-                  onClick={() => setIsAssignDesignerOpen(true)}
-                >
-                  {item.designerId
-                    ? 'Reatribuir desenhista'
-                    : 'Atribuir desenhista'}
-                </Button>
-              )}
+              {canAssignDesigner(appUser?.roles) &&
+                item.status !== 'projeto_criado' && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    colorScheme="orange"
+                    onClick={() => setIsAssignDesignerOpen(true)}
+                  >
+                    {item.designerId
+                      ? 'Reatribuir desenhista'
+                      : 'Atribuir desenhista'}
+                  </Button>
+                )}
             </HStack>
             <Stack gap={1} fontSize="sm" mb={3}>
               <Text>
@@ -536,11 +581,7 @@ const ProjectItemDetail = () => {
             onClose={() => setIsAssignDesignerOpen(false)}
             projectId={projectId}
             itemId={itemId}
-            actor={{
-              uid: user.uid,
-              name: appUser?.name,
-              role: actorRole(appUser?.roles),
-            }}
+            actor={{ uid: user.uid }}
           />
         )}
       </Dashboard>

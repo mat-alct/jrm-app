@@ -1,10 +1,15 @@
 import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { getBytes, ref } from 'firebase/storage';
+import { FieldValue } from 'firebase-admin/firestore';
 
 import { auth, storage } from '@/services/firebase';
 import { adminDb } from '@/services/firebaseAdmin';
 import {
-  getDesignerQueue,
+  approveItemForDesign,
+  assignDesignerByName,
+  claimDesignItem,
+  DesignClaimError,
+  getDesignQueue,
   listItemVersions,
   submitDesignerVersion,
 } from '@/services/projects/designer.service';
@@ -34,21 +39,160 @@ describe('services/projects/designer.service integration', () => {
     await signOut(auth);
   });
 
-  it('lists only items assigned to the designer via collection-group query', async () => {
-    await adminDb.doc(projectItemPath('seed-project-2', 'seed-item-5')).update({
-      designerId: 'other-designer',
+  describe('getDesignQueue', () => {
+    it('returns items in queue statuses, assigned or not', async () => {
+      await adminDb.doc(projectItemPath('seed-project-1', 'seed-item-1')).update({
+        status: 'aguardando_desenho',
+      });
+      await adminDb.doc(projectItemPath('seed-project-1', 'seed-item-2')).update({
+        status: 'alteracao_solicitada',
+        designerId: null,
+        designerName: null,
+      });
+      // seed-item-3/4/5 permanecem fora dos status de fila.
+
+      await signInAs('desenhista@seed.jrm');
+
+      const queue = await getDesignQueue();
+
+      expect(queue.map(item => item.id).sort()).toEqual([
+        'seed-item-1',
+        'seed-item-2',
+      ]);
     });
-    await signInAs('desenhista@seed.jrm');
+  });
 
-    const queue = await getDesignerQueue('seed-designer');
+  describe('approveItemForDesign', () => {
+    it('sets deadlineCurrent and advances the item to aguardando_desenho', async () => {
+      await adminDb.doc(`projects/seed-project-1/items/seed-item-novo`).set({
+        projectId: 'seed-project-1',
+        name: 'Item Novo',
+        environment: 'Sala',
+        status: 'projeto_criado',
+        clientApprovalStatus: 'aguardando',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        createdBy: 'seed-seller',
+        updatedBy: 'seed-seller',
+      });
+      await signInAs('vendedor@seed.jrm');
 
-    expect(queue.map(item => item.id).sort()).toEqual([
-      'seed-item-1',
-      'seed-item-2',
-      'seed-item-3',
-      'seed-item-4',
-    ]);
-    expect(queue.every(item => item.designerId === 'seed-designer')).toBe(true);
+      await approveItemForDesign('seed-project-1', 'seed-item-novo', {
+        uid: 'seed-seller',
+        name: 'Vendedor Seed',
+        role: 'seller',
+      });
+
+      const snap = await adminDb
+        .doc('projects/seed-project-1/items/seed-item-novo')
+        .get();
+      expect(snap.data()).toMatchObject({ status: 'aguardando_desenho' });
+      expect(snap.data()?.deadlineCurrent).toBeDefined();
+
+      const historySnap = await adminDb
+        .collection(
+          'projects/seed-project-1/items/seed-item-novo/statusHistory',
+        )
+        .get();
+      expect(historySnap.docs.map(d => d.data().toStatus)).toContain(
+        'aguardando_desenho',
+      );
+    });
+  });
+
+  describe('claimDesignItem', () => {
+    it('lets an active designer claim an unassigned queued item', async () => {
+      await adminDb.doc(projectItemPath('seed-project-1', 'seed-item-1')).update({
+        status: 'aguardando_desenho',
+        designerId: FieldValue.delete(),
+        designerName: FieldValue.delete(),
+      });
+      await signInAs('desenhista@seed.jrm');
+
+      await claimDesignItem('seed-project-1', 'seed-item-1', {
+        uid: 'seed-designer',
+        name: 'Desenhista Seed',
+      });
+
+      const snap = await adminDb
+        .doc(projectItemPath('seed-project-1', 'seed-item-1'))
+        .get();
+      expect(snap.data()).toMatchObject({
+        designerId: 'seed-designer',
+        designerName: 'Desenhista Seed',
+      });
+    });
+
+    it('rejects claiming an item that already has a designer (corrida)', async () => {
+      await adminDb.doc(projectItemPath('seed-project-1', 'seed-item-1')).update({
+        status: 'aguardando_desenho',
+        designerId: 'seed-designer',
+        designerName: 'Desenhista Seed',
+      });
+      await signInAs('desenhista@seed.jrm');
+
+      await expect(
+        claimDesignItem('seed-project-1', 'seed-item-1', {
+          uid: 'seed-designer',
+          name: 'Segunda tentativa',
+        }),
+      ).rejects.toThrow(DesignClaimError);
+
+      const snap = await adminDb
+        .doc(projectItemPath('seed-project-1', 'seed-item-1'))
+        .get();
+      expect(snap.data()?.designerName).toBe('Desenhista Seed');
+    });
+  });
+
+  describe('assignDesignerByName', () => {
+    it('matches an active designer by name and sets designerId', async () => {
+      await adminDb.doc(projectItemPath('seed-project-1', 'seed-item-1')).update({
+        status: 'aguardando_desenho',
+        designerId: null,
+        designerName: null,
+      });
+      await signInAs('admin@seed.jrm');
+
+      await assignDesignerByName(
+        'seed-project-1',
+        'seed-item-1',
+        'Desenhista Seed',
+        [{ id: 'seed-designer', name: 'Desenhista Seed' }],
+        { uid: 'seed-admin' },
+      );
+
+      const snap = await adminDb
+        .doc(projectItemPath('seed-project-1', 'seed-item-1'))
+        .get();
+      expect(snap.data()).toMatchObject({
+        designerId: 'seed-designer',
+        designerName: 'Desenhista Seed',
+      });
+    });
+
+    it('keeps only the name and clears designerId for an unmatched name', async () => {
+      await adminDb.doc(projectItemPath('seed-project-1', 'seed-item-1')).update({
+        status: 'aguardando_desenho',
+        designerId: 'seed-designer',
+        designerName: 'Desenhista Seed',
+      });
+      await signInAs('admin@seed.jrm');
+
+      await assignDesignerByName(
+        'seed-project-1',
+        'seed-item-1',
+        'Renato',
+        [{ id: 'seed-designer', name: 'Desenhista Seed' }],
+        { uid: 'seed-admin' },
+      );
+
+      const snap = await adminDb
+        .doc(projectItemPath('seed-project-1', 'seed-item-1'))
+        .get();
+      expect(snap.data()?.designerName).toBe('Renato');
+      expect(snap.data()?.designerId).toBeUndefined();
+    });
   });
 
   it('submits a version with real attachment upload and advances the item status', async () => {

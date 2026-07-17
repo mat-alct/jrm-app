@@ -113,26 +113,28 @@ test.describe('jornada Via A — operação interna', () => {
     expect(response.status()).toBe(200);
     expect((await response.body()).byteLength).toBeGreaterThan(0);
 
-    // ---------- 3. atribui desenhista (prazo automático) ----------
-    await page.getByRole('button', { name: 'Atribuir desenhista' }).click();
-    const dialog = page.getByRole('dialog', { name: 'Atribuir desenhista' });
-    await expect(dialog).toBeVisible();
-    await dialog.locator('select').selectOption('seed-designer');
-    await expect(dialog.locator('input[type="date"]')).not.toHaveValue('');
-    await dialog.getByRole('button', { name: 'Atribuir' }).click();
+    // ---------- 3. aprova para desenho (fila compartilhada, prazo automático) ----------
+    await page.getByRole('button', { name: 'Aprovar para desenho' }).click();
+    await expect(
+      page.getByRole('button', { name: 'Aprovar para desenho' }),
+    ).toHaveCount(0);
 
-    await expect(dialog).toBeHidden();
-    await expect(page.getByText('Desenhista: Desenhista Seed')).toBeVisible();
-    await expect(page.getByText('Aguardando desenho').first()).toBeVisible();
+    // A escrita e assincrona em relacao ao toast: poll em vez de espera fixa.
+    await expect
+      .poll(async () => {
+        const snap = await adminDb
+          .doc(`projects/${projectId}/items/${balcaoId}`)
+          .get();
+        return snap.data()?.status;
+      })
+      .toBe('aguardando_desenho');
 
-    const afterAssign = await adminDb
+    const afterApprove = await adminDb
       .doc(`projects/${projectId}/items/${balcaoId}`)
       .get();
-    expect(afterAssign.data()).toMatchObject({
-      designerId: 'seed-designer',
-      status: 'aguardando_desenho',
-    });
-    expect(afterAssign.data()?.deadlineCurrent).toBeDefined();
+    expect(afterApprove.data()).toMatchObject({ status: 'aguardando_desenho' });
+    expect(afterApprove.data()?.deadlineCurrent).toBeDefined();
+    expect(afterApprove.data()?.designerId).toBeUndefined();
 
     const historySnap = await adminDb
       .collection(`projects/${projectId}/items/${balcaoId}/statusHistory`)
@@ -142,6 +144,30 @@ test.describe('jornada Via A — operação interna', () => {
       toStatus: 'aguardando_desenho',
       changedByRole: 'admin',
     });
+
+    // ---------- 4. atribui o desenhista pelo nome (sem transicao de status) ----------
+    await page.getByRole('button', { name: 'Atribuir desenhista' }).click();
+    const dialog = page.getByRole('dialog', { name: 'Atribuir desenhista' });
+    await expect(dialog).toBeVisible();
+    await dialog.getByPlaceholder('Outros').fill('Desenhista Seed');
+    await dialog.getByRole('button', { name: 'Atribuir' }).click();
+
+    await expect(dialog).toBeHidden();
+    await expect(page.getByText('Desenhista: Desenhista Seed')).toBeVisible();
+
+    const afterAssign = await adminDb
+      .doc(`projects/${projectId}/items/${balcaoId}`)
+      .get();
+    expect(afterAssign.data()).toMatchObject({
+      designerId: 'seed-designer',
+      status: 'aguardando_desenho',
+    });
+
+    // Atribuir por nome nao muda status: continua so a entrada da aprovacao.
+    const historyAfterAssign = await adminDb
+      .collection(`projects/${projectId}/items/${balcaoId}/statusHistory`)
+      .get();
+    expect(historyAfterAssign.size).toBe(1);
   });
 
   test('desenhista envia versão do item e o admin lança o orçamento', async ({

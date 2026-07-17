@@ -514,7 +514,9 @@ describe('firestore.rules', () => {
       );
       await assertSucceeds(dbAs('assembler').doc(ownPath).get());
 
-      await assertFails(dbAs('designer').doc(otherPath).get());
+      // otherPath esta em aguardando_desenho (fila): qualquer desenhista pode
+      // abrir para avaliar antes de assumir, mas so o atribuido pode editar.
+      await assertSucceeds(dbAs('designer').doc(otherPath).get());
       await assertFails(
         dbAs('designer').doc(otherPath).update({ designerNote: 'no' }),
       );
@@ -546,6 +548,73 @@ describe('firestore.rules', () => {
           .collectionGroup('items')
           .where('designerId', '==', uid.designer)
           .get(),
+      );
+    });
+
+    it('permite query collection-group de itens na fila de desenho para qualquer desenhista ativo', async () => {
+      await assertSucceeds(
+        dbAs('otherDesigner')
+          .collectionGroup('items')
+          .where('status', 'in', [
+            'aguardando_desenho',
+            'alteracao_solicitada',
+          ])
+          .get(),
+      );
+      await assertFails(
+        dbAs('assembler')
+          .collectionGroup('items')
+          .where('status', 'in', [
+            'aguardando_desenho',
+            'alteracao_solicitada',
+          ])
+          .get(),
+      );
+    });
+
+    it('permite ao desenhista assumir (claim) um item da fila sem designerId', async () => {
+      const unclaimedPath = 'projects/project-1/items/unclaimed-item';
+      await testEnv.withSecurityRulesDisabled(async context => {
+        await context.firestore().doc(unclaimedPath).set({
+          projectId: 'project-1',
+          name: 'Item sem desenhista',
+          status: 'aguardando_desenho',
+        });
+      });
+
+      await assertFails(
+        dbAs('otherDesigner').doc(unclaimedPath).update({
+          designerId: 'someone-else',
+        }),
+      );
+      await assertSucceeds(
+        dbAs('otherDesigner').doc(unclaimedPath).update({
+          designerId: uid.otherDesigner,
+          designerName: 'Outro Desenhista',
+        }),
+      );
+
+      // Depois de assumido, um segundo desenhista nao pode sobrescrever o claim.
+      await assertFails(
+        dbAs('designer').doc(unclaimedPath).update({
+          designerId: uid.designer,
+        }),
+      );
+
+      // O claim nao pode mexer em outros campos junto.
+      const otherUnclaimedPath = 'projects/project-1/items/unclaimed-item-2';
+      await testEnv.withSecurityRulesDisabled(async context => {
+        await context.firestore().doc(otherUnclaimedPath).set({
+          projectId: 'project-1',
+          name: 'Item sem desenhista 2',
+          status: 'aguardando_desenho',
+        });
+      });
+      await assertFails(
+        dbAs('designer').doc(otherUnclaimedPath).update({
+          designerId: uid.designer,
+          budget: { totalCost: 999 },
+        }),
       );
     });
   });
@@ -583,6 +652,13 @@ describe('firestore.rules', () => {
       );
       await assertFails(dbAs('assembler').doc(assemblerFile).delete());
       await assertFails(dbAs('inactive').doc(assemblerFile).get());
+    });
+
+    it('permite a qualquer desenhista ler anexos de um item na fila, mesmo sem estar atribuido', async () => {
+      // designer-item esta em aguardando_desenho (fila) e atribuido a uid.designer;
+      // otherDesigner nao esta atribuido, mas pode avaliar o item antes de assumir.
+      await assertSucceeds(dbAs('otherDesigner').doc(internalFile).get());
+      await assertFails(dbAs('otherAssembler').doc(internalFile).get());
     });
 
     it('permite montador/desenhista atribuido criar anexo com audience valida e proprio uid/role', async () => {

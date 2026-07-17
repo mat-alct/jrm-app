@@ -1,39 +1,196 @@
-import { useQuery, UseQueryResult } from '@tanstack/react-query';
+import {
+  useMutation,
+  UseMutationResult,
+  useQuery,
+  useQueryClient,
+  UseQueryResult,
+} from '@tanstack/react-query';
 import {
   collection,
   collectionGroup,
+  deleteField,
   doc,
   getDocs,
   query,
+  runTransaction,
   setDoc,
   Timestamp,
+  updateDoc,
   where,
 } from 'firebase/firestore';
 
-import { ProjectItem, ProjectItemVersion } from '@/types/projects';
+import {
+  AppUser,
+  ProjectItem,
+  ProjectItemStatus,
+  ProjectItemVersion,
+} from '@/types/projects';
 
 import { db } from '../firebase';
 import { uploadAttachment } from './attachment.service';
-import { itemVersionsPath } from './paths';
+import { computeDeadline, getDeadlineDefaults } from './deadline.service';
+import { itemVersionsPath, projectItemPath } from './paths';
 import { updateProjectItem } from './projectItem.service';
 import { StatusActor, updateItemStatus } from './status.service';
 
-export async function getDesignerQueue(
-  designerId: string,
-): Promise<ProjectItem[]> {
+const DESIGN_QUEUE_STATUSES: ProjectItemStatus[] = [
+  'aguardando_desenho',
+  'alteracao_solicitada',
+];
+
+export async function getDesignQueue(): Promise<ProjectItem[]> {
   const snap = await getDocs(
-    query(collectionGroup(db, 'items'), where('designerId', '==', designerId)),
+    query(
+      collectionGroup(db, 'items'),
+      where('status', 'in', DESIGN_QUEUE_STATUSES),
+    ),
   );
   return snap.docs.map(d => ({ id: d.id, ...d.data() }) as ProjectItem);
 }
 
-export function useDesignerQueue(
-  designerId: string | undefined,
-): UseQueryResult<ProjectItem[]> {
+export function useDesignQueue(enabled = true): UseQueryResult<ProjectItem[]> {
   return useQuery({
-    queryKey: ['projects', 'designerQueue', designerId],
-    queryFn: () => getDesignerQueue(designerId as string),
-    enabled: !!designerId,
+    queryKey: ['projects', 'designQueue'],
+    queryFn: getDesignQueue,
+    enabled,
+  });
+}
+
+/**
+ * Vendedor/admin libera o item para desenho sem escolher desenhista — ele entra
+ * na fila compartilhada e qualquer desenhista pode assumi-lo.
+ */
+export async function approveItemForDesign(
+  projectId: string,
+  itemId: string,
+  actor: StatusActor,
+): Promise<void> {
+  const defaults = await getDeadlineDefaults();
+  const deadlineCurrent = computeDeadline('aguardando_desenho', defaults);
+  if (deadlineCurrent) {
+    await updateProjectItem(
+      projectId,
+      itemId,
+      { deadlineCurrent },
+      actor.uid,
+      { recalculateSummary: false },
+    );
+  }
+  await updateItemStatus(projectId, itemId, 'aguardando_desenho', actor);
+}
+
+export class DesignClaimError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'DesignClaimError';
+  }
+}
+
+/**
+ * Desenhista assume um item da fila compartilhada. So grava se ainda nao houver
+ * desenhista atribuido — usa transacao para evitar corrida entre dois desenhistas.
+ */
+export async function claimDesignItem(
+  projectId: string,
+  itemId: string,
+  actor: { uid: string; name?: string },
+): Promise<void> {
+  const itemRef = doc(db, projectItemPath(projectId, itemId));
+
+  await runTransaction(db, async transaction => {
+    const snap = await transaction.get(itemRef);
+    if (!snap.exists()) {
+      throw new DesignClaimError(
+        `Item ${itemId} nao encontrado no projeto ${projectId}`,
+      );
+    }
+    const current = snap.data() as ProjectItem;
+    if (current.designerId) {
+      throw new DesignClaimError(
+        'Este item ja foi assumido por outro desenhista.',
+      );
+    }
+
+    transaction.update(itemRef, {
+      designerId: actor.uid,
+      ...(actor.name ? { designerName: actor.name } : {}),
+      updatedAt: Timestamp.now(),
+      updatedBy: actor.uid,
+    });
+  });
+}
+
+/**
+ * Admin atribui/reatribui o desenhista por nome (opcoes rapidas Renato/Marcio ou
+ * "Outros" livre). Se o nome bater com um desenhista ativo, grava designerId
+ * tambem; senao fica so o nome (limpa designerId anterior, se houver).
+ */
+export async function assignDesignerByName(
+  projectId: string,
+  itemId: string,
+  name: string,
+  activeDesigners: Pick<AppUser, 'id' | 'name'>[],
+  actor: { uid: string },
+): Promise<void> {
+  const trimmed = name.trim();
+  if (!trimmed) {
+    throw new Error('Informe o nome do desenhista.');
+  }
+  const matched = activeDesigners.find(
+    designer => designer.name.trim().toLowerCase() === trimmed.toLowerCase(),
+  );
+
+  const itemRef = doc(db, projectItemPath(projectId, itemId));
+  await updateDoc(itemRef, {
+    designerName: matched ? matched.name : trimmed,
+    designerId: matched ? matched.id : deleteField(),
+    updatedAt: Timestamp.now(),
+    updatedBy: actor.uid,
+  });
+}
+
+export function useAssignDesignerByName(): UseMutationResult<
+  void,
+  Error,
+  {
+    projectId: string;
+    itemId: string;
+    name: string;
+    activeDesigners: Pick<AppUser, 'id' | 'name'>[];
+    actor: { uid: string };
+  }
+> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ projectId, itemId, name, activeDesigners, actor }) =>
+      assignDesignerByName(projectId, itemId, name, activeDesigners, actor),
+    onSuccess: (_data, { projectId, itemId }) => {
+      void queryClient.invalidateQueries({
+        queryKey: ['projects', projectId, 'items', itemId],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ['projects', 'designQueue'],
+      });
+    },
+  });
+}
+
+export function useClaimDesignItem(): UseMutationResult<
+  void,
+  Error,
+  { projectId: string; itemId: string; actor: { uid: string; name?: string } }
+> {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ projectId, itemId, actor }) =>
+      claimDesignItem(projectId, itemId, actor),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: ['projects', 'designQueue'],
+      });
+    },
   });
 }
 
