@@ -14,9 +14,10 @@ function attachment(overrides: Partial<Attachment>): Attachment {
   return {
     id: overrides.id ?? 'a1',
     projectId: 'p1',
+    itemId: 'i1',
     fileName: 'foto.jpg',
     originalFileName: 'foto.jpg',
-    storagePath: 'projects/p1/general/a1_foto.jpg',
+    storagePath: 'projects/p1/items/i1/fotos/a1_foto.jpg',
     mimeType: 'image/jpeg',
     sizeBytes: 1024,
     category: 'Fotos',
@@ -43,6 +44,7 @@ describe('Component: AttachmentList', () => {
     renderWithClient(
       <AttachmentList
         projectId="p1"
+        itemId="i1"
         attachments={[attachment({ visibility: 'internal' })]}
         viewerRoles={undefined}
       />,
@@ -57,6 +59,7 @@ describe('Component: AttachmentList', () => {
     const { unmount } = renderWithClient(
       <AttachmentList
         projectId="p1"
+        itemId="i1"
         attachments={attachments}
         viewerRoles={['seller']}
       />,
@@ -67,6 +70,7 @@ describe('Component: AttachmentList', () => {
     renderWithClient(
       <AttachmentList
         projectId="p1"
+        itemId="i1"
         attachments={attachments}
         viewerRoles={['admin']}
       />,
@@ -83,6 +87,7 @@ describe('Component: AttachmentList', () => {
     renderWithClient(
       <AttachmentList
         projectId="p1"
+        itemId="i1"
         attachments={attachments}
         viewerRoles={['admin']}
       />,

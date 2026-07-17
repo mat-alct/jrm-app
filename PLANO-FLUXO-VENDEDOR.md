@@ -152,22 +152,34 @@ estar vazio.
   foi a vermelho (2 casos); revertido, verde de novo.
 - Commit: `feat(projetos): adiciona itens pelo detalhe do projeto`
 
-### Fase 3 — Fim dos anexos gerais
+### Fase 3 — Fim dos anexos gerais ✅ (2026-07-17)
 
 **Objetivo:** todo anexo pertence a um item; remover o nível de projeto.
 
-- [ ] `attachment.service.ts`: `itemId` obrigatório; remover branch de projeto em
-      `uploadAttachment`/`listAttachments`; `paths.ts`: remover paths de
-      `projects/{id}/attachments` e `general/` no Storage.
-- [ ] UI: remover seção "Anexos do projeto" do `[projectId]/index.tsx`.
-- [ ] `firestore.rules`: remover o match de `projects/{projectId}/attachments`
-      (vira default-deny); `storage.rules`: remover regras de `general/`.
-- [ ] `Attachment.itemId` deixa de ser opcional nos types.
-- Testes: adaptar `attachment.service.spec` (integração), rules specs — os casos de
-  anexos de projeto viram **asserções de negação para todos os papéis** (inclusive
-  admin); component specs do uploader/list (prop `itemId` obrigatória); conferir se o
-  seed cria anexos de projeto e remover.
-- Prova de fogo: reintroduzir um allow de leitura no match removido → rules spec vermelho.
+- [x] `attachment.service.ts`: `itemId` obrigatório; removido o branch de projeto em
+      `uploadAttachment`/`listAttachments`; `paths.ts`: removidos os paths de
+      `projects/{id}/attachments` e `general/` no Storage. `attachmentAdmin.ts` e
+      `attachmentHooks.ts` também simplificados (sem branch opcional).
+- [x] UI: removida a seção "Anexos do projeto" do `[projectId]/index.tsx`;
+      `AttachmentUploader`/`AttachmentList` com `itemId` agora obrigatório.
+- [x] `firestore.rules`: removido o match de `projects/{projectId}/attachments`
+      (vira default-deny); `storage.rules`: removida a regra de `general/`.
+- [x] `Attachment.itemId` deixou de ser opcional nos types.
+- Testes: `attachment.service` integração (removido o caso project-level; caso de
+  delete migrado para item); rules specs (`projects/*/attachments` e
+  `projects/{id}/general/*` viram asserções de negação para todos os papéis, inclusive
+  admin); `AttachmentUploader`/`AttachmentList`/`attachmentAdmin` specs com `itemId`
+  obrigatório; `dataHooks.spec.tsx` (`useAttachments`/`useUploadAttachment`/
+  `useDeleteAttachment` sem o caso "sem item"); `factories.ts` (`buildAttachment` com
+  `itemId`); `emulator.smoke.spec.ts` migrado para path de item (usava `general/`
+  incidentalmente); `paths.spec.ts` sem os testes de path de projeto; e2e
+  `project-lifecycle.spec.ts` (upload movido para a página do item) e
+  `error-paths.spec.ts` (os dois testes de upload navegam para o item em vez do
+  projeto).
+- Resultados: unit 1232/1232, rules 24/24, integration 69/69, e2e 64/64.
+- Prova de fogo: reintroduzido o `allow` removido em `firestore.rules` → rules spec
+  foi a vermelho ("Expected request to fail, but it succeeded"); revertido, verde de
+  novo.
 - Commit: `refactor(projetos): remove anexos gerais do projeto`
 
 ### Fase 4 — Anexos por audiência com desseleção

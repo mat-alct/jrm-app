@@ -20,7 +20,7 @@ const ATTACHMENT_ACCEPT =
 
 interface AttachmentUploaderProps {
   projectId: string;
-  itemId?: string;
+  itemId: string;
   uploadedBy: string;
   uploadedByName?: string;
   uploadedByRole: UserRole;

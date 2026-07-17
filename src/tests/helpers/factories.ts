@@ -82,9 +82,10 @@ export function buildAttachment(
   return {
     id: 'attachment-1',
     projectId: 'project-1',
+    itemId: 'item-1',
     fileName: 'arquivo.pdf',
     originalFileName: 'Arquivo.pdf',
-    storagePath: 'projects/project-1/general/arquivo.pdf',
+    storagePath: 'projects/project-1/items/item-1/contrato/arquivo.pdf',
     downloadUrl: 'http://127.0.0.1:9199/download',
     mimeType: 'application/pdf',
     sizeBytes: 12,

@@ -147,7 +147,7 @@ export interface ItemBudget {
 export interface Attachment {
   id: string;
   projectId: string;
-  itemId?: string;
+  itemId: string;
 
   fileName: string;
   originalFileName: string;

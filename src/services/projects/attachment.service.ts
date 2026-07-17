@@ -13,12 +13,7 @@ import { Attachment, AttachmentVisibility, UserRole } from '@/types/projects';
 import { inferAttachmentFileKind } from '../../utils/projects/attachments';
 import { canViewAttachment } from '../../utils/projects/permissions';
 import { db, storage } from '../firebase';
-import {
-  itemAttachmentsPath,
-  itemAttachmentStoragePath,
-  projectAttachmentsPath,
-  projectAttachmentStoragePath,
-} from './paths';
+import { itemAttachmentsPath, itemAttachmentStoragePath } from './paths';
 
 export function sanitizeFileName(fileName: string): string {
   return fileName
@@ -50,7 +45,7 @@ export function filterAttachmentsByRole(
 
 interface UploadAttachmentParams {
   projectId: string;
-  itemId?: string;
+  itemId: string;
   file: File;
   category: string;
   visibility: AttachmentVisibility;
@@ -73,15 +68,13 @@ export async function uploadAttachment({
   const fileName = sanitizeFileName(file.name);
   const mimeType = file.type || 'application/octet-stream';
 
-  const storagePath = itemId
-    ? itemAttachmentStoragePath(
-        projectId,
-        itemId,
-        category,
-        attachmentId,
-        fileName,
-      )
-    : projectAttachmentStoragePath(projectId, attachmentId, fileName);
+  const storagePath = itemAttachmentStoragePath(
+    projectId,
+    itemId,
+    category,
+    attachmentId,
+    fileName,
+  );
 
   const storageRef = ref(storage, storagePath);
   await uploadBytes(storageRef, file, { contentType: mimeType });
@@ -90,7 +83,7 @@ export async function uploadAttachment({
   const attachment: Attachment = {
     id: attachmentId,
     projectId,
-    ...(itemId ? { itemId } : {}),
+    itemId,
     fileName,
     originalFileName: file.name,
     storagePath,
@@ -107,23 +100,20 @@ export async function uploadAttachment({
     createdAt: Timestamp.now(),
   };
 
-  const collectionPath = itemId
-    ? itemAttachmentsPath(projectId, itemId)
-    : projectAttachmentsPath(projectId);
-
-  await setDoc(doc(db, collectionPath, attachmentId), attachment);
+  await setDoc(
+    doc(db, itemAttachmentsPath(projectId, itemId), attachmentId),
+    attachment,
+  );
 
   return attachment;
 }
 
 export async function listAttachments(
   projectId: string,
-  itemId?: string,
+  itemId: string,
 ): Promise<Attachment[]> {
-  const collectionPath = itemId
-    ? itemAttachmentsPath(projectId, itemId)
-    : projectAttachmentsPath(projectId);
-
-  const snap = await getDocs(collection(db, collectionPath));
+  const snap = await getDocs(
+    collection(db, itemAttachmentsPath(projectId, itemId)),
+  );
   return snap.docs.map(d => d.data() as Attachment);
 }

@@ -24,7 +24,7 @@ describe('Firebase Emulator integration smoke', () => {
     );
     const fileRef = ref(
       storage,
-      'projects/seed-project-1/general/storage-upload.txt',
+      'projects/seed-project-1/items/seed-item-1/geral/storage-upload.txt',
     );
     const bytes = new TextEncoder().encode('storage emulator smoke');
 

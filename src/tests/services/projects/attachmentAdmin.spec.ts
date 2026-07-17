@@ -25,9 +25,10 @@ function attachment(overrides: Partial<Attachment> = {}): Attachment {
   return {
     id: 'a1',
     projectId: 'p1',
+    itemId: 'i1',
     fileName: 'foto.jpg',
     originalFileName: 'foto.jpg',
-    storagePath: 'projects/p1/general/a1_foto.jpg',
+    storagePath: 'projects/p1/items/i1/geral/a1_foto.jpg',
     mimeType: 'image/jpeg',
     sizeBytes: 100,
     category: 'geral',
@@ -49,20 +50,14 @@ describe('services/projects/attachmentAdmin', () => {
     mockedDeleteObject.mockResolvedValue(undefined);
   });
 
-  it('deletes a project-level attachment from the project collection', async () => {
-    await deleteAttachment(attachment());
-
-    expect(mockedDoc).toHaveBeenCalledWith({}, 'projects/p1/attachments/a1');
-    expect(mockedDeleteDoc).toHaveBeenCalledWith('doc-ref');
-    expect(mockedDeleteObject).toHaveBeenCalledWith('storage-ref');
-  });
-
   it('deletes an item-level attachment from the item subcollection', async () => {
-    await deleteAttachment(attachment({ itemId: 'i1' }));
+    await deleteAttachment(attachment());
 
     expect(mockedDoc).toHaveBeenCalledWith(
       {},
       'projects/p1/items/i1/attachments/a1',
     );
+    expect(mockedDeleteDoc).toHaveBeenCalledWith('doc-ref');
+    expect(mockedDeleteObject).toHaveBeenCalledWith('storage-ref');
   });
 });

@@ -134,30 +134,26 @@ describe('storage.rules', () => {
     await assertSucceeds(uploadAs(role, path));
   }
 
-  describe('projects/{id}/general/*', () => {
+  describe('projects/{id}/general/* (removido na Fase 3)', () => {
     const path = 'projects/project-1/general/contrato.pdf';
 
-    it('permite read admin/seller/designer, write admin/seller e delete apenas admin', async () => {
-      await putAs('admin', path);
-
-      for (const role of ['admin', 'seller', 'designer'] as const) {
-        await assertSucceeds(storageAs(role).ref(path).getMetadata());
+    it('nega leitura e escrita para todos os papeis, inclusive admin', async () => {
+      for (const role of [
+        'admin',
+        'seller',
+        'designer',
+        'assembler',
+        'woodworker',
+        'inactive',
+      ] as const) {
+        await assertFails(
+          uploadAs(role, `projects/project-1/general/${role}.pdf`),
+        );
+        await assertFails(storageAs(role).ref(path).getMetadata());
       }
 
-      await assertSucceeds(
-        uploadAs('seller', 'projects/project-1/general/seller.pdf'),
-      );
-
-      await assertFails(
-        uploadAs('designer', 'projects/project-1/general/designer.pdf'),
-      );
-      await assertFails(storageAs('assembler').ref(path).getMetadata());
-      await assertFails(storageAs('woodworker').ref(path).getMetadata());
-      await assertFails(storageAs('seller').ref(path).delete());
-      await assertFails(storageAs('inactive').ref(path).getMetadata());
       await assertFails(anonStorage().ref(path).getMetadata());
       await assertFails(uploadAnon('projects/project-1/general/anon.pdf'));
-      await assertSucceeds(storageAs('admin').ref(path).delete());
     });
   });
 

@@ -74,7 +74,10 @@ test.describe('jornada Via A — operação interna', () => {
     );
     expect([...itemsByName.keys()].sort()).toEqual(['Balcao gourmet', 'Cristaleira']);
 
-    // ---------- 2. upload de anexo geral (o passo que faltou no bug do Storage) ----------
+    // ---------- 2. upload de anexo do item (o passo que faltou no bug do Storage) ----------
+    const balcaoId = itemsByName.get('Balcao gourmet')!.id;
+    await page.goto(`/projetos/${projectId}/itens/${balcaoId}`);
+
     await page.getByPlaceholder('Ex: fotos do ambiente').fill('contrato');
     await page.locator('select').first().selectOption('client');
     await page.locator('input[type="file"]').setInputFiles(PDF_FIXTURE);
@@ -84,9 +87,9 @@ test.describe('jornada Via A — operação interna', () => {
     const downloadLink = page.getByRole('link', { name: 'Baixar' });
     await expect(downloadLink).toBeVisible();
 
-    // Verificação dupla (a): doc de attachment na subcoleção certa.
+    // Verificação dupla (a): doc de attachment na subcoleção certa do item.
     const attachmentsSnap = await adminDb
-      .collection(`projects/${projectId}/attachments`)
+      .collection(`projects/${projectId}/items/${balcaoId}/attachments`)
       .get();
     expect(attachmentsSnap.size).toBe(1);
     const attachment = attachmentsSnap.docs[0].data();
@@ -98,7 +101,7 @@ test.describe('jornada Via A — operação interna', () => {
 
     // Verificação dupla (b): o objeto existe no Storage e tem bytes > 0.
     const storagePath = attachment.storagePath as string;
-    expect(storagePath).toContain(`projects/${projectId}/general/`);
+    expect(storagePath).toContain(`projects/${projectId}/items/${balcaoId}/`);
     const [fileExists] = await adminStorage.bucket().file(storagePath).exists();
     expect(fileExists).toBe(true);
     const [contents] = await adminStorage.bucket().file(storagePath).download();
@@ -112,9 +115,6 @@ test.describe('jornada Via A — operação interna', () => {
     expect((await response.body()).byteLength).toBeGreaterThan(0);
 
     // ---------- 3. atribui desenhista (prazo automático) ----------
-    const balcaoId = itemsByName.get('Balcao gourmet')!.id;
-    await page.goto(`/projetos/${projectId}/itens/${balcaoId}`);
-
     await page.getByRole('button', { name: 'Atribuir desenhista' }).click();
     const dialog = page.getByRole('dialog', { name: 'Atribuir desenhista' });
     await expect(dialog).toBeVisible();

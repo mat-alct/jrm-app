@@ -11,9 +11,6 @@ import {
   itemVersionStoragePath,
   paymentPath,
   paymentProofStoragePath,
-  projectAttachmentPath,
-  projectAttachmentsPath,
-  projectAttachmentStoragePath,
   projectItemPath,
   projectItemsPath,
   projectPath,
@@ -31,13 +28,6 @@ describe('services/projects/paths', () => {
   it('builds project item paths', () => {
     expect(projectItemsPath('p1')).toBe('projects/p1/items');
     expect(projectItemPath('p1', 'i1')).toBe('projects/p1/items/i1');
-  });
-
-  it('builds project-level attachment paths', () => {
-    expect(projectAttachmentsPath('p1')).toBe('projects/p1/attachments');
-    expect(projectAttachmentPath('p1', 'a1')).toBe(
-      'projects/p1/attachments/a1',
-    );
   });
 
   it('builds item-level attachment paths', () => {
@@ -69,9 +59,6 @@ describe('services/projects/paths', () => {
   });
 
   it('builds storage paths', () => {
-    expect(projectAttachmentStoragePath('p1', 'a1', 'foto.png')).toBe(
-      'projects/p1/general/a1_foto.png',
-    );
     expect(
       itemAttachmentStoragePath('p1', 'i1', 'medidas', 'a1', 'foto.png'),
     ).toBe('projects/p1/items/i1/medidas/a1_foto.png');

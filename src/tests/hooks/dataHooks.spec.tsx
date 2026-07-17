@@ -107,21 +107,7 @@ describe('useAppUser', () => {
 describe('useAttachments', () => {
   beforeEach(() => jest.clearAllMocks());
 
-  it('usa queryKey de projeto quando nao ha item', async () => {
-    jest.mocked(listAttachments).mockResolvedValue([]);
-    const { Wrapper, queryClient } = makeWrapper();
-
-    renderHook(() => useAttachments('project-1'), { wrapper: Wrapper });
-
-    await waitFor(() =>
-      expect(
-        queryClient.getQueryState(['projects', 'project-1', 'attachments']),
-      ).toBeDefined(),
-    );
-    expect(listAttachments).toHaveBeenCalledWith('project-1', undefined);
-  });
-
-  it('usa queryKey de item quando ha itemId', async () => {
+  it('usa queryKey de item', async () => {
     jest.mocked(listAttachments).mockResolvedValue([]);
     const { Wrapper, queryClient } = makeWrapper();
 
@@ -143,10 +129,10 @@ describe('useAttachments', () => {
     expect(listAttachments).toHaveBeenCalledWith('project-1', 'item-1');
   });
 
-  it('nao busca sem projectId', () => {
+  it('nao busca sem projectId ou itemId', () => {
     const { Wrapper } = makeWrapper();
 
-    const { result } = renderHook(() => useAttachments(''), {
+    const { result } = renderHook(() => useAttachments('', ''), {
       wrapper: Wrapper,
     });
 
@@ -193,9 +179,10 @@ describe('useUploadAttachment', () => {
     const { Wrapper, queryClient } = makeWrapper();
     const invalidate = jest.spyOn(queryClient, 'invalidateQueries');
 
-    const { result } = renderHook(() => useUploadAttachment('project-1'), {
-      wrapper: Wrapper,
-    });
+    const { result } = renderHook(
+      () => useUploadAttachment('project-1', 'item-1'),
+      { wrapper: Wrapper },
+    );
 
     await expect(result.current.mutateAsync({} as never)).rejects.toThrow(
       'storage/unauthorized',
@@ -207,14 +194,15 @@ describe('useUploadAttachment', () => {
 describe('useDeleteAttachment', () => {
   beforeEach(() => jest.clearAllMocks());
 
-  it('remove o anexo e invalida a lista do projeto', async () => {
+  it('remove o anexo e invalida a lista do item', async () => {
     jest.mocked(deleteAttachment).mockResolvedValue(undefined);
     const { Wrapper, queryClient } = makeWrapper();
     const invalidate = jest.spyOn(queryClient, 'invalidateQueries');
 
-    const { result } = renderHook(() => useDeleteAttachment('project-1'), {
-      wrapper: Wrapper,
-    });
+    const { result } = renderHook(
+      () => useDeleteAttachment('project-1', 'item-1'),
+      { wrapper: Wrapper },
+    );
 
     const attachment = { id: 'a1' } as Attachment;
     await result.current.mutateAsync(attachment);
@@ -222,7 +210,7 @@ describe('useDeleteAttachment', () => {
     expect(deleteAttachment).toHaveBeenCalledWith(attachment);
     await waitFor(() =>
       expect(invalidate).toHaveBeenCalledWith({
-        queryKey: ['projects', 'project-1', 'attachments'],
+        queryKey: ['projects', 'project-1', 'items', 'item-1', 'attachments'],
       }),
     );
   });

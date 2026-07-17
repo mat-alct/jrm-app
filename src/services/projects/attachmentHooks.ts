@@ -11,26 +11,24 @@ import { Attachment } from '@/types/projects';
 import { listAttachments, uploadAttachment } from './attachment.service';
 import { deleteAttachment } from './attachmentAdmin';
 
-function attachmentsQueryKey(projectId: string, itemId?: string) {
-  return itemId
-    ? ['projects', projectId, 'items', itemId, 'attachments']
-    : ['projects', projectId, 'attachments'];
+function attachmentsQueryKey(projectId: string, itemId: string) {
+  return ['projects', projectId, 'items', itemId, 'attachments'];
 }
 
 export function useAttachments(
   projectId: string,
-  itemId?: string,
+  itemId: string,
 ): UseQueryResult<Attachment[]> {
   return useQuery({
     queryKey: attachmentsQueryKey(projectId, itemId),
     queryFn: () => listAttachments(projectId, itemId),
-    enabled: !!projectId,
+    enabled: !!projectId && !!itemId,
   });
 }
 
 export function useUploadAttachment(
   projectId: string,
-  itemId?: string,
+  itemId: string,
 ): UseMutationResult<
   Attachment,
   Error,
@@ -50,7 +48,7 @@ export function useUploadAttachment(
 
 export function useDeleteAttachment(
   projectId: string,
-  itemId?: string,
+  itemId: string,
 ): UseMutationResult<void, Error, Attachment> {
   const queryClient = useQueryClient();
 

@@ -26,17 +26,6 @@ export function projectItemPath(projectId: string, itemId: string): string {
   return `${projectItemsPath(projectId)}/${itemId}`;
 }
 
-export function projectAttachmentsPath(projectId: string): string {
-  return `${projectPath(projectId)}/${ATTACHMENTS_SUBCOLLECTION}`;
-}
-
-export function projectAttachmentPath(
-  projectId: string,
-  attachmentId: string,
-): string {
-  return `${projectAttachmentsPath(projectId)}/${attachmentId}`;
-}
-
 export function itemAttachmentsPath(projectId: string, itemId: string): string {
   return `${projectItemPath(projectId, itemId)}/${ATTACHMENTS_SUBCOLLECTION}`;
 }
@@ -95,14 +84,6 @@ export function paymentPath(paymentId: string): string {
 
 export function deadlineDefaultsPath(): string {
   return `${SETTINGS_COLLECTION}/${DEADLINE_DEFAULTS_DOC}`;
-}
-
-export function projectAttachmentStoragePath(
-  projectId: string,
-  attachmentId: string,
-  fileName: string,
-): string {
-  return `projects/${projectId}/general/${attachmentId}_${fileName}`;
 }
 
 export function itemAttachmentStoragePath(

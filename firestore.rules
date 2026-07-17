@@ -153,12 +153,6 @@ service cloud.firestore {
         || (activeUser() && updatesOnly(['itemSummary', 'totalCustomerValue']));
       allow delete: if isAdmin();
 
-      match /attachments/{attachmentId} {
-        allow read: if isAdmin() || isSeller();
-        allow create: if isAdmin() || isSeller();
-        allow update, delete: if isAdmin();
-      }
-
       match /items/{itemId} {
         // Leitura/edicao do desenhista restrita aos proprios itens (fila em /desenhista) — VIA A.
         allow get: if isAdmin() || isSeller()

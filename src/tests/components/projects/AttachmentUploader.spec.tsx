@@ -25,6 +25,7 @@ function renderUploader(
   return render(
     <AttachmentUploader
       projectId="project-1"
+      itemId="item-1"
       uploadedBy="user-1"
       uploadedByName="Vendedor"
       uploadedByRole="seller"
@@ -65,7 +66,7 @@ describe('AttachmentUploader', () => {
     expect(mockedUpload).toHaveBeenCalledWith(
       expect.objectContaining({
         projectId: 'project-1',
-        itemId: undefined,
+        itemId: 'item-1',
         category: 'medicao',
         visibility: 'internal',
         uploadedBy: 'user-1',
@@ -76,7 +77,7 @@ describe('AttachmentUploader', () => {
     );
   });
 
-  it('repassa o itemId quando o upload e de um item', async () => {
+  it('repassa o itemId recebido via props', async () => {
     const { container } = renderUploader({ itemId: 'item-9' });
 
     fireEvent.change(screen.getByPlaceholderText('Ex: fotos do ambiente'), {

@@ -52,12 +52,6 @@ service firebase.storage {
 
     // === VIA A ===
     // Cliente nunca le Storage diretamente. Arquivos de cliente saem somente por signed URL.
-    match /projects/{projectId}/general/{fileName} {
-      allow read: if isAdmin() || isSeller() || isDesigner();
-      allow create, update: if isAdmin() || isSeller();
-      allow delete: if isAdmin();
-    }
-
     match /projects/{projectId}/items/{itemId}/{category}/{fileName} {
       allow read: if isAdmin() || isSeller() || isDesigner()
         || isAssignedAssembler(projectId, itemId);

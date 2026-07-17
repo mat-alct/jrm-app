@@ -457,25 +457,27 @@ describe('firestore.rules', () => {
     });
   });
 
-  describe('projects/*/attachments', () => {
+  describe('projects/*/attachments (removidos na Fase 3)', () => {
     const path = 'projects/project-1/attachments/project-attachment';
 
-    it('permite read/create para admin e seller; update/delete apenas admin', async () => {
-      for (const role of ['admin', 'seller'] as const) {
-        await assertSucceeds(dbAs(role).doc(path).get());
-        await assertSucceeds(
+    it('nega leitura e escrita para todos os papeis, inclusive admin', async () => {
+      for (const role of [
+        'admin',
+        'seller',
+        'designer',
+        'assembler',
+        'woodworker',
+      ] as const) {
+        await assertFails(dbAs(role).doc(path).get());
+        await assertFails(
           dbAs(role)
             .doc(`projects/project-1/attachments/create-${role}`)
             .set(basicDoc),
         );
       }
 
-      await assertSucceeds(dbAs('admin').doc(path).update({ reviewed: true }));
-      await assertSucceeds(dbAs('admin').doc(path).delete());
-
-      await assertFails(dbAs('designer').doc(path).get());
-      await assertFails(dbAs('seller').doc(path).update({ reviewed: false }));
-      await assertFails(dbAs('seller').doc(path).delete());
+      await assertFails(dbAs('admin').doc(path).update({ reviewed: true }));
+      await assertFails(dbAs('admin').doc(path).delete());
       await assertFails(anonDb().doc(path).get());
       await assertFails(dbAs('inactive').doc(path).get());
     });

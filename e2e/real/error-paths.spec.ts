@@ -3,6 +3,7 @@ import './testEnv';
 import { expect, loginAs, test } from './fixtures';
 
 const PROJECT_ID = 'seed-project-1';
+const ITEM_ID = 'seed-item-1';
 
 /**
  * Único spec autorizado a usar `page.route` (princípio 4 do plano): aqui a
@@ -15,7 +16,7 @@ test.describe('caminhos de erro', () => {
     consoleErrors,
   }) => {
     await loginAs(page, 'admin');
-    await page.goto(`/projetos/${PROJECT_ID}`);
+    await page.goto(`/projetos/${PROJECT_ID}/itens/${ITEM_ID}`);
 
     // Falha de infraestrutura no Storage. Usamos 403 (erro definitivo) em vez de
     // `abort`: uma falha de rede faria o SDK do Firebase entrar em retry com
@@ -39,9 +40,13 @@ test.describe('caminhos de erro', () => {
     await expect(page.getByText('Erro ao enviar arquivo.')).toBeVisible();
 
     // Nada foi gravado: nem objeto no Storage, nem doc de anexo.
-    expect((await adminDb.collection(`projects/${PROJECT_ID}/attachments`).get()).size).toBe(
-      0,
-    );
+    expect(
+      (
+        await adminDb
+          .collection(`projects/${PROJECT_ID}/items/${ITEM_ID}/attachments`)
+          .get()
+      ).size,
+    ).toBe(0);
 
     // O upload volta a funcionar depois que a rede se recupera.
     await page.unroute('http://127.0.0.1:9199/**');
@@ -51,7 +56,11 @@ test.describe('caminhos de erro', () => {
     await expect
       .poll(
         async () =>
-          (await adminDb.collection(`projects/${PROJECT_ID}/attachments`).get()).size,
+          (
+            await adminDb
+              .collection(`projects/${PROJECT_ID}/items/${ITEM_ID}/attachments`)
+              .get()
+          ).size,
       )
       .toBe(1);
 
@@ -86,7 +95,7 @@ test.describe('caminhos de erro', () => {
     adminDb,
   }) => {
     await loginAs(page, 'admin');
-    await page.goto(`/projetos/${PROJECT_ID}`);
+    await page.goto(`/projetos/${PROJECT_ID}/itens/${ITEM_ID}`);
 
     await page.getByPlaceholder('Ex: fotos do ambiente').fill('contrato');
     await page.locator('input[type="file"]').setInputFiles({
@@ -107,7 +116,11 @@ test.describe('caminhos de erro', () => {
     await expect
       .poll(
         async () =>
-          (await adminDb.collection(`projects/${PROJECT_ID}/attachments`).get()).size,
+          (
+            await adminDb
+              .collection(`projects/${PROJECT_ID}/items/${ITEM_ID}/attachments`)
+              .get()
+          ).size,
       )
       .toBe(1);
   });

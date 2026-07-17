@@ -22,7 +22,7 @@ import { ModelViewerPreview } from './ModelViewerPreview';
 
 interface AttachmentListProps {
   projectId: string;
-  itemId?: string;
+  itemId: string;
   attachments: Attachment[];
   viewerRoles: UserRole[] | undefined;
 }

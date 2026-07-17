@@ -11,8 +11,6 @@ import { deleteAttachment } from '@/services/projects/attachmentAdmin';
 import {
   itemAttachmentPath,
   itemAttachmentStoragePath,
-  projectAttachmentPath,
-  projectAttachmentStoragePath,
 } from '@/services/projects/paths';
 import { resetEmulator, TEST_STORAGE_BUCKET } from '@/tests/helpers/emulator';
 import { SEED_USER_PASSWORD, seedEmulator } from '@/tests/helpers/seedEmulator';
@@ -85,60 +83,6 @@ describe('services/projects/attachment.service integration', () => {
     await signOut(auth);
   });
 
-  it('uploads, stores, downloads and lists a project-level attachment', async () => {
-    await signInAs('vendedor@seed.jrm');
-    const contents = 'contrato aprovado';
-
-    const attachment = await uploadAttachment({
-      projectId: 'seed-project-1',
-      file: textFile('Contrato final ção.pdf', contents, 'application/pdf'),
-      category: 'contratos',
-      visibility: 'client',
-      uploadedBy: 'seed-seller',
-      uploadedByName: 'Vendedor Seed',
-      uploadedByRole: 'seller',
-    });
-
-    expect(attachment).toMatchObject({
-      projectId: 'seed-project-1',
-      fileName: 'Contrato_final_cao.pdf',
-      originalFileName: 'Contrato final ção.pdf',
-      mimeType: 'application/pdf',
-      sizeBytes: contents.length,
-      fileKind: 'document',
-      category: 'contratos',
-      visibility: 'client',
-      uploadedBy: 'seed-seller',
-      uploadedByName: 'Vendedor Seed',
-      uploadedByRole: 'seller',
-      clientVisible: true,
-    });
-    expect(attachment.storagePath).toBe(
-      projectAttachmentStoragePath(
-        'seed-project-1',
-        attachment.id,
-        'Contrato_final_cao.pdf',
-      ),
-    );
-
-    await expectStoredObject(attachment.storagePath, contents);
-    expect(attachment.downloadUrl).toEqual(expect.any(String));
-    await expectDownloadUrlToReturn(attachment.downloadUrl as string, contents);
-    await expectAttachmentDoc(
-      projectAttachmentPath('seed-project-1', attachment.id),
-      attachment,
-    );
-
-    await expect(listAttachments('seed-project-1')).resolves.toEqual([
-      expect.objectContaining({
-        id: attachment.id,
-        storagePath: attachment.storagePath,
-        fileKind: 'document',
-        clientVisible: true,
-      }),
-    ]);
-  });
-
   it('uploads, stores, downloads and lists an item-level attachment', async () => {
     await signInAs('vendedor@seed.jrm');
     const contents = 'foto do item';
@@ -200,6 +144,7 @@ describe('services/projects/attachment.service integration', () => {
     await signInAs('vendedor@seed.jrm');
     const attachment = await uploadAttachment({
       projectId: 'seed-project-1',
+      itemId: 'seed-item-1',
       file: textFile('Remover.txt', 'remover'),
       category: 'geral',
       visibility: 'internal',
@@ -213,7 +158,9 @@ describe('services/projects/attachment.service integration', () => {
     await deleteAttachment(attachment);
 
     await expect(
-      adminDb.doc(projectAttachmentPath('seed-project-1', attachment.id)).get(),
+      adminDb
+        .doc(itemAttachmentPath('seed-project-1', 'seed-item-1', attachment.id))
+        .get(),
     ).resolves.toMatchObject({ exists: false });
     await expect(
       adminStorage.bucket().file(attachment.storagePath).exists(),
