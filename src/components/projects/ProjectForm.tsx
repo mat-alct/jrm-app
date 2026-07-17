@@ -7,8 +7,8 @@ import { FormInput } from '../Form/Input';
 export interface ProjectFormValues {
   customerName: string;
   customerPhone: string;
-  customerEmail: string;
-  customerAddress: string;
+  customerEmail?: string;
+  customerAddress?: string;
 }
 
 interface ProjectFormProps<TFieldValues extends ProjectFormValues> {

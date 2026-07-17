@@ -20,8 +20,8 @@ import { projectPath, PROJECTS_COLLECTION } from './paths';
 export interface CreateProjectInput {
   customerName: string;
   customerPhone: string;
-  customerEmail: string;
-  customerAddress: string;
+  customerEmail?: string;
+  customerAddress?: string;
 }
 
 export interface CreateProjectActor {
@@ -42,13 +42,8 @@ export interface ListProjectsFilters {
 }
 
 function assertCreateProjectInput(input: CreateProjectInput): void {
-  if (
-    !input.customerName?.trim() ||
-    !input.customerPhone?.trim() ||
-    !input.customerEmail?.trim() ||
-    !input.customerAddress?.trim()
-  ) {
-    throw new Error('Nome, telefone, e-mail e endereço são obrigatórios.');
+  if (!input.customerName?.trim() || !input.customerPhone?.trim()) {
+    throw new Error('Nome e telefone são obrigatórios.');
   }
 }
 
@@ -64,8 +59,12 @@ export async function createProject(
   const project: Omit<Project, 'id'> = {
     customerName: input.customerName.trim(),
     customerPhone: input.customerPhone.trim(),
-    customerEmail: input.customerEmail.trim(),
-    customerAddress: input.customerAddress.trim(),
+    ...(input.customerEmail?.trim()
+      ? { customerEmail: input.customerEmail.trim() }
+      : {}),
+    ...(input.customerAddress?.trim()
+      ? { customerAddress: input.customerAddress.trim() }
+      : {}),
     sellerId: actor.uid,
     ...(actor.name ? { sellerName: actor.name } : {}),
     // Credenciais do cliente sao geradas pela rota `provision` da Via B

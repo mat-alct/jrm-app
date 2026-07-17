@@ -16,19 +16,10 @@ test.describe('jornada Via A — operação interna', () => {
   }) => {
     await loginAs(page, 'admin');
 
-    // ---------- 1. cria projeto com 2 itens ----------
+    // ---------- 1. cria o cadastro basico do cliente ----------
     await page.goto('/projetos/novo');
     await page.getByLabel('Nome do cliente').fill('Cliente Playwright');
     await page.getByLabel('Telefone').fill('(24) 98888-7777');
-    await page.getByLabel('E-mail').fill('cliente.playwright@example.com');
-    await page.getByLabel('Endereço').fill('Rua Playwright, 456');
-
-    await page.locator('input[name="items.0.name"]').fill('Balcao gourmet');
-    await page.locator('input[name="items.0.environment"]').fill('Varanda');
-
-    await page.getByRole('button', { name: 'Adicionar item' }).click();
-    await page.locator('input[name="items.1.name"]').fill('Cristaleira');
-    await page.locator('input[name="items.1.environment"]').fill('Sala');
 
     await page.getByRole('button', { name: 'Criar projeto' }).click();
 
@@ -37,14 +28,44 @@ test.describe('jornada Via A — operação interna', () => {
     const projectId = page.url().split('/').pop()!;
     await expect(page.getByText('Cliente Playwright').first()).toBeVisible();
 
-    // Verificação dupla: documento no path certo, com summary calculado.
+    // Verificação dupla: documento no path certo, sem e-mail/endereço.
     const projectSnap = await adminDb.doc(`projects/${projectId}`).get();
     expect(projectSnap.exists).toBe(true);
-    expect(projectSnap.data()).toMatchObject({
-      customerName: 'Cliente Playwright',
+    expect(projectSnap.data()).toMatchObject({ customerName: 'Cliente Playwright' });
+    expect(projectSnap.data()).not.toHaveProperty('customerEmail');
+    expect(projectSnap.data()?.itemSummary).toMatchObject({ total: 0 });
+
+    // ---------- 1b. completa e-mail/endereço e adiciona 2 itens no detalhe ----------
+    await page.getByRole('button', { name: 'Editar' }).click();
+    const editDialog = page.getByRole('dialog', { name: 'Editar dados do cliente' });
+    await editDialog.getByLabel('E-mail').fill('cliente.playwright@example.com');
+    await editDialog.getByLabel('Endereço').fill('Rua Playwright, 456');
+    await editDialog.getByRole('button', { name: 'Salvar' }).click();
+    await expect(editDialog).toBeHidden();
+    await expect(page.getByText('cliente.playwright@example.com')).toBeVisible();
+
+    await page.getByRole('button', { name: 'Adicionar item' }).click();
+    const addItemDialog1 = page.getByRole('dialog', { name: 'Adicionar item' });
+    await addItemDialog1.getByLabel('Nome do item').fill('Balcao gourmet');
+    await addItemDialog1.getByLabel('Ambiente').fill('Varanda');
+    await addItemDialog1.getByRole('button', { name: 'Adicionar' }).click();
+    await expect(addItemDialog1).toBeHidden();
+    await expect(page.getByText('Balcao gourmet')).toBeVisible();
+
+    await page.getByRole('button', { name: 'Adicionar item' }).click();
+    const addItemDialog2 = page.getByRole('dialog', { name: 'Adicionar item' });
+    await addItemDialog2.getByLabel('Nome do item').fill('Cristaleira');
+    await addItemDialog2.getByLabel('Ambiente').fill('Sala');
+    await addItemDialog2.getByRole('button', { name: 'Adicionar' }).click();
+    await expect(addItemDialog2).toBeHidden();
+    await expect(page.getByText('Cristaleira')).toBeVisible();
+
+    const projectSnapAfterItems = await adminDb.doc(`projects/${projectId}`).get();
+    expect(projectSnapAfterItems.data()).toMatchObject({
       customerEmail: 'cliente.playwright@example.com',
+      customerAddress: 'Rua Playwright, 456',
     });
-    expect(projectSnap.data()?.itemSummary).toMatchObject({ total: 2 });
+    expect(projectSnapAfterItems.data()?.itemSummary).toMatchObject({ total: 2 });
 
     const itemsSnap = await adminDb.collection(`projects/${projectId}/items`).get();
     expect(itemsSnap.size).toBe(2);

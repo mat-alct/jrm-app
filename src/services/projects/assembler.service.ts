@@ -119,6 +119,13 @@ export async function assignAssemblers(
 
   const project = { id: projectSnap.id, ...projectSnap.data() } as Project;
   const item = { id: itemSnap.id, ...itemSnap.data() } as ProjectItem;
+
+  if (!project.customerAddress?.trim()) {
+    throw new AssemblerServiceError(
+      'Preencha o endereço do cliente antes de atribuir um montador.',
+    );
+  }
+
   const now = Timestamp.now();
 
   const createdAssignments = assignments.map(input => {

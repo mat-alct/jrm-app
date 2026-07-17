@@ -197,6 +197,45 @@ describe('services/projects/assembler.service', () => {
     expect(result.map(item => item.id)).toEqual(['with-date', 'no-date']);
   });
 
+  it('rejects assigning an assembler when the project has no address', async () => {
+    mockedGetDoc
+      .mockResolvedValueOnce({
+        id: 'project-1',
+        exists: () => true,
+        data: () => ({
+          customerName: 'Cliente Teste',
+          customerPhone: '11999999999',
+          // customerAddress ausente
+        }),
+      })
+      .mockResolvedValueOnce({
+        id: 'item-1',
+        exists: () => true,
+        data: () => ({
+          name: 'Armario',
+          environment: 'Quarto',
+          status: 'aguardando_atribuicao_montador',
+        }),
+      });
+
+    await expect(
+      assignAssemblers(
+        'project-1',
+        'item-1',
+        [
+          {
+            assemblerId: 'assembler-1',
+            assemblerName: 'Montador 1',
+            amountToReceive: 500,
+          },
+        ],
+        { id: 'admin-1', name: 'Admin', roles: ['admin'] },
+      ),
+    ).rejects.toThrow('endereço');
+
+    expect(mockedSetDoc).not.toHaveBeenCalled();
+  });
+
   it('rejects non-admin assignment updates before writing', async () => {
     await expect(
       updateAssignment(

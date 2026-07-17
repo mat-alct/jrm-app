@@ -71,6 +71,22 @@ describe('services/projects/project.service', () => {
         createProject({ ...validInput, customerName: '' }, actor),
       ).rejects.toThrow();
       expect(mockedSetDoc).not.toHaveBeenCalled();
+
+      await expect(
+        createProject({ ...validInput, customerPhone: '' }, actor),
+      ).rejects.toThrow();
+      expect(mockedSetDoc).not.toHaveBeenCalled();
+    });
+
+    it('creates a project with only name and phone, omitting email/address', async () => {
+      await createProject(
+        { customerName: 'Fulano', customerPhone: '82999999999' },
+        actor,
+      );
+
+      const [, payload] = mockedSetDoc.mock.calls[0];
+      expect(payload).not.toHaveProperty('customerEmail');
+      expect(payload).not.toHaveProperty('customerAddress');
     });
 
     it('creates the project deriving seller from the actor', async () => {

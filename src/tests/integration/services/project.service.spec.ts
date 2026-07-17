@@ -69,6 +69,21 @@ describe('services/projects/project.service integration', () => {
     expect(snap.data()?.updatedAt).toBeTruthy();
   });
 
+  it('creates a project with only name and phone, omitting email/address', async () => {
+    await signInAs('vendedor@seed.jrm');
+
+    const projectId = await createProject(
+      { customerName: 'Cliente Minimo', customerPhone: '24999992222' },
+      { uid: 'seed-seller', name: 'Vendedor Seed' },
+    );
+
+    const snap = await adminDb.doc(projectPath(projectId)).get();
+    expect(snap.exists).toBe(true);
+    expect(snap.data()).not.toHaveProperty('customerEmail');
+    expect(snap.data()).not.toHaveProperty('customerAddress');
+    expect(snap.data()?.itemSummary).toMatchObject({ total: 0 });
+  });
+
   it('gets, updates and returns null for missing projects', async () => {
     await signInAs('admin@seed.jrm');
 

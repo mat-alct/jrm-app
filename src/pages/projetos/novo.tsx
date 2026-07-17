@@ -1,20 +1,15 @@
-import { Box, Button, Heading, Stack } from '@chakra-ui/react';
+import { Box, Button, Heading } from '@chakra-ui/react';
 import { yupResolver } from '@hookform/resolvers/yup';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import React from 'react';
-import { useFieldArray, useForm } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 
 import {
   ProjectForm,
   ProjectFormValues,
 } from '@/components/projects/ProjectForm';
-import {
-  ProjectItemForm,
-  ProjectItemFormValues,
-} from '@/components/projects/ProjectItemForm';
 import { useCreateProject } from '@/services/projects/projectHooks';
-import { createProjectItem } from '@/services/projects/projectItem.service';
 import { useAppUser } from '@/services/projects/users.service';
 import { createProjectSchema } from '@/utils/yup/projetosValidations';
 
@@ -23,18 +18,6 @@ import { Header } from '../../components/Dashboard/Content/Header';
 import { Loader } from '../../components/Loader';
 import { toaster } from '../../components/ui/toaster';
 import { useAuth } from '../../hooks/authContext';
-
-interface NovoProjetoFormValues extends ProjectFormValues {
-  items: ProjectItemFormValues[];
-}
-
-const EMPTY_ITEM: ProjectItemFormValues = {
-  name: '',
-  environment: '',
-  material: '',
-  description: '',
-  notes: '',
-};
 
 const NovoProjeto = () => {
   const { user } = useAuth();
@@ -48,23 +31,19 @@ const NovoProjeto = () => {
 
   const {
     register,
-    control,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<NovoProjetoFormValues>({
+  } = useForm({
     resolver: yupResolver(createProjectSchema),
     defaultValues: {
       customerName: '',
       customerPhone: '',
       customerEmail: '',
       customerAddress: '',
-      items: [EMPTY_ITEM],
     },
   });
 
-  const { fields, append, remove } = useFieldArray({ control, name: 'items' });
-
-  const onSubmit = async (values: NovoProjetoFormValues) => {
+  const onSubmit = async (values: ProjectFormValues) => {
     if (!user || !appUser) return;
 
     try {
@@ -77,20 +56,6 @@ const NovoProjeto = () => {
         },
         actor: { uid: user.uid, name: appUser.name },
       });
-
-      for (const item of values.items) {
-        await createProjectItem(
-          projectId,
-          {
-            name: item.name,
-            environment: item.environment,
-            material: item.material,
-            description: item.description,
-            notes: item.notes,
-          },
-          user.uid,
-        );
-      }
 
       toaster.create({ type: 'success', description: 'Projeto criado.' });
       void router.push(`/projetos/${projectId}`);
@@ -117,7 +82,11 @@ const NovoProjeto = () => {
 
         <Box
           as="form"
-          onSubmit={event => void handleSubmit(onSubmit)(event)}
+          onSubmit={event =>
+            void handleSubmit(values =>
+              onSubmit(values as ProjectFormValues),
+            )(event)
+          }
           display="flex"
           flexDirection="column"
           gap={6}
@@ -133,32 +102,6 @@ const NovoProjeto = () => {
               Dados do cliente
             </Heading>
             <ProjectForm register={register} errors={errors} />
-          </Box>
-
-          <Box>
-            <Heading size="md" mb={4}>
-              Itens
-            </Heading>
-            <Stack gap={4}>
-              {fields.map((field, index) => (
-                <ProjectItemForm
-                  key={field.id}
-                  index={index}
-                  register={register}
-                  errors={errors as never}
-                  onRemove={() => remove(index)}
-                  canRemove={fields.length > 1}
-                />
-              ))}
-            </Stack>
-            <Button
-              mt={4}
-              variant="outline"
-              colorScheme="orange"
-              onClick={() => append(EMPTY_ITEM)}
-            >
-              Adicionar item
-            </Button>
           </Box>
 
           <Button

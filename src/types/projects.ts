@@ -68,8 +68,8 @@ export interface Project {
 
   customerName: string;
   customerPhone: string;
-  customerEmail: string;
-  customerAddress: string;
+  customerEmail?: string;
+  customerAddress?: string;
 
   sellerId: string;
   sellerName?: string;

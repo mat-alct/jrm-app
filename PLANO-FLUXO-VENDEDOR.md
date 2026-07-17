@@ -107,44 +107,49 @@ Cada fase segue o mesmo ritual:
 - [x] Commit deste plano.
 - Commit: `docs(projetos): planeja novo fluxo de vendedor, fila de desenho e anexos`
 
-### Fase 1 — Cadastro básico do cliente
+### Fase 1 — Cadastro básico do cliente ✅ (2026-07-17)
 
 **Objetivo:** criar projeto só com nome + telefone; demais dados opcionais, editáveis no
 detalhe; sem itens na criação; redirecionar para o detalhe (já acontece hoje).
 
-- [ ] Types: `customerEmail`/`customerAddress` opcionais em `Project` e
+- [x] Types: `customerEmail`/`customerAddress` opcionais em `Project` e
       `CreateProjectInput` (`src/types/projects.ts`, `src/services/projects/project.service.ts`).
-- [ ] `assertCreateProjectInput` exige só nome+telefone; `createProjectSchema`
+- [x] `assertCreateProjectInput` exige só nome+telefone; `createProjectSchema`
       (`src/utils/yup/projetosValidations.ts`) idem, **remove** `items` do schema de criação.
-- [ ] `novo.tsx` + `ProjectForm`: formulário reduzido (nome, telefone); remover
+- [x] `novo.tsx` + `ProjectForm`: formulário reduzido (nome, telefone); remover
       `useFieldArray` de itens e o loop de `createProjectItem` do submit.
-- [ ] Detalhe do projeto: card "Dados do cliente" ganha "Editar" (admin/vendedor) para
-      completar e-mail/endereço via `updateProject` (já existe).
-- [ ] Atribuição de montador passa a validar endereço preenchido (mensagem clara).
-- [ ] Denormalizações que assumem endereço/email (ex.: `assignAssemblers` copia
-      `customerAddress`) toleram ausência.
-- Testes: adaptar `project.service` (integração), specs do yup, `ProjectForm.spec`,
-  factories/seed (manter projetos completos no seed), e2e `project-lifecycle` (etapa de
-  criação muda; adição de itens fica vermelha até a Fase 2 — combinar as fases 1 e 2 no
-  mesmo PR se preferir e2e sempre verde; ver nota ao fim).
-- Prova de fogo: remover a exigência de telefone no schema → spec do yup vermelho.
+- [x] Detalhe do projeto: card "Dados do cliente" ganha "Editar" (admin/vendedor) para
+      completar e-mail/endereço via `updateProject` (já existe). Implementado em
+      `EditCustomerDataModal.tsx`.
+- [x] Atribuição de montador passa a validar endereço preenchido (mensagem clara).
+- [x] Denormalizações que assumem endereço/email (`AssemblerAssignment.customerAddress`
+      já era opcional; nenhuma outra mudança necessária).
+- Testes: `project.service` (unit+integração), yup, `ProjectForm.spec`,
+  `EditCustomerDataModal.spec`, `assembler.service` (validação de endereço).
+  Fases 1+2 combinadas num único ciclo de execução para manter o e2e sempre verde
+  (ver nota da Fase 2).
+- Prova de fogo: removida a exigência de telefone no schema → spec do yup foi a
+  vermelho (`Resolved to value` em vez de rejeitar); revertido, verde de novo.
 - Commit: `feat(projetos): cadastro basico do cliente com dados opcionais`
 
-### Fase 2 — Itens adicionados no detalhe do projeto
+### Fase 2 — Itens adicionados no detalhe do projeto ✅ (2026-07-17)
 
 **Objetivo:** "Adicionar item" no `/projetos/[projectId]` (admin/vendedor); projeto pode
 estar vazio.
 
-- [ ] Reaproveitar `ProjectItemForm` num modal/section "Adicionar item" no detalhe,
-      usando `useCreateProjectItem` (já existe, hoje só usado em `novo.tsx`).
-- [ ] Estado vazio da lista de itens ("Nenhum item ainda — adicione o primeiro").
-- [ ] Conferir rules: create de item já é admin|seller — sem mudança esperada.
-- Testes: component spec do novo modal; integração `projectItem.service` já cobre
-  create + recálculo de summary (conferir caso projeto sem itens); e2e
-  `project-lifecycle` reescrito: cria cadastro básico → abre detalhe → adiciona 2 itens
-  → verifica docs + `itemSummary` no emulador (dupla verificação).
-- Prova de fogo: sabotar `recalculateProjectSummary` (não somar novo item) → integração
-  vermelha.
+- [x] Reaproveitar `ProjectItemForm` num modal "Adicionar item" no detalhe
+      (`AddProjectItemModal.tsx`), usando `useCreateProjectItem`.
+- [x] Estado vazio da lista de itens (já existia: "Nenhum item cadastrado.").
+- [x] Rules: create de item já era admin|seller — confirmado, sem mudança.
+- Testes: `AddProjectItemModal.spec` (component); `projectItem.service` integração já
+  cobria create + recálculo de summary; e2e `project-lifecycle.spec.ts` reescrito:
+  cria cadastro básico → completa e-mail/endereço pelo "Editar" → abre detalhe →
+  adiciona 2 itens pelo modal → verifica docs + `itemSummary` no emulador (dupla
+  verificação). `e2e/real/permissions.spec.ts` conferido (só checa rotas, sem
+  dependência de campos — não precisou de ajuste).
+- Resultados: unit 1235/1235, rules 24/24, integration 70/70, e2e 64/64.
+- Prova de fogo: `summary.total += 0` em `computeItemSummary` → `summary.spec.ts`
+  foi a vermelho (2 casos); revertido, verde de novo.
 - Commit: `feat(projetos): adiciona itens pelo detalhe do projeto`
 
 ### Fase 3 — Fim dos anexos gerais

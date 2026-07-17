@@ -1,14 +1,17 @@
 import { yupResolver } from '@hookform/resolvers/yup';
 import React from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
+import * as Yup from 'yup';
 
 import { ProjectForm } from '@/components/projects/ProjectForm';
 import { ProjectItemForm } from '@/components/projects/ProjectItemForm';
-import { createProjectSchema } from '@/utils/yup/projetosValidations';
+import {
+  createProjectSchema,
+  projectItemSchema,
+} from '@/utils/yup/projetosValidations';
 
 import { fireEvent, render, screen, waitFor } from '../../testUtils';
 
-/** Pagina de novo projeto reduzida ao essencial: form + array de itens. */
 function NewProjectHarness({
   onSubmit,
 }: {
@@ -16,7 +19,6 @@ function NewProjectHarness({
 }) {
   const {
     register,
-    control,
     handleSubmit,
     formState: { errors },
   } = useForm({
@@ -26,33 +28,12 @@ function NewProjectHarness({
       customerPhone: '',
       customerEmail: '',
       customerAddress: '',
-      items: [{ name: '', environment: '' }],
     },
   });
-
-  const { fields, append, remove } = useFieldArray({ control, name: 'items' });
 
   return (
     <form onSubmit={event => void handleSubmit(onSubmit as never)(event)}>
       <ProjectForm register={register} errors={errors as never} />
-
-      {fields.map((field, index) => (
-        <ProjectItemForm
-          key={field.id}
-          index={index}
-          register={register}
-          errors={errors as never}
-          onRemove={() => remove(index)}
-          canRemove={fields.length > 1}
-        />
-      ))}
-
-      <button
-        type="button"
-        onClick={() => append({ name: '', environment: '' })}
-      >
-        Adicionar item
-      </button>
       <button type="submit">Criar projeto</button>
     </form>
   );
@@ -65,26 +46,19 @@ function fillCustomer() {
   fireEvent.change(screen.getByLabelText('Telefone'), {
     target: { value: '24999990000' },
   });
-  fireEvent.change(screen.getByLabelText('E-mail'), {
-    target: { value: 'cliente@alpha.com' },
-  });
-  fireEvent.change(screen.getByLabelText('Endereço'), {
-    target: { value: 'Rua A, 1' },
-  });
 }
 
-describe('ProjectForm + ProjectItemForm', () => {
-  it('renderiza os campos do cliente e o primeiro item', () => {
+describe('ProjectForm', () => {
+  it('renderiza os campos do cliente', () => {
     render(<NewProjectHarness onSubmit={jest.fn()} />);
 
     expect(screen.getByLabelText('Nome do cliente')).toBeInTheDocument();
     expect(screen.getByLabelText('Telefone')).toBeInTheDocument();
     expect(screen.getByLabelText('E-mail')).toBeInTheDocument();
     expect(screen.getByLabelText('Endereço')).toBeInTheDocument();
-    expect(screen.getByText('Item 1')).toBeInTheDocument();
   });
 
-  it('exibe as mensagens de validacao no submit', async () => {
+  it('exige apenas nome e telefone no submit', async () => {
     render(<NewProjectHarness onSubmit={jest.fn()} />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Criar projeto' }));
@@ -93,33 +67,130 @@ describe('ProjectForm + ProjectItemForm', () => {
       await screen.findByText('Nome do cliente é obrigatório'),
     ).toBeInTheDocument();
     expect(screen.getByText('Telefone é obrigatório')).toBeInTheDocument();
-    expect(screen.getByText('E-mail é obrigatório')).toBeInTheDocument();
-    expect(screen.getByText('Endereço é obrigatório')).toBeInTheDocument();
-    expect(screen.getByText('Nome do item é obrigatório')).toBeInTheDocument();
+    expect(
+      screen.queryByText('E-mail é obrigatório'),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText('Endereço é obrigatório'),
+    ).not.toBeInTheDocument();
   });
 
-  it('deixa a validacao nativa do type=email barrar o submit', async () => {
+  it('deixa a validacao nativa do type=email barrar o submit quando preenchido', async () => {
     const onSubmit = jest.fn();
     render(<NewProjectHarness onSubmit={onSubmit} />);
 
+    fillCustomer();
     fireEvent.change(screen.getByLabelText('E-mail'), {
       target: { value: 'nao-e-email' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Criar projeto' }));
 
-    // O input e type="email": o proprio navegador (e o jsdom) bloqueia o submit,
-    // entao o yup nem chega a rodar. Vale registrar: o `.email()` do yup e permissivo
-    // (aceita ate "joao@empresa"), entao quem barra e-mail malformado aqui e a
-    // validacao nativa do HTML, nao o schema.
     await waitFor(() => expect(screen.getByLabelText('E-mail')).toBeInvalid());
     expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it('submete apenas com nome e telefone preenchidos', async () => {
+    const onSubmit = jest.fn();
+    render(<NewProjectHarness onSubmit={onSubmit} />);
+
+    fillCustomer();
+    fireEvent.click(screen.getByRole('button', { name: 'Criar projeto' }));
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalled());
+    expect(onSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        customerName: 'Cliente Alpha',
+        customerPhone: '24999990000',
+      }),
+      expect.anything(),
+    );
+  });
+
+  it('submete com e-mail e endereço quando preenchidos', async () => {
+    const onSubmit = jest.fn();
+    render(<NewProjectHarness onSubmit={onSubmit} />);
+
+    fillCustomer();
+    fireEvent.change(screen.getByLabelText('E-mail'), {
+      target: { value: 'cliente@alpha.com' },
+    });
+    fireEvent.change(screen.getByLabelText('Endereço'), {
+      target: { value: 'Rua A, 1' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Criar projeto' }));
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalled());
+    expect(onSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        customerEmail: 'cliente@alpha.com',
+        customerAddress: 'Rua A, 1',
+      }),
+      expect.anything(),
+    );
+  });
+});
+
+const addItemSchema = Yup.object().shape({
+  items: Yup.array().of(projectItemSchema).min(1).required(),
+});
+
+/** Harness isolado do ProjectItemForm: usado pelo modal "Adicionar item" da Fase 2. */
+function AddItemHarness({ onSubmit }: { onSubmit: (values: unknown) => void }) {
+  const {
+    register,
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({
+    resolver: yupResolver(addItemSchema as never),
+    defaultValues: { items: [{ name: '', environment: '' }] },
+  });
+
+  const { fields, append, remove } = useFieldArray({ control, name: 'items' });
+
+  return (
+    <form onSubmit={event => void handleSubmit(onSubmit as never)(event)}>
+      {fields.map((field, index) => (
+        <ProjectItemForm
+          key={field.id}
+          index={index}
+          register={register}
+          errors={errors as never}
+          onRemove={() => remove(index)}
+          canRemove={fields.length > 1}
+        />
+      ))}
+      <button
+        type="button"
+        onClick={() => append({ name: '', environment: '' })}
+      >
+        Adicionar item
+      </button>
+      <button type="submit">Salvar</button>
+    </form>
+  );
+}
+
+describe('ProjectItemForm', () => {
+  it('renderiza o primeiro item', () => {
+    render(<AddItemHarness onSubmit={jest.fn()} />);
+
+    expect(screen.getByText('Item 1')).toBeInTheDocument();
+  });
+
+  it('exibe as mensagens de validacao no submit', async () => {
+    render(<AddItemHarness onSubmit={jest.fn()} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
+
     expect(
-      screen.queryByText('Digite um e-mail válido'),
-    ).not.toBeInTheDocument();
+      await screen.findByText('Nome do item é obrigatório'),
+    ).toBeInTheDocument();
+    expect(screen.getByText('Ambiente é obrigatório')).toBeInTheDocument();
   });
 
   it('nao permite remover quando ha um unico item', () => {
-    render(<NewProjectHarness onSubmit={jest.fn()} />);
+    render(<AddItemHarness onSubmit={jest.fn()} />);
 
     expect(
       screen.queryByRole('button', { name: 'Remover' }),
@@ -127,7 +198,7 @@ describe('ProjectForm + ProjectItemForm', () => {
   });
 
   it('adiciona e remove itens dinamicamente', () => {
-    render(<NewProjectHarness onSubmit={jest.fn()} />);
+    render(<AddItemHarness onSubmit={jest.fn()} />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Adicionar item' }));
     expect(screen.getByText('Item 2')).toBeInTheDocument();
@@ -137,60 +208,26 @@ describe('ProjectForm + ProjectItemForm', () => {
     expect(screen.queryByText('Item 2')).not.toBeInTheDocument();
   });
 
-  it('mostra o erro no item certo do array', async () => {
-    render(<NewProjectHarness onSubmit={jest.fn()} />);
-
-    fireEvent.click(screen.getByRole('button', { name: 'Adicionar item' }));
-    fireEvent.change(screen.getAllByLabelText('Nome do item')[0], {
-      target: { value: 'Cozinha' },
-    });
-    fireEvent.change(screen.getAllByLabelText('Ambiente')[0], {
-      target: { value: 'Cozinha' },
-    });
-    fireEvent.click(screen.getByRole('button', { name: 'Criar projeto' }));
-
-    // Apenas o item 2, que ficou vazio, acusa erro.
-    expect(
-      await screen.findByText('Nome do item é obrigatório'),
-    ).toBeInTheDocument();
-    expect(screen.getAllByText('Nome do item é obrigatório')).toHaveLength(1);
-  });
-
-  it('submete o payload completo com todos os itens', async () => {
+  it('submete o payload do item preenchido', async () => {
     const onSubmit = jest.fn();
-    render(<NewProjectHarness onSubmit={onSubmit} />);
+    render(<AddItemHarness onSubmit={onSubmit} />);
 
-    fillCustomer();
-    fireEvent.change(screen.getAllByLabelText('Nome do item')[0], {
+    fireEvent.change(screen.getByLabelText('Nome do item'), {
       target: { value: 'Cozinha planejada' },
     });
-    fireEvent.change(screen.getAllByLabelText('Ambiente')[0], {
+    fireEvent.change(screen.getByLabelText('Ambiente'), {
       target: { value: 'Cozinha' },
     });
-
-    fireEvent.click(screen.getByRole('button', { name: 'Adicionar item' }));
-    fireEvent.change(screen.getAllByLabelText('Nome do item')[1], {
-      target: { value: 'Armario' },
-    });
-    fireEvent.change(screen.getAllByLabelText('Ambiente')[1], {
-      target: { value: 'Quarto' },
-    });
-
-    fireEvent.click(screen.getByRole('button', { name: 'Criar projeto' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
 
     await waitFor(() => expect(onSubmit).toHaveBeenCalled());
     expect(onSubmit).toHaveBeenCalledWith(
       expect.objectContaining({
-        customerName: 'Cliente Alpha',
-        customerPhone: '24999990000',
-        customerEmail: 'cliente@alpha.com',
-        customerAddress: 'Rua A, 1',
         items: [
           expect.objectContaining({
             name: 'Cozinha planejada',
             environment: 'Cozinha',
           }),
-          expect.objectContaining({ name: 'Armario', environment: 'Quarto' }),
         ],
       }),
       expect.anything(),
