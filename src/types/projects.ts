@@ -126,6 +126,7 @@ export interface ProjectItem {
   budget?: ItemBudget;
 
   approvedAt?: Timestamp;
+  assemblerAssignedAt?: Timestamp;
   rejectedAt?: Timestamp;
   changeRequestedAt?: Timestamp;
   completedAt?: Timestamp;

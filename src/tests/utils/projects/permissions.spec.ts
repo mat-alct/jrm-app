@@ -1,3 +1,6 @@
+import { Timestamp } from 'firebase/firestore';
+
+import { buildProjectItem } from '@/tests/helpers/factories';
 import {
   canAssignAssembler,
   canAssignDesigner,
@@ -7,6 +10,7 @@ import {
   canViewAttachment,
   hasRole,
   isAdmin,
+  isSellerLocked,
 } from '@/utils/projects/permissions';
 
 describe('utils/projects/permissions', () => {
@@ -96,6 +100,27 @@ describe('utils/projects/permissions', () => {
     it('blocks unauthenticated users regardless of audience', () => {
       expect(canViewAttachment(allTrue, undefined)).toBe(false);
       expect(canViewAttachment(allTrue, [])).toBe(false);
+    });
+  });
+
+  describe('isSellerLocked', () => {
+    const assignedItem = buildProjectItem({
+      assemblerAssignedAt: Timestamp.fromDate(
+        new Date('2026-07-17T12:00:00.000Z'),
+      ),
+    });
+
+    it('locks only a seller-only user after an assembler is assigned', () => {
+      expect(isSellerLocked(assignedItem, ['seller'])).toBe(true);
+      expect(isSellerLocked(assignedItem, ['admin'])).toBe(false);
+      expect(isSellerLocked(assignedItem, ['admin', 'seller'])).toBe(false);
+      expect(isSellerLocked(assignedItem, ['seller', 'designer'])).toBe(false);
+    });
+
+    it('does not lock before assignment or without an effective role', () => {
+      expect(isSellerLocked(buildProjectItem(), ['seller'])).toBe(false);
+      expect(isSellerLocked(assignedItem, [])).toBe(false);
+      expect(isSellerLocked(undefined, ['seller'])).toBe(false);
     });
   });
 });

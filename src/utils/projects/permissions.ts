@@ -1,4 +1,4 @@
-import { AttachmentAudience, UserRole } from '@/types/projects';
+import { AttachmentAudience, ProjectItem, UserRole } from '@/types/projects';
 
 export const ROLE_LABELS: Record<UserRole, string> = {
   admin: 'Administrador',
@@ -118,4 +118,20 @@ export function canViewAttachment(
     const audienceKey = AUDIENCE_ROLES[role];
     return audienceKey ? audience[audienceKey] : false;
   });
+}
+
+/**
+ * O corte de visibilidade se aplica apenas ao usuario cujo unico papel e
+ * vendedor. Papeis acumulados (especialmente admin/designer) preservam suas
+ * responsabilidades operacionais.
+ */
+export function isSellerLocked(
+  item: Pick<ProjectItem, 'assemblerAssignedAt'> | null | undefined,
+  userRoles: UserRole[] | undefined,
+): boolean {
+  return (
+    !!item?.assemblerAssignedAt &&
+    userRoles?.length === 1 &&
+    userRoles[0] === 'seller'
+  );
 }

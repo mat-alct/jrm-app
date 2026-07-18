@@ -359,23 +359,23 @@ anexa e reaprova.
   sabotagens foram revertidas e os testes direcionados voltaram a verde.
 - Commit: `feat(projetos): pedido de informacoes pelo desenhista com notificacoes`
 
-### Fase 8 — Visibilidade do vendedor
+### Fase 8 — Visibilidade do vendedor ✅ (2026-07-17)
 
 **Objetivo:** (a) vendedor vê todos os cadastros; (b) após montador atribuído, só o
 status.
 
-- [ ] (a) `/projetos` index: remover `sellerOnly`/filtro `sellerId` (rules já permitem
+- [x] (a) `/projetos` index: remover `sellerOnly`/filtro `sellerId` (rules já permitem
       leitura de todos os projetos por seller). `listProjects` mantém o filtro como
       opcional para o dashboard.
-- [ ] (b) `ProjectItem.assemblerAssignedAt?: Timestamp` — gravado em
+- [x] (b) `ProjectItem.assemblerAssignedAt?: Timestamp` — gravado em
       `assignAssemblers`. Novo helper puro `isSellerLocked(item)` em `permissions.ts`
       (true quando `assemblerAssignedAt` presente e o papel efetivo é só vendedor —
       admin nunca é travado).
-- [ ] UI do item para vendedor travado: renderizar apenas identificação (nome,
+- [x] UI do item para vendedor travado: renderizar apenas identificação (nome,
       ambiente) + badge de status. Sem anexos, orçamento, versões, montadores,
       histórico.
-- [ ] Detalhe do projeto: cards de item continuam com badge de status (ok).
-- [ ] Rules: leitura de `attachments` e `versions` do item negada para seller quando o
+- [x] Detalhe do projeto: cards de item continuam com badge de status (ok).
+- [x] Rules: leitura de `attachments` e `versions` do item negada para seller quando o
       doc do item tem `assemblerAssignedAt` (o doc do item em si continua legível — o
       status vem dele; campos como `budget` ficam ocultos **apenas via UI**, limitação
       documentada: Firestore rules não filtram campos).
@@ -387,6 +387,12 @@ status.
   vendedores.
 - Prova de fogo: fazer `isSellerLocked` retornar sempre `false` → component e rules
   specs vermelhos.
+- Resultados: typecheck e guardrails OK; unit **1323/1323**; rules **37/37**;
+  integração **82/82**; e2e da visibilidade **1/1**. A UI bloqueada também desativa
+  as queries de anexos, versões, histórico e atribuições, evitando requisições negadas
+  e dados sensíveis em cache. Provas de fogo executadas em separado: forçar
+  `isSellerLocked` a `false` derrubou helper+page; liberar o seller nas rules derrubou
+  os quatro casos de Firestore/Storage; sabotagens revertidas e suítes verdes.
 - Commit: `feat(projetos): vendedor ve todos os cadastros e so status apos montador`
 
 ### Fase 9 — Consolidação

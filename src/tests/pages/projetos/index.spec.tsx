@@ -1,7 +1,10 @@
 import { Timestamp } from 'firebase/firestore';
 
 import ProjetosIndex from '@/pages/projetos/index';
-import { useClaimDesignItem, useDesignQueue } from '@/services/projects/designer.service';
+import {
+  useClaimDesignItem,
+  useDesignQueue,
+} from '@/services/projects/designer.service';
 import { useProjects } from '@/services/projects/projectHooks';
 import { useAppUser } from '@/services/projects/users.service';
 import { AppUser, ProjectItem } from '@/types/projects';
@@ -127,7 +130,17 @@ describe('Página: /projetos (abas por papel)', () => {
   });
 
   it('vendedor ve apenas a aba Projetos', () => {
-    mockHooks({ roles: ['seller'] });
+    mockHooks({
+      roles: ['seller'],
+      projects: [
+        {
+          id: 'p-outro',
+          customerName: 'Cliente de Outro Vendedor',
+          sellerName: 'Outro Vendedor',
+          itemSummary: { total: 1, atrasados: 0 },
+        },
+      ],
+    });
 
     render(<ProjetosIndex />);
 
@@ -135,6 +148,8 @@ describe('Página: /projetos (abas por papel)', () => {
     expect(
       screen.queryByRole('tab', { name: 'Desenhos pendentes' }),
     ).not.toBeInTheDocument();
+    expect(screen.getByText('Cliente de Outro Vendedor')).toBeInTheDocument();
+    expect(useProjects).toHaveBeenCalledWith({ search: undefined });
   });
 
   it('desenhista ve apenas a aba Desenhos pendentes, com a fila', () => {

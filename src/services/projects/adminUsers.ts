@@ -84,9 +84,13 @@ export function useUsers(): UseQueryResult<AppUser[]> {
   });
 }
 
-export function useUsersByRole(role: UserRole): UseQueryResult<AppUser[]> {
+export function useUsersByRole(
+  role: UserRole,
+  enabled = true,
+): UseQueryResult<AppUser[]> {
   return useQuery({
     queryKey: ['projects', 'users', 'byRole', role],
     queryFn: () => listUsersByRole(role),
+    enabled,
   });
 }

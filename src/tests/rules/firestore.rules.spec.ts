@@ -121,6 +121,39 @@ describe('firestore.rules', () => {
         status: 'aguardando_desenho',
       });
 
+      await db.doc('projects/project-1/items/locked-seller-item').set({
+        projectId: 'project-1',
+        name: 'Item com montador atribuido',
+        status: 'em_producao',
+        assemblerAssignedAt: new Date('2026-01-02T00:00:00.000Z'),
+      });
+
+      await db
+        .doc(
+          'projects/project-1/items/locked-seller-item/attachments/locked-attachment',
+        )
+        .set({
+          audience: {
+            seller: true,
+            designer: true,
+            assembler: true,
+            client: true,
+          },
+          uploadedBy: uid.admin,
+          uploadedByRole: 'admin',
+        });
+
+      await db
+        .doc(
+          'projects/project-1/items/locked-seller-item/versions/locked-version',
+        )
+        .set({
+          projectId: 'project-1',
+          itemId: 'locked-seller-item',
+          attachmentIds: [],
+          createdBy: uid.designer,
+        });
+
       await db
         .doc(
           'projects/project-1/items/designer-item/attachments/assembler-file',
@@ -766,6 +799,20 @@ describe('firestore.rules', () => {
           }),
       );
     });
+
+    it('nega leitura e criacao ao seller depois da atribuicao do montador, mantendo admin', async () => {
+      const lockedPath =
+        'projects/project-1/items/locked-seller-item/attachments/locked-attachment';
+      await assertFails(dbAs('seller').doc(lockedPath).get());
+      await assertFails(
+        dbAs('seller').doc(`${lockedPath}-new`).set({
+          audience: fullAudience,
+          uploadedBy: uid.seller,
+          uploadedByRole: 'seller',
+        }),
+      );
+      await assertSucceeds(dbAs('admin').doc(lockedPath).get());
+    });
   });
 
   describe('items/*/statusHistory', () => {
@@ -929,6 +976,13 @@ describe('firestore.rules', () => {
       );
       await assertFails(dbAs('designer').doc(path).delete());
       await assertFails(anonDb().doc(path).get());
+    });
+
+    it('nega leitura ao seller depois da atribuicao do montador, mantendo admin', async () => {
+      const lockedPath =
+        'projects/project-1/items/locked-seller-item/versions/locked-version';
+      await assertFails(dbAs('seller').doc(lockedPath).get());
+      await assertSucceeds(dbAs('admin').doc(lockedPath).get());
     });
   });
 

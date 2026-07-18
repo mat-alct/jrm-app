@@ -42,6 +42,7 @@ import {
   canEditItemStatus,
   hasRole,
   isAdmin,
+  isSellerLocked,
 } from '@/utils/projects/permissions';
 import { canTransition } from '@/utils/projects/status';
 
@@ -84,25 +85,43 @@ const ProjectItemDetail = () => {
     if (user === null) void router.push('/login');
   }, [user, router]);
 
-  const { data: appUser } = useAppUser();
+  const { data: appUser, isLoading: isLoadingAppUser } = useAppUser();
   const { data: item, isLoading: isLoadingItem } = useProjectItem(
     projectId,
     itemId,
   );
-  const { data: history } = useItemStatusHistory(projectId, itemId);
-  const { data: attachments } = useAttachments(projectId, itemId);
-  const { data: versions } = useItemVersions(projectId, itemId);
+  const admin = isAdmin(appUser?.roles);
+  const sellerLocked = isSellerLocked(item, appUser?.roles);
+  const canLoadItemDetails = !!item && !!appUser && !sellerLocked;
+  const { data: history } = useItemStatusHistory(
+    projectId,
+    itemId,
+    canLoadItemDetails && (admin || hasRole(appUser?.roles, 'seller')),
+  );
+  const { data: attachments } = useAttachments(
+    projectId,
+    itemId,
+    canLoadItemDetails,
+  );
+  const { data: versions } = useItemVersions(
+    projectId,
+    itemId,
+    canLoadItemDetails,
+  );
   const updateStatus = useUpdateItemStatus(projectId, itemId);
   const [isAssignDesignerOpen, setIsAssignDesignerOpen] = React.useState(false);
   const [isAssignAssemblerOpen, setIsAssignAssemblerOpen] =
     React.useState(false);
 
   const queryClient = useQueryClient();
-  const { data: assemblers } = useUsersByRole('assembler');
+  const { data: assemblers } = useUsersByRole(
+    'assembler',
+    canLoadItemDetails && admin,
+  );
   const { data: assignments } = useQuery({
     queryKey: ['projects', projectId, 'items', itemId, 'assemblerAssignments'],
     queryFn: () => listItemAssemblerAssignments(projectId, itemId),
-    enabled: !!projectId && !!itemId,
+    enabled: !!projectId && !!itemId && canLoadItemDetails && admin,
   });
   const assignAssemblersMutation = useMutation({
     mutationFn: (rows: AssignAssemblerInput[]) => {
@@ -122,6 +141,9 @@ const ProjectItemDetail = () => {
           itemId,
           'assemblerAssignments',
         ],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: ['projects', projectId, 'items', itemId],
       });
       toaster.create({
         type: 'success',
@@ -239,7 +261,7 @@ const ProjectItemDetail = () => {
     }
   };
 
-  if (!user || isLoadingItem) {
+  if (!user || isLoadingItem || isLoadingAppUser || !appUser) {
     return <Loader />;
   }
 
@@ -252,7 +274,34 @@ const ProjectItemDetail = () => {
     );
   }
 
-  const admin = isAdmin(appUser?.roles);
+  if (sellerLocked) {
+    return (
+      <>
+        <Head>
+          <title>{item.name} | JRM Compensados</title>
+        </Head>
+        <Dashboard>
+          <Header pageTitle={item.name} />
+          <Box
+            bg="white"
+            borderWidth="1px"
+            borderColor="gray.200"
+            borderRadius="md"
+            p={4}
+          >
+            <HStack justify="space-between" mb={3}>
+              <Heading size="md">Status atual</Heading>
+              <ProjectItemStatusBadge status={item.status} />
+            </HStack>
+            <Text fontSize="sm">
+              <b>Ambiente:</b> {item.environment}
+            </Text>
+          </Box>
+        </Dashboard>
+      </>
+    );
+  }
+
   // Desenhistas comuns nao veem valores financeiros (spec secao 4).
   const canSeePrice = admin || !hasRole(appUser?.roles, 'designer');
   // Vendedor acompanha status, mas quem edita e admin/desenhista/montador (spec secao 4).

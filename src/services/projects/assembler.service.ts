@@ -162,6 +162,12 @@ export async function assignAssemblers(
     ),
   );
 
+  await updateDoc(doc(db, projectItemPath(projectId, itemId)), {
+    assemblerAssignedAt: now,
+    updatedAt: now,
+    updatedBy: actor.id,
+  });
+
   if (item.status === 'aguardando_atribuicao_montador') {
     await updateItemStatus(projectId, itemId, 'em_producao', {
       uid: actor.id,

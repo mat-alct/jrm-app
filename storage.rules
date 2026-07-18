@@ -32,6 +32,10 @@ service firebase.storage {
       return hasRole('seller');
     }
 
+    function isSellerOnly() {
+      return isSeller() && userDoc().data.roles.size() == 1;
+    }
+
     function isDesigner() {
       return hasRole('designer');
     }
@@ -45,6 +49,13 @@ service firebase.storage {
         && firestore.exists(/databases/(default)/documents/projects/$(projectId)/items/$(itemId)/assemblerAssignments/$(request.auth.uid));
     }
 
+    function sellerCanAccessItemDetails(projectId, itemId) {
+      return isSeller()
+        && (!isSellerOnly()
+            || firestore.get(/databases/(default)/documents/projects/$(projectId)/items/$(itemId))
+                 .data.get('assemblerAssignedAt', null) == null);
+    }
+
     function ownsPayment(paymentId) {
       return isAssembler()
         && firestore.get(/databases/(default)/documents/payments/$(paymentId)).data.assemblerId == request.auth.uid;
@@ -53,15 +64,15 @@ service firebase.storage {
     // === VIA A ===
     // Cliente nunca le Storage diretamente. Arquivos de cliente saem somente por signed URL.
     match /projects/{projectId}/items/{itemId}/{category}/{fileName} {
-      allow read: if isAdmin() || isSeller() || isDesigner()
+      allow read: if isAdmin() || sellerCanAccessItemDetails(projectId, itemId) || isDesigner()
         || isAssignedAssembler(projectId, itemId);
-      allow create, update: if isAdmin() || isSeller() || isDesigner()
+      allow create, update: if isAdmin() || sellerCanAccessItemDetails(projectId, itemId) || isDesigner()
         || isAssignedAssembler(projectId, itemId);
       allow delete: if isAdmin();
     }
 
     match /projects/{projectId}/items/{itemId}/versions/{versionId}/{fileName} {
-      allow read: if isAdmin() || isSeller() || isDesigner();
+      allow read: if isAdmin() || sellerCanAccessItemDetails(projectId, itemId) || isDesigner();
       allow create, update: if isAdmin() || hasRole('designer');
       allow delete: if isAdmin();
     }

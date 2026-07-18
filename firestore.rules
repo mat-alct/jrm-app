@@ -38,6 +38,10 @@ service cloud.firestore {
       return hasRole('seller');
     }
 
+    function isSellerOnly() {
+      return isSeller() && userDoc().data.roles.size() == 1;
+    }
+
     function isDesigner() {
       return hasRole('designer');
     }
@@ -58,6 +62,13 @@ service cloud.firestore {
     function isAssignedDesigner(projectId, itemId) {
       return isDesigner()
         && get(/databases/$(database)/documents/projects/$(projectId)/items/$(itemId)).data.designerId == request.auth.uid;
+    }
+
+    function sellerCanAccessItemDetails(projectId, itemId) {
+      return isSeller()
+        && (!isSellerOnly()
+            || get(/databases/$(database)/documents/projects/$(projectId)/items/$(itemId))
+                 .data.get('assemblerAssignedAt', null) == null);
     }
 
     function updatesOnly(keys) {
@@ -216,7 +227,7 @@ service cloud.firestore {
         allow delete: if isAdmin();
 
         match /attachments/{attachmentId} {
-          allow read: if isAdmin() || isSeller()
+          allow read: if isAdmin() || sellerCanAccessItemDetails(projectId, itemId)
             || (isAssignedDesigner(projectId, itemId)
                 && resource.data.get('audience', {}).get('designer', false) == true)
             || (isAssignedAssembler(projectId, itemId)
@@ -226,7 +237,7 @@ service cloud.firestore {
                      get(/databases/$(database)/documents/projects/$(projectId)/items/$(itemId)).data.status)
                 && resource.data.get('audience', {}).get('designer', false) == true);
           allow create: if isValidAudienceShape(request.resource.data.audience)
-            && (isAdmin() || isSeller()
+            && (isAdmin() || sellerCanAccessItemDetails(projectId, itemId)
                 || (isAssignedDesigner(projectId, itemId)
                     && request.resource.data.uploadedBy == request.auth.uid
                     && request.resource.data.uploadedByRole == 'designer')
@@ -245,7 +256,7 @@ service cloud.firestore {
         // === VIA A ===
         // Desenhista le/atualiza apenas itens atribuidos a ele; cria as proprias versoes.
         match /versions/{versionId} {
-          allow read: if isAdmin() || isSeller()
+          allow read: if isAdmin() || sellerCanAccessItemDetails(projectId, itemId)
             || (isDesigner() && get(/databases/$(database)/documents/projects/$(projectId)/items/$(itemId)).data.designerId == request.auth.uid);
           allow create: if isAdmin()
             || (isDesigner() && get(/databases/$(database)/documents/projects/$(projectId)/items/$(itemId)).data.designerId == request.auth.uid);

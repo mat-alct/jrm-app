@@ -70,11 +70,12 @@ export function useProjectItem(
 export function useItemStatusHistory(
   projectId: string,
   itemId: string,
+  enabled = true,
 ): UseQueryResult<StatusHistory[]> {
   return useQuery({
     queryKey: ['projects', projectId, 'items', itemId, 'statusHistory'],
     queryFn: () => listItemStatusHistory(projectId, itemId),
-    enabled: !!projectId && !!itemId,
+    enabled: enabled && !!projectId && !!itemId,
   });
 }
 

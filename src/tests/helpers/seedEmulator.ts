@@ -114,6 +114,7 @@ export async function seedEmulator(): Promise<void> {
     clientApprovalStatus: 'aprovado',
     designerId: 'seed-designer',
     designerName: 'Desenhista Seed',
+    assemblerAssignedAt: now,
     deadlineCurrent: Timestamp.fromDate(new Date('2026-01-22T12:00:00.000Z')),
     createdAt: now,
     updatedAt: now,

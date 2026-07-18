@@ -94,6 +94,11 @@ describe('storage.rules', () => {
         projectId: 'project-1',
         name: 'Item Alpha',
       });
+      await db.doc('projects/project-1/items/locked-item').set({
+        projectId: 'project-1',
+        name: 'Item bloqueado para vendedor',
+        assemblerAssignedAt: new Date('2026-01-02T00:00:00.000Z'),
+      });
       await db
         .doc(
           `projects/project-1/items/item-1/assemblerAssignments/${uid.assembler}`,
@@ -191,6 +196,21 @@ describe('storage.rules', () => {
       await assertFails(anonStorage().ref(path).getMetadata());
       await assertSucceeds(storageAs('admin').ref(path).delete());
     });
+
+    it('nega read/write ao seller depois da atribuicao do montador', async () => {
+      const lockedPath =
+        'projects/project-1/items/locked-item/documentos/contrato.pdf';
+      await putAs('admin', lockedPath);
+
+      await assertFails(storageAs('seller').ref(lockedPath).getMetadata());
+      await assertFails(
+        uploadAs(
+          'seller',
+          'projects/project-1/items/locked-item/documentos/novo.pdf',
+        ),
+      );
+      await assertSucceeds(storageAs('admin').ref(lockedPath).getMetadata());
+    });
   });
 
   describe('projects/.../versions/{versionId}/*', () => {
@@ -226,6 +246,15 @@ describe('storage.rules', () => {
       await assertFails(storageAs('inactive').ref(path).getMetadata());
       await assertFails(anonStorage().ref(path).getMetadata());
       await assertSucceeds(storageAs('admin').ref(path).delete());
+    });
+
+    it('nega leitura ao seller depois da atribuicao do montador', async () => {
+      const lockedPath =
+        'projects/project-1/items/locked-item/versions/version-1/model.glb';
+      await putAs('admin', lockedPath);
+
+      await assertFails(storageAs('seller').ref(lockedPath).getMetadata());
+      await assertSucceeds(storageAs('admin').ref(lockedPath).getMetadata());
     });
   });
 

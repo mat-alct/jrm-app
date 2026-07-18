@@ -12,6 +12,7 @@ import {
   canViewAttachment,
   getDefaultRouteForRoles,
   isPublicRoute,
+  isSellerLocked,
 } from '@/utils/projects/permissions';
 
 const ROLES: UserRole[] = [
@@ -237,5 +238,28 @@ describe('guardas de acao por papel', () => {
     }
     expect(guard([])).toBe(false);
     expect(guard(undefined)).toBe(false);
+  });
+});
+
+describe('isSellerLocked — matriz papel x atribuicao de montador', () => {
+  const ASSIGNMENT_STATES = [false, true] as const;
+  const PAIRS = ASSIGNMENT_STATES.flatMap(assigned =>
+    ROLES.map(role => [assigned, role] as const),
+  );
+
+  it.each(PAIRS)('assigned=%s como %s', (assigned, role) => {
+    const item = assigned
+      ? ({ assemblerAssignedAt: { seconds: 1 } } as never)
+      : ({} as never);
+    expect(isSellerLocked(item, [role])).toBe(assigned && role === 'seller');
+  });
+
+  it('admin nunca e bloqueado, inclusive acumulando seller', () => {
+    expect(
+      isSellerLocked({ assemblerAssignedAt: { seconds: 1 } } as never, [
+        'admin',
+        'seller',
+      ]),
+    ).toBe(false);
   });
 });

@@ -35,15 +35,11 @@ const ProjetosIndex = () => {
   const canSeeProjectsTab = admin || hasRole(appUser?.roles, 'seller');
   const canSeeDesignQueueTab = admin || hasRole(appUser?.roles, 'designer');
 
-  const sellerOnly =
-    !!appUser && !admin && hasRole(appUser.roles, 'seller');
-
   const {
     data: projects,
     isLoading,
     isFetching,
   } = useProjects({
-    sellerId: sellerOnly ? user?.uid : undefined,
     search,
   });
 
@@ -86,7 +82,9 @@ const ProjetosIndex = () => {
       <Dashboard>
         <Header
           pageTitle="Projetos"
-          isLoading={(isFetching && !isLoading) || (isFetchingQueue && !isLoadingQueue)}
+          isLoading={
+            (isFetching && !isLoading) || (isFetchingQueue && !isLoadingQueue)
+          }
         >
           {canSeeProjectsTab && (
             <Link href="/projetos/novo" passHref>
@@ -134,7 +132,9 @@ const ProjetosIndex = () => {
                       <Table.Row
                         key={project.id}
                         cursor="pointer"
-                        onClick={() => void router.push(`/projetos/${project.id}`)}
+                        onClick={() =>
+                          void router.push(`/projetos/${project.id}`)
+                        }
                         _hover={{ bg: 'orange.50' }}
                       >
                         <Table.Cell>{project.customerName}</Table.Cell>

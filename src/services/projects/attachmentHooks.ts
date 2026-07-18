@@ -18,11 +18,12 @@ function attachmentsQueryKey(projectId: string, itemId: string) {
 export function useAttachments(
   projectId: string,
   itemId: string,
+  enabled = true,
 ): UseQueryResult<Attachment[]> {
   return useQuery({
     queryKey: attachmentsQueryKey(projectId, itemId),
     queryFn: () => listAttachments(projectId, itemId),
-    enabled: !!projectId && !!itemId,
+    enabled: enabled && !!projectId && !!itemId,
   });
 }
 

@@ -211,11 +211,12 @@ export async function listItemVersions(
 export function useItemVersions(
   projectId: string,
   itemId: string,
+  enabled = true,
 ): UseQueryResult<ProjectItemVersion[]> {
   return useQuery({
     queryKey: ['projects', projectId, 'items', itemId, 'versions'],
     queryFn: () => listItemVersions(projectId, itemId),
-    enabled: !!projectId && !!itemId,
+    enabled: enabled && !!projectId && !!itemId,
   });
 }
 

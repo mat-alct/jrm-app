@@ -136,6 +136,13 @@ describe('services/projects/assembler.service', () => {
         assignedBy: 'admin-1',
       }),
     );
+    expect(mockedUpdateDoc).toHaveBeenCalledWith(
+      'projects/project-1/items/item-1',
+      expect.objectContaining({
+        assemblerAssignedAt: expect.any(Timestamp),
+        updatedBy: 'admin-1',
+      }),
+    );
   });
 
   it('moves the item from aguardando_atribuicao_montador to em_producao when assigning', async () => {

@@ -99,6 +99,7 @@ describe('services/projects/assembler.service integration', () => {
       status: 'em_producao',
       updatedBy: 'seed-admin',
     });
+    expect(itemSnap.data()?.assemblerAssignedAt).toBeTruthy();
   });
 
   it('lists assignments by assembler and by item, sorted by due date', async () => {
