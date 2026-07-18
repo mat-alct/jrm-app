@@ -67,7 +67,7 @@ test.describe('caminhos de erro', () => {
     consoleErrors.length = 0;
   });
 
-  test('erro 500 na API de acesso do cliente mostra mensagem e não trava a tela', async ({
+  test('erro HTML da infraestrutura ao gerar acesso mostra mensagem e não trava a tela', async ({
     page,
     consoleErrors,
   }) => {
@@ -77,14 +77,18 @@ test.describe('caminhos de erro', () => {
     await page.route('**/api/client-access/provision', route =>
       route.fulfill({
         status: 500,
-        contentType: 'application/json',
-        body: JSON.stringify({ error: 'Erro inesperado.' }),
+        contentType: 'text/html',
+        body: '<!DOCTYPE html><html><body>Internal Server Error</body></html>',
       }),
     );
 
     await page.getByRole('button', { name: /Gerar senha|Regenerar senha/ }).click();
 
-    await expect(page.getByText('Erro inesperado.')).toBeVisible();
+    await expect(
+      page.getByText(
+        'Nao foi possivel gerar o acesso do cliente. Tente novamente.',
+      ),
+    ).toBeVisible();
     await expect(page.getByRole('button', { name: 'Copiar link' })).toHaveCount(0);
 
     consoleErrors.length = 0;

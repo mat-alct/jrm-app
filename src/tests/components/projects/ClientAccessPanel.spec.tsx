@@ -21,6 +21,13 @@ function respondWith(body: unknown, ok = true) {
   fetchMock.mockResolvedValue({ ok, json: async () => body });
 }
 
+function respondWithInvalidJson(error: Error, ok = false) {
+  fetchMock.mockResolvedValue({
+    ok,
+    json: async () => Promise.reject(error),
+  });
+}
+
 describe('ClientAccessPanel', () => {
   it('gera o acesso e exibe link e senha', async () => {
     respondWith({ publicId: 'Abc123', accessCode: 'K7M2P9' });
@@ -108,6 +115,22 @@ describe('ClientAccessPanel', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Gerar senha' }));
 
     expect(await screen.findByText('Failed to fetch')).toBeInTheDocument();
+  });
+
+  it('nao exibe erro de parsing quando a infraestrutura devolve HTML', async () => {
+    respondWithInvalidJson(
+      new SyntaxError(`Unexpected token '<', "<!DOCTYPE "... is not valid JSON`),
+    );
+
+    render(<ClientAccessPanel projectId="project-1" />);
+    fireEvent.click(screen.getByRole('button', { name: 'Gerar senha' }));
+
+    expect(
+      await screen.findByText(
+        'Nao foi possivel gerar o acesso do cliente. Tente novamente.',
+      ),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/Unexpected token/)).not.toBeInTheDocument();
   });
 
   it('nao exibe link nem senha antes de gerar', () => {

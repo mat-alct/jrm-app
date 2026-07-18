@@ -1,3 +1,5 @@
+import requiredServerEnv from './required-server-env.json';
+
 /**
  * Validacao das variaveis de ambiente exigidas pelo servidor.
  *
@@ -12,13 +14,7 @@ export type ServerEnv = Record<string, string | undefined>;
  * Toda chave aqui precisa existir tambem no `.env.example` — o contrato e
  * verificado em `src/tests/services/env.server.spec.ts`.
  */
-export const REQUIRED_SERVER_ENV = [
-  'NEXT_PUBLIC_FIREBASE_PROJECT_ID',
-  'NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET',
-  'FIREBASE_CLIENT_EMAIL',
-  'FIREBASE_PRIVATE_KEY',
-  'CLIENT_ACCESS_SECRET',
-] as const;
+export const REQUIRED_SERVER_ENV = requiredServerEnv;
 
 export type RequiredServerEnvKey = (typeof REQUIRED_SERVER_ENV)[number];
 

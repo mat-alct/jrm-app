@@ -8,6 +8,47 @@ interface ProvisionResponse {
   accessCode: string;
 }
 
+const PROVISION_ERROR_MESSAGE =
+  'Nao foi possivel gerar o acesso do cliente. Tente novamente.';
+
+function isProvisionResponse(value: unknown): value is ProvisionResponse {
+  if (!value || typeof value !== 'object') return false;
+
+  const candidate = value as Partial<ProvisionResponse>;
+  return (
+    typeof candidate.publicId === 'string' &&
+    typeof candidate.accessCode === 'string'
+  );
+}
+
+async function readProvisionResponse(
+  response: Response,
+): Promise<ProvisionResponse> {
+  let data: unknown;
+  try {
+    data = await response.json();
+  } catch {
+    throw new Error(PROVISION_ERROR_MESSAGE);
+  }
+
+  if (!response.ok) {
+    const apiError =
+      data &&
+      typeof data === 'object' &&
+      'error' in data &&
+      typeof data.error === 'string'
+        ? data.error
+        : PROVISION_ERROR_MESSAGE;
+    throw new Error(apiError);
+  }
+
+  if (!isProvisionResponse(data)) {
+    throw new Error(PROVISION_ERROR_MESSAGE);
+  }
+
+  return data;
+}
+
 interface ClientAccessPanelProps {
   projectId: string;
   baseUrl?: string;
@@ -39,12 +80,7 @@ export function ClientAccessPanel({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ projectId }),
       });
-      const data = (await response.json()) as ProvisionResponse & {
-        error?: string;
-      };
-      if (!response.ok) {
-        throw new Error(data.error ?? 'Nao foi possivel gerar o acesso.');
-      }
+      const data = await readProvisionResponse(response);
       setCredentials(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro inesperado.');
