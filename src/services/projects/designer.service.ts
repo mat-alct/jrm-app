@@ -29,6 +29,7 @@ import {
 import { db } from '../firebase';
 import { uploadAttachment } from './attachment.service';
 import { computeDeadline, getDeadlineDefaults } from './deadline.service';
+import { resolveNotificationsForItem } from './notification.service';
 import { itemVersionsPath, projectItemPath } from './paths';
 import { updateProjectItem } from './projectItem.service';
 import { StatusActor, updateItemStatus } from './status.service';
@@ -68,15 +69,12 @@ export async function approveItemForDesign(
   const defaults = await getDeadlineDefaults();
   const deadlineCurrent = computeDeadline('aguardando_desenho', defaults);
   if (deadlineCurrent) {
-    await updateProjectItem(
-      projectId,
-      itemId,
-      { deadlineCurrent },
-      actor.uid,
-      { recalculateSummary: false },
-    );
+    await updateProjectItem(projectId, itemId, { deadlineCurrent }, actor.uid, {
+      recalculateSummary: false,
+    });
   }
   await updateItemStatus(projectId, itemId, 'aguardando_desenho', actor);
+  await resolveNotificationsForItem(projectId, itemId);
 }
 
 export class DesignClaimError extends Error {

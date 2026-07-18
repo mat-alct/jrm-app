@@ -319,30 +319,30 @@ admin edita depois. Sem campo "para quem é".
   falhou ao não achar a aba ausente); revertido.
 - Commit: `feat(projetos): aba de desenhos pendentes em listar projetos`
 
-### Fase 7 — Pedir mais informações + aba de notificações
+### Fase 7 — Pedir mais informações + aba de notificações ✅ (2026-07-17)
 
 **Objetivo:** desenhista devolve o item com justificativa; vendedor vê notificação,
 anexa e reaprova.
 
-- [ ] Novo status `aguardando_informacoes` em `ProjectItemStatus` + rótulos/cores
+- [x] Novo status `aguardando_informacoes` em `ProjectItemStatus` + rótulos/cores
       (interno e cliente — rótulo do cliente neutro).
-- [ ] `TRANSITIONS`: `aguardando_desenho → aguardando_informacoes` (desenhista, com
+- [x] `TRANSITIONS`: `aguardando_desenho → aguardando_informacoes` (desenhista, com
       `note` obrigatória) e `aguardando_informacoes → aguardando_desenho`
       (vendedor/admin, via "Aprovar para desenho" recomputando prazo).
-- [ ] Atualizar a tabela independente de `statusMatrix.spec.ts` (13→14 status) — todo o
+- [x] Atualizar a tabela independente de `statusMatrix.spec.ts` (13→14 status) — todo o
       resto da matriz continua valendo.
-- [ ] Botão "Pedir mais informações" no item (desenhista que assumiu, status
+- [x] Botão "Pedir mais informações" no item (desenhista que assumiu, status
       `aguardando_desenho`) com textarea de justificativa obrigatória.
-- [ ] Novo `notification.service.ts`: subcoleção `projects/{projectId}/notifications`
+- [x] Novo `notification.service.ts`: subcoleção `projects/{projectId}/notifications`
       `{ itemId, itemName, type: 'info_solicitada', message, createdBy, createdByName,
       createdByRole, resolvedAt?, createdAt }`. Criada ao pedir informações; marcada
       resolvida ao reaprovar o item.
-- [ ] Detalhe do projeto ganha abas ("Visão geral" / "Itens" / "Notificações") com
+- [x] Detalhe do projeto ganha abas ("Visão geral" / "Itens" / "Notificações") com
       badge de não-resolvidas na aba.
-- [ ] Rules: notifications — read admin|seller; create designer|admin (payload
+- [x] Rules: notifications — read admin|seller; create designer|admin (payload
       validado); update (resolver) admin|seller; delete admin. O claim continua valendo
       quando o item volta para a fila (`designerId` mantido → "Atribuído a").
-- [ ] Guardrail: novo service referenciado por spec (o
+- [x] Guardrail: novo service referenciado por spec (o
       `check-test-coverage-map.mjs` falha sozinho se esquecer).
 - Testes: unit das transições novas (+ note obrigatória); integração do
   `notification.service` (criar/listar/resolver, round-trip emulador); rules
@@ -352,6 +352,11 @@ anexa e reaprova.
   notificação some do badge (dupla verificação no emulador).
 - Prova de fogo: permitir a transição sem `note` → unit vermelho; sabotar o resolve da
   notificação → integração vermelha.
+- Resultados: typecheck e guardrails OK; unit **1308/1308**; rules **33/33**;
+  integração **82/82**; e2e do ciclo completo **1/1**. Provas de fogo executadas: ao remover a
+  validação da justificativa, `status.service.spec.ts` ficou vermelho; ao neutralizar
+  `resolveNotificationsForItem`, o teste de integração ficou vermelho; ambas as
+  sabotagens foram revertidas e os testes direcionados voltaram a verde.
 - Commit: `feat(projetos): pedido de informacoes pelo desenhista com notificacoes`
 
 ### Fase 8 — Visibilidade do vendedor

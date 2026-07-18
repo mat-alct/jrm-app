@@ -197,6 +197,19 @@ describe('firestore.rules', () => {
       await db
         .doc('payments/payment-other')
         .set(paymentData(uid.otherAssembler));
+
+      await db.doc('projects/project-1/notifications/notification-1').set({
+        id: 'notification-1',
+        projectId: 'project-1',
+        itemId: 'designer-item',
+        itemName: 'Item do desenhista',
+        type: 'info_solicitada',
+        message: 'Falta a medida do vão',
+        createdBy: uid.designer,
+        createdByRole: 'designer',
+        resolvedAt: null,
+        createdAt: new Date('2026-01-01T00:00:00.000Z'),
+      });
     });
   }
 
@@ -555,19 +568,13 @@ describe('firestore.rules', () => {
       await assertSucceeds(
         dbAs('otherDesigner')
           .collectionGroup('items')
-          .where('status', 'in', [
-            'aguardando_desenho',
-            'alteracao_solicitada',
-          ])
+          .where('status', 'in', ['aguardando_desenho', 'alteracao_solicitada'])
           .get(),
       );
       await assertFails(
         dbAs('assembler')
           .collectionGroup('items')
-          .where('status', 'in', [
-            'aguardando_desenho',
-            'alteracao_solicitada',
-          ])
+          .where('status', 'in', ['aguardando_desenho', 'alteracao_solicitada'])
           .get(),
       );
     });
@@ -611,10 +618,12 @@ describe('firestore.rules', () => {
         });
       });
       await assertFails(
-        dbAs('designer').doc(otherUnclaimedPath).update({
-          designerId: uid.designer,
-          budget: { totalCost: 999 },
-        }),
+        dbAs('designer')
+          .doc(otherUnclaimedPath)
+          .update({
+            designerId: uid.designer,
+            budget: { totalCost: 999 },
+          }),
       );
     });
   });
@@ -686,18 +695,22 @@ describe('firestore.rules', () => {
         }),
       );
       await assertFails(
-        dbAs('assembler').doc(`${createPath}-bad-shape`).set({
-          audience: { seller: true, designer: true, assembler: true },
-          uploadedBy: uid.assembler,
-          uploadedByRole: 'assembler',
-        }),
+        dbAs('assembler')
+          .doc(`${createPath}-bad-shape`)
+          .set({
+            audience: { seller: true, designer: true, assembler: true },
+            uploadedBy: uid.assembler,
+            uploadedByRole: 'assembler',
+          }),
       );
       await assertFails(
-        dbAs('assembler').doc(`${createPath}-bad-type`).set({
-          audience: { ...fullAudience, client: 'sim' },
-          uploadedBy: uid.assembler,
-          uploadedByRole: 'assembler',
-        }),
+        dbAs('assembler')
+          .doc(`${createPath}-bad-type`)
+          .set({
+            audience: { ...fullAudience, client: 'sim' },
+            uploadedBy: uid.assembler,
+            uploadedByRole: 'assembler',
+          }),
       );
 
       const designerCreatePath =
@@ -720,25 +733,37 @@ describe('firestore.rules', () => {
 
     it('admin/seller criam anexo com qualquer audience valida', async () => {
       await assertSucceeds(
-        dbAs('admin').doc('projects/project-1/items/designer-item/attachments/admin-created').set({
-          audience: fullAudience,
-          uploadedBy: uid.admin,
-          uploadedByRole: 'admin',
-        }),
+        dbAs('admin')
+          .doc(
+            'projects/project-1/items/designer-item/attachments/admin-created',
+          )
+          .set({
+            audience: fullAudience,
+            uploadedBy: uid.admin,
+            uploadedByRole: 'admin',
+          }),
       );
       await assertSucceeds(
-        dbAs('seller').doc('projects/project-1/items/designer-item/attachments/seller-created').set({
-          audience: fullAudience,
-          uploadedBy: uid.seller,
-          uploadedByRole: 'seller',
-        }),
+        dbAs('seller')
+          .doc(
+            'projects/project-1/items/designer-item/attachments/seller-created',
+          )
+          .set({
+            audience: fullAudience,
+            uploadedBy: uid.seller,
+            uploadedByRole: 'seller',
+          }),
       );
       await assertFails(
-        dbAs('admin').doc('projects/project-1/items/designer-item/attachments/admin-bad-shape').set({
-          audience: { seller: true },
-          uploadedBy: uid.admin,
-          uploadedByRole: 'admin',
-        }),
+        dbAs('admin')
+          .doc(
+            'projects/project-1/items/designer-item/attachments/admin-bad-shape',
+          )
+          .set({
+            audience: { seller: true },
+            uploadedBy: uid.admin,
+            uploadedByRole: 'admin',
+          }),
       );
     });
   });
@@ -769,6 +794,108 @@ describe('firestore.rules', () => {
       await assertFails(dbAs('admin').doc(path).update({ note: 'no' }));
       await assertFails(dbAs('seller').doc(path).delete());
       await assertFails(dbAs('designer').doc(path).update({ note: 'no' }));
+    });
+  });
+
+  describe('projects/*/notifications', () => {
+    const path = 'projects/project-1/notifications/notification-1';
+    function validPayload(overrides: Record<string, unknown> = {}) {
+      return {
+        id: 'notification-created',
+        projectId: 'project-1',
+        itemId: 'designer-item',
+        itemName: 'Item do desenhista',
+        type: 'info_solicitada',
+        message: 'Falta a medida do vão',
+        createdBy: uid.designer,
+        createdByRole: 'designer',
+        resolvedAt: null,
+        createdAt: new Date('2026-01-01T00:00:00.000Z'),
+        ...overrides,
+      };
+    }
+
+    it('permite leitura por admin/seller e nega para desenhista/anonimo', async () => {
+      await assertSucceeds(dbAs('admin').doc(path).get());
+      await assertSucceeds(dbAs('seller').doc(path).get());
+      await assertFails(dbAs('designer').doc(path).get());
+      await assertFails(anonDb().doc(path).get());
+    });
+
+    it('permite create por desenhista/admin com payload valido; nega payload invalido ou outro papel', async () => {
+      await assertSucceeds(
+        dbAs('designer')
+          .doc('projects/project-1/notifications/create-designer')
+          .set(validPayload()),
+      );
+      await assertSucceeds(
+        dbAs('admin')
+          .doc('projects/project-1/notifications/create-admin')
+          .set(validPayload({ createdBy: uid.admin, createdByRole: 'admin' })),
+      );
+
+      await assertFails(
+        dbAs('seller')
+          .doc('projects/project-1/notifications/create-seller')
+          .set(
+            validPayload({ createdBy: uid.seller, createdByRole: 'seller' }),
+          ),
+      );
+      await assertFails(
+        dbAs('designer')
+          .doc('projects/project-1/notifications/create-empty-message')
+          .set(validPayload({ message: '' })),
+      );
+      await assertFails(
+        dbAs('designer')
+          .doc('projects/project-1/notifications/create-wrong-author')
+          .set(validPayload({ createdBy: uid.otherDesigner })),
+      );
+      await assertFails(
+        dbAs('designer')
+          .doc('projects/project-1/notifications/create-wrong-project')
+          .set(validPayload({ projectId: 'project-2' })),
+      );
+      await assertFails(
+        dbAs('designer')
+          .doc('projects/project-1/notifications/create-extra-field')
+          .set(validPayload({ unexpected: true })),
+      );
+      await assertFails(
+        dbAs('designer')
+          .doc('projects/project-1/notifications/create-resolved')
+          .set(validPayload({ resolvedAt: new Date() })),
+      );
+    });
+
+    it('permite resolver (so resolvedAt) por admin/seller; nega desenhista e outros campos', async () => {
+      const adminPath =
+        'projects/project-1/notifications/notification-for-admin';
+      await testEnv.withSecurityRulesDisabled(async context => {
+        await context
+          .firestore()
+          .doc(adminPath)
+          .set(validPayload({ id: 'notification-for-admin' }));
+      });
+
+      await assertSucceeds(
+        dbAs('seller').doc(path).update({ resolvedAt: new Date() }),
+      );
+      await assertSucceeds(
+        dbAs('admin').doc(adminPath).update({ resolvedAt: new Date() }),
+      );
+      await assertFails(
+        dbAs('designer').doc(path).update({ resolvedAt: new Date() }),
+      );
+      await assertFails(
+        dbAs('admin').doc(path).update({ message: 'outra coisa' }),
+      );
+      await assertFails(dbAs('admin').doc(path).update({ resolvedAt: null }));
+    });
+
+    it('permite delete apenas por admin', async () => {
+      await assertFails(dbAs('seller').doc(path).delete());
+      await assertSucceeds(dbAs('admin').doc(path).delete());
     });
   });
 
@@ -961,6 +1088,7 @@ describe('firestore.rules', () => {
       'projects/project-1/items/designer-item/statusHistory/history-1',
       'projects/project-1/items/designer-item/versions/version-1',
       'projects/project-1/items/designer-item/assemblerAssignments/assembler-uid',
+      'projects/project-1/notifications/notification-1',
       'payments/payment-owned',
     ];
 

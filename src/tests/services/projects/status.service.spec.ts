@@ -10,6 +10,7 @@ import {
 
 import {
   InvalidStatusTransitionError,
+  MissingStatusNoteError,
   updateItemStatus,
 } from '@/services/projects/status.service';
 import { recalculateProjectSummary } from '@/services/projects/summary';
@@ -101,6 +102,39 @@ describe('services/projects/status.service', () => {
       }),
     );
     expect(mockedRecalculate).toHaveBeenCalledWith('p1');
+  });
+
+  it('requires and trims the note when requesting more information', async () => {
+    mockedGetDoc.mockResolvedValue({
+      exists: () => true,
+      data: () => ({ status: 'aguardando_desenho' }),
+    });
+
+    await expect(
+      updateItemStatus(
+        'p1',
+        'i1',
+        'aguardando_informacoes',
+        { uid: 'designer1', role: 'designer' },
+        '   ',
+      ),
+    ).rejects.toBeInstanceOf(MissingStatusNoteError);
+
+    expect(mockedUpdateDoc).not.toHaveBeenCalled();
+    expect(mockedSetDoc).not.toHaveBeenCalled();
+
+    await updateItemStatus(
+      'p1',
+      'i1',
+      'aguardando_informacoes',
+      { uid: 'designer1', role: 'designer' },
+      '  Falta a medida do vão  ',
+    );
+
+    expect(mockedSetDoc).toHaveBeenCalledWith(
+      'doc-ref',
+      expect.objectContaining({ note: 'Falta a medida do vão' }),
+    );
   });
 
   it('records the actor name in history when provided', async () => {

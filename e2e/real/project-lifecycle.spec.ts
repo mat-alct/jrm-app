@@ -31,19 +31,28 @@ test.describe('jornada Via A — operação interna', () => {
     // Verificação dupla: documento no path certo, sem e-mail/endereço.
     const projectSnap = await adminDb.doc(`projects/${projectId}`).get();
     expect(projectSnap.exists).toBe(true);
-    expect(projectSnap.data()).toMatchObject({ customerName: 'Cliente Playwright' });
+    expect(projectSnap.data()).toMatchObject({
+      customerName: 'Cliente Playwright',
+    });
     expect(projectSnap.data()).not.toHaveProperty('customerEmail');
     expect(projectSnap.data()?.itemSummary).toMatchObject({ total: 0 });
 
     // ---------- 1b. completa e-mail/endereço e adiciona 2 itens no detalhe ----------
     await page.getByRole('button', { name: 'Editar' }).click();
-    const editDialog = page.getByRole('dialog', { name: 'Editar dados do cliente' });
-    await editDialog.getByLabel('E-mail').fill('cliente.playwright@example.com');
+    const editDialog = page.getByRole('dialog', {
+      name: 'Editar dados do cliente',
+    });
+    await editDialog
+      .getByLabel('E-mail')
+      .fill('cliente.playwright@example.com');
     await editDialog.getByLabel('Endereço').fill('Rua Playwright, 456');
     await editDialog.getByRole('button', { name: 'Salvar' }).click();
     await expect(editDialog).toBeHidden();
-    await expect(page.getByText('cliente.playwright@example.com')).toBeVisible();
+    await expect(
+      page.getByText('cliente.playwright@example.com'),
+    ).toBeVisible();
 
+    await page.getByRole('tab', { name: 'Itens' }).click();
     await page.getByRole('button', { name: 'Adicionar item' }).click();
     const addItemDialog1 = page.getByRole('dialog', { name: 'Adicionar item' });
     await addItemDialog1.getByLabel('Nome do item').fill('Balcao gourmet');
@@ -60,19 +69,28 @@ test.describe('jornada Via A — operação interna', () => {
     await expect(addItemDialog2).toBeHidden();
     await expect(page.getByText('Cristaleira')).toBeVisible();
 
-    const projectSnapAfterItems = await adminDb.doc(`projects/${projectId}`).get();
+    const projectSnapAfterItems = await adminDb
+      .doc(`projects/${projectId}`)
+      .get();
     expect(projectSnapAfterItems.data()).toMatchObject({
       customerEmail: 'cliente.playwright@example.com',
       customerAddress: 'Rua Playwright, 456',
     });
-    expect(projectSnapAfterItems.data()?.itemSummary).toMatchObject({ total: 2 });
+    expect(projectSnapAfterItems.data()?.itemSummary).toMatchObject({
+      total: 2,
+    });
 
-    const itemsSnap = await adminDb.collection(`projects/${projectId}/items`).get();
+    const itemsSnap = await adminDb
+      .collection(`projects/${projectId}/items`)
+      .get();
     expect(itemsSnap.size).toBe(2);
     const itemsByName = new Map(
       itemsSnap.docs.map(doc => [doc.data().name as string, doc]),
     );
-    expect([...itemsByName.keys()].sort()).toEqual(['Balcao gourmet', 'Cristaleira']);
+    expect([...itemsByName.keys()].sort()).toEqual([
+      'Balcao gourmet',
+      'Cristaleira',
+    ]);
 
     // ---------- 2. upload de anexo do item (o passo que faltou no bug do Storage) ----------
     const balcaoId = itemsByName.get('Balcao gourmet')!.id;
@@ -204,7 +222,9 @@ test.describe('jornada Via A — operação interna', () => {
       mimeType: 'application/pdf',
       buffer: Buffer.from('%PDF desenho'),
     });
-    await page.getByPlaceholder('Descrição da versão (opcional)').fill('Versão 1');
+    await page
+      .getByPlaceholder('Descrição da versão (opcional)')
+      .fill('Versão 1');
     await page.getByRole('button', { name: 'Enviar versão' }).click();
 
     await expect(page.getByText('Versão enviada.')).toBeVisible();
@@ -223,7 +243,9 @@ test.describe('jornada Via A — operação interna', () => {
     const [exists] = await adminStorage.bucket().file(storagePath).exists();
     expect(exists).toBe(true);
 
-    const afterUpload = await adminDb.doc(`projects/${projectId}/items/${itemId}`).get();
+    const afterUpload = await adminDb
+      .doc(`projects/${projectId}/items/${itemId}`)
+      .get();
     expect(afterUpload.data()?.status).toBe('aguardando_orcamento');
 
     // ---------- 5. admin lança o orçamento e envia ao cliente ----------
@@ -237,18 +259,24 @@ test.describe('jornada Via A — operação interna', () => {
     await page.getByRole('button', { name: 'Salvar orçamento' }).click();
     await expect(page.getByText('Orçamento salvo.')).toBeVisible();
 
-    await page.getByRole('button', { name: 'Enviar orçamento ao cliente' }).click();
+    await page
+      .getByRole('button', { name: 'Enviar orçamento ao cliente' })
+      .click();
     await expect(page.getByText('Orçamento enviado ao cliente.')).toBeVisible();
 
     // A escrita no Firestore é assíncrona em relação ao toast: poll em vez de espera fixa.
     await expect
       .poll(async () => {
-        const snap = await adminDb.doc(`projects/${projectId}/items/${itemId}`).get();
+        const snap = await adminDb
+          .doc(`projects/${projectId}/items/${itemId}`)
+          .get();
         return snap.data()?.status;
       })
       .toBe('aguardando_aprovacao_cliente');
 
-    const afterBudget = await adminDb.doc(`projects/${projectId}/items/${itemId}`).get();
+    const afterBudget = await adminDb
+      .doc(`projects/${projectId}/items/${itemId}`)
+      .get();
     expect(afterBudget.data()?.budget).toMatchObject({
       totalCost: 320,
       customerAmount: 900,
@@ -256,13 +284,19 @@ test.describe('jornada Via A — operação interna', () => {
 
     // ---------- 6. gera acesso do cliente ----------
     await page.goto(`/projetos/${projectId}`);
-    await page.getByRole('button', { name: /Gerar senha|Regenerar senha/ }).click();
+    await page
+      .getByRole('button', { name: /Gerar senha|Regenerar senha/ })
+      .click();
 
-    await expect(page.getByRole('button', { name: 'Copiar link' })).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: 'Copiar link' }),
+    ).toBeVisible();
     await expect(page.getByText(/\/cliente\//)).toBeVisible();
 
     const projectAfter = await adminDb.doc(`projects/${projectId}`).get();
     expect(projectAfter.data()?.clientAccessCodeHash).toBeTruthy();
-    expect(projectAfter.data()?.clientAccessPublicId).toMatch(/^[0-9A-Za-z]{12}$/);
+    expect(projectAfter.data()?.clientAccessPublicId).toMatch(
+      /^[0-9A-Za-z]{12}$/,
+    );
   });
 });

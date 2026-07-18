@@ -6,6 +6,7 @@ import { projectItemPath, projectPath } from '@/services/projects/paths';
 import { listItemStatusHistory } from '@/services/projects/projectItem.service';
 import {
   InvalidStatusTransitionError,
+  MissingStatusNoteError,
   updateItemStatus,
 } from '@/services/projects/status.service';
 import { resetEmulator } from '@/tests/helpers/emulator';
@@ -99,5 +100,32 @@ describe('services/projects/status.service integration', () => {
     await expect(
       listItemStatusHistory('seed-project-1', 'seed-item-2'),
     ).resolves.toEqual([]);
+  });
+
+  it('rejects a request for more information without a justification', async () => {
+    await adminDb.doc(projectItemPath('seed-project-1', 'seed-item-1')).update({
+      status: 'aguardando_desenho',
+      designerId: 'seed-designer',
+    });
+    await signInAs('desenhista@seed.jrm');
+
+    await expect(
+      updateItemStatus(
+        'seed-project-1',
+        'seed-item-1',
+        'aguardando_informacoes',
+        { uid: 'seed-designer', role: 'designer' },
+        '   ',
+      ),
+    ).rejects.toBeInstanceOf(MissingStatusNoteError);
+
+    const itemSnap = await adminDb
+      .doc(projectItemPath('seed-project-1', 'seed-item-1'))
+      .get();
+    expect(itemSnap.data()?.status).toBe('aguardando_desenho');
+    const historySnap = await adminDb
+      .collection('projects/seed-project-1/items/seed-item-1/statusHistory')
+      .get();
+    expect(historySnap.empty).toBe(true);
   });
 });

@@ -7,6 +7,7 @@ import React from 'react';
 import { AssemblerAssignmentsPanel } from '@/components/assembler/AssemblerAssignmentsPanel';
 import { AssignAssemblerModal } from '@/components/assembler/AssignAssemblerModal';
 import { DesignerUploadPanel } from '@/components/designer/DesignerUploadPanel';
+import { RequestMoreInfoPanel } from '@/components/designer/RequestMoreInfoPanel';
 import { AssignDesignerModal } from '@/components/projects/AssignDesignerModal';
 import { AttachmentList } from '@/components/projects/AttachmentList';
 import { AttachmentUploader } from '@/components/projects/AttachmentUploader';
@@ -53,6 +54,7 @@ import { useAuth } from '../../../../hooks/authContext';
 const ALL_STATUSES: ProjectItemStatus[] = [
   'projeto_criado',
   'aguardando_desenho',
+  'aguardando_informacoes',
   'aguardando_orcamento',
   'aguardando_aprovacao_cliente',
   'alteracao_solicitada',
@@ -258,12 +260,15 @@ const ProjectItemDetail = () => {
     ? ALL_STATUSES.filter(
         status =>
           status !== 'aguardando_pagamento_montador' &&
+          status !== 'aguardando_informacoes' &&
           canTransition(item.status, status, { isAdmin: admin }),
       )
     : [];
   const canApproveAssembly = admin && item.status === 'montagem_concluida';
   const canApproveForDesign =
-    canAssignDesigner(appUser?.roles) && item.status === 'projeto_criado';
+    canAssignDesigner(appUser?.roles) &&
+    (item.status === 'projeto_criado' ||
+      item.status === 'aguardando_informacoes');
 
   return (
     <>
@@ -451,15 +456,27 @@ const ProjectItemDetail = () => {
               appUser &&
               item.designerId === user.uid &&
               item.status === 'aguardando_desenho' && (
-                <DesignerUploadPanel
-                  projectId={projectId}
-                  itemId={itemId}
-                  actor={{
-                    uid: user.uid,
-                    name: appUser?.name,
-                    role: 'designer',
-                  }}
-                />
+                <Stack gap={4}>
+                  <DesignerUploadPanel
+                    projectId={projectId}
+                    itemId={itemId}
+                    actor={{
+                      uid: user.uid,
+                      name: appUser?.name,
+                      role: 'designer',
+                    }}
+                  />
+                  <RequestMoreInfoPanel
+                    projectId={projectId}
+                    itemId={itemId}
+                    itemName={item.name}
+                    actor={{
+                      uid: user.uid,
+                      name: appUser?.name,
+                      role: 'designer',
+                    }}
+                  />
+                </Stack>
               )}
 
             {versions && versions.length > 0 && (

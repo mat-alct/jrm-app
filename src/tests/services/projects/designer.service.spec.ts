@@ -25,6 +25,7 @@ import {
   getDesignQueue,
   submitDesignerVersion,
 } from '@/services/projects/designer.service';
+import { resolveNotificationsForItem } from '@/services/projects/notification.service';
 import { updateProjectItem } from '@/services/projects/projectItem.service';
 import { updateItemStatus } from '@/services/projects/status.service';
 
@@ -59,6 +60,10 @@ jest.mock('@/services/projects/status.service', () => ({
   updateItemStatus: jest.fn(),
 }));
 
+jest.mock('@/services/projects/notification.service', () => ({
+  resolveNotificationsForItem: jest.fn(),
+}));
+
 jest.mock('@/services/projects/deadline.service', () => ({
   computeDeadline: jest.fn(),
   getDeadlineDefaults: jest.fn(),
@@ -78,6 +83,8 @@ const mockedUpdateProjectItem = updateProjectItem as jest.Mock;
 const mockedUpdateItemStatus = updateItemStatus as jest.Mock;
 const mockedComputeDeadline = computeDeadline as jest.Mock;
 const mockedGetDeadlineDefaults = getDeadlineDefaults as jest.Mock;
+const mockedResolveNotificationsForItem =
+  resolveNotificationsForItem as jest.Mock;
 
 describe('services/projects/designer.service', () => {
   beforeEach(() => {
@@ -91,6 +98,7 @@ describe('services/projects/designer.service', () => {
     mockedUpdateDoc.mockResolvedValue(undefined);
     mockedUpdateProjectItem.mockResolvedValue(undefined);
     mockedUpdateItemStatus.mockResolvedValue(undefined);
+    mockedResolveNotificationsForItem.mockResolvedValue(undefined);
   });
 
   describe('getDesignQueue', () => {
@@ -111,7 +119,11 @@ describe('services/projects/designer.service', () => {
   });
 
   describe('approveItemForDesign', () => {
-    const actor = { uid: 'seller-1', name: 'Vendedor', role: 'seller' as const };
+    const actor = {
+      uid: 'seller-1',
+      name: 'Vendedor',
+      role: 'seller' as const,
+    };
 
     it('computes the deadline, sets it on the item and advances status', async () => {
       mockedGetDeadlineDefaults.mockResolvedValue({ desenhoDias: 5 });
@@ -120,10 +132,9 @@ describe('services/projects/designer.service', () => {
 
       await approveItemForDesign('p1', 'i1', actor);
 
-      expect(mockedComputeDeadline).toHaveBeenCalledWith(
-        'aguardando_desenho',
-        { desenhoDias: 5 },
-      );
+      expect(mockedComputeDeadline).toHaveBeenCalledWith('aguardando_desenho', {
+        desenhoDias: 5,
+      });
       expect(mockedUpdateProjectItem).toHaveBeenCalledWith(
         'p1',
         'i1',
@@ -136,6 +147,10 @@ describe('services/projects/designer.service', () => {
         'i1',
         'aguardando_desenho',
         actor,
+      );
+      expect(mockedResolveNotificationsForItem).toHaveBeenCalledWith(
+        'p1',
+        'i1',
       );
     });
 
@@ -234,9 +249,15 @@ describe('services/projects/designer.service', () => {
     });
 
     it('keeps only the name and clears designerId when there is no match', async () => {
-      await assignDesignerByName('p1', 'i1', 'Fulano Externo', activeDesigners, {
-        uid: 'admin-1',
-      });
+      await assignDesignerByName(
+        'p1',
+        'i1',
+        'Fulano Externo',
+        activeDesigners,
+        {
+          uid: 'admin-1',
+        },
+      );
 
       expect(mockedUpdateDoc).toHaveBeenCalledWith(
         { id: 'new-version-id' },

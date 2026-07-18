@@ -38,6 +38,13 @@ export class InvalidStatusTransitionError extends Error {
   }
 }
 
+export class MissingStatusNoteError extends Error {
+  constructor() {
+    super('Informe a justificativa para pedir mais informações.');
+    this.name = 'MissingStatusNoteError';
+  }
+}
+
 function itemTimestampFieldFor(
   next: ProjectItemStatus,
 ):
@@ -120,6 +127,15 @@ export async function updateItemStatus(
     throw new InvalidStatusTransitionError(current.status, next);
   }
 
+  const normalizedNote = note?.trim();
+  if (
+    current.status === 'aguardando_desenho' &&
+    next === 'aguardando_informacoes' &&
+    !normalizedNote
+  ) {
+    throw new MissingStatusNoteError();
+  }
+
   const now = Timestamp.now();
   const timestampField = itemTimestampFieldFor(next);
 
@@ -142,7 +158,7 @@ export async function updateItemStatus(
     changedBy: actor.uid,
     ...(actor.name ? { changedByName: actor.name } : {}),
     changedByRole: actor.role,
-    note: note ?? null,
+    note: normalizedNote ?? null,
     createdAt: now,
   });
 

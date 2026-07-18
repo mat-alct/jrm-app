@@ -12,6 +12,7 @@ import {
 const ALL_STATUSES: ProjectItemStatus[] = [
   'projeto_criado',
   'aguardando_desenho',
+  'aguardando_informacoes',
   'aguardando_orcamento',
   'aguardando_aprovacao_cliente',
   'alteracao_solicitada',
@@ -34,7 +35,8 @@ const FINAL_STATUSES: ProjectItemStatus[] = ['finalizado', 'cancelado'];
  */
 const ALLOWED_FOR_NON_ADMIN: Record<ProjectItemStatus, ProjectItemStatus[]> = {
   projeto_criado: ['aguardando_desenho'],
-  aguardando_desenho: ['aguardando_orcamento'],
+  aguardando_desenho: ['aguardando_orcamento', 'aguardando_informacoes'],
+  aguardando_informacoes: ['aguardando_desenho'],
   aguardando_orcamento: ['aguardando_aprovacao_cliente'],
   aguardando_aprovacao_cliente: [
     'aguardando_atribuicao_montador',
@@ -60,7 +62,7 @@ const ALL_PAIRS: Array<[ProjectItemStatus, ProjectItemStatus]> =
     ),
   );
 
-describe('canTransition — matriz integral (13 x 13)', () => {
+describe('canTransition — matriz integral (14 x 14)', () => {
   describe('usuario nao admin', () => {
     it.each(ALL_PAIRS)('%s -> %s', (from, to) => {
       const expected = ALLOWED_FOR_NON_ADMIN[from].includes(to);

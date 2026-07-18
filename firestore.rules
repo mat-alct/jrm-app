@@ -90,6 +90,26 @@ service cloud.firestore {
         && audience.assembler is bool && audience.client is bool;
     }
 
+    function isValidNotificationPayload(projectId) {
+      let data = request.resource.data;
+      return data.keys().hasOnly([
+          'id', 'projectId', 'itemId', 'itemName', 'type', 'message',
+          'createdBy', 'createdByName', 'createdByRole', 'resolvedAt', 'createdAt'
+        ])
+        && data.id is string && data.id.size() > 0
+        && data.projectId == projectId
+        && data.itemId is string && data.itemId.size() > 0
+        && data.itemName is string && data.itemName.size() > 0
+        && data.type == 'info_solicitada'
+        && data.message is string && data.message.size() > 0
+        && data.createdBy == request.auth.uid
+        && data.get('createdByName', '') is string
+        && ((isAdmin() && data.createdByRole == 'admin')
+            || (isDesigner() && data.createdByRole == 'designer'))
+        && data.resolvedAt == null
+        && data.createdAt is timestamp;
+    }
+
     function assemblerConfirmsOwnPaymentOnly() {
       return isAssembler()
         && resource.data.assemblerId == request.auth.uid
@@ -245,6 +265,17 @@ service cloud.firestore {
             || assemblerConfirmsOwnAssignmentOnly(assignmentId);
         }
         // === FIM VIA B ===
+      }
+
+      match /notifications/{notificationId} {
+        allow read: if isAdmin() || isSeller();
+        allow create: if isValidNotificationPayload(projectId)
+          && (isAdmin() || isDesigner());
+        allow update: if (isAdmin() || isSeller())
+          && resource.data.resolvedAt == null
+          && request.resource.data.resolvedAt is timestamp
+          && updatesOnly(['resolvedAt']);
+        allow delete: if isAdmin();
       }
     }
 

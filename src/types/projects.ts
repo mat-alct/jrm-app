@@ -21,6 +21,7 @@ export interface AppUser {
 export type ProjectItemStatus =
   | 'projeto_criado'
   | 'aguardando_desenho'
+  | 'aguardando_informacoes'
   | 'aguardando_orcamento'
   | 'aguardando_aprovacao_cliente'
   | 'alteracao_solicitada'
@@ -205,6 +206,25 @@ export interface StatusHistory {
   changedByRole: UserRole | 'client';
 
   note?: string;
+  createdAt: Timestamp;
+}
+
+export type ProjectNotificationType = 'info_solicitada';
+
+export interface ProjectNotification {
+  id: string;
+  projectId: string;
+  itemId: string;
+  itemName: string;
+
+  type: ProjectNotificationType;
+  message: string;
+
+  createdBy: string;
+  createdByName?: string;
+  createdByRole: UserRole;
+
+  resolvedAt?: Timestamp | null;
   createdAt: Timestamp;
 }
 

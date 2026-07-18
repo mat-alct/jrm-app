@@ -108,6 +108,7 @@ describe('utils/projects/status', () => {
       const nonFinal: ProjectItemStatus[] = [
         'projeto_criado',
         'aguardando_desenho',
+        'aguardando_informacoes',
         'aguardando_orcamento',
         'aguardando_aprovacao_cliente',
         'alteracao_solicitada',
@@ -127,7 +128,7 @@ describe('utils/projects/status', () => {
     it('has a label for every internal status', () => {
       const statuses = Object.keys(CLIENT_STATUS_LABELS) as ProjectItemStatus[];
 
-      expect(statuses).toHaveLength(13);
+      expect(statuses).toHaveLength(14);
       statuses.forEach(status => {
         expect(getClientStatusLabel(status)).toEqual(expect.any(String));
         expect(getClientStatusLabel(status).length).toBeGreaterThan(0);

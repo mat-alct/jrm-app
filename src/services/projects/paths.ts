@@ -9,6 +9,7 @@ export const ATTACHMENTS_SUBCOLLECTION = 'attachments';
 export const STATUS_HISTORY_SUBCOLLECTION = 'statusHistory';
 export const VERSIONS_SUBCOLLECTION = 'versions';
 export const ASSEMBLER_ASSIGNMENTS_SUBCOLLECTION = 'assemblerAssignments';
+export const NOTIFICATIONS_SUBCOLLECTION = 'notifications';
 
 export function userPath(uid: string): string {
   return `${USERS_COLLECTION}/${uid}`;
@@ -24,6 +25,17 @@ export function projectItemsPath(projectId: string): string {
 
 export function projectItemPath(projectId: string, itemId: string): string {
   return `${projectItemsPath(projectId)}/${itemId}`;
+}
+
+export function projectNotificationsPath(projectId: string): string {
+  return `${projectPath(projectId)}/${NOTIFICATIONS_SUBCOLLECTION}`;
+}
+
+export function projectNotificationPath(
+  projectId: string,
+  notificationId: string,
+): string {
+  return `${projectNotificationsPath(projectId)}/${notificationId}`;
 }
 
 export function itemAttachmentsPath(projectId: string, itemId: string): string {

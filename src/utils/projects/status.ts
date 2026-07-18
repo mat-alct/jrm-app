@@ -6,7 +6,8 @@ import {
 
 const TRANSITIONS: Record<ProjectItemStatus, ProjectItemStatus[]> = {
   projeto_criado: ['aguardando_desenho'],
-  aguardando_desenho: ['aguardando_orcamento'],
+  aguardando_desenho: ['aguardando_orcamento', 'aguardando_informacoes'],
+  aguardando_informacoes: ['aguardando_desenho'],
   aguardando_orcamento: ['aguardando_aprovacao_cliente'],
   aguardando_aprovacao_cliente: [
     'aguardando_atribuicao_montador',
@@ -53,6 +54,7 @@ export function isFinalStatus(status: ProjectItemStatus): boolean {
 export const CLIENT_STATUS_LABELS: Record<ProjectItemStatus, string> = {
   projeto_criado: 'Projeto em preparação',
   aguardando_desenho: 'Projeto em desenvolvimento',
+  aguardando_informacoes: 'Projeto em desenvolvimento',
   aguardando_orcamento: 'Orçamento em preparação',
   aguardando_aprovacao_cliente: 'Aguardando sua aprovação',
   alteracao_solicitada: 'Alteração solicitada',
@@ -73,6 +75,7 @@ export function getClientStatusLabel(status: ProjectItemStatus): string {
 export const INTERNAL_STATUS_LABELS: Record<ProjectItemStatus, string> = {
   projeto_criado: 'Projeto criado',
   aguardando_desenho: 'Aguardando desenho',
+  aguardando_informacoes: 'Aguardando informações',
   aguardando_orcamento: 'Aguardando orçamento',
   aguardando_aprovacao_cliente: 'Aguardando aprovação do cliente',
   alteracao_solicitada: 'Alteração solicitada pelo cliente',
@@ -89,6 +92,7 @@ export const INTERNAL_STATUS_LABELS: Record<ProjectItemStatus, string> = {
 export const INTERNAL_STATUS_COLORS: Record<ProjectItemStatus, string> = {
   projeto_criado: 'gray',
   aguardando_desenho: 'purple',
+  aguardando_informacoes: 'pink',
   aguardando_orcamento: 'purple',
   aguardando_aprovacao_cliente: 'yellow',
   alteracao_solicitada: 'orange',
