@@ -169,7 +169,7 @@ const NovoServiço = () => {
         >
           {/* Componente para selecionar entre "Pedido" e "Orçamento". */}
           <RadioGroup.Root
-            colorPalette="orange"
+            colorScheme="orange"
             value={orderType}
             onValueChange={e => {
               if (e.value) {

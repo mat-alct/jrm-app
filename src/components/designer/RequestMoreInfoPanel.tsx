@@ -73,7 +73,7 @@ export const RequestMoreInfoPanel: React.FC<RequestMoreInfoPanelProps> = ({
           alignSelf="flex-start"
           loading={requestMoreInfo.isPending}
           variant="outline"
-          colorPalette="orange"
+          colorScheme="orange"
           onClick={() => void handleSubmit()}
         >
           Pedir mais informações

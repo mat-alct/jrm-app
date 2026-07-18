@@ -521,7 +521,7 @@ const Cortes: React.FC = () => {
 
             <Box overflowX="auto" pb={[2, 2, 0]}>
               <RadioGroup.Root
-                colorPalette="orange"
+                colorScheme="orange"
                 size={radioSize}
                 value={ordersFilter}
                 onValueChange={e => {
@@ -633,7 +633,7 @@ const Cortes: React.FC = () => {
                 <Button
                   size="sm"
                   variant="outline"
-                  colorPalette="orange"
+                  colorScheme="orange"
                   onClick={() => goToPage(currentPage - 1)}
                   disabled={currentPage === 1}
                 >
@@ -643,7 +643,7 @@ const Cortes: React.FC = () => {
                 <Button
                   size="sm"
                   variant="outline"
-                  colorPalette="orange"
+                  colorScheme="orange"
                   onClick={() => goToPage(currentPage + 1)}
                   disabled={
                     currentPage === totalPages || !pageCursors[currentPage]

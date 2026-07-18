@@ -110,7 +110,7 @@ export function ItemBudgetForm({
       />
 
       <Flex justify="flex-end">
-        <Button type="submit" colorPalette="orange" loading={isSubmitting}>
+        <Button type="submit" colorScheme="orange" loading={isSubmitting}>
           Salvar orçamento
         </Button>
       </Flex>

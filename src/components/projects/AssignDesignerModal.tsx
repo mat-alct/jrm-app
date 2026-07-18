@@ -78,7 +78,7 @@ export const AssignDesignerModal: React.FC<AssignDesignerModalProps> = ({
                     key={option}
                     size="sm"
                     variant={name === option ? 'solid' : 'outline'}
-                    colorPalette="orange"
+                    colorScheme="orange"
                     onClick={() => setName(option)}
                   >
                     {option}
@@ -93,7 +93,7 @@ export const AssignDesignerModal: React.FC<AssignDesignerModalProps> = ({
             </Dialog.Body>
             <Dialog.Footer>
               <Button
-                colorPalette="orange"
+                colorScheme="orange"
                 mr={3}
                 loading={assignDesigner.isPending}
                 onClick={() => void handleSubmit()}

@@ -17,7 +17,7 @@ export function PaginationItem({
         size="sm"
         fontSize="xs"
         width="4"
-        colorPalette="orange"
+        colorScheme="orange"
         disabled
         _disabled={{ bg: 'orange.500', cursor: 'default' }}
       >

@@ -30,7 +30,7 @@ interface OrderResumeProps {
   order: OrderDocument;
   variant?: 'outline' | 'solid' | 'subtle' | 'surface' | 'ghost' | 'plain';
   size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '2xs' | 'xs';
-  colorPalette?: string;
+  colorScheme?: string;
   autoPrint?: boolean;
   onAfterPrint?: () => void;
 }
@@ -82,7 +82,7 @@ export const OrderResume: React.FC<OrderResumeProps> = ({
   order,
   variant = 'ghost',
   size = 'sm',
-  colorPalette = 'gray',
+  colorScheme = 'gray',
   autoPrint = false,
   onAfterPrint,
 }) => {
@@ -676,7 +676,7 @@ export const OrderResume: React.FC<OrderResumeProps> = ({
 
       {!autoPrint && (
         <IconButton
-          colorPalette={colorPalette}
+          colorScheme={colorScheme}
           variant={variant}
           size={size}
           aria-label="Imprimir Resumo"

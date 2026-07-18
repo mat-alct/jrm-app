@@ -106,7 +106,7 @@ const NovoProjeto = () => {
 
           <Button
             type="submit"
-            colorPalette="orange"
+            colorScheme="orange"
             alignSelf="flex-start"
             loading={isSubmitting}
           >

@@ -206,7 +206,7 @@ export const CuttingPlanViewer = ({ plan }: CuttingPlanViewerProps) => {
               </Button>
               <Badge
                 variant="outline"
-                colorPalette="gray"
+                colorScheme="gray"
                 minW="62px"
                 textAlign="center"
                 py={1.5}

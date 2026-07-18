@@ -375,7 +375,7 @@ const ProjectItemDetail = () => {
                       key={status}
                       size="sm"
                       variant="outline"
-                      colorPalette="orange"
+                      colorScheme="orange"
                       loading={updateStatus.isPending}
                       onClick={() => void handleTransition(status)}
                     >
@@ -390,7 +390,7 @@ const ProjectItemDetail = () => {
               <Box mt={4}>
                 <Button
                   size="sm"
-                  colorPalette="orange"
+                  colorScheme="orange"
                   loading={updateStatus.isPending}
                   onClick={() =>
                     void handleTransition('aguardando_pagamento_montador')
@@ -405,7 +405,7 @@ const ProjectItemDetail = () => {
               <Box mt={4}>
                 <Button
                   size="sm"
-                  colorPalette="orange"
+                  colorScheme="orange"
                   loading={approveForDesignMutation.isPending}
                   onClick={() => approveForDesignMutation.mutate()}
                 >
@@ -456,7 +456,7 @@ const ProjectItemDetail = () => {
                 <Button
                   mt={3}
                   size="sm"
-                  colorPalette="orange"
+                  colorScheme="orange"
                   loading={sendBudgetMutation.isPending}
                   onClick={() => sendBudgetMutation.mutate()}
                 >
@@ -480,7 +480,7 @@ const ProjectItemDetail = () => {
                   <Button
                     size="sm"
                     variant="outline"
-                    colorPalette="orange"
+                    colorScheme="orange"
                     onClick={() => setIsAssignDesignerOpen(true)}
                   >
                     {item.designerId
@@ -568,7 +568,7 @@ const ProjectItemDetail = () => {
                 <Button
                   size="sm"
                   variant="outline"
-                  colorPalette="orange"
+                  colorScheme="orange"
                   onClick={() => setIsAssignAssemblerOpen(open => !open)}
                 >
                   {isAssignAssemblerOpen ? 'Fechar' : 'Atribuir montador'}

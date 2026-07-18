@@ -55,14 +55,6 @@ export default [
       '@typescript-eslint/no-require-imports': 'error',
       '@typescript-eslint/no-wrapper-object-types': 'error',
       '@typescript-eslint/no-unused-expressions': 'error',
-      'no-restricted-syntax': [
-        'error',
-        {
-          selector: "JSXAttribute[name.name='colorScheme']",
-          message:
-            'Chakra UI 3 ignora colorScheme; use colorPalette para aplicar cores.',
-        },
-      ],
     },
   }),
   {

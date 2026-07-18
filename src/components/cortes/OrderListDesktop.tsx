@@ -71,7 +71,7 @@ const EstimateRow = React.memo<EstimateRowProps>(
       <Table.Cell>
         <HStack gap={2} justify="flex-end">
           <IconButton
-            colorPalette="gray"
+            colorScheme="gray"
             variant="ghost"
             size="sm"
             aria-label="Imprimir Orçamento"
@@ -80,7 +80,7 @@ const EstimateRow = React.memo<EstimateRowProps>(
             <FaRegFileAlt />
           </IconButton>
           <IconButton
-            colorPalette="green"
+            colorScheme="green"
             size="sm"
             aria-label="Aprovar"
             onClick={() => onApproveEstimate(item.id)}
@@ -208,7 +208,7 @@ const OrderRow = React.memo<OrderRowProps>(
           <HStack gap={2} justify="flex-end">
             {hasCuttingPlan && (
               <IconButton
-                colorPalette="gray"
+                colorScheme="gray"
                 variant="outline"
                 size="sm"
                 aria-label="Imprimir plano de corte"
@@ -220,7 +220,7 @@ const OrderRow = React.memo<OrderRowProps>(
             )}
             {hasCuttingPlan && (
               <IconButton
-                colorPalette="gray"
+                colorScheme="gray"
                 variant="outline"
                 size="sm"
                 aria-label="Baixar arquivos AC e AD"
@@ -234,7 +234,7 @@ const OrderRow = React.memo<OrderRowProps>(
               <IconButton
                 aria-label="Histórico de edições"
                 variant="ghost"
-                colorPalette="purple"
+                colorScheme="purple"
                 size="sm"
                 onClick={() => onShowHistory(item)}
                 title={`${edits.length} edição(ões)`}
@@ -243,7 +243,7 @@ const OrderRow = React.memo<OrderRowProps>(
               </IconButton>
             )}
             <IconButton
-              colorPalette="gray"
+              colorScheme="gray"
               variant="ghost"
               size="sm"
               aria-label="Imprimir Resumo"
@@ -254,7 +254,7 @@ const OrderRow = React.memo<OrderRowProps>(
             <IconButton
               aria-label="Etiquetas"
               variant="ghost"
-              colorPalette="gray"
+              colorScheme="gray"
               size="sm"
               onClick={() => onPrintLabels(item)}
             >
@@ -262,7 +262,7 @@ const OrderRow = React.memo<OrderRowProps>(
             </IconButton>
             {!isDeactivated && item.orderStatus === 'Em Produção' && (
               <IconButton
-                colorPalette="blue"
+                colorScheme="blue"
                 variant="ghost"
                 size="sm"
                 aria-label="Editar"
@@ -273,7 +273,7 @@ const OrderRow = React.memo<OrderRowProps>(
             )}
             {!isDeactivated && item.orderStatus !== 'Concluído' && (
               <IconButton
-                colorPalette="red"
+                colorScheme="red"
                 variant="ghost"
                 size="sm"
                 aria-label="Desativar"
@@ -285,7 +285,7 @@ const OrderRow = React.memo<OrderRowProps>(
             )}
             {!isDeactivated && item.orderStatus !== 'Concluído' && (
               <IconButton
-                colorPalette="green"
+                colorScheme="green"
                 size="sm"
                 aria-label="Concluir"
                 onClick={() => onConfirmStatus(item)}
@@ -334,7 +334,7 @@ const OrderListDesktopImpl: React.FC<OrderListProps> = ({
       ) : (
         <Table.Root
           variant="line"
-          colorPalette="orange"
+          colorScheme="orange"
           size={tableSize}
           whiteSpace="nowrap"
         >

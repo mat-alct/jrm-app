@@ -74,7 +74,7 @@ const EstimateCard = React.memo<EstimateCardProps>(
           flex="1"
           size="md"
           variant="outline"
-          colorPalette="gray"
+          colorScheme="gray"
           onClick={() => onPrintResume(item, 'estimate')}
         >
           <FaRegFileAlt /> Resumo
@@ -82,7 +82,7 @@ const EstimateCard = React.memo<EstimateCardProps>(
         <Button
           flex="1"
           size="md"
-          colorPalette="green"
+          colorScheme="green"
           onClick={() => onApproveEstimate(item.id)}
         >
           <FaHandshake /> Aprovar
@@ -224,7 +224,7 @@ const OrderCard = React.memo<OrderCardProps>(
               minW="100px"
               size="md"
               variant="outline"
-              colorPalette="gray"
+              colorScheme="gray"
               onClick={() => onPrintCuttingPlan(item)}
             >
               <FaPrint /> Plano
@@ -236,7 +236,7 @@ const OrderCard = React.memo<OrderCardProps>(
               minW="100px"
               size="md"
               variant="outline"
-              colorPalette="gray"
+              colorScheme="gray"
               onClick={() => onDownloadMachineFiles(item)}
             >
               <FaFileArchive /> Máquina
@@ -246,7 +246,7 @@ const OrderCard = React.memo<OrderCardProps>(
             <IconButton
               size="md"
               variant="outline"
-              colorPalette="purple"
+              colorScheme="purple"
               aria-label="Histórico de edições"
               onClick={() => onShowHistory(item)}
             >
@@ -258,7 +258,7 @@ const OrderCard = React.memo<OrderCardProps>(
             minW="100px"
             size="md"
             variant="outline"
-            colorPalette="gray"
+            colorScheme="gray"
             onClick={() => onPrintResume(item, 'order')}
           >
             <FaRegFileAlt /> Resumo
@@ -268,7 +268,7 @@ const OrderCard = React.memo<OrderCardProps>(
             minW="100px"
             size="md"
             variant="outline"
-            colorPalette="gray"
+            colorScheme="gray"
             onClick={() => onPrintLabels(item)}
           >
             <FaTags /> Etiquetas
@@ -277,7 +277,7 @@ const OrderCard = React.memo<OrderCardProps>(
             <IconButton
               size="md"
               variant="outline"
-              colorPalette="blue"
+              colorScheme="blue"
               aria-label="Editar"
               onClick={() => onEdit(item.id)}
             >
@@ -288,7 +288,7 @@ const OrderCard = React.memo<OrderCardProps>(
             <IconButton
               size="md"
               variant="outline"
-              colorPalette="red"
+              colorScheme="red"
               aria-label="Desativar"
               onClick={() => onDeactivate(item)}
             >
@@ -302,7 +302,7 @@ const OrderCard = React.memo<OrderCardProps>(
             mt={3}
             w="100%"
             size="lg"
-            colorPalette="green"
+            colorScheme="green"
             onClick={() => onConfirmStatus(item)}
           >
             <FaCheck /> {nextLabel}

@@ -73,7 +73,7 @@ const ProjectDetail = () => {
               <HStack gap={2}>
                 <Text>Notificações</Text>
                 {unresolvedCount > 0 && (
-                  <Badge colorPalette="red">{unresolvedCount}</Badge>
+                  <Badge colorScheme="red">{unresolvedCount}</Badge>
                 )}
               </HStack>
             </Tabs.Trigger>
@@ -138,7 +138,7 @@ const ProjectDetail = () => {
                 <Heading size="md">Itens</Heading>
                 <Button
                   size="sm"
-                  colorPalette="orange"
+                  colorScheme="orange"
                   variant="outline"
                   onClick={() => setIsAddingItem(true)}
                 >
