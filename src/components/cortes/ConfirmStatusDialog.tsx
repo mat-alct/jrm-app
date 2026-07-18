@@ -97,7 +97,7 @@ export const ConfirmStatusDialog: React.FC<ConfirmStatusDialogProps> = ({
               >
                 <Button
                   variant="outline"
-                  colorScheme="gray"
+                  colorPalette="gray"
                   size={['lg', 'lg', 'md']}
                   onClick={onCancel}
                   disabled={loading}
@@ -106,7 +106,7 @@ export const ConfirmStatusDialog: React.FC<ConfirmStatusDialogProps> = ({
                   Cancelar
                 </Button>
                 <Button
-                  colorScheme="green"
+                  colorPalette="green"
                   size={['lg', 'lg', 'md']}
                   loading={loading}
                   onClick={() => order && onConfirm(order.id)}

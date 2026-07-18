@@ -386,7 +386,7 @@ const EditarPedido = () => {
                 <HStack gap={3}>
                   <Button
                     flex="1"
-                    colorScheme={shouldCharge === true ? 'orange' : 'gray'}
+                    colorPalette={shouldCharge === true ? 'orange' : 'gray'}
                     variant={shouldCharge === true ? 'solid' : 'outline'}
                     onClick={() => setShouldCharge(true)}
                   >
@@ -394,7 +394,7 @@ const EditarPedido = () => {
                   </Button>
                   <Button
                     flex="1"
-                    colorScheme={shouldCharge === false ? 'orange' : 'gray'}
+                    colorPalette={shouldCharge === false ? 'orange' : 'gray'}
                     variant={shouldCharge === false ? 'solid' : 'outline'}
                     onClick={() => setShouldCharge(false)}
                   >

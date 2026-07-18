@@ -366,7 +366,7 @@ export const OrderData = ({
                     gap={3}
                   >
                     <Switch.Root
-                      colorScheme="red"
+                      colorPalette="red"
                       checked={value}
                       onCheckedChange={e => onChange(e.checked)}
                       size="lg"
@@ -681,7 +681,7 @@ export const OrderData = ({
           {/* Lado Direito: Botão (Expande com flex=1) */}
           <Box flex="1" w="100%">
             <Button
-              colorScheme="orange"
+              colorPalette="orange"
               size="xl"
               height="60px"
               fontSize="xl"

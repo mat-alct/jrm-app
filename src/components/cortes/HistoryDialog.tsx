@@ -90,7 +90,7 @@ export const HistoryDialog: React.FC<HistoryDialogProps> = ({
                             onSelectVersion(snap);
                           }}
                           variant="outline"
-                          colorScheme="orange"
+                          colorPalette="orange"
                           justifyContent="flex-start"
                           height="auto"
                           py={3}

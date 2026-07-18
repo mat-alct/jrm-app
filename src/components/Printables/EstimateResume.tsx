@@ -20,7 +20,7 @@ interface EstimateResumeProps {
   estimate: EstimateDocument;
   variant?: 'outline' | 'solid' | 'subtle' | 'surface' | 'ghost' | 'plain';
   size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '2xs' | 'xs';
-  colorScheme?: string;
+  colorPalette?: string;
   autoPrint?: boolean;
   onAfterPrint?: () => void;
 }
@@ -29,7 +29,7 @@ export const EstimateResume: React.FC<EstimateResumeProps> = ({
   estimate,
   variant = 'ghost',
   size = 'sm',
-  colorScheme = 'gray',
+  colorPalette = 'gray',
   autoPrint = false,
   onAfterPrint,
 }) => {
@@ -266,7 +266,7 @@ export const EstimateResume: React.FC<EstimateResumeProps> = ({
 
       {!autoPrint && (
         <IconButton
-          colorScheme={colorScheme}
+          colorPalette={colorPalette}
           variant={variant}
           size={size}
           aria-label="Imprimir Orçamento"

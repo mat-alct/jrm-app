@@ -182,7 +182,7 @@ const Fretes = () => {
           pageTitle="Fretes por Bairro"
           isLoading={isFetching && !isLoading}
         >
-          <Button colorScheme="orange" onClick={openAdd}>
+          <Button colorPalette="orange" onClick={openAdd}>
             Novo Bairro
           </Button>
         </Header>
@@ -198,11 +198,11 @@ const Fretes = () => {
 
           {isLoading ? (
             <Flex justify="center" py={10}>
-              <Spinner colorScheme="orange" />
+              <Spinner colorPalette="orange" />
             </Flex>
           ) : (
             <Box overflowX="auto" bg="white" borderRadius="md" shadow="sm">
-              <Table.Root variant="outline" colorScheme="orange">
+              <Table.Root variant="outline" colorPalette="orange">
                 <Table.Header>
                   <Table.Row>
                     <Table.ColumnHeader>Bairro</Table.ColumnHeader>
@@ -248,7 +248,7 @@ const Fretes = () => {
                               <IconButton
                                 aria-label="Salvar"
                                 size="sm"
-                                colorScheme="orange"
+                                colorPalette="orange"
                                 onClick={() => void handleSaveFreight(area)}
                                 loading={isSaving}
                               >
@@ -266,7 +266,7 @@ const Fretes = () => {
                               aria-label={`Remover ${area.name}`}
                               size="sm"
                               variant="ghost"
-                              colorScheme="red"
+                              colorPalette="red"
                               onClick={() => setConfirmRemove(area)}
                             >
                               <FaTrash />
@@ -367,7 +367,7 @@ const Fretes = () => {
                       Cancelar
                     </Button>
                     <Button
-                      colorScheme="red"
+                      colorPalette="red"
                       onClick={() => void handleRemove()}
                       loading={removeArea.isPending}
                     >

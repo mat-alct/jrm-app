@@ -216,7 +216,7 @@ export const CuttingPlanSection = ({
           </Text>
         </Box>
         {plan && (
-          <Badge colorScheme={statusColor[plan.status]} px={3} py={1}>
+          <Badge colorPalette={statusColor[plan.status]} px={3} py={1}>
             {statusLabel[plan.status]} · versão {plan.version}
           </Badge>
         )}
@@ -331,14 +331,14 @@ export const CuttingPlanSection = ({
             <FaSave /> Salvar rascunho
           </Button>
           <Button
-            colorScheme="green"
+            colorPalette="green"
             onClick={approve}
             disabled={!plan || plan.status === 'outdated' || generating}
           >
             <FaCheck /> Aprovar plano
           </Button>
           <Button
-            colorScheme="orange"
+            colorPalette="orange"
             onClick={() => void generate()}
             disabled={
               cutlist.length === 0 ||

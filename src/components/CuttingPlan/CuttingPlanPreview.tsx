@@ -77,7 +77,7 @@ export const CuttingPlanPreview = ({
             wrap="wrap"
           >
             <Heading size="md">Resultado do plano</Heading>
-            <Badge colorScheme="orange" variant="subtle" px={3} py={1}>
+            <Badge colorPalette="orange" variant="subtle" px={3} py={1}>
               {modeLabel[plan.optimizationMode]}
             </Badge>
           </Flex>

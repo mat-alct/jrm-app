@@ -91,7 +91,7 @@ export const EditCustomerDataModal: React.FC<EditCustomerDataModalProps> = ({
             </Dialog.Body>
             <Dialog.Footer>
               <Button
-                colorScheme="orange"
+                colorPalette="orange"
                 mr={3}
                 loading={isSubmitting}
                 onClick={() =>

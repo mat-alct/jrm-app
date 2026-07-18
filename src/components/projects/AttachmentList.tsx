@@ -233,7 +233,7 @@ export const AttachmentList: React.FC<AttachmentListProps> = ({
                       <HStack gap={2} mt={2}>
                         <Button
                           size="xs"
-                          colorScheme="orange"
+                          colorPalette="orange"
                           loading={updateAudience.isPending}
                           onClick={() => void saveAudience(attachment.id)}
                         >

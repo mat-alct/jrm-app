@@ -193,7 +193,7 @@ const Materiais = () => {
         >
           {/* Botão para forçar a atualização da lista de materiais. */}
           <Button
-            colorScheme="gray"
+            colorPalette="gray"
             onClick={() => void refetch()}
             disabled={createMaterialIsSubmitting || isFetching}
             size={buttonSize}
@@ -203,7 +203,7 @@ const Materiais = () => {
           </Button>
           {/* Botão para abrir o modal de criação de novo material. */}
           <Button
-            colorScheme="orange"
+            colorPalette="orange"
             onClick={onOpen}
             disabled={createMaterialIsSubmitting || isFetching}
             size={buttonSize}
@@ -286,7 +286,7 @@ const Materiais = () => {
             }
           }}
           value={materialFilter}
-          colorScheme="orange"
+          colorPalette="orange"
           mb={4}
         >
           <HStack gap={4}>
@@ -305,7 +305,7 @@ const Materiais = () => {
 
         {/* Tabela de dados que exibe os materiais. */}
         <Box overflowX="auto">
-          <Table.Root variant="line" colorScheme="orange" whiteSpace="nowrap">
+          <Table.Root variant="line" colorPalette="orange" whiteSpace="nowrap">
             <TableCaption>Lista de Materiais</TableCaption>
             <Table.Header>
               <Table.Row>
@@ -330,7 +330,7 @@ const Materiais = () => {
                       {/* Botões de ação para cada linha da tabela. */}
                       <HStack gap={4}>
                         <IconButton
-                          colorScheme="orange"
+                          colorPalette="orange"
                           size="sm"
                           aria-label="Editar"
                           onClick={() => {
@@ -343,7 +343,7 @@ const Materiais = () => {
                           <FaEdit />
                         </IconButton>
                         <IconButton
-                          colorScheme="orange"
+                          colorPalette="orange"
                           size="sm"
                           aria-label="Remover"
                           onClick={() => {

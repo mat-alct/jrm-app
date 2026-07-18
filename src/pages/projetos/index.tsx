@@ -88,7 +88,7 @@ const ProjetosIndex = () => {
         >
           {canSeeProjectsTab && (
             <Link href="/projetos/novo" passHref>
-              <Button colorScheme="orange">Novo Projeto</Button>
+              <Button colorPalette="orange">Novo Projeto</Button>
             </Link>
           )}
         </Header>
@@ -116,7 +116,7 @@ const ProjetosIndex = () => {
               <Box overflowX="auto">
                 <Table.Root
                   variant="outline"
-                  colorScheme="orange"
+                  colorPalette="orange"
                   whiteSpace="nowrap"
                 >
                   <Table.Header>
@@ -142,7 +142,7 @@ const ProjetosIndex = () => {
                         <Table.Cell>{project.itemSummary.total}</Table.Cell>
                         <Table.Cell>
                           {project.itemSummary.atrasados > 0 ? (
-                            <Badge colorScheme="red">
+                            <Badge colorPalette="red">
                               {project.itemSummary.atrasados}
                             </Badge>
                           ) : (

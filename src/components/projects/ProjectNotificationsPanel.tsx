@@ -41,9 +41,9 @@ export const ProjectNotificationsPanel: React.FC<
             <HStack justify="space-between" wrap="wrap" gap={2} mb={1}>
               <Text fontWeight="semibold">{notification.itemName}</Text>
               {notification.resolvedAt ? (
-                <Badge colorScheme="gray">Resolvida</Badge>
+                <Badge colorPalette="gray">Resolvida</Badge>
               ) : (
-                <Badge colorScheme="red">Pendente</Badge>
+                <Badge colorPalette="red">Pendente</Badge>
               )}
             </HStack>
             <Text fontSize="sm">{notification.message}</Text>

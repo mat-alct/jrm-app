@@ -165,7 +165,7 @@ const Vendedores = () => {
           isLoading={isFetching && !isLoading} // Mostra o spinner do header apenas no refetch em background
         >
           <Button
-            colorScheme="orange"
+            colorPalette="orange"
             onClick={onOpen}
             disabled={createSellerIsSubmitting}
             // leftIcon={<Icon as={FaUserPlus} fontSize="20" />}
@@ -202,7 +202,7 @@ const Vendedores = () => {
         <Box overflowX="auto">
           <Table.Root
             variant="outline"
-            colorScheme="orange"
+            colorPalette="orange"
             whiteSpace="nowrap"
           >
             <TableCaption>Lista de Vendedores</TableCaption>

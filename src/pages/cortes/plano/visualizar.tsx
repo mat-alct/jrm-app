@@ -53,7 +53,7 @@ const CuttingPlanViewerPage = () => {
               Este link precisa ser aberto pelo pedido que gerou o plano. Volte
               à lista e use a ação “Visualizar plano”.
             </Text>
-            <Button onClick={() => window.close()} colorScheme="gray">
+            <Button onClick={() => window.close()} colorPalette="gray">
               Fechar esta aba
             </Button>
           </Stack>

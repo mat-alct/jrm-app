@@ -117,7 +117,7 @@ export const UserForm: React.FC<UserFormProps> = ({
       />
       <Button
         type="submit"
-        colorScheme="orange"
+        colorPalette="orange"
         loading={isSubmitting}
         alignSelf="flex-start"
       >

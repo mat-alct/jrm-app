@@ -104,7 +104,7 @@ export const AddProjectItemModal: React.FC<AddProjectItemModalProps> = ({
             </Dialog.Body>
             <Dialog.Footer>
               <Button
-                colorScheme="orange"
+                colorPalette="orange"
                 mr={3}
                 loading={isSubmitting}
                 onClick={() =>

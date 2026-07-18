@@ -82,7 +82,7 @@ export const ConfirmDeactivateDialog: React.FC<
               >
                 <Button
                   variant="outline"
-                  colorScheme="gray"
+                  colorPalette="gray"
                   size={['lg', 'lg', 'md']}
                   onClick={onCancel}
                   disabled={loading}
@@ -91,7 +91,7 @@ export const ConfirmDeactivateDialog: React.FC<
                   Cancelar
                 </Button>
                 <Button
-                  colorScheme="red"
+                  colorPalette="red"
                   size={['lg', 'lg', 'md']}
                   loading={loading}
                   onClick={() => order && onConfirm(order.id)}
