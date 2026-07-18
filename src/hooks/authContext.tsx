@@ -24,6 +24,28 @@ export interface AuthContextData {
   signOut: () => Promise<void>;
 }
 
+export class ServerSessionError extends Error {
+  constructor() {
+    super('Nao foi possivel iniciar a sessao. Tente novamente.');
+    this.name = 'ServerSessionError';
+  }
+}
+
+async function createServerSession(user: User): Promise<void> {
+  const token = await user.getIdToken();
+  const response = await fetch('/api/login', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ token }),
+  });
+
+  if (!response.ok) {
+    throw new ServerSessionError();
+  }
+}
+
 // Exportado para que os testes possam prover um valor controlado sem mockar o hook.
 export const AuthContext = createContext<AuthContextData>(
   {} as AuthContextData,
@@ -35,27 +57,39 @@ interface AuthProviderProps {
 
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null | undefined>(undefined);
+  const pendingSession = React.useRef<{
+    uid: string;
+    promise: Promise<void>;
+  } | null>(null);
+
+  const ensureServerSession = React.useCallback((currentUser: User) => {
+    if (pendingSession.current?.uid === currentUser.uid) {
+      return pendingSession.current.promise;
+    }
+
+    const promise = createServerSession(currentUser).finally(() => {
+      if (pendingSession.current?.promise === promise) {
+        pendingSession.current = null;
+      }
+    });
+    pendingSession.current = { uid: currentUser.uid, promise };
+    return promise;
+  }, []);
 
   // Função de login que será usada na página de login
   const signIn = async (email: string, password: string) => {
-    // 1. Primeiro, autentica no lado do cliente como você já faz
     const userCredential = await signInWithEmailAndPassword(
       auth,
       email,
       password,
     );
 
-    // 2. PEÇA-CHAVE FALTANTE: Pega o ID Token do usuário
-    const token = await userCredential.user.getIdToken();
-
-    // 3. Envia o token para a sua API route para criar o cookie de sessão
-    await fetch('/api/login', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ token }),
-    });
+    try {
+      await ensureServerSession(userCredential.user);
+    } catch (error) {
+      await firebaseSignOut(auth);
+      throw error;
+    }
   };
 
   const signOut = async () => {
@@ -74,13 +108,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Efeito que monitora o estado de autenticação em tempo real
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, currentUser => {
-      // Quando o estado muda (login/logout), atualizamos nosso estado 'user'
-      setUser(currentUser);
+      if (!currentUser) {
+        setUser(null);
+        return;
+      }
+
+      // O Firebase restaura o usuario via IndexedDB, mas o cookie HTTP-only pode
+      // ter expirado ou nunca ter sido criado. Renova-o antes de liberar o app.
+      setUser(undefined);
+      void ensureServerSession(currentUser)
+        .then(() => setUser(currentUser))
+        .catch(async () => {
+          await firebaseSignOut(auth);
+          setUser(null);
+        });
     });
 
     // Desliga o monitoramento ao sair do componente para evitar vazamento de memória
     return () => unsubscribe();
-  }, []);
+  }, [ensureServerSession]);
 
   return (
     <AuthContext.Provider value={{ user, signIn, signOut }}>

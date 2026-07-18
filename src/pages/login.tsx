@@ -9,7 +9,10 @@ import { toaster } from '@/components/ui/toaster';
 
 import { FormInput } from '../components/Form/Input';
 import { Loader } from '../components/Loader';
-import { useAuth } from '../hooks/authContext'; // Importando o novo hook
+import {
+  ServerSessionError,
+  useAuth,
+} from '../hooks/authContext'; // Importando o novo hook
 import { loginSchema } from '../utils/yup/pages/login';
 
 interface LoginProps {
@@ -33,11 +36,14 @@ const Login = () => {
     try {
       await signIn(email, password);
       void router.push('/');
-    } catch {
+    } catch (error) {
       toaster.create({
         type: 'error',
         title: 'Erro de autenticação',
-        description: 'Email ou senha incorretos.',
+        description:
+          error instanceof ServerSessionError
+            ? error.message
+            : 'Email ou senha incorretos.',
       });
     }
   };

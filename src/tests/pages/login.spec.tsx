@@ -1,4 +1,5 @@
 import { toaster } from '@/components/ui/toaster';
+import { ServerSessionError } from '@/hooks/authContext';
 import Login from '@/pages/login';
 import { fakeAuthUser, TestAuthProvider } from '@/tests/helpers/authTestUtils';
 
@@ -60,6 +61,22 @@ describe('pages/login', () => {
           type: 'error',
           title: 'Erro de autenticação',
           description: 'Email ou senha incorretos.',
+        }),
+      ),
+    );
+    expect(push).not.toHaveBeenCalled();
+  });
+
+  it('diferencia falha da sessao do servidor de credencial invalida', async () => {
+    renderLogin(jest.fn().mockRejectedValue(new ServerSessionError()));
+
+    fillCredentials();
+    fireEvent.click(screen.getByRole('button', { name: 'Entrar' }));
+
+    await waitFor(() =>
+      expect(toaster.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          description: 'Nao foi possivel iniciar a sessao. Tente novamente.',
         }),
       ),
     );
