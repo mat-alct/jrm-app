@@ -69,13 +69,13 @@ Um usuário interno pode ter mais de um papel. Exemplo: um administrador também
 
 ## 4. Regras gerais de permissão
 
-| Perfil | Acesso | Permissões principais |
-|---|---|---|
-| Administrador | Tudo | Criar, editar, atribuir desenhistas, atribuir montadores, alterar valores, alterar prazos, pagar montadores, anexar documentos, editar qualquer status |
-| Vendedor | Todos os projetos, sem financeiro dos montadores | Criar projeto, editar dados do cliente, anexar arquivos, acompanhar aprovação e status simplificado |
-| Desenhista | Apenas itens atribuídos | Ver dados técnicos necessários, anexar projeto pronto, visualizar prazo, devolver item para alteração quando necessário |
-| Montador | Apenas itens atribuídos | Ver dados do cliente, endereço, telefone, arquivos técnicos, prazo, valor próprio, atualizar etapa, anexar fotos/arquivos, ver financeiro próprio |
-| Cliente | Apenas projeto via link + senha | Ver orçamento, aprovar, recusar, pedir alteração e acompanhar status simplificado |
+| Perfil        | Acesso                                                                                         | Permissões principais                                                                                                                                  |
+| ------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Administrador | Tudo                                                                                           | Criar, editar, atribuir desenhistas, atribuir montadores, alterar valores, alterar prazos, pagar montadores, anexar documentos, editar qualquer status |
+| Vendedor      | Todos os cadastros; detalhe completo até a atribuição do montador e apenas status depois disso | Criar cadastro básico, completar dados do cliente, adicionar itens, aprovar para desenho, anexar arquivos, tratar notificações e montar orçamento      |
+| Desenhista    | Fila compartilhada e itens atribuídos                                                          | Avaliar anexos da fila, assumir item, anexar projeto pronto, visualizar prazo e pedir mais informações ao vendedor                                     |
+| Montador      | Apenas itens atribuídos                                                                        | Ver dados do cliente, endereço, telefone, arquivos técnicos, prazo, valor próprio, atualizar etapa, anexar fotos/arquivos, ver financeiro próprio      |
+| Cliente       | Apenas projeto via link + senha                                                                | Ver orçamento, aprovar, recusar, pedir alteração e acompanhar status simplificado                                                                      |
 
 ### Observações importantes
 
@@ -83,6 +83,9 @@ Um usuário interno pode ter mais de um papel. Exemplo: um administrador também
 - Vendedores não veem valores pagos aos montadores.
 - Montadores veem apenas o valor que eles receberão.
 - Desenhistas comuns não veem valores financeiros, a menos que também sejam administradores.
+- A partir de `assemblerAssignedAt`, o usuário cujo único papel é vendedor vê no detalhe
+  do item somente nome, ambiente e status. Firestore/Storage negam anexos e versões; o
+  documento do item continua legível porque Firestore não filtra campos individualmente.
 - O cliente não cria conta; ele acessa por link e senha gerada automaticamente.
 - Após aprovação, o cliente não pode mais recusar ou pedir alteração daquele item pelo link. Apenas o administrador poderá editar internamente.
 
@@ -92,49 +95,48 @@ Um usuário interno pode ter mais de um papel. Exemplo: um administrador também
 
 ### 5.1 Fluxo com desenhista
 
-1. Vendedor cria um novo projeto.
-2. Vendedor cadastra os dados do cliente.
-3. Vendedor cria um ou mais itens dentro do projeto.
-4. Vendedor anexa arquivos do ambiente, medidas, fotos, PDFs ou outros documentos.
-5. Administrador escolhe o desenhista responsável por cada item.
-6. Sistema define prazo automático para o desenhista, com possibilidade de edição manual.
-7. Desenhista acessa sua fila de itens pendentes.
-8. Desenhista anexa o projeto pronto.
-9. Item muda para “projeto desenhado” e depois para “aguardando aprovação do cliente”.
-10. Cliente recebe link com senha.
-11. Cliente visualiza os itens, valores e arquivos liberados.
-12. Cliente pode:
+1. Vendedor cria o cadastro básico com nome e telefone; e-mail/endereço são opcionais.
+2. No detalhe do projeto, vendedor completa os dados do cliente e adiciona os itens.
+3. Em cada item, anexa ambiente, medidas, fotos, PDFs ou outros documentos. Todo anexo
+   pertence a um item e nasce visível para vendedor, desenhista, montador e cliente; cada
+   público pode ser desmarcado.
+4. Vendedor/admin clica em **Aprovar para desenho**, que calcula o prazo e coloca o item
+   na fila compartilhada sem exigir atribuição prévia.
+5. Desenhista acessa `/projetos`, aba **Desenhos pendentes**, avalia os anexos e assume o
+   item. Admin também pode atribuir por nome (Renato, Marcio ou Outros).
+6. Se faltar dado, o desenhista informa uma justificativa e move o item para
+   `aguardando_informacoes`; o vendedor recebe uma notificação no cadastro, anexa o que
+   falta e reaprova, mantendo o mesmo desenhista.
+7. Desenhista anexa o projeto pronto.
+8. Item muda para “aguardando orçamento” e depois para “aguardando aprovação do cliente”.
+9. Cliente recebe link com senha.
+10. Cliente visualiza os itens, valores e arquivos liberados.
+11. Cliente pode:
     - aprovar item por item;
     - aprovar tudo;
     - recusar um item;
     - pedir alteração de um item.
-13. Se pedir alteração, apenas aquele item volta para “alteração solicitada”.
-14. Itens já aprovados seguem para produção.
-15. Administrador atribui um ou mais montadores ao item aprovado.
-16. Administrador define manualmente quanto cada montador receberá.
-17. Montador acessa apenas os itens atribuídos a ele.
-18. Montador atualiza as etapas do item.
-19. Cliente acompanha status simplificado, como rastreamento.
-20. Montador confirma montagem concluída.
-21. Valor do montador entra como pagamento pendente.
-22. Administrador realiza pagamento e anexa comprovante.
-23. Montador confirma recebimento.
-24. Item é finalizado.
-25. Quando todos os itens forem finalizados, o projeto é considerado concluído.
-26. O link do cliente expira 1 mês após a conclusão do projeto.
+12. Se pedir alteração, apenas aquele item volta para “alteração solicitada”.
+13. Itens já aprovados seguem para produção.
+14. Administrador atribui um ou mais montadores ao item aprovado.
+15. Administrador define manualmente quanto cada montador receberá.
+16. Montador acessa apenas os itens atribuídos a ele e atualiza as etapas.
+17. Cliente acompanha status simplificado, como rastreamento.
+18. Montador confirma montagem concluída.
+19. Valor do montador entra como pagamento pendente.
+20. Administrador realiza pagamento e anexa comprovante.
+21. Montador confirma recebimento e o item é finalizado.
+22. Quando todos os itens forem finalizados, o projeto é considerado concluído e o link
+    do cliente expira 1 mês depois.
 
 ---
 
-### 5.2 Fluxo direto sem desenhista
+### 5.2 Itens sem trabalho externo de desenho
 
-Usado quando não há necessidade de projetista.
-
-1. Vendedor ou administrador cria o projeto.
-2. Administrador define os valores.
-3. Arquivos e documentação são anexados.
-4. Cliente aprova pelo link.
-5. Administrador atribui montador.
-6. Item segue direto para execução.
+O fluxo normal não pula estados: todo item passa pela aprovação para desenho e pela etapa
+de orçamento. Quando não houver trabalho externo, o admin pode assumir/atribuir o item e
+enviar a versão mínima necessária, preservando histórico, prazo e auditoria. Apenas o
+override administrativo pode forçar uma transição excepcional.
 
 ---
 
@@ -146,19 +148,20 @@ O status principal deve ser por item, não por projeto.
 
 ```ts
 type ProjectItemStatus =
-  | "projeto_criado"
-  | "aguardando_desenho"
-  | "aguardando_orcamento"
-  | "aguardando_aprovacao_cliente"
-  | "alteracao_solicitada"
-  | "recusado_pelo_cliente"
-  | "aguardando_atribuicao_montador"
-  | "em_producao"
-  | "pronto_para_montagem"
-  | "montagem_concluida"
-  | "aguardando_pagamento_montador"
-  | "finalizado"
-  | "cancelado";
+  | 'projeto_criado'
+  | 'aguardando_desenho'
+  | 'aguardando_informacoes'
+  | 'aguardando_orcamento'
+  | 'aguardando_aprovacao_cliente'
+  | 'alteracao_solicitada'
+  | 'recusado_pelo_cliente'
+  | 'aguardando_atribuicao_montador'
+  | 'em_producao'
+  | 'pronto_para_montagem'
+  | 'montagem_concluida'
+  | 'aguardando_pagamento_montador'
+  | 'finalizado'
+  | 'cancelado';
 ```
 
 ### Observação sobre financeiro
@@ -178,10 +181,10 @@ Isso evita misturar produção com pagamento.
 
 ```ts
 type AssemblerPaymentStatus =
-  | "nao_liberado"
-  | "pendente"
-  | "pago"
-  | "confirmado_pelo_montador";
+  | 'nao_liberado'
+  | 'pendente'
+  | 'pago'
+  | 'confirmado_pelo_montador';
 ```
 
 ### Regra
@@ -202,21 +205,22 @@ O cliente não deve ver todos os detalhes internos.
 
 Mapeamento sugerido:
 
-| Status interno | Status para cliente |
-|---|---|
-| projeto_criado | Projeto em preparação |
-| aguardando_desenho | Projeto em desenvolvimento |
-| aguardando_orcamento | Orçamento em preparação |
-| aguardando_aprovacao_cliente | Aguardando sua aprovação |
-| alteracao_solicitada | Alteração solicitada |
-| recusado_pelo_cliente | Item recusado |
-| aguardando_atribuicao_montador | Projeto aprovado |
-| em_producao | Em produção |
-| pronto_para_montagem | Em produção |
-| montagem_concluida | Montagem concluída |
-| aguardando_pagamento_montador | Montagem concluída |
-| finalizado | Finalizado |
-| cancelado | Cancelado |
+| Status interno                 | Status para cliente        |
+| ------------------------------ | -------------------------- |
+| projeto_criado                 | Projeto em preparação      |
+| aguardando_desenho             | Projeto em desenvolvimento |
+| aguardando_informacoes         | Projeto em desenvolvimento |
+| aguardando_orcamento           | Orçamento em preparação    |
+| aguardando_aprovacao_cliente   | Aguardando sua aprovação   |
+| alteracao_solicitada           | Alteração solicitada       |
+| recusado_pelo_cliente          | Item recusado              |
+| aguardando_atribuicao_montador | Projeto aprovado           |
+| em_producao                    | Em produção                |
+| pronto_para_montagem           | Em produção                |
+| montagem_concluida             | Montagem concluída         |
+| aguardando_pagamento_montador  | Montagem concluída         |
+| finalizado                     | Finalizado                 |
+| cancelado                      | Cancelado                  |
 
 Os status ligados à operação interna do montador (`aguardando_atribuicao_montador`, `aguardando_pagamento_montador`, `em_producao`/`pronto_para_montagem`) colapsam em rótulos que não expõem a operação interna.
 
@@ -294,10 +298,10 @@ O cliente vê apenas uma previsão atualizada.
 
 ```ts
 type ClientApprovalStatus =
-  | "aguardando"
-  | "aprovado"
-  | "recusado"
-  | "alteracao_solicitada";
+  | 'aguardando'
+  | 'aprovado'
+  | 'recusado'
+  | 'alteracao_solicitada';
 ```
 
 ---
@@ -332,24 +336,27 @@ Exemplos:
 
 As categorias dos arquivos são livres e podem ser criadas por quem estiver manuseando o projeto.
 
-### Visibilidade dos anexos
+### Audiência dos anexos
 
-Cada anexo deve ter um campo de visibilidade.
+Todo anexo pertence a um item e possui quatro flags independentes, todas `true` por
+padrão. No upload, o usuário desmarca quem não deve ver; depois, somente admin edita.
 
 ```ts
-type AttachmentVisibility =
-  | "internal"
-  | "client"
-  | "designer"
-  | "assembler";
+interface AttachmentAudience {
+  seller: boolean;
+  designer: boolean;
+  assembler: boolean;
+  client: boolean;
+}
 ```
 
 ### Regras de visualização
 
-- Cliente vê arquivos anexados pelo vendedor, orçamento e arquivos marcados como visíveis para cliente.
-- Desenhista vê anexos necessários para desenho.
-- Montador vê arquivos técnicos necessários para execução.
+- Cliente vê arquivos com `audience.client === true` e o orçamento público.
+- Vendedor, desenhista e montador dependem da flag do próprio papel.
 - Admin vê tudo.
+- Depois da atribuição do montador, vendedor-only não lê o documento nem o objeto do
+  anexo, mesmo que `audience.seller` seja `true`.
 
 ---
 
@@ -359,11 +366,11 @@ type AttachmentVisibility =
 users
 projects
 projects/{projectId}/items
-projects/{projectId}/attachments
 projects/{projectId}/items/{itemId}/attachments
 projects/{projectId}/items/{itemId}/statusHistory
 projects/{projectId}/items/{itemId}/versions
 projects/{projectId}/items/{itemId}/assemblerAssignments
+projects/{projectId}/notifications
 payments
 settings
 ```
@@ -375,7 +382,7 @@ settings
 ## 14.1 users
 
 ```ts
-type UserRole = "admin" | "seller" | "designer" | "assembler";
+type UserRole = 'admin' | 'seller' | 'designer' | 'assembler';
 
 interface AppUser {
   id: string;
@@ -417,8 +424,8 @@ interface Project {
 
   customerName: string;
   customerPhone: string;
-  customerEmail: string;
-  customerAddress: string;
+  customerEmail?: string;
+  customerAddress?: string;
 
   sellerId: string;
   sellerName?: string;
@@ -472,16 +479,11 @@ interface ProjectItem {
   environment: string;
   description?: string;
   material?: string;
-  finish?: string;
-  measurements?: string;
   notes?: string;
-
-  customerPrice: number;
 
   status: ProjectItemStatus;
   clientApprovalStatus: ClientApprovalStatus;
 
-  requiresDesigner: boolean;
   designerId?: string;
   designerName?: string;
 
@@ -489,8 +491,10 @@ interface ProjectItem {
   estimatedDeliveryDate?: Timestamp;
 
   currentVersionId?: string;
+  budget?: ItemBudget;
 
   approvedAt?: Timestamp;
+  assemblerAssignedAt?: Timestamp;
   rejectedAt?: Timestamp;
   changeRequestedAt?: Timestamp;
   completedAt?: Timestamp;
@@ -506,15 +510,7 @@ interface ProjectItem {
 
 ## 14.4 attachments
 
-Pode existir anexo no nível do projeto ou do item.
-
-### Projeto
-
-```txt
-projects/{projectId}/attachments/{attachmentId}
-```
-
-### Item
+Todo anexo pertence obrigatoriamente a um item.
 
 ```txt
 projects/{projectId}/items/{itemId}/attachments/{attachmentId}
@@ -524,7 +520,7 @@ projects/{projectId}/items/{itemId}/attachments/{attachmentId}
 interface Attachment {
   id: string;
   projectId: string;
-  itemId?: string;
+  itemId: string;
 
   fileName: string;
   originalFileName: string;
@@ -534,12 +530,11 @@ interface Attachment {
   sizeBytes: number;
 
   category: string;
-  visibility: AttachmentVisibility;
+  audience: AttachmentAudience;
 
   uploadedBy: string;
+  uploadedByName?: string;
   uploadedByRole: UserRole;
-
-  clientVisible: boolean;
 
   createdAt: Timestamp;
 }
@@ -666,7 +661,7 @@ interface AssemblerPayment {
   assemblerName?: string;
 
   amount: number;
-  status: "pago" | "confirmado_pelo_montador";
+  status: 'pago' | 'confirmado_pelo_montador';
 
   proofAttachmentId?: string;
   proofStoragePath?: string;
@@ -1145,8 +1140,8 @@ Como os itens ficam em subcoleções, usar `collectionGroup`.
 Buscar todos os itens atribuídos ao usuário atual:
 
 ```ts
-collectionGroup(db, "items")
-where("designerId", "==", currentUser.uid)
+collectionGroup(db, 'items');
+where('designerId', '==', currentUser.uid);
 ```
 
 ### Montador
@@ -1154,8 +1149,8 @@ where("designerId", "==", currentUser.uid)
 Para montador, é melhor consultar `assemblerAssignments` por `collectionGroup`:
 
 ```ts
-collectionGroup(db, "assemblerAssignments")
-where("assemblerId", "==", currentUser.uid)
+collectionGroup(db, 'assemblerAssignments');
+where('assemblerId', '==', currentUser.uid);
 ```
 
 Depois carregar os itens correspondentes por `projectId` e `itemId`.
@@ -1195,7 +1190,8 @@ O vendedor deve ver:
 - projetos criados;
 - dados do cliente;
 - itens;
-- anexos;
+- anexos e versões somente antes de um montador ser atribuído;
+- notificações de informação solicitada pelo desenhista;
 - aprovação do cliente;
 - status simplificado da produção;
 - previsão atualizada.
@@ -1207,13 +1203,17 @@ O vendedor não deve ver:
 - financeiro interno;
 - histórico financeiro dos montadores.
 
+Depois da atribuição do montador, o detalhe é deliberadamente reduzido a nome, ambiente
+e badge de status. Admin nunca sofre esse corte; usuário com papel acumulado de
+admin/desenhista continua operando pelo papel adicional.
+
 ---
 
 ## 25. Painel do desenhista
 
 O desenhista deve ver:
 
-- fila de itens atribuídos;
+- fila compartilhada de itens pendentes, inclusive ainda não atribuídos;
 - prazo de entrega;
 - dados técnicos enviados pelo vendedor;
 - anexos necessários;
@@ -1403,7 +1403,7 @@ Implementar:
 - upload para Firebase Storage;
 - registro do anexo no Firestore;
 - categoria livre;
-- visibilidade do arquivo;
+- audiência independente do arquivo (`seller`, `designer`, `assembler`, `client`);
 - listagem de anexos;
 - remoção ou desativação de anexo por admin.
 
@@ -1505,10 +1505,12 @@ Implementar:
 
 O MVP só deve ser considerado pronto quando:
 
-1. Vendedor consegue criar projeto com cliente e itens.
+1. Vendedor consegue criar cadastro básico e adicionar itens no detalhe.
 2. Vendedor consegue anexar documentos.
-3. Admin consegue atribuir desenhista.
-4. Desenhista consegue ver fila e anexar projeto pronto.
+3. Vendedor/admin consegue aprovar para desenho sem atribuir; desenhista consegue assumir
+   na fila compartilhada e admin consegue atribuir por nome.
+4. Desenhista consegue pedir informações com justificativa, e vendedor consegue tratar a
+   notificação, anexar e reaprovar mantendo a atribuição.
 5. Cliente consegue acessar por link e senha.
 6. Cliente consegue aprovar item por item.
 7. Cliente consegue pedir alteração em um item sem afetar os outros.
@@ -1525,6 +1527,8 @@ O MVP só deve ser considerado pronto quando:
 18. Vendedor não consegue ver valores dos montadores.
 19. Cliente não consegue ver dados internos.
 20. Sistema funciona bem no celular.
+21. Vendedor vê todos os cadastros e, após a atribuição do montador, apenas o status do item.
+22. Anexos respeitam as quatro flags de audiência em UI, Firestore e Storage.
 
 ---
 

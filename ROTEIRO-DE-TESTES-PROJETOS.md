@@ -65,13 +65,13 @@ Todas as contas abaixo já estão criadas no ambiente de teste. A tela de login 
 
 ### Equipe interna (login com e-mail e senha)
 
-| Papel | Para que serve | E-mail | Senha |
-|---|---|---|---|
-| **Administrador** | Vê e faz tudo: cria projetos, atribui montadores, aprova montagens, paga | `admin@seed.jrm` | `Seed@12345` |
-| **Vendedor** | Cria projetos, monta orçamentos, acompanha — mas não mexe em dinheiro de montador | `vendedor@seed.jrm` | `Seed@12345` |
-| **Desenhista** | Recebe os itens para desenhar e envia o projeto pronto | `desenhista@seed.jrm` | `Seed@12345` |
-| **Montador** | Vê só os itens dele, atualiza as etapas e confirma pagamentos | `montador@seed.jrm` | `Seed@12345` |
-| **Marceneiro** | Papel usado na área antiga de cortes (serve para testar que ele *não* entra em Projetos) | `marceneiro@seed.jrm` | `Seed@12345` |
+| Papel             | Para que serve                                                                           | E-mail                | Senha        |
+| ----------------- | ---------------------------------------------------------------------------------------- | --------------------- | ------------ |
+| **Administrador** | Vê e faz tudo: cria projetos, atribui montadores, aprova montagens, paga                 | `admin@seed.jrm`      | `Seed@12345` |
+| **Vendedor**      | Cria projetos, monta orçamentos, acompanha — mas não mexe em dinheiro de montador        | `vendedor@seed.jrm`   | `Seed@12345` |
+| **Desenhista**    | Recebe os itens para desenhar e envia o projeto pronto                                   | `desenhista@seed.jrm` | `Seed@12345` |
+| **Montador**      | Vê só os itens dele, atualiza as etapas e confirma pagamentos                            | `montador@seed.jrm`   | `Seed@12345` |
+| **Marceneiro**    | Papel usado na área antiga de cortes (serve para testar que ele _não_ entra em Projetos) | `marceneiro@seed.jrm` | `Seed@12345` |
 
 ### Cliente (portal externo, sem login)
 
@@ -96,19 +96,19 @@ parados em etapas diferentes. Isso permite testar o meio do fluxo sem ter que pe
 
 **Projeto do "Cliente Seed 1"**
 
-| Item | Ambiente | Em que etapa está |
-|---|---|---|
-| Cozinha planejada | Cozinha | Aguardando aprovação do cliente |
-| Armário de quarto | Quarto | Em produção |
-| Painel de TV | Sala | Projeto criado (ainda não foi para o desenhista) |
+| Item              | Ambiente | Em que etapa está                                |
+| ----------------- | -------- | ------------------------------------------------ |
+| Cozinha planejada | Cozinha  | Aguardando aprovação do cliente                  |
+| Armário de quarto | Quarto   | Em produção                                      |
+| Painel de TV      | Sala     | Projeto criado (ainda não foi para o desenhista) |
 
 **Projeto do "Cliente Seed 2"**
 
-| Item | Ambiente | Em que etapa está |
-|---|---|---|
-| Rack de sala | Sala | Pronto para montagem |
-| Bancada de lavanderia | Lavanderia | Aguardando pagamento do montador (e com prazo **vencido**) |
-| Guarda-roupa planejado | Quarto | Finalizado |
+| Item                   | Ambiente   | Em que etapa está                                          |
+| ---------------------- | ---------- | ---------------------------------------------------------- |
+| Rack de sala           | Sala       | Pronto para montagem                                       |
+| Bancada de lavanderia  | Lavanderia | Aguardando pagamento do montador (e com prazo **vencido**) |
+| Guarda-roupa planejado | Quarto     | Finalizado                                                 |
 
 Esses dois projetos são o seu "laboratório". O Roteiro 1, porém, pede que você **crie um
 projeto novo do zero** — porque só assim dá para ver o fluxo inteiro nascer e terminar.
@@ -123,7 +123,8 @@ sua própria velocidade — um pode estar em produção enquanto o outro ainda e
 
 ```
 1.  Projeto criado                  ← vendedor cadastrou o item
-2.  Aguardando desenho              ← desenhista foi atribuído
+2.  Aguardando desenho              ← vendedor aprovou para a fila compartilhada
+    Aguardando informações          ← desenhista pediu um dado com justificativa
 3.  Aguardando orçamento            ← desenhista entregou o desenho
 4.  Aguardando aprovação do cliente ← orçamento foi enviado ao cliente
 5.  Aguardando atribuição de montador  ← cliente aprovou
@@ -134,13 +135,14 @@ sua própria velocidade — um pode estar em produção enquanto o outro ainda e
 10. Finalizado                      ← montador confirmou que recebeu
 ```
 
-Existem ainda três desvios: **Alteração solicitada** e **Recusado pelo cliente** (etapa 4),
-e **Cancelado** (o administrador pode cancelar a qualquer momento).
+Existem ainda quatro desvios: **Aguardando informações** (etapa 2), **Alteração
+solicitada** e **Recusado pelo cliente** (etapa 4), e **Cancelado** (o administrador pode
+cancelar a qualquer momento).
 
 **Quem faz o quê, em uma frase:**
 
 - **Vendedor** cadastra o cliente, cadastra os itens, monta o orçamento e envia ao cliente.
-- **Desenhista** só vê os itens que caíram para ele, e só faz uma coisa: sobe o desenho.
+- **Desenhista** vê a fila compartilhada, assume um item, pede dados se necessário e sobe o desenho.
 - **Cliente** aprova, recusa ou pede alteração — pelo celular, sem instalar nada.
 - **Montador** vê só os itens dele, avança as etapas e confirma quando recebe o pagamento.
 - **Administrador** faz tudo isso e mais: atribui montador, aprova a montagem e paga.
@@ -166,51 +168,49 @@ e cliente), mais a janela normal para o administrador. Deixe todas abertas.
 
 - [ ] Entre como **`vendedor@seed.jrm`** / `Seed@12345`.
 - [ ] No menu da esquerda, procure a seção **"Projetos"** e clique em **"Novo projeto"**.
-- [ ] Preencha os dados do cliente:
+- [ ] Preencha o cadastro básico:
   - **Nome do cliente:** `Teste Diretoria`
   - **Telefone:** um número de celular real seu (você vai clicar nele mais tarde, na tela
     do montador, para ver se o telefone disca)
-  - **E-mail:** qualquer e-mail
-  - **Endereço:** um endereço real e completo (você vai clicar nele para abrir o mapa)
-- [ ] Adicione o **primeiro item**: nome `Cozinha da diretoria`, ambiente `Cozinha`,
-  material, descrição e observações à vontade.
-- [ ] Adicione um **segundo item**: nome `Rack da sala`, ambiente `Sala`.
 - [ ] Salve.
+- [ ] No detalhe aberto após salvar, clique em **Editar** nos dados do cliente e informe
+      e-mail e um endereço real e completo.
+- [ ] Abra a aba **Itens**, clique em **Adicionar item** e cadastre `Cozinha da diretoria`
+      no ambiente `Cozinha`, com material, descrição e observações à vontade.
+- [ ] Adicione um segundo item: `Rack da sala`, ambiente `Sala`.
 
 **O que deve acontecer:**
 
-- ✅ O projeto é criado e você vai para a lista de projetos.
+- ✅ O projeto é criado vazio e abre imediatamente no detalhe.
 - ✅ O projeto aparece na lista, e a coluna **"Vendedor"** mostra **"Vendedor Seed"** —
-  ou seja, o sistema entendeu sozinho quem cadastrou. *Não existe mais campo para escolher
-  o vendedor à mão.*
+  ou seja, o sistema entendeu sozinho quem cadastrou. _Não existe mais campo para escolher
+  o vendedor à mão._
 - ✅ Os dois itens começam na etapa **"Projeto criado"**.
 
-**Repare no que o formulário *não* pede:** não há campo de preço, acabamento nem medidas.
+**Repare no que o formulário _não_ pede:** não há campo de preço, acabamento nem medidas.
 Isso é proposital. Preço vira **orçamento** (feito depois do desenho) e acabamento/medidas
 viram **anexos**. O vendedor não chuta preço na frente do cliente.
 
-- [ ] **Teste a validação:** tente salvar um projeto sem nome de cliente, ou sem nenhum item.
-  ✅ O sistema deve barrar e mostrar o erro.
+- [ ] **Teste a validação:** tente salvar outro cadastro sem nome ou sem telefone.
+      ✅ O sistema deve barrar. Projeto sem itens, por outro lado, é permitido.
 
 ---
 
 ### Etapa 2 — Mandar o item para o desenhista (vendedor ou administrador)
 
 - [ ] Ainda como vendedor, abra o projeto `Teste Diretoria` e clique no item **"Cozinha da diretoria"**.
-- [ ] No card **"Desenho"**, clique em **"Atribuir desenhista"**.
-- [ ] Escolha **"Desenhista Seed"**.
-- [ ] Repare que o campo de **prazo já vem preenchido** — o sistema somou os dias
-  configurados para a etapa de desenho (5 dias, por padrão). Você pode mudar essa data.
-- [ ] Confirme.
+- [ ] Clique em **"Aprovar para desenho"**. Não escolha desenhista ainda.
 
 **O que deve acontecer:**
 
 - ✅ O item muda para **"Aguardando desenho"**.
-- ✅ O card "Desenho" agora mostra o nome do desenhista e o prazo.
+- ✅ O prazo é calculado automaticamente e o item entra na fila compartilhada ainda sem
+  desenhista.
 - ✅ No card **"Histórico"**, no fim da página, aparece um registro novo dizendo o que
   mudou e **o nome de quem mudou** (não só o cargo). Isso vale para todas as ações do
   sistema — dá para auditar quem fez o quê.
-- ✅ O botão agora se chama **"Reatribuir desenhista"**, caso queira trocar.
+- ✅ O admin ainda pode atribuir por **Renato**, **Marcio** ou escrever outro nome; o
+  desenhista também pode assumir sozinho.
 
 > 💡 Diferente de como era antes, **qualquer item pode receber um desenhista**. Não existe
 > mais a caixinha "requer desenhista" no cadastro.
@@ -221,17 +221,24 @@ viram **anexos**. O vendedor não chuta preço na frente do cliente.
 
 - [ ] Na janela anônima, entre como **`desenhista@seed.jrm`** / `Seed@12345`.
 - [ ] Repare no menu da esquerda: o desenhista **não vê** "Novo projeto", nem "Dashboard",
-  nem nada de administração. Ele vê **"Minha fila"**.
-- [ ] Clique em **"Minha fila"**.
+      nem nada de administração. Ele vê **"Listar projetos"**.
+- [ ] Clique em **"Listar projetos"** e abra a aba **"Desenhos pendentes"**.
 
 **O que deve acontecer:**
 
-- ✅ Aparece **apenas** o item "Cozinha da diretoria" (e outros que estejam atribuídos a
-  ele). O item "Rack da sala", que não foi atribuído, **não aparece**.
+- ✅ Aparece o item "Cozinha da diretoria" mesmo sem atribuição. A fila é compartilhada;
+  itens assumidos continuam visíveis com **"Atribuído a ..."**.
+
+- [ ] Clique em **Assumir**. ✅ O item passa a mostrar **"Atribuído a você"**.
+- [ ] Abra o item, escreva `Falta a medida final do vão` e clique em **Pedir mais informações**.
+- [ ] Na janela do vendedor, abra o projeto e confirme o badge **Notificações 1**. Na aba
+      Notificações, abra o item, anexe a medida e clique em **Aprovar para desenho**.
+- [ ] ✅ A notificação fica resolvida, o badge some e o item volta à fila mantendo o mesmo
+      desenhista e com prazo recalculado.
 
 - [ ] Abra o item. Você verá um painel de envio de desenho.
 - [ ] Escreva uma descrição da versão (opcional, ex.: `Primeira versão`) e anexe um ou mais
-  arquivos. Pode ser qualquer PDF ou imagem do seu computador.
+      arquivos. Pode ser qualquer PDF ou imagem do seu computador.
 - [ ] Envie.
 
 **O que deve acontecer:**
@@ -255,7 +262,7 @@ viram **anexos**. O vendedor não chuta preço na frente do cliente.
 - ✅ Agora apareceu um card **"Orçamento"** com um formulário. Ele só aparece nessa etapa.
 
 - [ ] Preencha as **linhas de custo** — o que a JRM gasta para fazer o item. Adicione pelo
-  menos duas linhas, por exemplo:
+      menos duas linhas, por exemplo:
   - `MDF e ferragens` → `4500`
   - `Mão de obra de marcenaria` → `1500`
 - [ ] Preencha o **"Valor cobrado do cliente"**: `9800`
@@ -328,7 +335,7 @@ versão, monte um orçamento (ex.: valor ao cliente `2400`, sugestão ao montado
   sem o valor do montador.
 
 - [ ] Em cada cartão de item há três botões: **"Aprovar item"**, **"Recusar"** e
-  **"Pedir alteração"**. Clique em **"Aprovar item"** no item "Cozinha da diretoria".
+      **"Pedir alteração"**. Clique em **"Aprovar item"** no item "Cozinha da diretoria".
 - [ ] ✅ Aparece uma **confirmação** ("Confirmar aprovação deste item?"). Confirme.
 
 **O que deve acontecer:**
@@ -338,19 +345,19 @@ versão, monte um orçamento (ex.: valor ao cliente `2400`, sugestão ao montado
 - ✅ O contador sobe para "1 de 2".
 
 - [ ] Agora teste o botão **"Aprovar tudo"**, fixo no rodapé da tela (no celular ele fica
-  grudado embaixo, para o cliente não precisar rolar).
+      grudado embaixo, para o cliente não precisar rolar).
 - [ ] ✅ Ele pede confirmação e aprova **todos os itens que ainda estavam pendentes** de uma vez.
 - [ ] ✅ Depois que não há mais nada pendente, o botão "Aprovar tudo" **some**.
 
 - [ ] Clique em **"Acompanhar andamento"**, no topo.
 - [ ] ✅ Aparece uma linha do tempo **em linguagem de cliente**. Repare: ele lê
-  "Em produção", "Montagem concluída", "Aguardando sua aprovação". Ele **nunca** lê
-  "Aguardando atribuição de montador" nem "Aguardando pagamento do montador" — essas
-  etapas internas aparecem para ele como "Projeto aprovado" e "Montagem concluída".
+      "Em produção", "Montagem concluída", "Aguardando sua aprovação". Ele **nunca** lê
+      "Aguardando atribuição de montador" nem "Aguardando pagamento do montador" — essas
+      etapas internas aparecem para ele como "Projeto aprovado" e "Montagem concluída".
 
 - [ ] Volte para a **janela do administrador**, recarregue a página do item.
 - [ ] ✅ O item está em **"Aguardando atribuição de montador"** e o **Histórico** registra
-  a aprovação **feita pelo cliente**, com data e hora.
+      a aprovação **feita pelo cliente**, com data e hora.
 
 ---
 
@@ -361,9 +368,9 @@ versão, monte um orçamento (ex.: valor ao cliente `2400`, sugestão ao montado
 - [ ] Como administrador, no item "Cozinha da diretoria", vá ao card **"Montadores"**.
 - [ ] Clique em **"Atribuir montador"**.
 - [ ] ✅ Repare: o campo de valor **já vem preenchido com R$ 700** — a sugestão que o
-  vendedor colocou no orçamento. O administrador pode aceitar ou mudar.
+      vendedor colocou no orçamento. O administrador pode aceitar ou mudar.
 - [ ] **Teste o bloqueio:** apague o valor (ou coloque `0`) e tente salvar.
-  ✅ O sistema recusa: *"Informe montador e valor maior que zero."*
+      ✅ O sistema recusa: _"Informe montador e valor maior que zero."_
 - [ ] Coloque o valor de volta, escolha **"Montador Seed"** e salve.
 
 **O que deve acontecer:**
@@ -384,10 +391,10 @@ versão, monte um orçamento (ex.: valor ao cliente `2400`, sugestão ao montado
 
 - [ ] Entre como **`montador@seed.jrm`** / `Seed@12345`.
 - [ ] ✅ O menu dele é curtíssimo: **"Meus itens"** e **"Financeiro"**. Ele não vê projetos,
-  não vê clientes, não vê dashboard.
+      não vê clientes, não vê dashboard.
 - [ ] Abra **"Meus itens"**.
 - [ ] ✅ Aparecem cartões com o cliente, o prazo, o status e **quanto ele tem a receber**.
-  Ele vê o valor **dele**, e não o valor que o cliente pagou.
+      Ele vê o valor **dele**, e não o valor que o cliente pagou.
 - [ ] Abra o item "Cozinha da diretoria".
 
 **Teste os três atalhos de campo:**
@@ -402,18 +409,18 @@ versão, monte um orçamento (ex.: valor ao cliente `2400`, sugestão ao montado
 - [ ] ✅ Ele avança para **"Pronto para montagem"**.
 - [ ] Toque de novo → ✅ avança para **"Montagem concluída"**.
 - [ ] Toque de novo → ✅ o botão fica **desabilitado**, escrito "Sem próxima etapa".
-  **O montador não consegue passar daqui.** Ele não libera o próprio pagamento.
+      **O montador não consegue passar daqui.** Ele não libera o próprio pagamento.
 
 - [ ] Em **"Fotos da montagem"**, envie uma foto. No celular, o campo abre a **câmera**
-  direto. ✅ A foto é enviada.
+      direto. ✅ A foto é enviada.
 
 > 📝 **Observação honesta:** nesta tela, a "Etapa atual" e o botão ainda mostram o nome
 > técnico da etapa (ex.: `pronto_para_montagem`, com underline) em vez do nome bonito
 > ("Pronto para montagem"). É um acabamento que ainda falta. Anotem se incomodar.
 
 - [ ] **Teste o isolamento:** ainda como montador, tente abrir um item que não é dele —
-  troque o endereço na barra do navegador pelo item "Painel de TV" do Cliente Seed 1.
-  ✅ Deve aparecer *"Item nao atribuido a este montador."* e nada mais.
+      troque o endereço na barra do navegador pelo item "Painel de TV" do Cliente Seed 1.
+      ✅ Deve aparecer _"Item nao atribuido a este montador."_ e nada mais.
 
 ---
 
@@ -423,9 +430,9 @@ versão, monte um orçamento (ex.: valor ao cliente `2400`, sugestão ao montado
 
 - [ ] Como administrador, abra o item "Cozinha da diretoria".
 - [ ] ✅ Como o item está em "Montagem concluída", apareceu um botão laranja:
-  **"Aprovar montagem"**. Ele **só** aparece para o administrador e **só** nessa etapa.
+      **"Aprovar montagem"**. Ele **só** aparece para o administrador e **só** nessa etapa.
 - [ ] Antes de clicar, abra **"Financeiro dos montadores"** (menu Administração) numa
-  outra aba. ✅ A pendência da "Cozinha da diretoria" **ainda não está lá**.
+      outra aba. ✅ A pendência da "Cozinha da diretoria" **ainda não está lá**.
 - [ ] Volte e clique em **"Aprovar montagem"**.
 
 **O que deve acontecer:**
@@ -440,10 +447,10 @@ versão, monte um orçamento (ex.: valor ao cliente `2400`, sugestão ao montado
 
 - [ ] Vá em **Administração → "Financeiro dos montadores"**.
 - [ ] ✅ As pendências vêm **agrupadas por montador**, com o total que ele tem a receber
-  no topo do cartão.
+      no topo do cartão.
 - [ ] Repare que o botão **"Pagar"** está **desabilitado**.
 - [ ] Anexe um arquivo no campo ao lado (um print do comprovante de PIX, por exemplo —
-  para o teste, qualquer imagem serve).
+      para o teste, qualquer imagem serve).
 - [ ] ✅ Agora o botão "Pagar" liberou. Clique.
 
 **O que deve acontecer:**
@@ -461,7 +468,7 @@ versão, monte um orçamento (ex.: valor ao cliente `2400`, sugestão ao montado
 - [ ] Volte para a janela do **montador** e abra **"Financeiro"**.
 - [ ] ✅ No topo, dois números: **"A receber"** e **"Aguardando confirmação"**.
 - [ ] ✅ Na lista de pagamentos, o de R$ 700 aparece com a marca "Comprovante anexado" e um
-  botão **"Confirmar recebimento"**.
+      botão **"Confirmar recebimento"**.
 - [ ] Clique em **"Confirmar recebimento"**.
 
 **O que deve acontecer:**
@@ -478,7 +485,7 @@ versão, monte um orçamento (ex.: valor ao cliente `2400`, sugestão ao montado
 ### Etapa 13 — Fechando o ciclo
 
 - [ ] Leve também o item **"Rack da sala"** até o fim (atribuir montador → montador avança
-  as três etapas → administrador aprova a montagem → paga → montador confirma).
+      as três etapas → administrador aprova a montagem → paga → montador confirma).
 - [ ] Quando o **último item** do projeto for finalizado:
   - ✅ Abra o link do cliente novamente. Aparece o aviso verde **"Projeto concluído —
     Todos os itens deste projeto foram finalizados."**
@@ -486,10 +493,10 @@ versão, monte um orçamento (ex.: valor ao cliente `2400`, sugestão ao montado
     não acessa mais e vê uma mensagem pedindo para entrar em contato com a loja.
 
 - [ ] Por fim, abra o item finalizado e leia o **Histórico** de cima a baixo.
-  ✅ Deve estar tudo lá, em ordem: quem atribuiu o desenhista, quem enviou o desenho, quem
-  enviou o orçamento, **o cliente** aprovando, quem atribuiu o montador, o montador
-  avançando cada etapa, o administrador aprovando a montagem, o pagamento e a confirmação.
-  Cada linha com **nome, data e hora**.
+      ✅ Deve estar tudo lá, em ordem: quem atribuiu o desenhista, quem enviou o desenho, quem
+      enviou o orçamento, **o cliente** aprovando, quem atribuiu o montador, o montador
+      avançando cada etapa, o administrador aprovando a montagem, o pagamento e a confirmação.
+      Cada linha com **nome, data e hora**.
 
 **🎉 Se você chegou até aqui, o coração da funcionalidade está validado.**
 
@@ -507,14 +514,14 @@ Nem todo cliente aprova de primeira. Teste os dois desvios.
 - [ ] No portal do cliente, clique em **"Pedir alteração"** num item pendente.
 - [ ] ✅ Pede confirmação. Confirme.
 - [ ] ✅ O item passa a mostrar **"Alteração solicitada"** e os botões ficam desabilitados —
-  a bola está com a JRM agora.
+      a bola está com a JRM agora.
 - [ ] Como administrador, abra o item.
 - [ ] ✅ O status é **"Alteração solicitada pelo cliente"** e o histórico registra o pedido.
 - [ ] ✅ A única etapa para onde o item pode ir é **de volta para "Aguardando desenho"**.
-  Ou seja: o sistema obriga o retrabalho a passar pelo desenhista de novo, e depois por um
-  orçamento novo. Não dá para "empurrar" o item de volta pro cliente sem redesenhar.
+      Ou seja: o sistema obriga o retrabalho a passar pelo desenhista de novo, e depois por um
+      orçamento novo. Não dá para "empurrar" o item de volta pro cliente sem redesenhar.
 - [ ] Mande o item de volta para o desenhista e repita o ciclo: nova versão → ✅ ela vira
-  **"Versão 2"** (a versão 1 continua guardada) → novo orçamento → novo envio.
+      **"Versão 2"** (a versão 1 continua guardada) → novo orçamento → novo envio.
 
 ### 2B — O cliente recusa
 
@@ -522,16 +529,16 @@ Nem todo cliente aprova de primeira. Teste os dois desvios.
 - [ ] ✅ O item mostra **"Item recusado"** e todos os botões ficam travados.
 - [ ] Como administrador, abra o item.
 - [ ] ✅ O status é **"Recusado pelo cliente"**. É um **beco sem saída**: o item não avança
-  mais por conta própria. Só o administrador, usando os poderes de exceção dele, pode movê-lo.
+      mais por conta própria. Só o administrador, usando os poderes de exceção dele, pode movê-lo.
 
 ### 2C — Poderes de exceção do administrador
 
 - [ ] Como **administrador**, abra qualquer item e olhe a área **"Alterar status"**.
 - [ ] ✅ O administrador vê **todos** os status disponíveis, inclusive "Cancelado". Ele pode
-  pular etapas e corrigir um erro operacional.
+      pular etapas e corrigir um erro operacional.
 - [ ] Agora entre como **desenhista** e abra um item da fila dele.
 - [ ] ✅ O desenhista vê **apenas** a transição permitida pelo fluxo. Ele não consegue
-  cancelar um item nem pulá-lo para produção.
+      cancelar um item nem pulá-lo para produção.
 
 > 🔑 **É esse o desenho:** o fluxo é rígido para a equipe e flexível para o dono. Se algo
 > der errado na prática, o administrador destrava — e o histórico registra que foi ele.
@@ -544,21 +551,16 @@ O sistema tem controle fino sobre **quem enxerga cada arquivo**. Isso importa: a
 técnica não deve ir para o cliente, e o custo não deve ir para o montador.
 
 - [ ] Como **administrador**, abra um item qualquer e vá até o card **"Anexos do item"**.
-- [ ] Envie **quatro arquivos**, um de cada visibilidade. Para cada envio, escolha uma
-  **categoria** (é texto livre, ex.: `fotos do ambiente`, `planta`, `contrato`) e a
-  visibilidade:
-
-| Visibilidade | Quem enxerga |
-|---|---|
-| **Interno** | Só a equipe da JRM. Nunca o cliente. |
-| **Cliente** | A equipe **e** o cliente, no portal. |
-| **Desenhista** | Só o desenhista (e o administrador). |
-| **Montador** | Só o montador (e o administrador). |
+- [ ] Envie quatro arquivos. Em cada envio, escolha uma **categoria** (texto livre, ex.:
+      `fotos do ambiente`, `planta`, `contrato`) e use os checkboxes **Quem pode ver**.
+      Vendedor, Desenhista, Montador e Cliente começam todos marcados; desmarque públicos
+      diferentes em cada arquivo.
+- [ ] Como admin, use **Editar visibilidade** num anexo já enviado e salve outra combinação.
 
 - [ ] ✅ Os anexos aparecem **agrupados por categoria** na lista.
 - [ ] Agora confira o vazamento, um perfil de cada vez:
-  - [ ] Abra o **portal do cliente** → ✅ ele vê **apenas** o arquivo marcado como "Cliente".
-        O arquivo "Interno" **não aparece em lugar nenhum**.
+  - [ ] Abra o **portal do cliente** → ✅ ele vê apenas os arquivos que mantiveram
+        **Cliente** marcado.
   - [ ] Abra o item como **montador** → ✅ em "Arquivos técnicos" ele vê o arquivo marcado
         como "Montador". Ele não vê o do desenhista.
   - [ ] Abra o item como **desenhista** → ✅ ele vê o dele, e continua sem ver nenhum valor.
@@ -568,8 +570,8 @@ técnica não deve ir para o cliente, e o custo não deve ir para o montador.
 Esta é uma das novidades mais visíveis para o cliente.
 
 - [ ] Consiga um arquivo de modelo 3D com extensão **`.glb`** (o desenhista de vocês exporta
-  isso do Promob/SketchUp; para testar, dá para baixar qualquer `.glb` de exemplo na internet).
-- [ ] Anexe esse arquivo a um item, com visibilidade **"Cliente"**.
+      isso do Promob/SketchUp; para testar, dá para baixar qualquer `.glb` de exemplo na internet).
+- [ ] Anexe esse arquivo a um item mantendo **Cliente** marcado.
 - [ ] Abra o **portal do cliente**.
 
 **O que deve acontecer:**
@@ -580,8 +582,8 @@ Esta é uma das novidades mais visíveis para o cliente.
 - ✅ No celular, existe a opção de **realidade aumentada** — o cliente aponta a câmera para
   a cozinha dele e vê o móvel no lugar.
 
-- [ ] Anexe o mesmo `.glb` com visibilidade **"Montador"** e abra como montador.
-  ✅ O visualizador 3D aparece também para ele, dentro de "Arquivos técnicos".
+- [ ] Anexe o mesmo `.glb` mantendo **Montador** marcado e desmarcando Cliente; abra como montador.
+      ✅ O visualizador 3D aparece também para ele, dentro de "Arquivos técnicos".
 
 > 💡 O sistema reconhece sozinho os formatos `.glb`, `.gltf` e `.usdz` e troca o link
 > simples pelo visualizador. Qualquer outro arquivo (PDF, foto, planilha) continua sendo
@@ -597,36 +599,39 @@ o sistema tem que barrar o acesso mesmo se a pessoa digitar o endereço na mão.
 Para cada linha da tabela abaixo, **entre com a conta indicada** e **digite o endereço na
 barra do navegador**, depois do endereço do ambiente de teste.
 
-| Entre como | Digite este endereço | O que deve acontecer |
-|---|---|---|
-| Vendedor | `/administracao/financeiro-montadores` | ❌ Bloqueado — é redirecionado para o início |
-| Vendedor | `/projetos/dashboard` | ❌ Bloqueado — o dashboard é só do administrador |
-| Vendedor | `/administracao/usuarios` | ❌ Bloqueado |
-| Vendedor | `/montador` | ❌ Bloqueado |
-| Desenhista | `/projetos` | ❌ Bloqueado — ele só usa a fila dele |
-| Desenhista | `/administracao/financeiro-montadores` | ❌ Bloqueado |
-| Montador | `/projetos` | ❌ Bloqueado |
-| Montador | `/administracao/financeiro-montadores` | ❌ Bloqueado (ele só vê `/montador/financeiro`, o *dele*) |
-| Marceneiro | `/projetos` | ❌ Bloqueado — o marceneiro só usa a área antiga de Cortes |
-| Marceneiro | `/projetos/novo` | ❌ Bloqueado |
+| Entre como | Digite este endereço                   | O que deve acontecer                                                      |
+| ---------- | -------------------------------------- | ------------------------------------------------------------------------- |
+| Vendedor   | `/administracao/financeiro-montadores` | ❌ Bloqueado — é redirecionado para o início                              |
+| Vendedor   | `/projetos/dashboard`                  | ❌ Bloqueado — o dashboard é só do administrador                          |
+| Vendedor   | `/administracao/usuarios`              | ❌ Bloqueado                                                              |
+| Vendedor   | `/montador`                            | ❌ Bloqueado                                                              |
+| Desenhista | `/projetos`                            | ✅ Permitido, mas somente a aba "Desenhos pendentes" e sem "Novo projeto" |
+| Desenhista | `/administracao/financeiro-montadores` | ❌ Bloqueado                                                              |
+| Montador   | `/projetos`                            | ❌ Bloqueado                                                              |
+| Montador   | `/administracao/financeiro-montadores` | ❌ Bloqueado (ele só vê `/montador/financeiro`, o _dele_)                 |
+| Marceneiro | `/projetos`                            | ❌ Bloqueado — o marceneiro só usa a área antiga de Cortes                |
+| Marceneiro | `/projetos/novo`                       | ❌ Bloqueado                                                              |
 
 - [ ] Testei todas as linhas acima.
 
-**E dentro das telas que a pessoa *pode* abrir:**
+**E dentro das telas que a pessoa _pode_ abrir:**
 
-- [ ] Como **vendedor**, abra um item. ✅ Ele vê o orçamento e o custo interno (ele precisa,
-  para vender), mas **não vê o botão "Atribuir montador"** e **não vê os valores** que os
-  montadores recebem.
+- [ ] Como **vendedor**, abra um item antes da atribuição. ✅ Ele vê orçamento/custo interno,
+      mas não o botão "Atribuir montador" nem valores dos montadores.
+- [ ] Depois que o admin atribuir o montador, reabra o mesmo item como vendedor. ✅ Restam
+      apenas nome, ambiente e status; orçamento, desenho, montadores, histórico e anexos somem.
+- [ ] Na lista `/projetos`, confirme que o vendedor vê também um cadastro criado por outro
+      vendedor.
 - [ ] Como **desenhista**, abra um item da fila. ✅ **Nenhum** valor em dinheiro aparece.
-  Nem orçamento, nem montador.
+      Nem orçamento, nem montador.
 - [ ] Como **montador**, você já testou: só os itens dele, só o valor dele.
 
 - [ ] Como **montador**, abra `/montador/financeiro`. ✅ Só aparecem os pagamentos **dele**.
-  Nenhum outro montador.
+      Nenhum outro montador.
 
 - [ ] **O teste do link do cliente:** copie o link de um projeto e cole numa janela anônima,
-  mas **não digite a senha**. Tente ir direto para `/cliente/{codigo}/acompanhar`.
-  ✅ Sem a senha, não há acesso a nada.
+      mas **não digite a senha**. Tente ir direto para `/cliente/{codigo}/acompanhar`.
+      ✅ Sem a senha, não há acesso a nada.
 
 ---
 
@@ -637,28 +642,28 @@ barra do navegador**, depois do endereço do ambiente de teste.
 - [ ] Entre como **administrador** → menu Projetos → **"Dashboard"**.
 - [ ] ✅ Você deve ver **dez indicadores**:
 
-| | |
-|---|---|
-| Projetos em aberto | Itens atrasados |
-| Aguardando desenho | Aguardando orçamento |
-| Aguardando aprovação | Aguardando montador |
-| Em produção | Em montagem |
-| Montadores a pagar | Vendido no mês |
+|                      |                      |
+| -------------------- | -------------------- |
+| Projetos em aberto   | Itens atrasados      |
+| Aguardando desenho   | Aguardando orçamento |
+| Aguardando aprovação | Aguardando montador  |
+| Em produção          | Em montagem          |
+| Montadores a pagar   | Vendido no mês       |
 
 - [ ] Confira se os números batem com o que você fez até agora.
 - [ ] Use os filtros: **busca por cliente**, **por vendedor**, **por desenhista** e
-  **por status**. ✅ Os números dos cards **mudam** conforme o filtro. O dashboard não é
-  uma foto fixa: ele responde ao recorte.
+      **por status**. ✅ Os números dos cards **mudam** conforme o filtro. O dashboard não é
+      uma foto fixa: ele responde ao recorte.
 - [ ] Combine dois filtros ao mesmo tempo. ✅ Funciona.
 
 ### 5B — Itens atrasados
 
 - [ ] No dashboard, procure a **tabela de itens atrasados**.
 - [ ] ✅ O item "Bancada de lavanderia" (Cliente Seed 2) deve estar lá — ele foi criado de
-  propósito com o prazo vencido.
+      propósito com o prazo vencido.
 - [ ] ✅ O card **"Itens atrasados"** deve contar esse item.
 - [ ] Repare que o "Guarda-roupa planejado" também tem prazo vencido, mas **não** aparece
-  como atrasado. ✅ Correto: ele já está **finalizado**, e item entregue não atrasa mais.
+      como atrasado. ✅ Correto: ele já está **finalizado**, e item entregue não atrasa mais.
 
 > 📝 **Observação honesta:** na tela **"Listar projetos"**, a coluna "Atrasados" dos dois
 > projetos de exemplo mostra `0`, mesmo com a bancada atrasada. Isso é uma limitação dos
@@ -673,13 +678,13 @@ de atraso e o preenchimento automático de prazo.
 
 - [ ] Menu Administração → **"Configurações de prazos"**.
 - [ ] ✅ Existem seis campos: dias para **desenho**, **orçamento**, **aprovação do cliente**,
-  **atribuição de montador**, **produção** e **montagem**.
+      **atribuição de montador**, **produção** e **montagem**.
 - [ ] Mude "Dias para desenho" de `5` para `2` e salve. ✅ Mensagem "Prazos atualizados."
 - [ ] Agora atribua um desenhista a um item novo.
-  ✅ O prazo sugerido agora é de **2 dias**, não mais 5. A configuração pegou.
+      ✅ O prazo sugerido agora é de **2 dias**, não mais 5. A configuração pegou.
 - [ ] Volte o valor para `5`.
 - [ ] Entre como **vendedor** e tente abrir `/administracao/configuracoes-prazos`.
-  ✅ Bloqueado. Só o administrador define prazos.
+      ✅ Bloqueado. Só o administrador define prazos.
 
 ---
 
@@ -723,7 +728,7 @@ O link do cliente é público — qualquer um que tenha o endereço pode tentar 
 > combinações. Depois de alguns minutos, o acesso destrava sozinho.
 
 - [ ] Espere destravar (ou use o link de outro projeto) e entre com a senha **certa**.
-  ✅ Entra normalmente.
+      ✅ Entra normalmente.
 
 - [ ] **Teste a regeneração:** como administrador, no projeto, clique em **"Regenerar senha"**.
 - [ ] ✅ Uma senha nova aparece.
@@ -746,6 +751,8 @@ das afirmações abaixo. **Estas são as promessas do sistema.**
 - [ ] A confirmação de recebimento do montador finalizou o item automaticamente.
 - [ ] Um item recusado pelo cliente ficou travado; um item com alteração solicitada
       voltou obrigatoriamente para o desenhista.
+- [ ] O desenhista pediu informações com justificativa; o vendedor recebeu a notificação,
+      anexou o dado e reaprovar resolveu o badge sem perder a atribuição.
 
 **Dinheiro**
 
@@ -764,6 +771,8 @@ das afirmações abaixo. **Estas são as promessas do sistema.**
 - [ ] O cliente entrou sem ter conta, só com link e senha.
 - [ ] Cinco senhas erradas travaram o portal do cliente.
 - [ ] Regenerar a senha invalidou a antiga.
+- [ ] O vendedor viu todos os cadastros e somente o status depois da atribuição do montador.
+- [ ] Cada anexo respeitou os quatro checkboxes de audiência.
 
 **Registro**
 

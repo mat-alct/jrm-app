@@ -30,12 +30,12 @@ Reformular o fluxo do módulo de projetos:
 
 ## 2. Decisões já tomadas (respostas do Mateus — não reabrir)
 
-| Tema | Decisão |
-|---|---|
-| Fila de desenho | Compartilhada; desenhista pode **assumir** um desenho — o item continua na lista com "Atribuído a …". Admin atribui via duas opções fixas **"Renato"** e **"Marcio"** + campo vazio com placeholder **"Outros"**; o nome digitado aparece no "Atribuído a". |
-| Cliente nos anexos | **Marcado por padrão** na lista de seleção de audiência. |
-| Corte de visão do vendedor | A partir do momento em que o **montador é atribuído** ao item. |
-| Lista de cadastros | Vendedor vê **todos** os cadastros (remove o filtro `sellerId` atual). |
+| Tema                       | Decisão                                                                                                                                                                                                                                                     |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Fila de desenho            | Compartilhada; desenhista pode **assumir** um desenho — o item continua na lista com "Atribuído a …". Admin atribui via duas opções fixas **"Renato"** e **"Marcio"** + campo vazio com placeholder **"Outros"**; o nome digitado aparece no "Atribuído a". |
+| Cliente nos anexos         | **Marcado por padrão** na lista de seleção de audiência.                                                                                                                                                                                                    |
+| Corte de visão do vendedor | A partir do momento em que o **montador é atribuído** ao item.                                                                                                                                                                                              |
+| Lista de cadastros         | Vendedor vê **todos** os cadastros (remove o filtro `sellerId` atual).                                                                                                                                                                                      |
 
 ## 3. Decisões de design desta rodada (vetáveis antes de implementar)
 
@@ -188,7 +188,7 @@ estar vazio.
 admin edita depois. Sem campo "para quem é".
 
 - [x] Types: `Attachment.audience: { seller: boolean; designer: boolean;
-      assembler: boolean; client: boolean }`; removidos `visibility`, `clientVisible` e o
+  assembler: boolean; client: boolean }`; removidos `visibility`, `clientVisible` e o
       tipo `AttachmentVisibility`.
 - [x] `uploadAttachment`: default tudo `true` (`DEFAULT_ATTACHMENT_AUDIENCE`); grava
       `audience` recebido do form.
@@ -242,7 +242,7 @@ admin edita depois. Sem campo "para quem é".
 - [x] Nova ação `approveItemForDesign(projectId, itemId, actor)` (`designer.service.ts`,
       admin/vendedor via `canAssignDesigner`): computa `deadlineCurrent` e chama
       `updateItemStatus(...,'aguardando_desenho',...)` (validação `projeto_criado →
-      aguardando_desenho` já embutida em `canTransition`), **não** mexe em designer.
+  aguardando_desenho` já embutida em `canTransition`), **não** mexe em designer.
       Botão "Aprovar para desenho" no item, visível só quando `status===projeto_criado`.
 - [x] Fila compartilhada: `getDesignQueue()` = collectionGroup `items` com
       `status in ['aguardando_desenho','alteracao_solicitada']` (itens assumidos
@@ -254,7 +254,7 @@ admin edita depois. Sem campo "para quem é".
       Rule `isValidDesignClaim()`: designer só atualiza quando `designerId` está ausente,
       `null` ou `''`, só grava o próprio uid, e só nesses 4 campos.
 - [x] Atribuição pelo admin: `AssignDesignerModal` reescrito — `DESIGNER_QUICK_OPTIONS =
-      ['Renato','Marcio']` preenchem um campo de texto único (também aceita "Outros"
+  ['Renato','Marcio']` preenchem um campo de texto único (também aceita "Outros"
       livre); `assignDesignerByName` casa por nome (case-insensitive) com um desenhista
       ativo → grava `designerId+designerName`; sem match → só `designerName`, limpando
       `designerId` anterior com `deleteField()`. Sem transição de status.
@@ -335,7 +335,7 @@ anexa e reaprova.
       `aguardando_desenho`) com textarea de justificativa obrigatória.
 - [x] Novo `notification.service.ts`: subcoleção `projects/{projectId}/notifications`
       `{ itemId, itemName, type: 'info_solicitada', message, createdBy, createdByName,
-      createdByRole, resolvedAt?, createdAt }`. Criada ao pedir informações; marcada
+  createdByRole, resolvedAt?, createdAt }`. Criada ao pedir informações; marcada
       resolvida ao reaprovar o item.
 - [x] Detalhe do projeto ganha abas ("Visão geral" / "Itens" / "Notificações") com
       badge de não-resolvidas na aba.
@@ -395,17 +395,27 @@ status.
   os quatro casos de Firestore/Storage; sabotagens revertidas e suítes verdes.
 - Commit: `feat(projetos): vendedor ve todos os cadastros e so status apos montador`
 
-### Fase 9 — Consolidação
+### Fase 9 — Consolidação ✅ (2026-07-17)
 
-- [ ] `npm run test:all` completo verde (typecheck, guardrails, unit, rules,
+- [x] `npm run test:all` completo verde (typecheck, guardrails, unit, rules,
       integração, e2e) — comparar contagens com a baseline da Fase 0.
-- [ ] Atualizar docs: `docs/gestao-projetos/especificacao.md` (§12 visibilidade de
+- [x] Atualizar docs: `docs/gestao-projetos/especificacao.md` (§12 visibilidade de
       anexos, fluxo de status), `PLANO.md`, `ROTEIRO-DE-TESTES-PROJETOS.md` (roteiros
       manuais refletem o fluxo novo), `CONTAS-SEED-TESTE.md` + `scripts/seed-projetos.mjs`
       (seed manual espelha o novo modelo).
-- [ ] Deploy de índices se mudaram (`npm run firebase:indexes`).
-- [ ] Prova de fogo final: sabotar `canViewAttachment` e `canTransition` → confirmar
+- [x] Deploy de índices se mudaram (`npm run firebase:indexes`).
+- [x] Prova de fogo final: sabotar `canViewAttachment` e `canTransition` → confirmar
       que rules + unit + e2e acusam; reverter.
+- Resultados finais: typecheck e guardrails OK; unit **1323/1323** (baseline
+  1222/1222); rules **37/37** (baseline 24/24); integração **82/82** (baseline
+  69/69); e2e **67/67** em 5,3 min (baseline 64/64). `git diff --check`, lint e
+  validação sintática do seed também verdes.
+- Índices publicados com sucesso no projeto `new-jrm-app-tests`. Um índice remoto já
+  existente e ausente do arquivo foi preservado, sem exclusão forçada.
+- Provas de fogo finais: liberar `canViewAttachment` derrubou 13 testes de permissão;
+  neutralizar `canTransition` derrubou 202 casos da matriz e o e2e de pedido de
+  informações; retirar o filtro de audiência da regra derrubou 1 teste de rules. Todas
+  as sabotagens foram revertidas antes da suíte final.
 - Commit: `docs(projetos): atualiza especificacao e roteiros para o fluxo novo`
 
 ---

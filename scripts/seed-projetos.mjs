@@ -4,13 +4,12 @@
 // - um usuario Auth + doc em users/{uid} para cada papel (admin, vendedor,
 //   desenhista, montador, marceneiro);
 // - settings/deadlineDefaults;
-// - 2 projetos com itens cobrindo os 13 status do fluxo real (desenho,
-//   orcamento, aprovacao do cliente, atribuicao de montador, producao,
-//   montagem e pagamento);
+// - 2 projetos com itens representativos dos 14 status do fluxo real (pedido
+//   de informacoes, desenho, orcamento, aprovacao do cliente, atribuicao de
+//   montador, producao, montagem e pagamento);
 // - orcamento (ItemBudget) nos itens que ja passaram do desenho;
 // - assemblerAssignments de exemplo (um pendente, um pago);
-// - um anexo fake por projeto (metadados no Firestore; nao sobe arquivo
-//   real ao Storage).
+// - notificacao pendente de exemplo para o vendedor.
 //
 // ATENCAO: este script grava dados reais no projeto Firebase configurado
 // pelas variaveis de ambiente (.env.local / .env). Rode-o SOMENTE apontando
@@ -48,9 +47,17 @@ const db = getFirestore();
 const SEED_USERS = [
   { name: 'Admin Seed', email: 'admin@seed.jrm', roles: ['admin'] },
   { name: 'Vendedor Seed', email: 'vendedor@seed.jrm', roles: ['seller'] },
-  { name: 'Desenhista Seed', email: 'desenhista@seed.jrm', roles: ['designer'] },
+  {
+    name: 'Desenhista Seed',
+    email: 'desenhista@seed.jrm',
+    roles: ['designer'],
+  },
   { name: 'Montador Seed', email: 'montador@seed.jrm', roles: ['assembler'] },
-  { name: 'Marceneiro Seed', email: 'marceneiro@seed.jrm', roles: ['woodworker'] },
+  {
+    name: 'Marceneiro Seed',
+    email: 'marceneiro@seed.jrm',
+    roles: ['woodworker'],
+  },
 ];
 const SEED_USER_PASSWORD = 'Seed@12345';
 
@@ -79,17 +86,14 @@ async function ensureSeedUsers() {
       console.log(`✓ Usuario Auth criado: ${seedUser.email}`);
     }
 
-    await db
-      .collection('users')
-      .doc(userRecord.uid)
-      .set({
-        name: seedUser.name,
-        email: seedUser.email,
-        roles: seedUser.roles,
-        active: true,
-        createdAt: Timestamp.now(),
-        updatedAt: Timestamp.now(),
-      });
+    await db.collection('users').doc(userRecord.uid).set({
+      name: seedUser.name,
+      email: seedUser.email,
+      roles: seedUser.roles,
+      active: true,
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+    });
 
     created[seedUser.roles[0]] = { uid: userRecord.uid, ...seedUser };
   }
@@ -98,19 +102,16 @@ async function ensureSeedUsers() {
 }
 
 async function ensureDeadlineDefaults(adminUid) {
-  await db
-    .collection('settings')
-    .doc('deadlineDefaults')
-    .set({
-      desenhoDias: 5,
-      orcamentoDias: 2,
-      aprovacaoClienteDias: 3,
-      atribuicaoMontadorDias: 2,
-      producaoDias: 10,
-      montagemDias: 2,
-      updatedAt: Timestamp.now(),
-      updatedBy: adminUid,
-    });
+  await db.collection('settings').doc('deadlineDefaults').set({
+    desenhoDias: 5,
+    orcamentoDias: 2,
+    aprovacaoClienteDias: 3,
+    atribuicaoMontadorDias: 2,
+    producaoDias: 10,
+    montagemDias: 2,
+    updatedAt: Timestamp.now(),
+    updatedBy: adminUid,
+  });
   console.log('✓ settings/deadlineDefaults configurado');
 }
 
@@ -132,7 +133,12 @@ const STATUSES_WITH_BUDGET = new Set([
   'finalizado',
 ]);
 
-function buildBudget({ users, totalCost, customerAmount, suggestedAssemblerAmount }) {
+function buildBudget({
+  users,
+  totalCost,
+  customerAmount,
+  suggestedAssemblerAmount,
+}) {
   const now = Timestamp.now();
   return {
     lines: [
@@ -210,6 +216,9 @@ async function seedProject({ users, index, itemsSpec }) {
     const itemRef = projectRef.collection('items').doc();
     const budget = itemBudgets[itemIndex];
     const hasDesigner = itemSpec.status !== 'projeto_criado';
+    const assemblerAssignedAt = itemSpec.assignAssembler
+      ? Timestamp.now()
+      : undefined;
 
     await itemRef.set({
       projectId: projectRef.id,
@@ -222,6 +231,7 @@ async function seedProject({ users, index, itemsSpec }) {
         ? { designerId: users.designer.uid, designerName: users.designer.name }
         : {}),
       ...(budget ? { budget } : {}),
+      ...(assemblerAssignedAt ? { assemblerAssignedAt } : {}),
       deadlineCurrent: futureTimestamp(itemSpec.deadlineDays),
       createdAt: Timestamp.now(),
       updatedAt: Timestamp.now(),
@@ -241,7 +251,7 @@ async function seedProject({ users, index, itemsSpec }) {
           assemblerName: users.assembler.name,
           amountToReceive: budget?.suggestedAssemblerAmount ?? 150,
           paymentStatus: itemSpec.assignAssembler,
-          assignedAt: Timestamp.now(),
+          assignedAt: assemblerAssignedAt,
           assignedBy: users.admin.uid,
           assignedByName: users.admin.name,
           createdAt: Timestamp.now(),
@@ -249,7 +259,26 @@ async function seedProject({ users, index, itemsSpec }) {
         });
     }
 
-    console.log(`  • item ${itemIndex + 1}/${itemsSpec.length}: ${itemSpec.name} [${itemSpec.status}]`);
+    if (itemSpec.notificationMessage) {
+      const notificationRef = projectRef.collection('notifications').doc();
+      await notificationRef.set({
+        id: notificationRef.id,
+        projectId: projectRef.id,
+        itemId: itemRef.id,
+        itemName: itemSpec.name,
+        type: 'info_solicitada',
+        message: itemSpec.notificationMessage,
+        createdBy: users.designer.uid,
+        createdByName: users.designer.name,
+        createdByRole: 'designer',
+        resolvedAt: null,
+        createdAt: Timestamp.now(),
+      });
+    }
+
+    console.log(
+      `  • item ${itemIndex + 1}/${itemsSpec.length}: ${itemSpec.name} [${itemSpec.status}]`,
+    );
   }
 }
 
@@ -282,6 +311,7 @@ async function main() {
         customerAmount: 3200,
         suggestedAssemblerAmount: 300,
         deadlineDays: 10,
+        assignAssembler: 'pendente',
       },
       {
         name: 'Painel de TV',
@@ -289,6 +319,14 @@ async function main() {
         status: 'projeto_criado',
         clientApprovalStatus: 'aguardando',
         deadlineDays: 3,
+      },
+      {
+        name: 'Escritorio aguardando medidas',
+        environment: 'Escritorio',
+        status: 'aguardando_informacoes',
+        clientApprovalStatus: 'aguardando',
+        deadlineDays: 3,
+        notificationMessage: 'Informe a largura final do vao da bancada.',
       },
     ],
   });
@@ -335,7 +373,9 @@ async function main() {
 
   console.log('\n✅ Seed concluido.');
   console.log(`   Senha dos usuarios de login interno: ${SEED_USER_PASSWORD}`);
-  console.log(`   Senha de acesso do cliente (ambos os projetos): ${CLIENT_ACCESS_PASSWORD}`);
+  console.log(
+    `   Senha de acesso do cliente (ambos os projetos): ${CLIENT_ACCESS_PASSWORD}`,
+  );
   process.exit(0);
 }
 
