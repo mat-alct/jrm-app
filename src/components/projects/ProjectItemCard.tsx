@@ -32,7 +32,7 @@ export const ProjectItemCard: React.FC<ProjectItemCardProps> = ({
           </Text>
         </Box>
         <HStack gap={2}>
-          {isDelayed(item) && <Badge colorScheme="red">Atrasado</Badge>}
+          {isDelayed(item) && <Badge colorPalette="red">Atrasado</Badge>}
           <ProjectItemStatusBadge status={item.status} />
         </HStack>
       </HStack>

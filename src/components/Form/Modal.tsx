@@ -58,7 +58,7 @@ export const FormModal = ({
             {/* Rodapé do modal, com os botões de ação. */}
             <Dialog.Footer>
               <Button
-                colorScheme="orange"
+                colorPalette="orange"
                 mr={3}
                 // O onClick aqui chama a função de submissão que vem do componente pai.
                 // Geralmente, essa função é o resultado de handleSubmit do react-hook-form.

@@ -62,7 +62,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
       <Button
         // CORREÇÃO: Usando 'disabled' (padrão HTML/Chakra v3) em vez de 'isDisabled'
         disabled={searchIsSubmitting}
-        colorScheme="gray"
+        colorPalette="gray"
         type="submit"
         borderLeftRadius="none"
       >

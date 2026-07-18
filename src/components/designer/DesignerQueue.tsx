@@ -96,7 +96,7 @@ export const DesignerQueue: React.FC<DesignerQueueProps> = ({
                   onClaim && (
                     <Button
                       size="sm"
-                      colorScheme="orange"
+                      colorPalette="orange"
                       loading={claimingItemId === item.id}
                       onClick={event => {
                         event.preventDefault();

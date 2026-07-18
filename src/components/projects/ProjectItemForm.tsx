@@ -59,7 +59,7 @@ export function ProjectItemForm<
           <Button
             size="xs"
             variant="outline"
-            colorScheme="red"
+            colorPalette="red"
             onClick={onRemove}
           >
             Remover

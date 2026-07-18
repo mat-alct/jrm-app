@@ -177,7 +177,7 @@ const CutlistRow = React.memo<CutlistRowProps>(props => {
           </Text>
         )}
         {cut.grainDirection && cut.grainDirection !== 'none' && (
-          <Badge colorScheme="blue" variant="subtle" fontSize="0.65em">
+          <Badge colorPalette="blue" variant="subtle" fontSize="0.65em">
             Veio obrigatório
           </Badge>
         )}
@@ -191,7 +191,7 @@ const CutlistRow = React.memo<CutlistRowProps>(props => {
           {cut.hasHingeHoles && (
             <Flex align="center" gap={1} mt={1}>
               <Badge
-                colorScheme="green"
+                colorPalette="green"
                 variant="subtle"
                 fontSize="0.6em"
                 borderRadius="full"
@@ -207,7 +207,7 @@ const CutlistRow = React.memo<CutlistRowProps>(props => {
           {cut.hasDrawerSlot && (
             <Flex align="center" gap={1} mt={1}>
               <Badge
-                colorScheme="orange"
+                colorPalette="orange"
                 variant="subtle"
                 fontSize="0.6em"
                 borderRadius="full"
@@ -223,7 +223,7 @@ const CutlistRow = React.memo<CutlistRowProps>(props => {
           {cut.hasRoundedCorners && (
             <Flex align="center" gap={1} mt={1}>
               <Badge
-                colorScheme="purple"
+                colorPalette="purple"
                 variant="subtle"
                 fontSize="0.6em"
                 borderRadius="full"
@@ -236,11 +236,11 @@ const CutlistRow = React.memo<CutlistRowProps>(props => {
         </Flex>
       </Table.Cell>
       <Table.Cell>
-        <Badge variant="outline" colorScheme="gray">
+        <Badge variant="outline" colorPalette="gray">
           {cut.borderA}
         </Badge>{' '}
         |{' '}
-        <Badge variant="outline" colorScheme="gray">
+        <Badge variant="outline" colorPalette="gray">
           {cut.borderB}
         </Badge>
       </Table.Cell>
@@ -254,7 +254,7 @@ const CutlistRow = React.memo<CutlistRowProps>(props => {
         <HStack gap={1}>
           <IconButton
             variant="ghost"
-            colorScheme="blue"
+            colorPalette="blue"
             size="sm"
             aria-label="Editar"
             onClick={() => onEdit(cut.id)}
@@ -263,7 +263,7 @@ const CutlistRow = React.memo<CutlistRowProps>(props => {
           </IconButton>
           <IconButton
             variant="ghost"
-            colorScheme="red"
+            colorPalette="red"
             size="sm"
             aria-label="Remover"
             onClick={() => onRemove(cut.id)}
@@ -676,7 +676,7 @@ export const Cutlist = ({
             <Flex direction="column" align={['center', 'flex-end']} gap={2}>
               {!isCuttingPlan && (
                 <RadioGroup.Root
-                  colorScheme="orange"
+                  colorPalette="orange"
                   value={String(pricePercent)}
                   onValueChange={e => {
                     if (e.value) updatePricePercent(e.value);
@@ -889,7 +889,7 @@ export const Cutlist = ({
               <Flex gap={2} align="center" pb="2px">
                 <IconButton
                   aria-label="Opções de Detalhe"
-                  colorScheme={
+                  colorPalette={
                     extraType === 'hinge'
                       ? 'green'
                       : extraType === 'slot'
@@ -907,7 +907,7 @@ export const Cutlist = ({
 
                 <Button
                   id="addCutBtn"
-                  colorScheme="orange"
+                  colorPalette="orange"
                   size="md"
                   flex="1"
                   type="submit"
@@ -989,7 +989,7 @@ export const Cutlist = ({
                   position="absolute"
                   top="-10px"
                   left="20px"
-                  colorScheme={
+                  colorPalette={
                     extraType === 'hinge'
                       ? 'green'
                       : extraType === 'slot'
@@ -1022,7 +1022,7 @@ export const Cutlist = ({
                   <HStack gap={2} wrap="wrap">
                     <Button
                       onClick={() => setExtraType('none')}
-                      colorScheme="gray"
+                      colorPalette="gray"
                       variant={extraType === 'none' ? 'solid' : 'outline'}
                       size="sm"
                     >
@@ -1030,7 +1030,7 @@ export const Cutlist = ({
                     </Button>
                     <Button
                       onClick={() => setExtraType('hinge')}
-                      colorScheme="green"
+                      colorPalette="green"
                       variant={extraType === 'hinge' ? 'solid' : 'outline'}
                       size="sm"
                     >
@@ -1038,7 +1038,7 @@ export const Cutlist = ({
                     </Button>
                     <Button
                       onClick={() => setExtraType('slot')}
-                      colorScheme="orange"
+                      colorPalette="orange"
                       variant={extraType === 'slot' ? 'solid' : 'outline'}
                       size="sm"
                     >
@@ -1046,7 +1046,7 @@ export const Cutlist = ({
                     </Button>
                     <Button
                       onClick={() => setExtraType('round')}
-                      colorScheme="purple"
+                      colorPalette="purple"
                       variant={extraType === 'round' ? 'solid' : 'outline'}
                       size="sm"
                     >
@@ -1072,7 +1072,9 @@ export const Cutlist = ({
                     <HStack gap={2}>
                       <Button
                         size="sm"
-                        colorScheme={extraType === 'hinge' ? 'green' : 'orange'}
+                        colorPalette={
+                          extraType === 'hinge' ? 'green' : 'orange'
+                        }
                         variant={extraSide === 'Maior' ? 'solid' : 'outline'}
                         onClick={() => setExtraSide('Maior')}
                       >
@@ -1080,7 +1082,9 @@ export const Cutlist = ({
                       </Button>
                       <Button
                         size="sm"
-                        colorScheme={extraType === 'hinge' ? 'green' : 'orange'}
+                        colorPalette={
+                          extraType === 'hinge' ? 'green' : 'orange'
+                        }
                         variant={extraSide === 'Menor' ? 'solid' : 'outline'}
                         onClick={() => setExtraSide('Menor')}
                       >
@@ -1147,7 +1151,7 @@ export const Cutlist = ({
         >
           <Table.Root
             variant="line"
-            colorScheme="orange"
+            colorPalette="orange"
             // @ts-expect-error O tamanho resolvido é compatível em runtime.
             size={tableSize}
             whiteSpace="nowrap"
